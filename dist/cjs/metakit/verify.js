@@ -5,10 +5,7 @@
  * Verify ECDSA signatures using secp256k1 curve via dag4js.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.verify = verify;
-exports.verifyHash = verifyHash;
-exports.verifySignature = verifySignature;
-exports.normalizeSignatureToLowS = normalizeSignatureToLowS;
+exports.normalizeSignatureToLowS = exports.verifySignature = exports.verifyHash = exports.verify = void 0;
 const dag4_1 = require("@stardust-collective/dag4");
 const js_sha256_1 = require("js-sha256");
 const binary_js_1 = require("./binary.js");
@@ -57,6 +54,7 @@ async function verify(signed, isDataUpdate = false) {
         invalidProofs,
     };
 }
+exports.verify = verify;
 /**
  * Verify a signature against a SHA-256 hash
  *
@@ -89,6 +87,7 @@ async function verifyHash(hashHex, signature, publicKeyId) {
         return false;
     }
 }
+exports.verifyHash = verifyHash;
 /**
  * Verify a single signature proof against data
  *
@@ -102,6 +101,7 @@ async function verifySignature(data, proof, isDataUpdate = false) {
     const hashHex = js_sha256_1.sha256.hex(bytes);
     return verifyHash(hashHex, proof.signature, proof.id);
 }
+exports.verifySignature = verifySignature;
 /**
  * Normalize public key to full format (with 04 prefix)
  */
@@ -173,6 +173,7 @@ function normalizeSignatureToLowS(signatureHex) {
     const newSig = new Uint8Array([0x30, newSigContent.length, ...newSigContent]);
     return bytesToHex(newSig);
 }
+exports.normalizeSignatureToLowS = normalizeSignatureToLowS;
 /**
  * Normalize a byte array for DER integer encoding
  */

@@ -8,8 +8,7 @@
  * @packageDocumentation
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CONTRACT_TRANSITIONS = exports.DEFAULT_CONTRACT_CONFIG = void 0;
-exports.isTerminalState = isTerminalState;
+exports.isTerminalState = exports.CONTRACT_TRANSITIONS = exports.DEFAULT_CONTRACT_CONFIG = void 0;
 const contract_pb_js_1 = require("../../generated/ottochain/apps/contracts/v1/contract_pb.js");
 // ---------------------------------------------------------------------------
 // Configuration Defaults
@@ -46,3 +45,4 @@ function isTerminalState(state) {
         contract_pb_js_1.ContractState.CANCELLED,
     ].includes(state);
 }
+exports.isTerminalState = isTerminalState;

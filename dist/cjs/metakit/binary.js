@@ -6,8 +6,7 @@
  * Supports both regular encoding and DataUpdate encoding with Constellation prefix.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.toBytes = toBytes;
-exports.encodeDataUpdate = encodeDataUpdate;
+exports.encodeDataUpdate = exports.toBytes = void 0;
 const canonicalize_js_1 = require("./canonicalize.js");
 const types_js_1 = require("./types.js");
 /**
@@ -44,6 +43,7 @@ function toBytes(data, isDataUpdate = false) {
     }
     return utf8Bytes;
 }
+exports.toBytes = toBytes;
 /**
  * Encode data as a DataUpdate with Constellation prefix
  *
@@ -55,3 +55,4 @@ function toBytes(data, isDataUpdate = false) {
 function encodeDataUpdate(data) {
     return toBytes(data, true);
 }
+exports.encodeDataUpdate = encodeDataUpdate;

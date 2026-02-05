@@ -5,9 +5,7 @@
  * Convenience functions for creating and managing signed objects.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createSignedObject = createSignedObject;
-exports.addSignature = addSignature;
-exports.batchSign = batchSign;
+exports.batchSign = exports.addSignature = exports.createSignedObject = void 0;
 const sign_js_1 = require("./sign.js");
 /**
  * Create a signed object with a single signature
@@ -36,6 +34,7 @@ async function createSignedObject(value, privateKey, options = {}) {
         proofs: [proof],
     };
 }
+exports.createSignedObject = createSignedObject;
 /**
  * Add an additional signature to an existing signed object
  *
@@ -69,6 +68,7 @@ async function addSignature(signed, privateKey, options = {}) {
         proofs: [...signed.proofs, newProof],
     };
 }
+exports.addSignature = addSignature;
 /**
  * Create a signed object with multiple signatures at once
  *
@@ -97,3 +97,4 @@ async function batchSign(value, privateKeys, options = {}) {
         proofs,
     };
 }
+exports.batchSign = batchSign;

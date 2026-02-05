@@ -5,10 +5,7 @@
  * SHA-256 and SHA-512 hashing for the Constellation signature protocol.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.hash = hash;
-exports.hashBytes = hashBytes;
-exports.computeDigest = computeDigest;
-exports.hashData = hashData;
+exports.hashData = exports.computeDigest = exports.hashBytes = exports.hash = void 0;
 const js_sha256_1 = require("js-sha256");
 const js_sha512_1 = require("js-sha512");
 const binary_js_1 = require("./binary.js");
@@ -28,6 +25,7 @@ function hash(data) {
     const bytes = (0, binary_js_1.toBytes)(data, false);
     return hashBytes(bytes);
 }
+exports.hash = hash;
 /**
  * Compute SHA-256 hash of raw bytes
  *
@@ -43,6 +41,7 @@ function hashBytes(bytes) {
         bytes: hashUint8,
     };
 }
+exports.hashBytes = hashBytes;
 /**
  * Compute the full signing digest according to Constellation protocol
  *
@@ -70,6 +69,7 @@ function computeDigest(data, isDataUpdate = false) {
     // Step 6: Truncate to 32 bytes
     return new Uint8Array(sha512Hash.slice(0, 32));
 }
+exports.computeDigest = computeDigest;
 /**
  * Compute SHA-256 hash of data with optional DataUpdate encoding
  *
@@ -81,3 +81,4 @@ function hashData(data, isDataUpdate = false) {
     const bytes = (0, binary_js_1.toBytes)(data, isDataUpdate);
     return hashBytes(bytes);
 }
+exports.hashData = hashData;

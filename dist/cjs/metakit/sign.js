@@ -6,9 +6,7 @@
  * Implements the Constellation signature protocol.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sign = sign;
-exports.signDataUpdate = signDataUpdate;
-exports.signHash = signHash;
+exports.signHash = exports.signDataUpdate = exports.sign = void 0;
 const dag4_1 = require("@stardust-collective/dag4");
 const js_sha256_1 = require("js-sha256");
 const canonicalize_js_1 = require("./canonicalize.js");
@@ -47,6 +45,7 @@ async function sign(data, privateKey) {
     const id = normalizePublicKeyId(publicKey);
     return { id, signature };
 }
+exports.sign = sign;
 /**
  * Sign data as a DataUpdate (with Constellation prefix)
  *
@@ -71,6 +70,7 @@ async function signDataUpdate(data, privateKey) {
     const id = normalizePublicKeyId(publicKey);
     return { id, signature };
 }
+exports.signDataUpdate = signDataUpdate;
 /**
  * Sign a pre-computed SHA-256 hash
  *
@@ -102,6 +102,7 @@ async function signHash(hashHex, privateKey) {
     // 3. ECDSA signing with secp256k1
     return dag4_1.dag4.keyStore.sign(privateKey, hashHex);
 }
+exports.signHash = signHash;
 /**
  * Normalize public key to ID format (without 04 prefix, 128 chars)
  */

@@ -9,7 +9,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.canonicalize = canonicalize;
+exports.canonicalize = void 0;
 const canonicalize_1 = __importDefault(require("canonicalize"));
 /**
  * Canonicalize JSON data according to RFC 8785
@@ -37,3 +37,4 @@ function canonicalize(data) {
     }
     return result;
 }
+exports.canonicalize = canonicalize;

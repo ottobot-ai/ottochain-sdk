@@ -8,6 +8,8 @@
  * - `generated` — Protobuf-generated types (source of truth)
  * - `apps/identity` — Agent Identity application types
  * - `apps/contracts` — Contract application types
+ * - `errors` — Custom error classes for structured error handling
+ * - `validation` — Input validation with Zod schemas
  *
  * @packageDocumentation
  */
@@ -17,3 +19,60 @@ export * from './metakit/index.js';
 
 // Generated protobuf types (canonical definitions)
 export * from './generated/index.js';
+
+// Custom error classes
+export {
+  OttoChainError,
+  NetworkError,
+  ValidationError,
+  SigningError,
+  TransactionError,
+  ErrorCode,
+  isErrorCode,
+  wrapError,
+} from './errors.js';
+
+// Validation schemas and helpers
+export {
+  // Schemas
+  DagAddressSchema,
+  PrivateKeySchema,
+  PublicKeySchema,
+  KeyPairSchema,
+  SignatureProofSchema,
+  SignedSchema,
+  TransactionReferenceSchema,
+  CurrencyTransactionValueSchema,
+  CurrencyTransactionSchema,
+  TransferParamsSchema,
+  AgentIdentityRegistrationSchema,
+  PlatformLinkSchema,
+  ContractTermsSchema,
+  ProposeContractRequestSchema,
+  AcceptContractRequestSchema,
+  CompleteContractRequestSchema,
+  // Helpers
+  validate,
+  validatePrivateKey,
+  validatePublicKey,
+  validateAddress,
+  validateKeyPair,
+  safeParse,
+  assert,
+  // Types
+  type ValidatedKeyPair,
+  type ValidatedSignatureProof,
+  type ValidatedCurrencyTransaction,
+  type ValidatedTransferParams,
+  type ValidatedAgentIdentityRegistration,
+  type ValidatedPlatformLink,
+  type ValidatedProposeContractRequest,
+  type ValidatedAcceptContractRequest,
+  type ValidatedCompleteContractRequest,
+} from './validation.js';
+
+// Error classes
+export * from './errors.js';
+
+// Validation schemas and helpers
+export * from './validation.js';

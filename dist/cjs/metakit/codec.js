@@ -6,8 +6,7 @@
  * Re-exports from binary.ts for backwards compatibility and provides additional utilities.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CONSTELLATION_PREFIX = exports.encodeDataUpdate = exports.toBytes = void 0;
-exports.decodeDataUpdate = decodeDataUpdate;
+exports.decodeDataUpdate = exports.CONSTELLATION_PREFIX = exports.encodeDataUpdate = exports.toBytes = void 0;
 var binary_js_1 = require("./binary.js");
 Object.defineProperty(exports, "toBytes", { enumerable: true, get: function () { return binary_js_1.toBytes; } });
 Object.defineProperty(exports, "encodeDataUpdate", { enumerable: true, get: function () { return binary_js_1.encodeDataUpdate; } });
@@ -43,3 +42,4 @@ function decodeDataUpdate(bytes) {
     const jsonString = new TextDecoder().decode(jsonBytes);
     return JSON.parse(jsonString);
 }
+exports.decodeDataUpdate = decodeDataUpdate;

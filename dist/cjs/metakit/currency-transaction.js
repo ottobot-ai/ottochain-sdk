@@ -5,16 +5,7 @@
  * @packageDocumentation
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.tokenToUnits = tokenToUnits;
-exports.unitsToToken = unitsToToken;
-exports.isValidDagAddress = isValidDagAddress;
-exports.createCurrencyTransaction = createCurrencyTransaction;
-exports.createCurrencyTransactionBatch = createCurrencyTransactionBatch;
-exports.signCurrencyTransaction = signCurrencyTransaction;
-exports.verifyCurrencyTransaction = verifyCurrencyTransaction;
-exports.encodeCurrencyTransaction = encodeCurrencyTransaction;
-exports.hashCurrencyTransaction = hashCurrencyTransaction;
-exports.getTransactionReference = getTransactionReference;
+exports.getTransactionReference = exports.hashCurrencyTransaction = exports.encodeCurrencyTransaction = exports.verifyCurrencyTransaction = exports.signCurrencyTransaction = exports.createCurrencyTransactionBatch = exports.createCurrencyTransaction = exports.isValidDagAddress = exports.unitsToToken = exports.tokenToUnits = void 0;
 const dag4_keystore_1 = require("@stardust-collective/dag4-keystore");
 const currency_types_js_1 = require("./currency-types.js");
 const wallet_js_1 = require("./wallet.js");
@@ -33,6 +24,7 @@ const verify_js_1 = require("./verify.js");
 function tokenToUnits(amount) {
     return Math.floor(amount * 1e8);
 }
+exports.tokenToUnits = tokenToUnits;
 /**
  * Convert smallest units to token amount
  *
@@ -47,6 +39,7 @@ function tokenToUnits(amount) {
 function unitsToToken(units) {
     return units * currency_types_js_1.TOKEN_DECIMALS;
 }
+exports.unitsToToken = unitsToToken;
 /**
  * Validate DAG address format
  *
@@ -61,6 +54,7 @@ function unitsToToken(units) {
 function isValidDagAddress(address) {
     return dag4_keystore_1.keyStore.validateDagAddress(address);
 }
+exports.isValidDagAddress = isValidDagAddress;
 /**
  * Create a metagraph token transaction
  *
@@ -136,6 +130,7 @@ async function createCurrencyTransaction(params, privateKey, lastRef) {
     tx.addSignature(proof);
     return tx.getPostTransaction();
 }
+exports.createCurrencyTransaction = createCurrencyTransaction;
 /**
  * Create multiple metagraph token transactions (batch)
  *
@@ -174,6 +169,7 @@ async function createCurrencyTransactionBatch(transfers, privateKey, lastRef) {
     }
     return transactions;
 }
+exports.createCurrencyTransactionBatch = createCurrencyTransactionBatch;
 /**
  * Add a signature to an existing currency transaction (for multi-sig)
  *
@@ -217,6 +213,7 @@ async function signCurrencyTransaction(transaction, privateKey) {
     tx.addSignature(proof);
     return tx.getPostTransaction();
 }
+exports.signCurrencyTransaction = signCurrencyTransaction;
 /**
  * Verify all signatures on a currency transaction
  *
@@ -258,6 +255,7 @@ async function verifyCurrencyTransaction(transaction) {
         invalidProofs,
     };
 }
+exports.verifyCurrencyTransaction = verifyCurrencyTransaction;
 /**
  * Encode a currency transaction for hashing
  *
@@ -273,6 +271,7 @@ function encodeCurrencyTransaction(transaction) {
     const tx = dag4_keystore_1.TransactionV2.fromPostTransaction(transaction);
     return tx.getEncoded();
 }
+exports.encodeCurrencyTransaction = encodeCurrencyTransaction;
 /**
  * Hash a currency transaction
  *
@@ -295,6 +294,7 @@ async function hashCurrencyTransaction(transaction) {
         bytes: Buffer.from(hash, 'hex'),
     };
 }
+exports.hashCurrencyTransaction = hashCurrencyTransaction;
 /**
  * Get transaction reference from a currency transaction
  * Useful for chaining transactions
@@ -316,3 +316,4 @@ async function getTransactionReference(transaction, ordinal) {
         ordinal,
     };
 }
+exports.getTransactionReference = getTransactionReference;

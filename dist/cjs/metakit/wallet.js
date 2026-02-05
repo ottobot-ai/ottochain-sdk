@@ -5,13 +5,7 @@
  * Functions for generating and managing cryptographic keys.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generateKeyPair = generateKeyPair;
-exports.keyPairFromPrivateKey = keyPairFromPrivateKey;
-exports.getPublicKeyHex = getPublicKeyHex;
-exports.getPublicKeyId = getPublicKeyId;
-exports.getAddress = getAddress;
-exports.isValidPrivateKey = isValidPrivateKey;
-exports.isValidPublicKey = isValidPublicKey;
+exports.isValidPublicKey = exports.isValidPrivateKey = exports.getAddress = exports.getPublicKeyId = exports.getPublicKeyHex = exports.keyPairFromPrivateKey = exports.generateKeyPair = void 0;
 const dag4_1 = require("@stardust-collective/dag4");
 /**
  * Generate a new random key pair
@@ -30,6 +24,7 @@ function generateKeyPair() {
     const privateKey = dag4_1.dag4.keyStore.generatePrivateKey();
     return keyPairFromPrivateKey(privateKey);
 }
+exports.generateKeyPair = generateKeyPair;
 /**
  * Derive a key pair from an existing private key
  *
@@ -52,6 +47,7 @@ function keyPairFromPrivateKey(privateKey) {
         address,
     };
 }
+exports.keyPairFromPrivateKey = keyPairFromPrivateKey;
 /**
  * Get the public key hex from a private key
  *
@@ -62,6 +58,7 @@ function keyPairFromPrivateKey(privateKey) {
 function getPublicKeyHex(privateKey, compressed = false) {
     return dag4_1.dag4.keyStore.getPublicKeyFromPrivate(privateKey, compressed);
 }
+exports.getPublicKeyHex = getPublicKeyHex;
 /**
  * Get the public key ID (without 04 prefix) from a private key
  *
@@ -78,6 +75,7 @@ function getPublicKeyId(privateKey) {
     }
     return publicKey;
 }
+exports.getPublicKeyId = getPublicKeyId;
 /**
  * Get DAG address from a public key
  *
@@ -88,6 +86,7 @@ function getAddress(publicKey) {
     const normalizedKey = normalizePublicKey(publicKey);
     return dag4_1.dag4.keyStore.getDagAddressFromPublicKey(normalizedKey);
 }
+exports.getAddress = getAddress;
 /**
  * Validate that a private key is correctly formatted
  *
@@ -101,6 +100,7 @@ function isValidPrivateKey(privateKey) {
         return false;
     return /^[0-9a-fA-F]+$/.test(privateKey);
 }
+exports.isValidPrivateKey = isValidPrivateKey;
 /**
  * Validate that a public key is correctly formatted
  *
@@ -115,6 +115,7 @@ function isValidPublicKey(publicKey) {
         return false;
     return /^[0-9a-fA-F]+$/.test(publicKey);
 }
+exports.isValidPublicKey = isValidPublicKey;
 /**
  * Normalize public key to include 04 prefix
  */
