@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package ottochain.apps.identity.v1;
+
+import "ottochain/v1/common.proto";
+import "ottochain/apps/identity/v1/agent.proto";
+import "google/protobuf/timestamp.proto";
+
+// Types of attestations that affect reputation
+enum AttestationType {
+  ATTESTATION_TYPE_UNSPECIFIED = 0;
+  ATTESTATION_TYPE_COMPLETION = 1;   // Contract completed successfully (+5)
+  ATTESTATION_TYPE_VOUCH = 2;        // Vouched for by another agent (+2)
+  ATTESTATION_TYPE_VIOLATION = 3;    // Protocol violation (-10)
+  ATTESTATION_TYPE_BEHAVIORAL = 4;   // Positive behavioral signal (+3)
+}
+
+// Reputation change record
+message ReputationDelta {
+  AttestationType attestation_type = 1;
+  int32 delta = 2;
+  string reason = 3;
+  google.protobuf.Timestamp recorded_at = 4;
+}
+
+// Attestation record
+message Attestation {
+  string id = 1;
+  AttestationType type = 2;
+  ottochain.v1.Address subject = 3;      // Agent receiving attestation
+  ottochain.v1.Address issuer = 4;       // Agent or platform issuing
+  Platform issuer_platform = 5;          // If issued by platform
+  int32 delta = 6;                       // Reputation change
+  string reason = 7;
+  string tx_hash = 8;
+  google.protobuf.Timestamp created_at = 9;
+}
+
+// Vouch request - one agent vouching for another
+message VouchRequest {
+  ottochain.v1.Address from_address = 1;
+  ottochain.v1.Address to_address = 2;
+  string reason = 3;
+}
+
+// Challenge request - disputing an agent's behavior
+message ChallengeRequest {
+  ottochain.v1.Address challenger = 1;
+  ottochain.v1.Address challenged = 2;
+  string evidence = 3;
+  string reason = 4;
+}
+
+// Reputation thresholds and rules
+message ReputationConfig {
+  int32 base_reputation = 1;           // Starting rep (default: 10)
+  int32 completion_delta = 2;          // Contract completion (default: +5)
+  int32 vouch_delta = 3;               // Vouch received (default: +2)
+  int32 violation_delta = 4;           // Violation penalty (default: -10)
+  int32 behavioral_delta = 5;          // Behavioral bonus (default: +3)
+  int32 min_reputation = 6;            // Floor (default: 0)
+  int32 challenge_threshold = 7;       // Min rep to challenge (default: 5)
+}

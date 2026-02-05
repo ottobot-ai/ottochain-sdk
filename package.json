@@ -16,10 +16,20 @@
       "require": "./dist/cjs/metakit/index.js",
       "types": "./dist/types/metakit/index.d.ts"
     },
-    "./ottochain": {
+    "./core": {
       "import": "./dist/esm/ottochain/index.js",
       "require": "./dist/cjs/ottochain/index.js",
       "types": "./dist/types/ottochain/index.d.ts"
+    },
+    "./apps/identity": {
+      "import": "./dist/esm/apps/identity/index.js",
+      "require": "./dist/cjs/apps/identity/index.js",
+      "types": "./dist/types/apps/identity/index.d.ts"
+    },
+    "./apps/contracts": {
+      "import": "./dist/esm/apps/contracts/index.js",
+      "require": "./dist/cjs/apps/contracts/index.js",
+      "types": "./dist/types/apps/contracts/index.d.ts"
     }
   },
   "files": [

@@ -57,18 +57,44 @@ npm run proto:generate
 
 ```
 ottochain-sdk/
-├── proto/                  # Protobuf definitions (source of truth)
-│   └── ottochain/v1/
-│       ├── common.proto
-│       ├── fiber.proto
-│       ├── messages.proto
-│       └── records.proto
+├── proto/                           # Protobuf definitions (source of truth)
+│   └── ottochain/
+│       ├── v1/                      # Core metagraph types
+│       │   ├── common.proto
+│       │   ├── fiber.proto
+│       │   ├── messages.proto
+│       │   └── records.proto
+│       └── apps/                    # Application-specific types
+│           ├── identity/v1/
+│           │   ├── agent.proto
+│           │   └── attestation.proto
+│           └── contracts/v1/
+│               └── contract.proto
 ├── src/
-│   ├── metakit/           # Signing, hashing, HTTP client
-│   ├── ottochain/         # Domain types
-│   ├── generated/         # Protobuf-generated code
+│   ├── metakit/                     # Signing, hashing, HTTP client
+│   ├── ottochain/                   # Core domain types
+│   ├── apps/                        # Application modules
+│   │   ├── identity/                # Agent Identity types
+│   │   └── contracts/               # Contract types
+│   ├── generated/                   # Protobuf-generated code
 │   └── index.ts
-└── dist/                  # Compiled output
+└── dist/                            # Compiled output
+```
+
+## Imports
+
+```typescript
+// Core SDK (signing, HTTP client)
+import { generateKeyPair, batchSign, HttpClient } from '@ottochain/sdk';
+
+// Core types (fiber, state machine)
+import { Fiber, StateMachineDefinition } from '@ottochain/sdk/core';
+
+// Agent Identity application
+import { AgentState, AttestationType, AgentIdentity } from '@ottochain/sdk/apps/identity';
+
+// Contracts application
+import { ContractState, Contract } from '@ottochain/sdk/apps/contracts';
 ```
 
 ## License

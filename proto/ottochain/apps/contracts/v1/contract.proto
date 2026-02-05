@@ -1,0 +1,83 @@
+syntax = "proto3";
+
+package ottochain.apps.contracts.v1;
+
+import "ottochain/v1/common.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+// Contract lifecycle states
+enum ContractState {
+  CONTRACT_STATE_UNSPECIFIED = 0;
+  CONTRACT_STATE_PROPOSED = 1;    // Awaiting counterparty acceptance
+  CONTRACT_STATE_ACTIVE = 2;      // Both parties agreed, in progress
+  CONTRACT_STATE_COMPLETED = 3;   // Successfully fulfilled (terminal)
+  CONTRACT_STATE_REJECTED = 4;    // Counterparty declined (terminal)
+  CONTRACT_STATE_DISPUTED = 5;    // Under dispute resolution
+  CONTRACT_STATE_CANCELLED = 6;   // Cancelled by proposer before acceptance (terminal)
+}
+
+// Contract between two agents
+message Contract {
+  string id = 1;
+  string contract_id = 2;                    // Human-readable ID
+  ottochain.v1.Address proposer = 3;
+  ottochain.v1.Address counterparty = 4;
+  ContractState state = 5;
+  google.protobuf.Struct terms = 6;          // Flexible terms structure
+  google.protobuf.Timestamp proposed_at = 7;
+  google.protobuf.Timestamp accepted_at = 8;
+  google.protobuf.Timestamp completed_at = 9;
+  string completion_proof = 10;              // Evidence of completion
+}
+
+// Propose a new contract
+message ProposeContractRequest {
+  ottochain.v1.Address proposer = 1;
+  ottochain.v1.Address counterparty = 2;
+  google.protobuf.Struct terms = 3;
+  string description = 4;
+}
+
+// Accept a proposed contract
+message AcceptContractRequest {
+  string contract_id = 1;
+  ottochain.v1.Address acceptor = 2;
+}
+
+// Complete a contract with proof
+message CompleteContractRequest {
+  string contract_id = 1;
+  ottochain.v1.Address completer = 2;
+  string proof = 3;
+}
+
+// Reject a proposed contract
+message RejectContractRequest {
+  string contract_id = 1;
+  ottochain.v1.Address rejector = 2;
+  string reason = 3;
+}
+
+// Dispute a contract
+message DisputeContractRequest {
+  string contract_id = 1;
+  ottochain.v1.Address disputant = 2;
+  string evidence = 3;
+  string reason = 4;
+}
+
+// Contract state machine definition
+message ContractDefinition {
+  // Valid transitions:
+  //   PROPOSED -> ACTIVE (accept)
+  //   PROPOSED -> REJECTED (reject)
+  //   PROPOSED -> CANCELLED (cancel)
+  //   ACTIVE -> COMPLETED (complete)
+  //   ACTIVE -> DISPUTED (dispute)
+  //   DISPUTED -> COMPLETED (resolve_for_completer)
+  //   DISPUTED -> REJECTED (resolve_for_disputant)
+  
+  bool require_both_signatures = 1;  // Both parties must sign completion
+  int32 dispute_window_epochs = 2;   // How long after completion disputes allowed
+}
