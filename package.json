@@ -71,6 +71,7 @@
     "url": "https://github.com/ottobot-ai/ottochain-sdk/issues"
   },
   "dependencies": {
+    "@bufbuild/protobuf": "^2.11.0",
     "@stardust-collective/dag4": "^2.6.0",
     "@stardust-collective/dag4-keystore": "^2.6.0",
     "canonicalize": "^2.1.0",
@@ -79,7 +80,6 @@
   },
   "devDependencies": {
     "@bufbuild/buf": "^1.65.0",
-    "@bufbuild/protobuf": "^2.11.0",
     "@bufbuild/protoc-gen-es": "^2.11.0",
     "@protobuf-ts/plugin": "^2.11.1",
     "@protobuf-ts/runtime": "^2.11.1",
