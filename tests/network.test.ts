@@ -58,7 +58,7 @@ describe('Network Operations', () => {
       expect(error.message).toBe('Connection failed');
       expect(error.name).toBe('NetworkError');
       expect(error.statusCode).toBeUndefined();
-      expect(error.response).toBeUndefined();
+      expect(error.responseBody).toBeUndefined();
     });
 
     it('should create error with status code', () => {
@@ -71,7 +71,7 @@ describe('Network Operations', () => {
       const error = new NetworkError('Bad request', 400, '{"error":"invalid"}');
       expect(error.message).toBe('Bad request');
       expect(error.statusCode).toBe(400);
-      expect(error.response).toBe('{"error":"invalid"}');
+      expect(error.responseBody).toBe('{"error":"invalid"}');
     });
 
     it('should be instanceof Error', () => {

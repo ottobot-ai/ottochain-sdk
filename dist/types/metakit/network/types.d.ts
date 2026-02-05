@@ -69,6 +69,6 @@ export declare class NetworkError extends Error {
     /** HTTP status code if applicable */
     statusCode?: number;
     /** Raw response body */
-    response?: string;
-    constructor(message: string, statusCode?: number, response?: string);
+    responseBody?: string;
+    constructor(message: string, statusCode?: number, responseBody?: string);
 }

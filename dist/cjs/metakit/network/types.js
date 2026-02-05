@@ -10,11 +10,11 @@ exports.NetworkError = void 0;
  * Network error with status code and response details
  */
 class NetworkError extends Error {
-    constructor(message, statusCode, response) {
+    constructor(message, statusCode, responseBody) {
         super(message);
         this.name = 'NetworkError';
         this.statusCode = statusCode;
-        this.response = response;
+        this.responseBody = responseBody;
     }
 }
 exports.NetworkError = NetworkError;
