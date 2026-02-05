@@ -46,7 +46,8 @@
     "test:coverage": "jest --coverage",
     "lint": "eslint src tests",
     "format": "prettier --write src tests",
-    "generate:proto": "bash scripts/generate-proto.sh"
+    "generate": "buf generate",
+    "lint:proto": "buf lint"
   },
   "keywords": [
     "ottochain",

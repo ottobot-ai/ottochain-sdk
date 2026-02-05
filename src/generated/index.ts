@@ -1,51 +1,21 @@
 /**
- * Auto-generated protobuf types for OttoChain SDK
+ * Generated Protobuf Types
  * 
- * Generated from proto files in sdk/proto/ottochain/v1/
- * DO NOT EDIT - regenerate with: npm run generate:proto
+ * Auto-generated from proto/ definitions.
+ * DO NOT EDIT - regenerate with `npm run generate`
+ * 
+ * @packageDocumentation
  */
 
-// Common types
-export {
-  FiberOrdinal,
-  SnapshotOrdinal,
-  StateId,
-  HashValue,
-  Address,
-} from './ottochain/v1/common';
+// Core types
+export * from './ottochain/v1/common_pb.js';
+export * from './ottochain/v1/fiber_pb.js';
+export * from './ottochain/v1/messages_pb.js';
+export * from './ottochain/v1/records_pb.js';
 
-// Fiber types
-export {
-  FiberStatus,
-  fiberStatusFromJSON,
-  fiberStatusToJSON,
-  AccessControlPolicy,
-  PublicAccess,
-  WhitelistAccess,
-  FiberOwnedAccess,
-  StateMachineDefinition,
-  EmittedEvent,
-  EventReceipt,
-  ScriptInvocation,
-  FiberLogEntry,
-} from './ottochain/v1/fiber';
+// App: Identity
+export * from './ottochain/apps/identity/v1/agent_pb.js';
+export * from './ottochain/apps/identity/v1/attestation_pb.js';
 
-// Record types
-export {
-  StateMachineFiberRecord,
-  ScriptFiberRecord,
-  FiberCommit,
-  OnChainState,
-  FiberLogEntryList,
-  CalculatedState,
-} from './ottochain/v1/records';
-
-// Message types
-export {
-  CreateStateMachine,
-  TransitionStateMachine,
-  ArchiveStateMachine,
-  CreateScript,
-  InvokeScript,
-  OttochainMessage,
-} from './ottochain/v1/messages';
+// App: Contracts
+export * from './ottochain/apps/contracts/v1/contract_pb.js';

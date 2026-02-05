@@ -3,12 +3,17 @@
  *
  * Unified SDK combining metakit framework operations with ottochain domain types.
  *
+ * Structure:
  * - `metakit` — Signing, encoding, hashing, and network clients for Constellation metagraphs
- * - `ottochain` — Domain types, state models, and message formats for the ottochain metagraph
+ * - `generated` — Protobuf-generated types (source of truth)
+ * - `apps/identity` — Agent Identity application types
+ * - `apps/contracts` — Contract application types
  *
  * @packageDocumentation
  */
 
-// Re-export everything from both modules at the top level for convenience
+// Metakit utilities (signing, hashing, HTTP client)
 export * from './metakit/index.js';
-export * from './ottochain/index.js';
+
+// Generated protobuf types (canonical definitions)
+export * from './generated/index.js';

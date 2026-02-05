@@ -5,20 +5,22 @@
  * 
  * @example
  * ```typescript
- * import { AgentState, AttestationType, DEFAULT_REPUTATION_CONFIG } from '@ottochain/sdk/apps/identity';
+ * import { AgentState, AttestationType, AgentIdentitySchema } from '@ottochain/sdk/apps/identity';
+ * import { create } from '@bufbuild/protobuf';
  * 
- * const agent: AgentIdentity = {
- *   address: 'DAG...',
+ * const agent = create(AgentIdentitySchema, {
  *   publicKey: '...',
- *   reputation: DEFAULT_REPUTATION_CONFIG.baseReputation,
- *   state: 'REGISTERED',
- *   platformLinks: [],
- *   createdAt: new Date().toISOString(),
- *   updatedAt: new Date().toISOString(),
- * };
+ *   reputation: 10,
+ *   state: AgentState.REGISTERED,
+ * });
  * ```
  * 
  * @packageDocumentation
  */
 
+// Re-export generated protobuf types
+export * from '../../generated/ottochain/apps/identity/v1/agent_pb.js';
+export * from '../../generated/ottochain/apps/identity/v1/attestation_pb.js';
+
+// Re-export convenience types and constants
 export * from './types.js';

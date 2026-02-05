@@ -1,0 +1,10 @@
+version: v2
+managed:
+  enabled: true
+plugins:
+  # Generate TypeScript using protobuf-es
+  - remote: buf.build/bufbuild/es:v2.2.0
+    out: src/generated
+    opt:
+      - target=ts
+      - import_extension=.js
