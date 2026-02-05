@@ -1,97 +1,95 @@
 /**
- * Example: Register a new agent identity on OttoChain
- * 
- * This example demonstrates:
- * - Generating a new keypair
- * - Creating an agent identity
- * - Waiting for on-chain confirmation
- * - Activating the agent
+ * Agent Registration Example
+ *
+ * Demonstrates how to register an agent identity on the OttoChain network.
+ *
+ * @example
+ * ```bash
+ * npx ts-node examples/agent-registration.ts
+ * ```
  */
 
-import { 
-  generateKeyPair, 
-  batchSign, 
-  HttpClient,
-  KeyPair 
-} from '@ottochain/sdk';
+import {
+  generateKeyPair,
+  createSignedObject,
+  DataL1Client,
+  AgentIdentityRegistrationSchema,
+  validate,
+  ValidationError,
+} from '../src/index.js';
 
-const ML0_URL = process.env.ML0_URL || 'http://localhost:9200';
-const DL1_URL = process.env.DL1_URL || 'http://localhost:9400';
+// Configuration
+const METAGRAPH_DATA_L1_URL = process.env.METAGRAPH_URL || 'http://localhost:9300';
 
+/**
+ * Register a new agent identity
+ */
 async function registerAgent() {
-  // 1. Generate a new keypair for the agent
-  console.log('Generating keypair...');
-  const keyPair = await generateKeyPair();
-  console.log('Agent address:', keyPair.address);
+  console.log('🚀 Agent Registration Example\n');
 
-  // 2. Create the registration payload
-  const createAgentPayload = {
-    CreateAgentIdentity: {
-      name: 'MyAgent',
-      platformId: 'telegram:123456789',
-      metadata: {
-        description: 'An example agent',
-        version: '1.0.0',
-      },
-    },
+  // Step 1: Generate a new keypair for the agent
+  console.log('Step 1: Generating new keypair...');
+  const keyPair = generateKeyPair();
+  console.log(`  ✅ Address: ${keyPair.address}`);
+  console.log(`  ✅ Public Key: ${keyPair.publicKey.slice(0, 20)}...`);
+
+  // Step 2: Create the registration payload
+  console.log('\nStep 2: Creating registration payload...');
+  const registrationData = {
+    publicKey: keyPair.publicKey,
+    displayName: 'My AI Agent',
+    reputation: 10,
   };
 
-  // 3. Sign the transaction
-  console.log('Signing registration transaction...');
-  const signedTx = await batchSign(keyPair, [createAgentPayload]);
-
-  // 4. Submit to DL1
-  const client = new HttpClient(DL1_URL);
-  console.log('Submitting to DL1...');
-  const response = await client.postDataTransaction(signedTx);
-  console.log('Transaction hash:', response.hash);
-
-  // 5. Wait for the fiber to appear in ML0 checkpoint
-  console.log('Waiting for on-chain confirmation...');
-  const fiberId = await waitForFiber(keyPair.address, 60);
-  console.log('Fiber created:', fiberId);
-
-  // 6. Activate the agent
-  const activatePayload = {
-    ActivateAgent: {
-      fiberId,
-    },
-  };
-  
-  const activateTx = await batchSign(keyPair, [activatePayload]);
-  await client.postDataTransaction(activateTx);
-  console.log('Agent activated!');
-
-  return { keyPair, fiberId };
-}
-
-async function waitForFiber(ownerAddress: string, timeoutSeconds: number): Promise<string> {
-  const client = new HttpClient(ML0_URL);
-  const startTime = Date.now();
-  
-  while (Date.now() - startTime < timeoutSeconds * 1000) {
-    const checkpoint = await client.getCheckpoint();
-    
-    for (const [fiberId, fiber] of Object.entries(checkpoint.fibers || {})) {
-      if ((fiber as any).owners?.includes(ownerAddress)) {
-        return fiberId;
-      }
+  // Validate the registration data
+  try {
+    validate(AgentIdentityRegistrationSchema, registrationData, 'registration');
+    console.log('  ✅ Payload validated successfully');
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      console.error(`  ❌ Validation failed: ${error.message}`);
+      console.error(`  Field: ${error.field}`);
+      return;
     }
-    
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    throw error;
   }
-  
-  throw new Error(`Fiber not found for ${ownerAddress} within ${timeoutSeconds}s`);
+
+  // Step 3: Sign the registration
+  console.log('\nStep 3: Signing registration...');
+  const signedRegistration = await createSignedObject(
+    {
+      action: 'RegisterAgent',
+      data: registrationData,
+    },
+    keyPair.privateKey,
+    { isDataUpdate: true }
+  );
+  console.log(`  ✅ Signed with ${signedRegistration.proofs.length} proof(s)`);
+  console.log(`  ✅ Signer ID: ${signedRegistration.proofs[0].id.slice(0, 20)}...`);
+
+  // Step 4: Submit to the network (optional - requires running metagraph)
+  console.log('\nStep 4: Submitting to network...');
+  const client = new DataL1Client(METAGRAPH_DATA_L1_URL);
+
+  try {
+    const response = await client.postData(signedRegistration);
+    console.log(`  ✅ Submitted! Hash: ${response.hash}`);
+  } catch (error) {
+    console.log(`  ⚠️ Network unavailable (expected in demo): ${(error as Error).message}`);
+  }
+
+  // Summary
+  console.log('\n📋 Summary:');
+  console.log('─'.repeat(50));
+  console.log(`Agent Address:    ${keyPair.address}`);
+  console.log(`Display Name:     ${registrationData.displayName}`);
+  console.log(`Initial Rep:      ${registrationData.reputation}`);
+  console.log('─'.repeat(50));
+
+  // Important: In production, securely store the private key!
+  console.log('\n⚠️  IMPORTANT: Save your private key securely!');
+  console.log(`   Private Key: ${keyPair.privateKey}`);
 }
 
-// Run if executed directly
-registerAgent()
-  .then(result => {
-    console.log('\n✅ Agent registered successfully!');
-    console.log('Address:', result.keyPair.address);
-    console.log('Fiber ID:', result.fiberId);
-  })
-  .catch(error => {
-    console.error('❌ Registration failed:', error.message);
-    process.exit(1);
-  });
+// Run the example
+registerAgent().catch(console.error);

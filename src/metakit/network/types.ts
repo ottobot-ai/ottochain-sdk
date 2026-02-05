@@ -81,12 +81,12 @@ export class NetworkError extends Error {
   /** HTTP status code if applicable */
   statusCode?: number;
   /** Raw response body */
-  response?: string;
+  responseBody?: string;
 
-  constructor(message: string, statusCode?: number, response?: string) {
+  constructor(message: string, statusCode?: number, responseBody?: string) {
     super(message);
     this.name = 'NetworkError';
     this.statusCode = statusCode;
-    this.response = response;
+    this.responseBody = responseBody;
   }
 }
