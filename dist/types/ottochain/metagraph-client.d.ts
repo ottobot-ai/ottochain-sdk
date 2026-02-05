@@ -8,7 +8,7 @@
  * @see modules/data_l1/src/main/scala/xyz/kd5ujc/data_l1/DataL1CustomRoutes.scala
  * @packageDocumentation
  */
-import type { OnChain, CalculatedState, StateMachineFiberRecord, ScriptOracleFiberRecord, EventReceipt, OracleInvocation, FiberStatus } from './types.js';
+import type { OnChain, CalculatedState, StateMachineFiberRecord, ScriptFiberRecord, EventReceipt, OracleInvocation, FiberStatus } from './types.js';
 /**
  * Checkpoint response from the metagraph (ordinal + calculated state).
  */
@@ -77,15 +77,15 @@ export declare class MetagraphClient {
     /**
      * Get all script oracles, optionally filtered by status.
      */
-    getOracles(status?: FiberStatus): Promise<Record<string, ScriptOracleFiberRecord>>;
+    getScripts(status?: FiberStatus): Promise<Record<string, ScriptFiberRecord>>;
     /**
      * Get a single script oracle by fiber ID.
      */
-    getOracle(oracleId: string): Promise<ScriptOracleFiberRecord | null>;
+    getScript(scriptId: string): Promise<ScriptFiberRecord | null>;
     /**
      * Get oracle invocations from the current ordinal's logs.
      */
-    getOracleInvocations(oracleId: string): Promise<OracleInvocation[]>;
+    getScriptInvocations(scriptId: string): Promise<OracleInvocation[]>;
     /**
      * Get the latest snapshot and decode its on-chain state.
      */

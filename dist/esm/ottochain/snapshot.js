@@ -94,7 +94,7 @@ export function getEventReceipts(onChain, fiberId) {
  * @param fiberId - Fiber UUID to filter by
  * @returns Array of OracleInvocation entries
  */
-export function getOracleInvocations(onChain, fiberId) {
+export function getScriptInvocations(onChain, fiberId) {
     return getLogsForFiber(onChain, fiberId)
         .filter((entry) => 'method' in entry && 'result' in entry);
 }

@@ -11,7 +11,7 @@
  * @packageDocumentation
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getOracleInvocations = exports.getEventReceipts = exports.getLogsForFiber = exports.extractOnChainState = exports.getLatestOnChainState = exports.getSnapshotOnChainState = exports.decodeOnChainState = void 0;
+exports.getScriptInvocations = exports.getEventReceipts = exports.getLogsForFiber = exports.extractOnChainState = exports.getLatestOnChainState = exports.getSnapshotOnChainState = exports.decodeOnChainState = void 0;
 const client_js_1 = require("../metakit/network/client.js");
 /**
  * Decode on-chain state from binary (JsonBinaryCodec format).
@@ -103,8 +103,8 @@ exports.getEventReceipts = getEventReceipts;
  * @param fiberId - Fiber UUID to filter by
  * @returns Array of OracleInvocation entries
  */
-function getOracleInvocations(onChain, fiberId) {
+function getScriptInvocations(onChain, fiberId) {
     return getLogsForFiber(onChain, fiberId)
         .filter((entry) => 'method' in entry && 'result' in entry);
 }
-exports.getOracleInvocations = getOracleInvocations;
+exports.getScriptInvocations = getScriptInvocations;

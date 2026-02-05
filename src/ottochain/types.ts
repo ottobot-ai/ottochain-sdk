@@ -140,7 +140,7 @@ export interface EventReceipt {
 
 /**
  * Log entry for a script oracle invocation.
- * Emitted as a FiberLogEntry after each InvokeScriptOracle.
+ * Emitted as a FiberLogEntry after each InvokeScript.
  *
  * @see modules/models/src/main/scala/xyz/kd5ujc/schema/fiber/FiberLogEntry.scala
  */
@@ -191,7 +191,7 @@ export interface StateMachineFiberRecord {
  *
  * @see modules/models/src/main/scala/xyz/kd5ujc/schema/Records.scala
  */
-export interface ScriptOracleFiberRecord {
+export interface ScriptFiberRecord {
   fiberId: string;
   creationOrdinal: SnapshotOrdinal;
   latestUpdateOrdinal: SnapshotOrdinal;
@@ -208,7 +208,7 @@ export interface ScriptOracleFiberRecord {
 /**
  * Union type for all fiber records.
  */
-export type FiberRecord = StateMachineFiberRecord | ScriptOracleFiberRecord;
+export type FiberRecord = StateMachineFiberRecord | ScriptFiberRecord;
 
 // ---------------------------------------------------------------------------
 // On-chain state
@@ -249,7 +249,7 @@ export interface OnChain {
  */
 export interface CalculatedState {
   stateMachines: Record<string, StateMachineFiberRecord>;
-  scriptOracles: Record<string, ScriptOracleFiberRecord>;
+  scripts: Record<string, ScriptFiberRecord>;
 }
 
 // ---------------------------------------------------------------------------
@@ -295,7 +295,7 @@ export interface ArchiveStateMachine {
  *
  * @see modules/models/src/main/scala/xyz/kd5ujc/schema/Updates.scala
  */
-export interface CreateScriptOracle {
+export interface CreateScript {
   fiberId: string;
   scriptProgram: JsonLogicExpression;
   initialState?: JsonLogicValue;
@@ -307,7 +307,7 @@ export interface CreateScriptOracle {
  *
  * @see modules/models/src/main/scala/xyz/kd5ujc/schema/Updates.scala
  */
-export interface InvokeScriptOracle {
+export interface InvokeScript {
   fiberId: string;
   method: string;
   args: JsonLogicValue;
@@ -324,5 +324,5 @@ export type OttochainMessage =
   | { CreateStateMachine: CreateStateMachine }
   | { TransitionStateMachine: TransitionStateMachine }
   | { ArchiveStateMachine: ArchiveStateMachine }
-  | { CreateScriptOracle: CreateScriptOracle }
-  | { InvokeScriptOracle: InvokeScriptOracle };
+  | { CreateScript: CreateScript }
+  | { InvokeScript: InvokeScript };

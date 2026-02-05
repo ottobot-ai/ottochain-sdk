@@ -30,7 +30,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MetagraphClient = exports.extractOnChainState = exports.getOracleInvocations = exports.getEventReceipts = exports.getLogsForFiber = exports.getLatestOnChainState = exports.getSnapshotOnChainState = exports.decodeOnChainState = exports.proto = void 0;
+exports.MetagraphClient = exports.extractOnChainState = exports.getScriptInvocations = exports.getEventReceipts = exports.getLogsForFiber = exports.getLatestOnChainState = exports.getSnapshotOnChainState = exports.decodeOnChainState = exports.proto = void 0;
 // Re-export generated protobuf types
 exports.proto = __importStar(require("../generated/index.js"));
 var snapshot_js_1 = require("./snapshot.js");
@@ -39,7 +39,7 @@ Object.defineProperty(exports, "getSnapshotOnChainState", { enumerable: true, ge
 Object.defineProperty(exports, "getLatestOnChainState", { enumerable: true, get: function () { return snapshot_js_1.getLatestOnChainState; } });
 Object.defineProperty(exports, "getLogsForFiber", { enumerable: true, get: function () { return snapshot_js_1.getLogsForFiber; } });
 Object.defineProperty(exports, "getEventReceipts", { enumerable: true, get: function () { return snapshot_js_1.getEventReceipts; } });
-Object.defineProperty(exports, "getOracleInvocations", { enumerable: true, get: function () { return snapshot_js_1.getOracleInvocations; } });
+Object.defineProperty(exports, "getScriptInvocations", { enumerable: true, get: function () { return snapshot_js_1.getScriptInvocations; } });
 Object.defineProperty(exports, "extractOnChainState", { enumerable: true, get: function () { return snapshot_js_1.extractOnChainState; } });
 var metagraph_client_js_1 = require("./metagraph-client.js");
 Object.defineProperty(exports, "MetagraphClient", { enumerable: true, get: function () { return metagraph_client_js_1.MetagraphClient; } });
