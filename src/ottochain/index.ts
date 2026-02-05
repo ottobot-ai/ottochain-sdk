@@ -37,7 +37,7 @@ export type {
 
   // Fiber records
   StateMachineFiberRecord,
-  ScriptOracleFiberRecord,
+  ScriptFiberRecord,
   FiberRecord,
 
   // On-chain state
@@ -51,8 +51,8 @@ export type {
   CreateStateMachine,
   TransitionStateMachine,
   ArchiveStateMachine,
-  CreateScriptOracle,
-  InvokeScriptOracle,
+  CreateScript,
+  InvokeScript,
   OttochainMessage,
 } from './types.js';
 
@@ -64,7 +64,7 @@ export {
   getLatestOnChainState,
   getLogsForFiber,
   getEventReceipts,
-  getOracleInvocations,
+  getScriptInvocations,
   extractOnChainState,
 } from './snapshot.js';
 

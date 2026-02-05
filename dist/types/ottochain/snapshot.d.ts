@@ -83,4 +83,4 @@ export declare function getEventReceipts(onChain: OnChain, fiberId: string): Eve
  * @param fiberId - Fiber UUID to filter by
  * @returns Array of OracleInvocation entries
  */
-export declare function getOracleInvocations(onChain: OnChain, fiberId: string): OracleInvocation[];
+export declare function getScriptInvocations(onChain: OnChain, fiberId: string): OracleInvocation[];

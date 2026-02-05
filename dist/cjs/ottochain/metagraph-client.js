@@ -89,16 +89,16 @@ class MetagraphClient {
     /**
      * Get all script oracles, optionally filtered by status.
      */
-    async getOracles(status) {
+    async getScripts(status) {
         const query = status ? `?status=${status}` : '';
         return this.ml0.get(`/data-application/v1/oracles${query}`);
     }
     /**
      * Get a single script oracle by fiber ID.
      */
-    async getOracle(oracleId) {
+    async getScript(scriptId) {
         try {
-            return await this.ml0.get(`/data-application/v1/oracles/${oracleId}`);
+            return await this.ml0.get(`/data-application/v1/oracles/${scriptId}`);
         }
         catch (error) {
             if (error instanceof types_js_1.NetworkError && error.statusCode === 404) {
@@ -110,8 +110,8 @@ class MetagraphClient {
     /**
      * Get oracle invocations from the current ordinal's logs.
      */
-    async getOracleInvocations(oracleId) {
-        return this.ml0.get(`/data-application/v1/oracles/${oracleId}/invocations`);
+    async getScriptInvocations(scriptId) {
+        return this.ml0.get(`/data-application/v1/oracles/${scriptId}/invocations`);
     }
     // -------------------------------------------------------------------------
     // Framework snapshot endpoints (ML0 /snapshots/*)
