@@ -1,0 +1,105 @@
+syntax = "proto3";
+
+package ottochain.apps.oracles.v1;
+
+import "ottochain/v1/common.proto";
+import "google/protobuf/timestamp.proto";
+
+// Oracle lifecycle states
+enum OracleState {
+  ORACLE_STATE_UNSPECIFIED = 0;
+  ORACLE_STATE_UNREGISTERED = 1;  // Not yet registered
+  ORACLE_STATE_REGISTERED = 2;    // Registered but not yet active
+  ORACLE_STATE_ACTIVE = 3;        // Active and eligible for markets
+  ORACLE_STATE_SLASHED = 4;       // Penalized for misbehavior
+  ORACLE_STATE_WITHDRAWN = 5;     // Voluntarily exited (terminal)
+}
+
+// Oracle reputation metrics
+message OracleReputation {
+  int32 accuracy_percentage = 1;   // Accuracy as percentage (0-100)
+  int32 total_resolutions = 2;     // Total markets resolved
+  int32 disputes_won = 3;          // Disputes resolved in oracle's favor
+  int32 disputes_lost = 4;         // Disputes resolved against oracle
+}
+
+// Record of a slashing event
+message SlashingEvent {
+  string reason = 1;                           // Description of infraction
+  int64 amount = 2;                            // Amount slashed from stake
+  string market_id = 3;                        // Market where infraction occurred
+  google.protobuf.Timestamp timestamp = 4;     // When slashing occurred
+}
+
+// Oracle identity and state
+message Oracle {
+  string id = 1;                               // Unique oracle identifier
+  ottochain.v1.Address address = 2;            // Oracle's DAG address
+  int64 stake = 3;                             // Current staked amount
+  OracleReputation reputation = 4;             // Reputation metrics
+  int32 accuracy = 5;                          // Current accuracy score (0-100)
+  int32 markets_resolved = 6;                  // Total markets resolved
+  int32 dispute_rate = 7;                      // Dispute rate percentage (0-100)
+  repeated string domains = 8;                 // Expertise domains (e.g., "sports", "crypto", "politics")
+  OracleState state = 9;                       // Current oracle state
+  repeated SlashingEvent slashing_history = 10; // History of slashing events
+  google.protobuf.Timestamp registered_at = 11; // Registration timestamp
+  google.protobuf.Timestamp updated_at = 12;   // Last state update timestamp
+}
+
+// Register a new oracle
+message RegisterOracleRequest {
+  ottochain.v1.Address address = 1;
+  int64 initial_stake = 2;
+  repeated string domains = 3;
+}
+
+// Activate a registered oracle
+message ActivateOracleRequest {
+  string oracle_id = 1;
+  ottochain.v1.Address address = 2;
+}
+
+// Add stake to oracle
+message AddStakeRequest {
+  string oracle_id = 1;
+  ottochain.v1.Address address = 2;
+  int64 amount = 3;
+}
+
+// Withdraw stake (initiates cooldown)
+message WithdrawStakeRequest {
+  string oracle_id = 1;
+  ottochain.v1.Address address = 2;
+  int64 amount = 3;
+}
+
+// Slash an oracle for misbehavior
+message SlashOracleRequest {
+  string oracle_id = 1;
+  string market_id = 2;
+  string reason = 3;
+  int64 amount = 4;
+}
+
+// Withdraw oracle from service
+message WithdrawOracleRequest {
+  string oracle_id = 1;
+  ottochain.v1.Address address = 2;
+}
+
+// Oracle state machine definition
+message OracleDefinition {
+  // Valid transitions:
+  //   UNREGISTERED -> REGISTERED (register)
+  //   REGISTERED -> ACTIVE (activate, requires min_stake)
+  //   ACTIVE -> SLASHED (slash)
+  //   ACTIVE -> WITHDRAWN (withdraw)
+  //   SLASHED -> ACTIVE (recover, after cooldown + restake)
+  //   SLASHED -> WITHDRAWN (withdraw, forfeit remaining stake)
+
+  int64 min_stake = 1;                 // Minimum stake to activate
+  int32 slash_cooldown_epochs = 2;     // Epochs before slashed oracle can recover
+  int32 accuracy_threshold = 3;        // Min accuracy to remain active (0-100)
+  int32 max_dispute_rate = 4;          // Max dispute rate before auto-slash (0-100)
+}
