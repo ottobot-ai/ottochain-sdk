@@ -12,3 +12,4 @@ export { decodeOnChainState, getSnapshotOnChainState, getLatestOnChainState, get
 export type { Checkpoint, MetagraphClientConfig } from './metagraph-client.js';
 export { MetagraphClient } from './metagraph-client.js';
 export * from './governance.js';
+export * from './corporate.js';

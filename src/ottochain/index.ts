@@ -74,3 +74,6 @@ export { MetagraphClient } from './metagraph-client.js';
 
 // Governance and DAO types
 export * from './governance.js';
+
+// Corporate governance types
+export * from './corporate.js';
