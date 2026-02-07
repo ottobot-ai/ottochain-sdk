@@ -71,3 +71,6 @@ export {
 // Metagraph client
 export type { Checkpoint, MetagraphClientConfig } from './metagraph-client.js';
 export { MetagraphClient } from './metagraph-client.js';
+
+// Governance and DAO types
+export * from './governance.js';

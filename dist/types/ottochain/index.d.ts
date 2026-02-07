@@ -11,3 +11,4 @@ export type { CurrencySnapshotResponse } from './snapshot.js';
 export { decodeOnChainState, getSnapshotOnChainState, getLatestOnChainState, getLogsForFiber, getEventReceipts, getScriptInvocations, extractOnChainState, } from './snapshot.js';
 export type { Checkpoint, MetagraphClientConfig } from './metagraph-client.js';
 export { MetagraphClient } from './metagraph-client.js';
+export * from './governance.js';
