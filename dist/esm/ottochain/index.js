@@ -9,3 +9,5 @@
 export * as proto from '../generated/index.js';
 export { decodeOnChainState, getSnapshotOnChainState, getLatestOnChainState, getLogsForFiber, getEventReceipts, getScriptInvocations, extractOnChainState, } from './snapshot.js';
 export { MetagraphClient } from './metagraph-client.js';
+// Governance and DAO types
+export * from './governance.js';
