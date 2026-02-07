@@ -48,3 +48,5 @@ var metagraph_client_js_1 = require("./metagraph-client.js");
 Object.defineProperty(exports, "MetagraphClient", { enumerable: true, get: function () { return metagraph_client_js_1.MetagraphClient; } });
 // Governance and DAO types
 __exportStar(require("./governance.js"), exports);
+// Corporate governance types
+__exportStar(require("./corporate.js"), exports);
