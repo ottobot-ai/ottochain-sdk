@@ -18,6 +18,7 @@
  */
 export { AgentState, Platform, PlatformLink, AgentIdentity, AgentIdentityDefinition, agentStateFromJSON, agentStateToJSON, platformFromJSON, platformToJSON, } from '../../generated/ottochain/apps/identity/v1/agent.js';
 export { AttestationType, ReputationDelta, Attestation, VouchRequest, ChallengeRequest, ReputationConfig, attestationTypeFromJSON, attestationTypeToJSON, } from '../../generated/ottochain/apps/identity/v1/attestation.js';
+export { AGENT_TRANSITIONS, ATTESTATION_DELTAS, canTransition, getReputationDelta, } from './constants.js';
 /**
  * Default reputation configuration for agent identity
  */

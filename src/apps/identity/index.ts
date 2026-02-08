@@ -41,6 +41,14 @@ export {
   attestationTypeToJSON,
 } from '../../generated/ottochain/apps/identity/v1/attestation.js';
 
+// Re-export constants and utilities
+export {
+  AGENT_TRANSITIONS,
+  ATTESTATION_DELTAS,
+  canTransition,
+  getReputationDelta,
+} from './constants.js';
+
 // ---------------------------------------------------------------------------
 // Configuration Defaults
 // ---------------------------------------------------------------------------
