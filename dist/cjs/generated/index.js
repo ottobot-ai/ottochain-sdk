@@ -32,3 +32,7 @@ __exportStar(require("./ottochain/apps/identity/v1/agent_pb.js"), exports);
 __exportStar(require("./ottochain/apps/identity/v1/attestation_pb.js"), exports);
 // App: Contracts
 __exportStar(require("./ottochain/apps/contracts/v1/contract_pb.js"), exports);
+// App: Markets
+__exportStar(require("./ottochain/apps/markets/v1/market_pb.js"), exports);
+// App: Oracles
+__exportStar(require("./ottochain/apps/oracles/v1/oracle_pb.js"), exports);
