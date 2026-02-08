@@ -1,0 +1,201 @@
+{
+  "metadata": {
+    "name": "Contract",
+    "description": "Agreement between two agents with completion attestation and dispute resolution",
+    "version": "1.0.0"
+  },
+  "states": {
+    "PROPOSED": { "id": { "value": "PROPOSED" }, "isFinal": false },
+    "ACTIVE": { "id": { "value": "ACTIVE" }, "isFinal": false },
+    "COMPLETED": { "id": { "value": "COMPLETED" }, "isFinal": true },
+    "DISPUTED": { "id": { "value": "DISPUTED" }, "isFinal": false },
+    "REJECTED": { "id": { "value": "REJECTED" }, "isFinal": true },
+    "CANCELLED": { "id": { "value": "CANCELLED" }, "isFinal": true }
+  },
+  "initialState": { "value": "PROPOSED" },
+  "crossReferences": {
+    "proposerIdentityId": "Links to proposer's AgentIdentity fiber",
+    "counterpartyIdentityId": "Links to counterparty's AgentIdentity fiber",
+    "escrowId": "Links to Escrow if payment is escrowed",
+    "arbitrationPoolId": "Links to ArbitrationPool for dispute resolution"
+  },
+  "transitions": [
+    {
+      "_comment": "Counterparty accepts the contract proposal",
+      "from": { "value": "PROPOSED" },
+      "to": { "value": "ACTIVE" },
+      "eventName": "accept",
+      "guard": { "===": [{ "var": "event.agent" }, { "var": "state.counterparty" }] },
+      "effect": {
+        "merge": [
+          { "var": "state" },
+          { "status": "ACTIVE", "acceptedAt": { "var": "$timestamp" } }
+        ]
+      }
+    },
+    {
+      "_comment": "Counterparty rejects the contract proposal",
+      "from": { "value": "PROPOSED" },
+      "to": { "value": "REJECTED" },
+      "eventName": "reject",
+      "guard": { "===": [{ "var": "event.agent" }, { "var": "state.counterparty" }] },
+      "effect": {
+        "merge": [
+          { "var": "state" },
+          {
+            "status": "REJECTED",
+            "rejectedAt": { "var": "$timestamp" },
+            "rejectReason": { "var": "event.reason" }
+          }
+        ]
+      }
+    },
+    {
+      "_comment": "Proposer cancels before acceptance",
+      "from": { "value": "PROPOSED" },
+      "to": { "value": "CANCELLED" },
+      "eventName": "cancel",
+      "guard": { "===": [{ "var": "event.agent" }, { "var": "state.proposer" }] },
+      "effect": {
+        "merge": [
+          { "var": "state" },
+          { "status": "CANCELLED", "cancelledAt": { "var": "$timestamp" } }
+        ]
+      }
+    },
+    {
+      "_comment": "Either party submits completion proof",
+      "from": { "value": "ACTIVE" },
+      "to": { "value": "ACTIVE" },
+      "eventName": "submit_completion",
+      "guard": {
+        "and": [
+          {
+            "or": [
+              { "===": [{ "var": "event.agent" }, { "var": "state.proposer" }] },
+              { "===": [{ "var": "event.agent" }, { "var": "state.counterparty" }] }
+            ]
+          },
+          {
+            "!": {
+              "in": [
+                { "var": "event.agent" },
+                { "map": [{ "var": "state.completions" }, { "var": "agent" }] }
+              ]
+            }
+          }
+        ]
+      },
+      "effect": {
+        "merge": [
+          { "var": "state" },
+          {
+            "completions": {
+              "cat": [
+                { "var": "state.completions" },
+                [{
+                  "agent": { "var": "event.agent" },
+                  "proof": { "var": "event.proof" },
+                  "submittedAt": { "var": "$timestamp" }
+                }]
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "_comment": "Finalize when both parties have submitted completions",
+      "from": { "value": "ACTIVE" },
+      "to": { "value": "COMPLETED" },
+      "eventName": "finalize",
+      "guard": {
+        ">=": [{ "size": { "var": "state.completions" } }, 2]
+      },
+      "effect": {
+        "merge": [
+          { "var": "state" },
+          { "status": "COMPLETED", "completedAt": { "var": "$timestamp" } }
+        ]
+      },
+      "emits": [
+        {
+          "_comment": "Credit proposer's identity with completion",
+          "target": { "var": "state.proposerIdentityId" },
+          "event": "receive_completion",
+          "payload": { "contractId": { "var": "fiberId" } }
+        },
+        {
+          "_comment": "Credit counterparty's identity with completion",
+          "target": { "var": "state.counterpartyIdentityId" },
+          "event": "receive_completion",
+          "payload": { "contractId": { "var": "fiberId" } }
+        }
+      ]
+    },
+    {
+      "_comment": "Either party raises a dispute",
+      "from": { "value": "ACTIVE" },
+      "to": { "value": "DISPUTED" },
+      "eventName": "dispute",
+      "guard": {
+        "or": [
+          { "===": [{ "var": "event.agent" }, { "var": "state.proposer" }] },
+          { "===": [{ "var": "event.agent" }, { "var": "state.counterparty" }] }
+        ]
+      },
+      "effect": {
+        "merge": [
+          { "var": "state" },
+          {
+            "status": "DISPUTED",
+            "disputedAt": { "var": "$timestamp" },
+            "disputeReason": { "var": "event.reason" },
+            "disputedBy": { "var": "event.agent" }
+          }
+        ]
+      }
+    },
+    {
+      "_comment": "Resolve dispute (typically by arbitration)",
+      "from": { "value": "DISPUTED" },
+      "to": { "value": "COMPLETED" },
+      "eventName": "resolve",
+      "guard": {
+        "or": [
+          { "var": "event.judicialRuling" },
+          {
+            "and": [
+              { "===": [{ "var": "event.proposerApproves" }, true] },
+              { "===": [{ "var": "event.counterpartyApproves" }, true] }
+            ]
+          }
+        ]
+      },
+      "effect": {
+        "merge": [
+          { "var": "state" },
+          {
+            "status": "COMPLETED",
+            "resolvedAt": { "var": "$timestamp" },
+            "resolution": { "var": "event.resolution" },
+            "rulingId": { "var": "event.rulingId" }
+          }
+        ]
+      }
+    }
+  ],
+  "initialDataTemplate": {
+    "_comment": "Template for creating new contracts",
+    "schema": "Contract",
+    "title": "",
+    "description": "",
+    "proposer": "<address>",
+    "counterparty": "<address>",
+    "proposerIdentityId": null,
+    "counterpartyIdentityId": null,
+    "terms": {},
+    "completions": [],
+    "status": "PROPOSED"
+  }
+}
