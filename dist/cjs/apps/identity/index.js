@@ -21,7 +21,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getIdentityDefinition = exports.DEFAULT_REPUTATION_CONFIG = exports.attestationTypeToJSON = exports.attestationTypeFromJSON = exports.ReputationConfig = exports.ChallengeRequest = exports.VouchRequest = exports.Attestation = exports.ReputationDelta = exports.AttestationType = exports.platformToJSON = exports.platformFromJSON = exports.agentStateToJSON = exports.agentStateFromJSON = exports.AgentIdentityDefinition = exports.AgentIdentity = exports.PlatformLink = exports.Platform = exports.AgentState = void 0;
+exports.getIdentityDefinition = exports.DEFAULT_REPUTATION_CONFIG = exports.getReputationDelta = exports.canTransition = exports.ATTESTATION_DELTAS = exports.AGENT_TRANSITIONS = exports.attestationTypeToJSON = exports.attestationTypeFromJSON = exports.ReputationConfig = exports.ChallengeRequest = exports.VouchRequest = exports.Attestation = exports.ReputationDelta = exports.AttestationType = exports.platformToJSON = exports.platformFromJSON = exports.agentStateToJSON = exports.agentStateFromJSON = exports.AgentIdentityDefinition = exports.AgentIdentity = exports.PlatformLink = exports.Platform = exports.AgentState = void 0;
 // Re-export generated protobuf types (source of truth)
 var agent_js_1 = require("../../generated/ottochain/apps/identity/v1/agent.js");
 Object.defineProperty(exports, "AgentState", { enumerable: true, get: function () { return agent_js_1.AgentState; } });
@@ -42,6 +42,12 @@ Object.defineProperty(exports, "ChallengeRequest", { enumerable: true, get: func
 Object.defineProperty(exports, "ReputationConfig", { enumerable: true, get: function () { return attestation_js_1.ReputationConfig; } });
 Object.defineProperty(exports, "attestationTypeFromJSON", { enumerable: true, get: function () { return attestation_js_1.attestationTypeFromJSON; } });
 Object.defineProperty(exports, "attestationTypeToJSON", { enumerable: true, get: function () { return attestation_js_1.attestationTypeToJSON; } });
+// Re-export constants and utilities
+var constants_js_1 = require("./constants.js");
+Object.defineProperty(exports, "AGENT_TRANSITIONS", { enumerable: true, get: function () { return constants_js_1.AGENT_TRANSITIONS; } });
+Object.defineProperty(exports, "ATTESTATION_DELTAS", { enumerable: true, get: function () { return constants_js_1.ATTESTATION_DELTAS; } });
+Object.defineProperty(exports, "canTransition", { enumerable: true, get: function () { return constants_js_1.canTransition; } });
+Object.defineProperty(exports, "getReputationDelta", { enumerable: true, get: function () { return constants_js_1.getReputationDelta; } });
 // ---------------------------------------------------------------------------
 // Configuration Defaults
 // ---------------------------------------------------------------------------
