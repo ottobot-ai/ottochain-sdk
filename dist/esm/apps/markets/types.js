@@ -3,47 +3,12 @@
  *
  * Constants, types, and utilities for the Markets application on OttoChain.
  *
- * Note: When proto files are generated, enums will move to generated types.
+ * Core types (MarketType, MarketState, Market, Commitment, Resolution) are
+ * exported from proto-generated types in index.ts.
  *
  * @packageDocumentation
  */
-// ---------------------------------------------------------------------------
-// Enums (will be replaced by proto-generated versions)
-// ---------------------------------------------------------------------------
-/**
- * Market lifecycle states
- */
-export var MarketState;
-(function (MarketState) {
-    MarketState[MarketState["UNSPECIFIED"] = 0] = "UNSPECIFIED";
-    /** Market is open for commitments */
-    MarketState[MarketState["OPEN"] = 1] = "OPEN";
-    /** Commitment period has ended, awaiting resolution */
-    MarketState[MarketState["CLOSED"] = 2] = "CLOSED";
-    /** Oracle has resolved the outcome */
-    MarketState[MarketState["RESOLVED"] = 3] = "RESOLVED";
-    /** Payouts distributed to winners */
-    MarketState[MarketState["SETTLED"] = 4] = "SETTLED";
-    /** Market cancelled, refunds issued */
-    MarketState[MarketState["CANCELLED"] = 5] = "CANCELLED";
-    /** Market is disputed */
-    MarketState[MarketState["DISPUTED"] = 6] = "DISPUTED";
-})(MarketState || (MarketState = {}));
-/**
- * Types of markets supported
- */
-export var MarketType;
-(function (MarketType) {
-    MarketType[MarketType["UNSPECIFIED"] = 0] = "UNSPECIFIED";
-    /** Binary or multi-outcome prediction market */
-    MarketType[MarketType["PREDICTION"] = 1] = "PREDICTION";
-    /** Ascending/descending price auction */
-    MarketType[MarketType["AUCTION"] = 2] = "AUCTION";
-    /** All-or-nothing crowdfunding */
-    MarketType[MarketType["CROWDFUND"] = 3] = "CROWDFUND";
-    /** Group buying with volume discounts */
-    MarketType[MarketType["GROUP_BUY"] = 4] = "GROUP_BUY";
-})(MarketType || (MarketType = {}));
+import { MarketType, MarketState } from '../../generated/ottochain/apps/markets/v1/market_pb.js';
 /**
  * Commitment direction (for prediction markets)
  */
@@ -97,16 +62,17 @@ export const MARKET_TYPE_CONFIGS = {
 // State Machine Transitions
 // ---------------------------------------------------------------------------
 /**
- * Valid transitions for each market state
+ * Valid transitions for each market state (aligned with proto MarketState enum)
  */
 export const MARKET_TRANSITIONS = {
     [MarketState.UNSPECIFIED]: [],
-    [MarketState.OPEN]: ['close', 'cancel'],
-    [MarketState.CLOSED]: ['resolve', 'dispute', 'cancel'],
-    [MarketState.RESOLVED]: ['settle', 'dispute'],
-    [MarketState.SETTLED]: [], // Terminal state
+    [MarketState.PROPOSED]: ['open', 'cancel'],
+    [MarketState.OPEN]: ['close', 'cancel', 'commit'],
+    [MarketState.CLOSED]: ['submit_resolution', 'refund'],
+    [MarketState.RESOLVING]: ['submit_resolution', 'finalize', 'refund'],
+    [MarketState.SETTLED]: ['claim'], // Terminal (only claims allowed)
+    [MarketState.REFUNDED]: [], // Terminal state
     [MarketState.CANCELLED]: [], // Terminal state
-    [MarketState.DISPUTED]: ['resolve_dispute', 'cancel'],
 };
 /**
  * Check if a market state is terminal
@@ -114,6 +80,7 @@ export const MARKET_TRANSITIONS = {
 export function isTerminalMarketState(state) {
     return [
         MarketState.SETTLED,
+        MarketState.REFUNDED,
         MarketState.CANCELLED,
     ].includes(state);
 }

@@ -5,36 +5,14 @@
  * Constants, types, and utilities for the Oracle system on OttoChain.
  * Oracles provide truth resolution for markets and disputes.
  *
- * Note: When proto files are generated, enums will move to generated types.
+ * Core types (OracleState, Oracle, etc.) are exported from proto-generated
+ * types in index.ts.
  *
  * @packageDocumentation
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isResolutionType = exports.isSlashingReason = exports.isOracleState = exports.calculateOracleReward = exports.calculateSelectionScore = exports.calculateStakeAfterSlash = exports.calculateSlashAmount = exports.SLASHING_CONDITIONS = exports.qualifiesForHighValue = exports.calculateWeightedReputation = exports.calculateReputation = exports.REPUTATION_DELTAS = exports.canAcceptAssignment = exports.isTerminalOracleState = exports.ORACLE_TRANSITIONS = exports.SLASHING_PERCENTAGES = exports.DEFAULT_ORACLE_CONFIG = exports.SlashingReason = exports.ResolutionType = exports.OracleState = void 0;
-// ---------------------------------------------------------------------------
-// Enums (will be replaced by proto-generated versions)
-// ---------------------------------------------------------------------------
-/**
- * Oracle lifecycle states
- */
-var OracleState;
-(function (OracleState) {
-    OracleState[OracleState["UNSPECIFIED"] = 0] = "UNSPECIFIED";
-    /** Oracle has registered but not yet staked */
-    OracleState[OracleState["REGISTERED"] = 1] = "REGISTERED";
-    /** Oracle is staked and available for assignments */
-    OracleState[OracleState["ACTIVE"] = 2] = "ACTIVE";
-    /** Oracle is currently assigned to resolve a market */
-    OracleState[OracleState["ASSIGNED"] = 3] = "ASSIGNED";
-    /** Oracle has submitted a resolution, in challenge period */
-    OracleState[OracleState["SUBMITTED"] = 4] = "SUBMITTED";
-    /** Oracle is under review due to dispute */
-    OracleState[OracleState["CHALLENGED"] = 5] = "CHALLENGED";
-    /** Oracle is suspended due to slashing */
-    OracleState[OracleState["SUSPENDED"] = 6] = "SUSPENDED";
-    /** Oracle has withdrawn stake and exited */
-    OracleState[OracleState["WITHDRAWN"] = 7] = "WITHDRAWN";
-})(OracleState || (exports.OracleState = OracleState = {}));
+exports.isResolutionType = exports.isSlashingReason = exports.isOracleState = exports.calculateOracleReward = exports.calculateSelectionScore = exports.calculateStakeAfterSlash = exports.calculateSlashAmount = exports.SLASHING_CONDITIONS = exports.qualifiesForHighValue = exports.calculateWeightedReputation = exports.calculateReputation = exports.REPUTATION_DELTAS = exports.canAcceptAssignment = exports.isTerminalOracleState = exports.ORACLE_TRANSITIONS = exports.SLASHING_PERCENTAGES = exports.DEFAULT_ORACLE_CONFIG = exports.SlashingReason = exports.ResolutionType = void 0;
+const oracle_pb_js_1 = require("../../generated/ottochain/apps/oracles/v1/oracle_pb.js");
 /**
  * Types of oracle resolutions
  */
@@ -95,30 +73,28 @@ exports.SLASHING_PERCENTAGES = {
 // State Machine Transitions
 // ---------------------------------------------------------------------------
 /**
- * Valid transitions for each oracle state
+ * Valid transitions for each oracle state (aligned with proto OracleState enum)
  */
 exports.ORACLE_TRANSITIONS = {
-    [OracleState.UNSPECIFIED]: [],
-    [OracleState.REGISTERED]: ['stake', 'withdraw'],
-    [OracleState.ACTIVE]: ['assign', 'unstake'],
-    [OracleState.ASSIGNED]: ['submit', 'timeout'],
-    [OracleState.SUBMITTED]: ['finalize', 'challenge'],
-    [OracleState.CHALLENGED]: ['uphold', 'overturn'],
-    [OracleState.SUSPENDED]: ['begin_probation', 'permanent_ban'],
-    [OracleState.WITHDRAWN]: [], // Terminal state
+    [oracle_pb_js_1.OracleState.UNSPECIFIED]: [],
+    [oracle_pb_js_1.OracleState.UNREGISTERED]: ['register'],
+    [oracle_pb_js_1.OracleState.REGISTERED]: ['activate', 'withdraw'],
+    [oracle_pb_js_1.OracleState.ACTIVE]: ['add_stake', 'record_resolution', 'slash', 'withdraw'],
+    [oracle_pb_js_1.OracleState.SLASHED]: ['reactivate', 'withdraw'],
+    [oracle_pb_js_1.OracleState.WITHDRAWN]: [], // Terminal state
 };
 /**
  * Check if an oracle state is terminal
  */
 function isTerminalOracleState(state) {
-    return state === OracleState.WITHDRAWN;
+    return state === oracle_pb_js_1.OracleState.WITHDRAWN;
 }
 exports.isTerminalOracleState = isTerminalOracleState;
 /**
  * Check if an oracle can accept new assignments
  */
 function canAcceptAssignment(state) {
-    return state === OracleState.ACTIVE;
+    return state === oracle_pb_js_1.OracleState.ACTIVE;
 }
 exports.canAcceptAssignment = canAcceptAssignment;
 // ---------------------------------------------------------------------------
@@ -287,7 +263,7 @@ exports.calculateOracleReward = calculateOracleReward;
  * Check if a value is a valid OracleState
  */
 function isOracleState(value) {
-    return typeof value === 'number' && value in OracleState;
+    return typeof value === 'number' && value in oracle_pb_js_1.OracleState;
 }
 exports.isOracleState = isOracleState;
 /**

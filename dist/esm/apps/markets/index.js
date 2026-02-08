@@ -10,8 +10,12 @@
  *   MarketState,
  *   MarketType,
  *   calculatePayout,
- *   DEFAULT_MARKET_CONFIG
+ *   DEFAULT_MARKET_CONFIG,
+ *   getMarketDefinition
  * } from '@ottochain/sdk/apps/markets';
+ *
+ * // Get the universal market state machine definition
+ * const marketDef = getMarketDefinition();
  *
  * // Calculate payout for a winning prediction
  * const payout = calculatePayout({
@@ -23,8 +27,30 @@
  *
  * @packageDocumentation
  */
-// Note: Once proto files are generated, uncomment these exports:
-// export * from '../../generated/ottochain/apps/markets/v1/market_pb.js';
-// export * from '../../generated/ottochain/apps/markets/v1/commitment_pb.js';
+// Re-export generated protobuf types
+export * from '../../generated/ottochain/apps/markets/v1/market_pb.js';
 // Export convenience types, constants, and helpers
 export * from './types.js';
+// ---------------------------------------------------------------------------
+// State Machine JSON Definitions
+// ---------------------------------------------------------------------------
+import marketUniversalDef from './state-machines/market-universal.json';
+/**
+ * Market state machine definitions mapped by type.
+ */
+export const MARKET_DEFINITIONS = {
+    Universal: marketUniversalDef,
+};
+/**
+ * Get the market state machine definition.
+ *
+ * @param type - Definition type (default: 'Universal')
+ * @returns The state machine definition JSON
+ */
+export function getMarketDefinition(type = 'Universal') {
+    const def = MARKET_DEFINITIONS[type];
+    if (!def) {
+        throw new Error(`Unknown market definition type: ${type}`);
+    }
+    return def;
+}

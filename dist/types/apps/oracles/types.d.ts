@@ -4,30 +4,12 @@
  * Constants, types, and utilities for the Oracle system on OttoChain.
  * Oracles provide truth resolution for markets and disputes.
  *
- * Note: When proto files are generated, enums will move to generated types.
+ * Core types (OracleState, Oracle, etc.) are exported from proto-generated
+ * types in index.ts.
  *
  * @packageDocumentation
  */
-/**
- * Oracle lifecycle states
- */
-export declare enum OracleState {
-    UNSPECIFIED = 0,
-    /** Oracle has registered but not yet staked */
-    REGISTERED = 1,
-    /** Oracle is staked and available for assignments */
-    ACTIVE = 2,
-    /** Oracle is currently assigned to resolve a market */
-    ASSIGNED = 3,
-    /** Oracle has submitted a resolution, in challenge period */
-    SUBMITTED = 4,
-    /** Oracle is under review due to dispute */
-    CHALLENGED = 5,
-    /** Oracle is suspended due to slashing */
-    SUSPENDED = 6,
-    /** Oracle has withdrawn stake and exited */
-    WITHDRAWN = 7
-}
+import { OracleState } from '../../generated/ottochain/apps/oracles/v1/oracle_pb.js';
 /**
  * Types of oracle resolutions
  */
@@ -92,7 +74,7 @@ export declare const DEFAULT_ORACLE_CONFIG: OracleConfig;
  */
 export declare const SLASHING_PERCENTAGES: Record<SlashingReason, number>;
 /**
- * Valid transitions for each oracle state
+ * Valid transitions for each oracle state (aligned with proto OracleState enum)
  */
 export declare const ORACLE_TRANSITIONS: Record<OracleState, readonly string[]>;
 /**
