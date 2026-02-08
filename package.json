@@ -30,6 +30,31 @@
       "import": "./dist/esm/apps/contracts/index.js",
       "require": "./dist/cjs/apps/contracts/index.js",
       "types": "./dist/types/apps/contracts/index.d.ts"
+    },
+    "./apps/markets": {
+      "import": "./dist/esm/apps/markets/index.js",
+      "require": "./dist/cjs/apps/markets/index.js",
+      "types": "./dist/types/apps/markets/index.d.ts"
+    },
+    "./apps/oracles": {
+      "import": "./dist/esm/apps/oracles/index.js",
+      "require": "./dist/cjs/apps/oracles/index.js",
+      "types": "./dist/types/apps/oracles/index.d.ts"
+    },
+    "./apps/governance": {
+      "import": "./dist/esm/apps/governance/index.js",
+      "require": "./dist/cjs/apps/governance/index.js",
+      "types": "./dist/types/apps/governance/index.d.ts"
+    },
+    "./apps/corporate": {
+      "import": "./dist/esm/apps/corporate/index.js",
+      "require": "./dist/cjs/apps/corporate/index.js",
+      "types": "./dist/types/apps/corporate/index.d.ts"
+    },
+    "./apps": {
+      "import": "./dist/esm/apps/index.js",
+      "require": "./dist/cjs/apps/index.js",
+      "types": "./dist/types/apps/index.d.ts"
     }
   },
   "files": [
