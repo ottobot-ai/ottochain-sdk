@@ -247,17 +247,6 @@
             "dependencies": []
         }
     ],
-    "initialDataTemplate": {
-        "schema": "SingleOwnerDAO",
-        "name": "",
-        "owner": "",
-        "pendingOwner": null,
-        "transferInitiatedAt": null,
-        "actions": [],
-        "ownershipHistory": [],
-        "metadata": {},
-        "status": "ACTIVE"
-    },
     "crossReferences": {
         "Identity": "owner registration",
         "Contract": "action execution targets",

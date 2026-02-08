@@ -676,49 +676,5 @@
       },
       "dependencies": []
     }
-  ],
-  "initialDataTemplate": {
-    "_comment": "Template for creating new markets",
-    "schema": "Market",
-    "marketType": "prediction | auction | crowdfund | group_buy",
-    "creator": "<address>",
-    "title": "",
-    "description": "",
-    "terms": {
-      "_comment": "Type-specific configuration",
-      "prediction": {
-        "question": "",
-        "outcomes": [
-          "YES",
-          "NO"
-        ],
-        "feePercent": 2
-      },
-      "auction": {
-        "item": "",
-        "reservePrice": 0,
-        "buyNowPrice": null
-      },
-      "crowdfund": {
-        "goal": 0,
-        "rewards": [],
-        "allOrNothing": true
-      },
-      "group_buy": {
-        "product": "",
-        "unitPrice": 0,
-        "bulkPrice": 0,
-        "minUnits": 0
-      }
-    },
-    "deadline": null,
-    "threshold": null,
-    "oracles": [],
-    "quorum": 1,
-    "commitments": {},
-    "totalCommitted": 0,
-    "resolutions": [],
-    "claims": {},
-    "status": "PROPOSED"
-  }
+  ]
 }

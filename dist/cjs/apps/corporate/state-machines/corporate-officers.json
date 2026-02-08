@@ -5,45 +5,135 @@
     "category": "corporate-governance",
     "description": "Executive officers state machine managing officer appointments, authority delegation, and succession. Tracks officer roles, reporting relationships, and delegation chains.",
     "context": {
-        "officersInstanceId": { "type": "string", "description": "Unique identifier for this officers instance" },
-        "entityId": { "type": "string", "description": "Reference to parent corporate-entity" },
+        "officersInstanceId": {
+            "type": "string",
+            "description": "Unique identifier for this officers instance"
+        },
+        "entityId": {
+            "type": "string",
+            "description": "Reference to parent corporate-entity"
+        },
         "officers": {
             "type": "array",
             "items": {
                 "type": "object",
                 "properties": {
-                    "officerId": { "type": "string" },
-                    "personId": { "type": "string", "description": "Person identifier" },
-                    "name": { "type": "string" },
+                    "officerId": {
+                        "type": "string"
+                    },
+                    "personId": {
+                        "type": "string",
+                        "description": "Person identifier"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
                     "title": {
                         "type": "string",
-                        "enum": ["CEO", "PRESIDENT", "COO", "CFO", "CTO", "CLO", "SECRETARY", "TREASURER", "VP", "SVP", "EVP", "GENERAL_COUNSEL", "CONTROLLER", "ASSISTANT_SECRETARY", "ASSISTANT_TREASURER", "OTHER"],
+                        "enum": [
+                            "CEO",
+                            "PRESIDENT",
+                            "COO",
+                            "CFO",
+                            "CTO",
+                            "CLO",
+                            "SECRETARY",
+                            "TREASURER",
+                            "VP",
+                            "SVP",
+                            "EVP",
+                            "GENERAL_COUNSEL",
+                            "CONTROLLER",
+                            "ASSISTANT_SECRETARY",
+                            "ASSISTANT_TREASURER",
+                            "OTHER"
+                        ],
                         "description": "Officer title"
                     },
-                    "customTitle": { "type": "string", "nullable": true, "description": "Custom title if OTHER" },
-                    "status": { "type": "string", "enum": ["ACTIVE", "RESIGNED", "REMOVED", "INTERIM"] },
-                    "appointedDate": { "type": "string", "format": "date" },
-                    "appointmentResolutionRef": { "type": "string" },
-                    "terminationDate": { "type": "string", "format": "date", "nullable": true },
-                    "reportsTo": { "type": "string", "nullable": true, "description": "Officer ID of supervisor" },
-                    "isBoardMember": { "type": "boolean", "default": false },
-                    "directorId": { "type": "string", "nullable": true },
-                    "compensationAgreementRef": { "type": "string", "nullable": true },
+                    "customTitle": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Custom title if OTHER"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "ACTIVE",
+                            "RESIGNED",
+                            "REMOVED",
+                            "INTERIM"
+                        ]
+                    },
+                    "appointedDate": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "appointmentResolutionRef": {
+                        "type": "string"
+                    },
+                    "terminationDate": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                    },
+                    "reportsTo": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Officer ID of supervisor"
+                    },
+                    "isBoardMember": {
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "directorId": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "compensationAgreementRef": {
+                        "type": "string",
+                        "nullable": true
+                    },
                     "authorityLevel": {
                         "type": "string",
-                        "enum": ["FULL", "LIMITED", "SPECIFIC"],
+                        "enum": [
+                            "FULL",
+                            "LIMITED",
+                            "SPECIFIC"
+                        ],
                         "description": "Scope of authority"
                     },
-                    "spendingLimit": { "type": "number", "nullable": true, "description": "Unilateral spending authority limit" },
+                    "spendingLimit": {
+                        "type": "number",
+                        "nullable": true,
+                        "description": "Unilateral spending authority limit"
+                    },
                     "signatureAuthority": {
                         "type": "object",
                         "properties": {
-                            "contracts": { "type": "boolean", "default": false },
-                            "contractLimit": { "type": "number", "nullable": true },
-                            "checks": { "type": "boolean", "default": false },
-                            "checkLimit": { "type": "number", "nullable": true },
-                            "hiringAuthority": { "type": "boolean", "default": false },
-                            "terminationAuthority": { "type": "boolean", "default": false }
+                            "contracts": {
+                                "type": "boolean",
+                                "default": false
+                            },
+                            "contractLimit": {
+                                "type": "number",
+                                "nullable": true
+                            },
+                            "checks": {
+                                "type": "boolean",
+                                "default": false
+                            },
+                            "checkLimit": {
+                                "type": "number",
+                                "nullable": true
+                            },
+                            "hiringAuthority": {
+                                "type": "boolean",
+                                "default": false
+                            },
+                            "terminationAuthority": {
+                                "type": "boolean",
+                                "default": false
+                            }
                         }
                     },
                     "delegatedAuthorities": {
@@ -51,13 +141,31 @@
                         "items": {
                             "type": "object",
                             "properties": {
-                                "delegationId": { "type": "string" },
-                                "authority": { "type": "string" },
-                                "scope": { "type": "string" },
-                                "delegatedBy": { "type": "string" },
-                                "delegatedOn": { "type": "string", "format": "date" },
-                                "expiresOn": { "type": "string", "format": "date", "nullable": true },
-                                "revoked": { "type": "boolean", "default": false }
+                                "delegationId": {
+                                    "type": "string"
+                                },
+                                "authority": {
+                                    "type": "string"
+                                },
+                                "scope": {
+                                    "type": "string"
+                                },
+                                "delegatedBy": {
+                                    "type": "string"
+                                },
+                                "delegatedOn": {
+                                    "type": "string",
+                                    "format": "date"
+                                },
+                                "expiresOn": {
+                                    "type": "string",
+                                    "format": "date",
+                                    "nullable": true
+                                },
+                                "revoked": {
+                                    "type": "boolean",
+                                    "default": false
+                                }
                             }
                         }
                     }
@@ -70,23 +178,50 @@
             "properties": {
                 "boardAppoints": {
                     "type": "array",
-                    "items": { "type": "string" },
-                    "default": ["CEO", "PRESIDENT", "CFO", "SECRETARY", "TREASURER", "GENERAL_COUNSEL"]
+                    "items": {
+                        "type": "string"
+                    },
+                    "default": [
+                        "CEO",
+                        "PRESIDENT",
+                        "CFO",
+                        "SECRETARY",
+                        "TREASURER",
+                        "GENERAL_COUNSEL"
+                    ]
                 },
                 "ceoAppoints": {
                     "type": "array",
-                    "items": { "type": "string" },
-                    "default": ["COO", "CTO", "VP", "SVP", "EVP", "CONTROLLER"]
+                    "items": {
+                        "type": "string"
+                    },
+                    "default": [
+                        "COO",
+                        "CTO",
+                        "VP",
+                        "SVP",
+                        "EVP",
+                        "CONTROLLER"
+                    ]
                 },
                 "cfoAppoints": {
                     "type": "array",
-                    "items": { "type": "string" },
-                    "default": ["CONTROLLER", "ASSISTANT_TREASURER"]
+                    "items": {
+                        "type": "string"
+                    },
+                    "default": [
+                        "CONTROLLER",
+                        "ASSISTANT_TREASURER"
+                    ]
                 },
                 "secretaryAppoints": {
                     "type": "array",
-                    "items": { "type": "string" },
-                    "default": ["ASSISTANT_SECRETARY"]
+                    "items": {
+                        "type": "string"
+                    },
+                    "default": [
+                        "ASSISTANT_SECRETARY"
+                    ]
                 }
             }
         },
@@ -95,17 +230,35 @@
             "items": {
                 "type": "object",
                 "properties": {
-                    "position": { "type": "string" },
-                    "currentOfficerId": { "type": "string" },
+                    "position": {
+                        "type": "string"
+                    },
+                    "currentOfficerId": {
+                        "type": "string"
+                    },
                     "successors": {
                         "type": "array",
                         "items": {
                             "type": "object",
                             "properties": {
-                                "personId": { "type": "string" },
-                                "name": { "type": "string" },
-                                "priority": { "type": "integer" },
-                                "readiness": { "type": "string", "enum": ["READY_NOW", "READY_1_YEAR", "READY_2_YEARS", "DEVELOPMENTAL"] }
+                                "personId": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "priority": {
+                                    "type": "integer"
+                                },
+                                "readiness": {
+                                    "type": "string",
+                                    "enum": [
+                                        "READY_NOW",
+                                        "READY_1_YEAR",
+                                        "READY_2_YEARS",
+                                        "DEVELOPMENTAL"
+                                    ]
+                                }
                             }
                         }
                     }
@@ -114,11 +267,19 @@
         },
         "vacantPositions": {
             "type": "array",
-            "items": { "type": "string" },
+            "items": {
+                "type": "string"
+            },
             "description": "Officer titles currently vacant"
         },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "updatedAt": { "type": "string", "format": "date-time" }
+        "createdAt": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+        }
     },
     "states": {
         "ACTIVE": {
@@ -138,20 +299,58 @@
             "event": {
                 "name": "appoint_officer",
                 "payload": {
-                    "officerId": { "type": "string", "required": true },
-                    "personId": { "type": "string", "required": true },
-                    "name": { "type": "string", "required": true },
-                    "title": { "type": "string", "required": true },
-                    "customTitle": { "type": "string" },
-                    "appointedDate": { "type": "string", "format": "date", "required": true },
-                    "appointmentResolutionRef": { "type": "string", "required": true },
-                    "reportsTo": { "type": "string" },
-                    "isBoardMember": { "type": "boolean", "default": false },
-                    "directorId": { "type": "string" },
-                    "authorityLevel": { "type": "string", "default": "LIMITED" },
-                    "spendingLimit": { "type": "number" },
-                    "signatureAuthority": { "type": "object" },
-                    "isInterim": { "type": "boolean", "default": false }
+                    "officerId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "personId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "name": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "title": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "customTitle": {
+                        "type": "string"
+                    },
+                    "appointedDate": {
+                        "type": "string",
+                        "format": "date",
+                        "required": true
+                    },
+                    "appointmentResolutionRef": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "reportsTo": {
+                        "type": "string"
+                    },
+                    "isBoardMember": {
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "directorId": {
+                        "type": "string"
+                    },
+                    "authorityLevel": {
+                        "type": "string",
+                        "default": "LIMITED"
+                    },
+                    "spendingLimit": {
+                        "type": "number"
+                    },
+                    "signatureAuthority": {
+                        "type": "object"
+                    },
+                    "isInterim": {
+                        "type": "boolean",
+                        "default": false
+                    }
                 }
             },
             "guards": [
@@ -223,11 +422,31 @@
             "event": {
                 "name": "remove_officer",
                 "payload": {
-                    "officerId": { "type": "string", "required": true },
-                    "effectiveDate": { "type": "string", "format": "date", "required": true },
-                    "reason": { "type": "string", "enum": ["WITH_CAUSE", "WITHOUT_CAUSE", "REORGANIZATION"], "required": true },
-                    "removalResolutionRef": { "type": "string", "required": true },
-                    "severanceAgreementRef": { "type": "string" }
+                    "officerId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "effectiveDate": {
+                        "type": "string",
+                        "format": "date",
+                        "required": true
+                    },
+                    "reason": {
+                        "type": "string",
+                        "enum": [
+                            "WITH_CAUSE",
+                            "WITHOUT_CAUSE",
+                            "REORGANIZATION"
+                        ],
+                        "required": true
+                    },
+                    "removalResolutionRef": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "severanceAgreementRef": {
+                        "type": "string"
+                    }
                 }
             },
             "guards": [
@@ -278,10 +497,23 @@
             "event": {
                 "name": "accept_resignation",
                 "payload": {
-                    "officerId": { "type": "string", "required": true },
-                    "effectiveDate": { "type": "string", "format": "date", "required": true },
-                    "resignationLetterRef": { "type": "string" },
-                    "acceptedBy": { "type": "string", "required": true, "description": "Officer ID or BOARD" }
+                    "officerId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "effectiveDate": {
+                        "type": "string",
+                        "format": "date",
+                        "required": true
+                    },
+                    "resignationLetterRef": {
+                        "type": "string"
+                    },
+                    "acceptedBy": {
+                        "type": "string",
+                        "required": true,
+                        "description": "Officer ID or BOARD"
+                    }
                 }
             },
             "guards": [
@@ -324,12 +556,32 @@
             "event": {
                 "name": "delegate_authority",
                 "payload": {
-                    "delegationId": { "type": "string", "required": true },
-                    "fromOfficerId": { "type": "string", "required": true },
-                    "toOfficerId": { "type": "string", "required": true },
-                    "authority": { "type": "string", "required": true, "description": "Type of authority being delegated" },
-                    "scope": { "type": "string", "required": true, "description": "Scope/limits of delegation" },
-                    "expiresOn": { "type": "string", "format": "date" }
+                    "delegationId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "fromOfficerId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "toOfficerId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "authority": {
+                        "type": "string",
+                        "required": true,
+                        "description": "Type of authority being delegated"
+                    },
+                    "scope": {
+                        "type": "string",
+                        "required": true,
+                        "description": "Scope/limits of delegation"
+                    },
+                    "expiresOn": {
+                        "type": "string",
+                        "format": "date"
+                    }
                 }
             },
             "guards": [
@@ -385,10 +637,21 @@
             "event": {
                 "name": "revoke_authority",
                 "payload": {
-                    "delegationId": { "type": "string", "required": true },
-                    "officerId": { "type": "string", "required": true },
-                    "revokedBy": { "type": "string", "required": true },
-                    "reason": { "type": "string" }
+                    "delegationId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "officerId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "revokedBy": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "reason": {
+                        "type": "string"
+                    }
                 }
             },
             "effects": [
@@ -422,11 +685,23 @@
             "event": {
                 "name": "update_authority_limits",
                 "payload": {
-                    "officerId": { "type": "string", "required": true },
-                    "authorityLevel": { "type": "string" },
-                    "spendingLimit": { "type": "number" },
-                    "signatureAuthority": { "type": "object" },
-                    "resolutionRef": { "type": "string", "required": true }
+                    "officerId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "authorityLevel": {
+                        "type": "string"
+                    },
+                    "spendingLimit": {
+                        "type": "number"
+                    },
+                    "signatureAuthority": {
+                        "type": "object"
+                    },
+                    "resolutionRef": {
+                        "type": "string",
+                        "required": true
+                    }
                 }
             },
             "guards": [
@@ -460,9 +735,19 @@
             "event": {
                 "name": "promote_interim_to_permanent",
                 "payload": {
-                    "officerId": { "type": "string", "required": true },
-                    "effectiveDate": { "type": "string", "format": "date", "required": true },
-                    "resolutionRef": { "type": "string", "required": true }
+                    "officerId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "effectiveDate": {
+                        "type": "string",
+                        "format": "date",
+                        "required": true
+                    },
+                    "resolutionRef": {
+                        "type": "string",
+                        "required": true
+                    }
                 }
             },
             "guards": [
@@ -500,9 +785,18 @@
             "event": {
                 "name": "update_succession_plan",
                 "payload": {
-                    "position": { "type": "string", "required": true },
-                    "currentOfficerId": { "type": "string", "required": true },
-                    "successors": { "type": "array", "required": true }
+                    "position": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "currentOfficerId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "successors": {
+                        "type": "array",
+                        "required": true
+                    }
                 }
             },
             "effects": [
@@ -540,7 +834,13 @@
     "metadata": {
         "author": "OttoChain",
         "license": "MIT",
-        "tags": ["corporate", "governance", "officers", "executives", "authority"],
+        "tags": [
+            "corporate",
+            "governance",
+            "officers",
+            "executives",
+            "authority"
+        ],
         "documentation": "https://ottochain.dev/docs/corporate/officers"
     }
 }
