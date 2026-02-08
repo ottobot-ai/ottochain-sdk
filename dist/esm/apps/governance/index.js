@@ -23,6 +23,57 @@
  * @packageDocumentation
  */
 export * from './types.js';
+// ---------------------------------------------------------------------------
+// State Machine JSON Definitions
+// ---------------------------------------------------------------------------
+import daoMultisigDef from './state-machines/dao-multisig.json';
+import daoSingleDef from './state-machines/dao-single.json';
+import daoThresholdDef from './state-machines/dao-threshold.json';
+import daoTokenDef from './state-machines/dao-token.json';
+import govConstitutionDef from './state-machines/governance-constitution.json';
+import govExecutiveDef from './state-machines/governance-executive.json';
+import govJudiciaryDef from './state-machines/governance-judiciary.json';
+import govLegislatureDef from './state-machines/governance-legislature.json';
+import govSimpleDef from './state-machines/governance-simple.json';
+/**
+ * DAO state machine definitions mapped by type.
+ */
+export const DAO_DEFINITIONS = {
+    Single: daoSingleDef,
+    Multisig: daoMultisigDef,
+    Threshold: daoThresholdDef,
+    Token: daoTokenDef,
+};
+/**
+ * Governance state machine definitions mapped by type.
+ */
+export const GOVERNANCE_DEFINITIONS = {
+    Legislature: govLegislatureDef,
+    Executive: govExecutiveDef,
+    Judiciary: govJudiciaryDef,
+    Constitution: govConstitutionDef,
+    Simple: govSimpleDef,
+};
+/**
+ * Get the state machine definition for a DAO type.
+ */
+export function getDAODefinition(daoType) {
+    const def = DAO_DEFINITIONS[daoType];
+    if (!def) {
+        throw new Error(`Unknown DAO type: ${daoType}`);
+    }
+    return def;
+}
+/**
+ * Get the state machine definition for a governance type.
+ */
+export function getGovernanceDefinition(governanceType) {
+    const def = GOVERNANCE_DEFINITIONS[governanceType];
+    if (!def) {
+        throw new Error(`Unknown governance type: ${governanceType}`);
+    }
+    return def;
+}
 // =============================================================================
 // State Factories
 // =============================================================================

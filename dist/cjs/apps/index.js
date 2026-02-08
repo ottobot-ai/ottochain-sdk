@@ -54,16 +54,18 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.governance = exports.oracles = exports.markets = exports.contracts = exports.identity = void 0;
+exports.corporate = exports.governance = exports.oracles = exports.markets = exports.contracts = exports.identity = void 0;
 // Re-export as namespaces for organized access
 exports.identity = __importStar(require("./identity/index.js"));
 exports.contracts = __importStar(require("./contracts/index.js"));
 exports.markets = __importStar(require("./markets/index.js"));
 exports.oracles = __importStar(require("./oracles/index.js"));
 exports.governance = __importStar(require("./governance/index.js"));
+exports.corporate = __importStar(require("./corporate/index.js"));
 // Also allow direct imports
 __exportStar(require("./identity/index.js"), exports);
 __exportStar(require("./contracts/index.js"), exports);
 __exportStar(require("./markets/index.js"), exports);
 __exportStar(require("./oracles/index.js"), exports);
 __exportStar(require("./governance/index.js"), exports);
+__exportStar(require("./corporate/index.js"), exports);

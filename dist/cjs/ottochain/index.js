@@ -29,9 +29,6 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-var __exportStar = (this && this.__exportStar) || function(m, exports) {
-    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MetagraphClient = exports.extractOnChainState = exports.getScriptInvocations = exports.getEventReceipts = exports.getLogsForFiber = exports.getLatestOnChainState = exports.getSnapshotOnChainState = exports.decodeOnChainState = exports.proto = void 0;
 // Re-export generated protobuf types
@@ -46,7 +43,5 @@ Object.defineProperty(exports, "getScriptInvocations", { enumerable: true, get: 
 Object.defineProperty(exports, "extractOnChainState", { enumerable: true, get: function () { return snapshot_js_1.extractOnChainState; } });
 var metagraph_client_js_1 = require("./metagraph-client.js");
 Object.defineProperty(exports, "MetagraphClient", { enumerable: true, get: function () { return metagraph_client_js_1.MetagraphClient; } });
-// Governance and DAO types
-__exportStar(require("./governance.js"), exports);
-// Corporate governance types
-__exportStar(require("./corporate.js"), exports);
+// Note: Governance and Corporate types are now in src/apps/
+// Import from '@ottochain/sdk/apps' instead

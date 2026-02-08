@@ -11,16 +11,16 @@
 // ---------------------------------------------------------------------------
 // State Machine Imports
 // ---------------------------------------------------------------------------
-import CorporateEntityDefinition from './corporate/corporate-entity.json';
-import CorporateBoardDefinition from './corporate/corporate-board.json';
-import CorporateShareholdersDefinition from './corporate/corporate-shareholders.json';
-import CorporateOfficersDefinition from './corporate/corporate-officers.json';
-import CorporateBylawsDefinition from './corporate/corporate-bylaws.json';
-import CorporateCommitteeDefinition from './corporate/corporate-committee.json';
-import CorporateResolutionDefinition from './corporate/corporate-resolution.json';
-import CorporateProxyDefinition from './corporate/corporate-proxy.json';
-import CorporateSecuritiesDefinition from './corporate/corporate-securities.json';
-import CorporateComplianceDefinition from './corporate/corporate-compliance.json';
+import CorporateEntityDefinition from './state-machines/corporate-entity.json';
+import CorporateBoardDefinition from './state-machines/corporate-board.json';
+import CorporateShareholdersDefinition from './state-machines/corporate-shareholders.json';
+import CorporateOfficersDefinition from './state-machines/corporate-officers.json';
+import CorporateBylawsDefinition from './state-machines/corporate-bylaws.json';
+import CorporateCommitteeDefinition from './state-machines/corporate-committee.json';
+import CorporateResolutionDefinition from './state-machines/corporate-resolution.json';
+import CorporateProxyDefinition from './state-machines/corporate-proxy.json';
+import CorporateSecuritiesDefinition from './state-machines/corporate-securities.json';
+import CorporateComplianceDefinition from './state-machines/corporate-compliance.json';
 /**
  * Corporate governance state machine definitions.
  */

@@ -17,16 +17,16 @@ exports.CORPORATE_DEFINITIONS = void 0;
 // ---------------------------------------------------------------------------
 // State Machine Imports
 // ---------------------------------------------------------------------------
-const corporate_entity_json_1 = __importDefault(require("./corporate/corporate-entity.json"));
-const corporate_board_json_1 = __importDefault(require("./corporate/corporate-board.json"));
-const corporate_shareholders_json_1 = __importDefault(require("./corporate/corporate-shareholders.json"));
-const corporate_officers_json_1 = __importDefault(require("./corporate/corporate-officers.json"));
-const corporate_bylaws_json_1 = __importDefault(require("./corporate/corporate-bylaws.json"));
-const corporate_committee_json_1 = __importDefault(require("./corporate/corporate-committee.json"));
-const corporate_resolution_json_1 = __importDefault(require("./corporate/corporate-resolution.json"));
-const corporate_proxy_json_1 = __importDefault(require("./corporate/corporate-proxy.json"));
-const corporate_securities_json_1 = __importDefault(require("./corporate/corporate-securities.json"));
-const corporate_compliance_json_1 = __importDefault(require("./corporate/corporate-compliance.json"));
+const corporate_entity_json_1 = __importDefault(require("./state-machines/corporate-entity.json"));
+const corporate_board_json_1 = __importDefault(require("./state-machines/corporate-board.json"));
+const corporate_shareholders_json_1 = __importDefault(require("./state-machines/corporate-shareholders.json"));
+const corporate_officers_json_1 = __importDefault(require("./state-machines/corporate-officers.json"));
+const corporate_bylaws_json_1 = __importDefault(require("./state-machines/corporate-bylaws.json"));
+const corporate_committee_json_1 = __importDefault(require("./state-machines/corporate-committee.json"));
+const corporate_resolution_json_1 = __importDefault(require("./state-machines/corporate-resolution.json"));
+const corporate_proxy_json_1 = __importDefault(require("./state-machines/corporate-proxy.json"));
+const corporate_securities_json_1 = __importDefault(require("./state-machines/corporate-securities.json"));
+const corporate_compliance_json_1 = __importDefault(require("./state-machines/corporate-compliance.json"));
 /**
  * Corporate governance state machine definitions.
  */
