@@ -2,8 +2,8 @@
 /**
  * Ottochain-specific type definitions
  *
- * TypeScript interfaces mirroring the Scala domain model for ottochain metagraphs.
- * These types represent the on-chain state, fiber records, log entries, and message formats.
+ * TypeScript interfaces matching the wire format from the Scala metagraph.
+ * The JSON Logic engine stores state as plain JSON - no wrapper objects.
  *
  * @see modules/models/src/main/scala/xyz/kd5ujc/schema/
  * @packageDocumentation
