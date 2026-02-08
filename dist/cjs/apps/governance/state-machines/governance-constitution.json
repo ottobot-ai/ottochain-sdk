@@ -5,192 +5,390 @@
         "version": "1.0.0"
     },
     "states": {
-        "DRAFT": { "id": { "value": "DRAFT" }, "isFinal": false },
-        "RATIFIED": { "id": { "value": "RATIFIED" }, "isFinal": false },
-        "AMENDING": { "id": { "value": "AMENDING" }, "isFinal": false },
-        "SUSPENDED": { "id": { "value": "SUSPENDED" }, "isFinal": false },
-        "DISSOLVED": { "id": { "value": "DISSOLVED" }, "isFinal": true }
+        "DRAFT": {
+            "id": {
+                "value": "DRAFT"
+            },
+            "isFinal": false
+        },
+        "RATIFIED": {
+            "id": {
+                "value": "RATIFIED"
+            },
+            "isFinal": false
+        },
+        "AMENDING": {
+            "id": {
+                "value": "AMENDING"
+            },
+            "isFinal": false
+        },
+        "SUSPENDED": {
+            "id": {
+                "value": "SUSPENDED"
+            },
+            "isFinal": false
+        },
+        "DISSOLVED": {
+            "id": {
+                "value": "DISSOLVED"
+            },
+            "isFinal": true
+        }
     },
-    "initialState": { "value": "DRAFT" },
+    "initialState": {
+        "value": "DRAFT"
+    },
     "transitions": [
         {
-            "_comment": "Founders ratify the constitution",
-            "from": { "value": "DRAFT" },
-            "to": { "value": "RATIFIED" },
+            "from": {
+                "value": "DRAFT"
+            },
+            "to": {
+                "value": "RATIFIED"
+            },
             "eventName": "ratify",
             "guard": {
                 ">=": [
-                    { "size": { "var": "state.ratifications" } },
-                    { "var": "state.ratificationThreshold" }
-                ]
-            },
-            "effect": {
-                "merge": [
-                    { "var": "state" },
-                    { "status": "RATIFIED", "ratifiedAt": { "var": "$timestamp" } }
-                ]
-            }
-        },
-        {
-            "_comment": "Founder signs ratification",
-            "from": { "value": "DRAFT" },
-            "to": { "value": "DRAFT" },
-            "eventName": "sign",
-            "guard": {
-                "and": [
-                    { "in": [{ "var": "event.agent" }, { "var": "state.founders" }] },
-                    { "!": { "in": [{ "var": "event.agent" }, { "var": "state.ratifications" }] } }
-                ]
-            },
-            "effect": {
-                "merge": [
-                    { "var": "state" },
                     {
-                        "ratifications": {
-                            "cat": [{ "var": "state.ratifications" }, [{ "var": "event.agent" }]]
+                        "size": {
+                            "var": "state.ratifications"
+                        }
+                    },
+                    {
+                        "var": "state.ratificationThreshold"
+                    }
+                ]
+            },
+            "effect": {
+                "merge": [
+                    {
+                        "var": "state"
+                    },
+                    {
+                        "status": "RATIFIED",
+                        "ratifiedAt": {
+                            "var": "$timestamp"
                         }
                     }
                 ]
-            }
+            },
+            "dependencies": []
         },
         {
-            "_comment": "Begin amendment process",
-            "from": { "value": "RATIFIED" },
-            "to": { "value": "AMENDING" },
-            "eventName": "propose_amendment",
+            "from": {
+                "value": "DRAFT"
+            },
+            "to": {
+                "value": "DRAFT"
+            },
+            "eventName": "sign",
             "guard": {
-                "or": [
-                    { "in": [{ "var": "event.agent" }, { "var": "state.branches.legislature.members" }] },
-                    { ">=": [{ "var": "event.petitionSignatures" }, { "var": "state.amendmentPetitionThreshold" }] }
+                "and": [
+                    {
+                        "in": [
+                            {
+                                "var": "event.agent"
+                            },
+                            {
+                                "var": "state.founders"
+                            }
+                        ]
+                    },
+                    {
+                        "!": {
+                            "in": [
+                                {
+                                    "var": "event.agent"
+                                },
+                                {
+                                    "var": "state.ratifications"
+                                }
+                            ]
+                        }
+                    }
                 ]
             },
             "effect": {
                 "merge": [
-                    { "var": "state" },
+                    {
+                        "var": "state"
+                    },
+                    {
+                        "ratifications": {
+                            "cat": [
+                                {
+                                    "var": "state.ratifications"
+                                },
+                                [
+                                    {
+                                        "var": "event.agent"
+                                    }
+                                ]
+                            ]
+                        }
+                    }
+                ]
+            },
+            "dependencies": []
+        },
+        {
+            "from": {
+                "value": "RATIFIED"
+            },
+            "to": {
+                "value": "AMENDING"
+            },
+            "eventName": "propose_amendment",
+            "guard": {
+                "or": [
+                    {
+                        "in": [
+                            {
+                                "var": "event.agent"
+                            },
+                            {
+                                "var": "state.branches.legislature.members"
+                            }
+                        ]
+                    },
+                    {
+                        ">=": [
+                            {
+                                "var": "event.petitionSignatures"
+                            },
+                            {
+                                "var": "state.amendmentPetitionThreshold"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "effect": {
+                "merge": [
+                    {
+                        "var": "state"
+                    },
                     {
                         "status": "AMENDING",
                         "pendingAmendment": {
-                            "id": { "var": "event.amendmentId" },
-                            "proposer": { "var": "event.agent" },
-                            "changes": { "var": "event.changes" },
-                            "proposedAt": { "var": "$timestamp" },
+                            "id": {
+                                "var": "event.amendmentId"
+                            },
+                            "proposer": {
+                                "var": "event.agent"
+                            },
+                            "changes": {
+                                "var": "event.changes"
+                            },
+                            "proposedAt": {
+                                "var": "$timestamp"
+                            },
                             "votes": {}
                         }
                     }
                 ]
-            }
+            },
+            "dependencies": []
         },
         {
-            "_comment": "Amendment passes",
-            "from": { "value": "AMENDING" },
-            "to": { "value": "RATIFIED" },
+            "from": {
+                "value": "AMENDING"
+            },
+            "to": {
+                "value": "RATIFIED"
+            },
             "eventName": "ratify_amendment",
             "guard": {
                 ">=": [
-                    { "var": "state.pendingAmendment.approvalCount" },
-                    { "var": "state.amendmentThreshold" }
+                    {
+                        "var": "state.pendingAmendment.approvalCount"
+                    },
+                    {
+                        "var": "state.amendmentThreshold"
+                    }
                 ]
             },
             "effect": {
                 "merge": [
-                    { "var": "state" },
+                    {
+                        "var": "state"
+                    },
                     {
                         "status": "RATIFIED",
                         "amendments": {
                             "cat": [
-                                { "var": "state.amendments" },
-                                [{
-                                        "id": { "var": "state.pendingAmendment.id" },
-                                        "changes": { "var": "state.pendingAmendment.changes" },
-                                        "ratifiedAt": { "var": "$timestamp" }
-                                    }]
+                                {
+                                    "var": "state.amendments"
+                                },
+                                [
+                                    {
+                                        "id": {
+                                            "var": "state.pendingAmendment.id"
+                                        },
+                                        "changes": {
+                                            "var": "state.pendingAmendment.changes"
+                                        },
+                                        "ratifiedAt": {
+                                            "var": "$timestamp"
+                                        }
+                                    }
+                                ]
                             ]
                         },
                         "pendingAmendment": null
                     }
                 ]
-            }
+            },
+            "dependencies": []
         },
         {
-            "_comment": "Amendment fails",
-            "from": { "value": "AMENDING" },
-            "to": { "value": "RATIFIED" },
+            "from": {
+                "value": "AMENDING"
+            },
+            "to": {
+                "value": "RATIFIED"
+            },
             "eventName": "reject_amendment",
-            "guard": { "var": "state.pendingAmendment.rejected" },
+            "guard": {
+                "var": "state.pendingAmendment.rejected"
+            },
             "effect": {
                 "merge": [
-                    { "var": "state" },
+                    {
+                        "var": "state"
+                    },
                     {
                         "status": "RATIFIED",
                         "failedAmendments": {
                             "cat": [
-                                { "var": "state.failedAmendments" },
-                                [{ "var": "state.pendingAmendment" }]
+                                {
+                                    "var": "state.failedAmendments"
+                                },
+                                [
+                                    {
+                                        "var": "state.pendingAmendment"
+                                    }
+                                ]
                             ]
                         },
                         "pendingAmendment": null
                     }
                 ]
-            }
+            },
+            "dependencies": []
         },
         {
-            "_comment": "Emergency suspension",
-            "from": { "value": "RATIFIED" },
-            "to": { "value": "SUSPENDED" },
+            "from": {
+                "value": "RATIFIED"
+            },
+            "to": {
+                "value": "SUSPENDED"
+            },
             "eventName": "suspend",
             "guard": {
                 "and": [
-                    { "in": [{ "var": "event.agent" }, { "var": "state.emergencyCouncil" }] },
-                    { "var": "event.reason" }
+                    {
+                        "in": [
+                            {
+                                "var": "event.agent"
+                            },
+                            {
+                                "var": "state.emergencyCouncil"
+                            }
+                        ]
+                    },
+                    {
+                        "var": "event.reason"
+                    }
                 ]
             },
             "effect": {
                 "merge": [
-                    { "var": "state" },
+                    {
+                        "var": "state"
+                    },
                     {
                         "status": "SUSPENDED",
-                        "suspendedBy": { "var": "event.agent" },
-                        "suspensionReason": { "var": "event.reason" },
-                        "suspendedAt": { "var": "$timestamp" }
+                        "suspendedBy": {
+                            "var": "event.agent"
+                        },
+                        "suspensionReason": {
+                            "var": "event.reason"
+                        },
+                        "suspendedAt": {
+                            "var": "$timestamp"
+                        }
                     }
                 ]
-            }
+            },
+            "dependencies": []
         },
         {
-            "_comment": "Restore from suspension",
-            "from": { "value": "SUSPENDED" },
-            "to": { "value": "RATIFIED" },
+            "from": {
+                "value": "SUSPENDED"
+            },
+            "to": {
+                "value": "RATIFIED"
+            },
             "eventName": "restore",
             "guard": {
                 ">=": [
-                    { "var": "event.restorationVotes" },
-                    { "var": "state.restorationThreshold" }
+                    {
+                        "var": "event.restorationVotes"
+                    },
+                    {
+                        "var": "state.restorationThreshold"
+                    }
                 ]
             },
             "effect": {
                 "merge": [
-                    { "var": "state" },
-                    { "status": "RATIFIED", "restoredAt": { "var": "$timestamp" } }
+                    {
+                        "var": "state"
+                    },
+                    {
+                        "status": "RATIFIED",
+                        "restoredAt": {
+                            "var": "$timestamp"
+                        }
+                    }
                 ]
-            }
+            },
+            "dependencies": []
         },
         {
-            "_comment": "Dissolve the constitution entirely",
-            "from": { "value": "RATIFIED" },
-            "to": { "value": "DISSOLVED" },
+            "from": {
+                "value": "RATIFIED"
+            },
+            "to": {
+                "value": "DISSOLVED"
+            },
             "eventName": "dissolve",
             "guard": {
                 ">=": [
-                    { "var": "event.dissolutionVotes" },
-                    { "var": "state.dissolutionThreshold" }
+                    {
+                        "var": "event.dissolutionVotes"
+                    },
+                    {
+                        "var": "state.dissolutionThreshold"
+                    }
                 ]
             },
             "effect": {
                 "merge": [
-                    { "var": "state" },
-                    { "status": "DISSOLVED", "dissolvedAt": { "var": "$timestamp" } }
+                    {
+                        "var": "state"
+                    },
+                    {
+                        "status": "DISSOLVED",
+                        "dissolvedAt": {
+                            "var": "$timestamp"
+                        }
+                    }
                 ]
-            }
+            },
+            "dependencies": []
         }
     ],
     "initialDataTemplate": {
@@ -203,20 +401,35 @@
         "branches": {
             "legislature": {
                 "name": "Legislature",
-                "powers": ["propose_law", "vote_law", "impeach", "amend_constitution"],
+                "powers": [
+                    "propose_law",
+                    "vote_law",
+                    "impeach",
+                    "amend_constitution"
+                ],
                 "members": [],
                 "quorum": 0.5,
                 "passingThreshold": 0.5
             },
             "executive": {
                 "name": "Executive",
-                "powers": ["execute_law", "veto", "appoint", "emergency_action"],
+                "powers": [
+                    "execute_law",
+                    "veto",
+                    "appoint",
+                    "emergency_action"
+                ],
                 "members": [],
                 "head": null
             },
             "judiciary": {
                 "name": "Judiciary",
-                "powers": ["interpret", "review", "overturn", "resolve_dispute"],
+                "powers": [
+                    "interpret",
+                    "review",
+                    "overturn",
+                    "resolve_dispute"
+                ],
                 "members": [],
                 "quorum": 0.5
             }
