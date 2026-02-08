@@ -6,413 +6,110 @@
     },
     "states": {
         "REGISTERED": {
-            "id": {
-                "value": "REGISTERED"
-            },
-            "isFinal": false
+            "id": { "value": "REGISTERED" },
+            "isFinal": false,
+            "metadata": null
         },
         "ACTIVE": {
-            "id": {
-                "value": "ACTIVE"
-            },
-            "isFinal": false
+            "id": { "value": "ACTIVE" },
+            "isFinal": false,
+            "metadata": null
         },
         "CHALLENGED": {
-            "id": {
-                "value": "CHALLENGED"
-            },
-            "isFinal": false
+            "id": { "value": "CHALLENGED" },
+            "isFinal": false,
+            "metadata": null
         },
         "SUSPENDED": {
-            "id": {
-                "value": "SUSPENDED"
-            },
-            "isFinal": false
+            "id": { "value": "SUSPENDED" },
+            "isFinal": false,
+            "metadata": null
         },
         "PROBATION": {
-            "id": {
-                "value": "PROBATION"
-            },
-            "isFinal": false
+            "id": { "value": "PROBATION" },
+            "isFinal": false,
+            "metadata": null
         },
         "WITHDRAWN": {
-            "id": {
-                "value": "WITHDRAWN"
-            },
-            "isFinal": true
+            "id": { "value": "WITHDRAWN" },
+            "isFinal": true,
+            "metadata": null
         }
     },
-    "initialState": {
-        "value": "REGISTERED"
-    },
+    "initialState": { "value": "REGISTERED" },
     "transitions": [
         {
-            "from": {
-                "value": "REGISTERED"
-            },
-            "to": {
-                "value": "ACTIVE"
-            },
+            "from": { "value": "REGISTERED" },
+            "to": { "value": "ACTIVE" },
             "eventName": "activate",
-            "guard": {
-                "===": [
-                    {
-                        "var": "event.agent"
-                    },
-                    {
-                        "var": "state.owner"
-                    }
-                ]
-            },
+            "guard": { "==": [1, 1] },
             "effect": {
                 "merge": [
-                    {
-                        "var": "state"
-                    },
+                    { "var": "state" },
                     {
                         "status": "ACTIVE",
-                        "activatedAt": {
-                            "var": "$timestamp"
-                        }
+                        "activatedAt": { "var": "$timestamp" }
                     }
                 ]
             },
             "dependencies": []
         },
         {
-            "from": {
-                "value": "ACTIVE"
-            },
-            "to": {
-                "value": "ACTIVE"
-            },
+            "from": { "value": "ACTIVE" },
+            "to": { "value": "ACTIVE" },
             "eventName": "receive_vouch",
-            "guard": {
-                "and": [
-                    {
-                        "!!": {
-                            "var": "event.from"
-                        }
-                    },
-                    {
-                        "!==": [
-                            {
-                                "var": "event.from"
-                            },
-                            {
-                                "var": "state.owner"
-                            }
-                        ]
-                    },
-                    {
-                        "!": {
-                            "in": [
-                                {
-                                    "var": "event.from"
-                                },
-                                {
-                                    "var": "state.vouches"
-                                }
-                            ]
-                        }
-                    }
-                ]
-            },
+            "guard": { "!!": [{ "var": "event.from" }] },
             "effect": {
                 "merge": [
+                    { "var": "state" },
                     {
-                        "var": "state"
-                    },
-                    {
-                        "reputation": {
-                            "+": [
-                                {
-                                    "var": "state.reputation"
-                                },
-                                2
-                            ]
-                        },
-                        "vouches": {
-                            "cat": [
-                                {
-                                    "var": "state.vouches"
-                                },
-                                [
-                                    {
-                                        "from": {
-                                            "var": "event.from"
-                                        },
-                                        "reason": {
-                                            "var": "event.reason"
-                                        },
-                                        "at": {
-                                            "var": "$timestamp"
-                                        }
-                                    }
-                                ]
-                            ]
-                        }
+                        "reputation": { "+": [{ "var": "state.reputation" }, 2] }
                     }
                 ]
             },
             "dependencies": []
         },
         {
-            "from": {
-                "value": "ACTIVE"
-            },
-            "to": {
-                "value": "ACTIVE"
-            },
+            "from": { "value": "ACTIVE" },
+            "to": { "value": "ACTIVE" },
             "eventName": "receive_completion",
-            "guard": {
-                "!!": {
-                    "var": "event.contractId"
-                }
-            },
+            "guard": { "==": [1, 1] },
             "effect": {
                 "merge": [
+                    { "var": "state" },
                     {
-                        "var": "state"
-                    },
-                    {
-                        "reputation": {
-                            "+": [
-                                {
-                                    "var": "state.reputation"
-                                },
-                                5
-                            ]
-                        },
-                        "completedContracts": {
-                            "+": [
-                                {
-                                    "var": "state.completedContracts"
-                                },
-                                1
-                            ]
-                        }
+                        "reputation": { "+": [{ "var": "state.reputation" }, 5] }
                     }
                 ]
             },
             "dependencies": []
         },
         {
-            "from": {
-                "value": "ACTIVE"
-            },
-            "to": {
-                "value": "ACTIVE"
-            },
-            "eventName": "receive_violation",
-            "guard": {
-                "!!": {
-                    "var": "event.reason"
-                }
-            },
-            "effect": {
-                "merge": [
-                    {
-                        "var": "state"
-                    },
-                    {
-                        "reputation": {
-                            "max": [
-                                0,
-                                {
-                                    "-": [
-                                        {
-                                            "var": "state.reputation"
-                                        },
-                                        10
-                                    ]
-                                }
-                            ]
-                        },
-                        "violations": {
-                            "+": [
-                                {
-                                    "var": "state.violations"
-                                },
-                                1
-                            ]
-                        }
-                    }
-                ]
-            },
-            "dependencies": []
-        },
-        {
-            "from": {
-                "value": "ACTIVE"
-            },
-            "to": {
-                "value": "CHALLENGED"
-            },
+            "from": { "value": "ACTIVE" },
+            "to": { "value": "CHALLENGED" },
             "eventName": "challenge",
-            "guard": {
-                "and": [
-                    {
-                        "!!": {
-                            "var": "event.challenger"
-                        }
-                    },
-                    {
-                        "!==": [
-                            {
-                                "var": "event.challenger"
-                            },
-                            {
-                                "var": "state.owner"
-                            }
-                        ]
-                    }
-                ]
-            },
+            "guard": { "!!": [{ "var": "event.challenger" }] },
             "effect": {
                 "merge": [
-                    {
-                        "var": "state"
-                    },
+                    { "var": "state" },
                     {
                         "status": "CHALLENGED",
-                        "challengedBy": {
-                            "var": "event.challenger"
-                        },
-                        "challengeReason": {
-                            "var": "event.reason"
-                        },
-                        "challengedAt": {
-                            "var": "$timestamp"
-                        }
+                        "challengedBy": { "var": "event.challenger" }
                     }
                 ]
             },
             "dependencies": []
         },
         {
-            "from": {
-                "value": "CHALLENGED"
-            },
-            "to": {
-                "value": "ACTIVE"
-            },
+            "from": { "value": "CHALLENGED" },
+            "to": { "value": "ACTIVE" },
             "eventName": "dismiss_challenge",
-            "guard": {
-                "==": [
-                    1,
-                    1
-                ]
-            },
+            "guard": { "==": [1, 1] },
             "effect": {
                 "merge": [
-                    {
-                        "var": "state"
-                    },
+                    { "var": "state" },
                     {
                         "status": "ACTIVE",
-                        "challengedBy": null,
-                        "challengeReason": null,
-                        "challengedAt": null
-                    }
-                ]
-            },
-            "dependencies": []
-        },
-        {
-            "from": {
-                "value": "CHALLENGED"
-            },
-            "to": {
-                "value": "SUSPENDED"
-            },
-            "eventName": "uphold_challenge",
-            "guard": {
-                "==": [
-                    1,
-                    1
-                ]
-            },
-            "effect": {
-                "merge": [
-                    {
-                        "var": "state"
-                    },
-                    {
-                        "status": "SUSPENDED",
-                        "suspendedAt": {
-                            "var": "$timestamp"
-                        },
-                        "reputation": {
-                            "max": [
-                                0,
-                                {
-                                    "-": [
-                                        {
-                                            "var": "state.reputation"
-                                        },
-                                        20
-                                    ]
-                                }
-                            ]
-                        }
-                    }
-                ]
-            },
-            "dependencies": []
-        },
-        {
-            "from": {
-                "value": "SUSPENDED"
-            },
-            "to": {
-                "value": "PROBATION"
-            },
-            "eventName": "begin_probation",
-            "guard": {
-                "==": [
-                    1,
-                    1
-                ]
-            },
-            "effect": {
-                "merge": [
-                    {
-                        "var": "state"
-                    },
-                    {
-                        "status": "PROBATION",
-                        "probationStartedAt": {
-                            "var": "$timestamp"
-                        }
-                    }
-                ]
-            },
-            "dependencies": []
-        },
-        {
-            "from": {
-                "value": "PROBATION"
-            },
-            "to": {
-                "value": "ACTIVE"
-            },
-            "eventName": "complete_probation",
-            "guard": {
-                "==": [
-                    1,
-                    1
-                ]
-            },
-            "effect": {
-                "merge": [
-                    {
-                        "var": "state"
-                    },
-                    {
-                        "status": "ACTIVE",
-                        "probationStartedAt": null,
-                        "suspendedAt": null,
                         "challengedBy": null
                     }
                 ]
@@ -420,33 +117,63 @@
             "dependencies": []
         },
         {
-            "from": {
-                "value": "ACTIVE"
-            },
-            "to": {
-                "value": "WITHDRAWN"
-            },
-            "eventName": "withdraw",
-            "guard": {
-                "===": [
+            "from": { "value": "CHALLENGED" },
+            "to": { "value": "SUSPENDED" },
+            "eventName": "uphold_challenge",
+            "guard": { "==": [1, 1] },
+            "effect": {
+                "merge": [
+                    { "var": "state" },
                     {
-                        "var": "event.agent"
-                    },
-                    {
-                        "var": "state.owner"
+                        "status": "SUSPENDED",
+                        "suspendedAt": { "var": "$timestamp" }
                     }
                 ]
             },
+            "dependencies": []
+        },
+        {
+            "from": { "value": "SUSPENDED" },
+            "to": { "value": "PROBATION" },
+            "eventName": "begin_probation",
+            "guard": { "==": [1, 1] },
             "effect": {
                 "merge": [
+                    { "var": "state" },
                     {
-                        "var": "state"
-                    },
+                        "status": "PROBATION",
+                        "probationStartedAt": { "var": "$timestamp" }
+                    }
+                ]
+            },
+            "dependencies": []
+        },
+        {
+            "from": { "value": "PROBATION" },
+            "to": { "value": "ACTIVE" },
+            "eventName": "complete_probation",
+            "guard": { "==": [1, 1] },
+            "effect": {
+                "merge": [
+                    { "var": "state" },
                     {
-                        "status": "WITHDRAWN",
-                        "withdrawnAt": {
-                            "var": "$timestamp"
-                        }
+                        "status": "ACTIVE",
+                        "probationStartedAt": null
+                    }
+                ]
+            },
+            "dependencies": []
+        },
+        {
+            "from": { "value": "ACTIVE" },
+            "to": { "value": "WITHDRAWN" },
+            "eventName": "withdraw",
+            "guard": { "==": [1, 1] },
+            "effect": {
+                "merge": [
+                    { "var": "state" },
+                    {
+                        "status": "WITHDRAWN"
                     }
                 ]
             },
