@@ -9,31 +9,36 @@
       "id": {
         "value": "DRAFT"
       },
-      "isFinal": false
+      "isFinal": false,
+      "metadata": null
     },
     "RATIFIED": {
       "id": {
         "value": "RATIFIED"
       },
-      "isFinal": false
+      "isFinal": false,
+      "metadata": null
     },
     "AMENDING": {
       "id": {
         "value": "AMENDING"
       },
-      "isFinal": false
+      "isFinal": false,
+      "metadata": null
     },
     "SUSPENDED": {
       "id": {
         "value": "SUSPENDED"
       },
-      "isFinal": false
+      "isFinal": false,
+      "metadata": null
     },
     "DISSOLVED": {
       "id": {
         "value": "DISSOLVED"
       },
-      "isFinal": true
+      "isFinal": true,
+      "metadata": null
     }
   },
   "initialState": {
@@ -96,16 +101,18 @@
             ]
           },
           {
-            "!": {
-              "in": [
-                {
-                  "var": "event.agent"
-                },
-                {
-                  "var": "state.ratifications"
-                }
-              ]
-            }
+            "!": [
+              {
+                "in": [
+                  {
+                    "var": "event.agent"
+                  },
+                  {
+                    "var": "state.ratifications"
+                  }
+                ]
+              }
+            ]
           }
         ]
       },

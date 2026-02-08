@@ -273,40 +273,25 @@
     "states": {
         "GRANTED": {
             "description": "Proxy has been granted but not yet active (before effective date or meeting)",
-            "metadata": {
-                "displayName": "Granted",
-                "color": "#FFC107"
-            }
+            "metadata": null
         },
         "ACTIVE": {
             "description": "Proxy is active and can be used to vote",
-            "metadata": {
-                "displayName": "Active",
-                "color": "#28A745"
-            }
+            "metadata": null
         },
         "VOTED": {
             "description": "Proxy has been used to cast all applicable votes",
-            "metadata": {
-                "displayName": "Voted",
-                "color": "#007BFF"
-            },
+            "metadata": null,
             "terminal": true
         },
         "REVOKED": {
             "description": "Proxy has been revoked by the grantor or superseded",
-            "metadata": {
-                "displayName": "Revoked",
-                "color": "#DC3545"
-            },
+            "metadata": null,
             "terminal": true
         },
         "EXPIRED": {
             "description": "Proxy has expired without being fully used",
-            "metadata": {
-                "displayName": "Expired",
-                "color": "#6C757D"
-            },
+            "metadata": null,
             "terminal": true
         }
     },

@@ -284,38 +284,23 @@
     "states": {
         "FORMING": {
             "description": "Committee being formed; members appointed but charter not yet adopted",
-            "metadata": {
-                "displayName": "Forming",
-                "color": "#FFA500"
-            }
+            "metadata": null
         },
         "ACTIVE": {
             "description": "Committee is active with adopted charter and proper membership",
-            "metadata": {
-                "displayName": "Active",
-                "color": "#28A745"
-            }
+            "metadata": null
         },
         "IN_MEETING": {
             "description": "Committee meeting in session with quorum",
-            "metadata": {
-                "displayName": "In Meeting",
-                "color": "#007BFF"
-            }
+            "metadata": null
         },
         "NON_COMPLIANT": {
             "description": "Committee lacks required membership (insufficient members, independence, etc.)",
-            "metadata": {
-                "displayName": "Non-Compliant",
-                "color": "#DC3545"
-            }
+            "metadata": null
         },
         "DISBANDED": {
             "description": "Committee has been disbanded (terminal for special committees)",
-            "metadata": {
-                "displayName": "Disbanded",
-                "color": "#6C757D"
-            },
+            "metadata": null,
             "terminal": true
         }
     },

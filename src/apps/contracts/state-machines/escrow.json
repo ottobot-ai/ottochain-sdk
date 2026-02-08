@@ -9,49 +9,57 @@
       "id": {
         "value": "CREATED"
       },
-      "isFinal": false
+      "isFinal": false,
+      "metadata": null
     },
     "FUNDED": {
       "id": {
         "value": "FUNDED"
       },
-      "isFinal": false
+      "isFinal": false,
+      "metadata": null
     },
     "ACTIVE": {
       "id": {
         "value": "ACTIVE"
       },
-      "isFinal": false
+      "isFinal": false,
+      "metadata": null
     },
     "RELEASING": {
       "id": {
         "value": "RELEASING"
       },
-      "isFinal": false
+      "isFinal": false,
+      "metadata": null
     },
     "DISPUTED": {
       "id": {
         "value": "DISPUTED"
       },
-      "isFinal": false
+      "isFinal": false,
+      "metadata": null
     },
     "RELEASED": {
       "id": {
         "value": "RELEASED"
       },
-      "isFinal": true
+      "isFinal": true,
+      "metadata": null
     },
     "REFUNDED": {
       "id": {
         "value": "REFUNDED"
       },
-      "isFinal": true
+      "isFinal": true,
+      "metadata": null
     },
     "SPLIT": {
       "id": {
         "value": "SPLIT"
       },
-      "isFinal": true
+      "isFinal": true,
+      "metadata": null
     }
   },
   "initialState": {

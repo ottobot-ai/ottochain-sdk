@@ -9,31 +9,36 @@
       "id": {
         "value": "UNREGISTERED"
       },
-      "isFinal": false
+      "isFinal": false,
+      "metadata": null
     },
     "REGISTERED": {
       "id": {
         "value": "REGISTERED"
       },
-      "isFinal": false
+      "isFinal": false,
+      "metadata": null
     },
     "ACTIVE": {
       "id": {
         "value": "ACTIVE"
       },
-      "isFinal": false
+      "isFinal": false,
+      "metadata": null
     },
     "SLASHED": {
       "id": {
         "value": "SLASHED"
       },
-      "isFinal": false
+      "isFinal": false,
+      "metadata": null
     },
     "WITHDRAWN": {
       "id": {
         "value": "WITHDRAWN"
       },
-      "isFinal": true
+      "isFinal": true,
+      "metadata": null
     }
   },
   "initialState": {

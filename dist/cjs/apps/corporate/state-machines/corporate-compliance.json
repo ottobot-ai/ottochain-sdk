@@ -331,31 +331,19 @@
     "states": {
         "COMPLIANT": {
             "description": "Entity is in good standing in all jurisdictions with no open deficiencies",
-            "metadata": {
-                "displayName": "Compliant / Good Standing",
-                "color": "#28A745"
-            }
+            "metadata": null
         },
         "REVIEW_PENDING": {
             "description": "Compliance review needed; deadline approaching or minor issue flagged",
-            "metadata": {
-                "displayName": "Review Pending",
-                "color": "#FFC107"
-            }
+            "metadata": null
         },
         "DEFICIENT": {
             "description": "One or more deficiencies identified; action required",
-            "metadata": {
-                "displayName": "Deficient",
-                "color": "#DC3545"
-            }
+            "metadata": null
         },
         "REMEDIATED": {
             "description": "Deficiencies cured; awaiting state confirmation of good standing",
-            "metadata": {
-                "displayName": "Remediated - Pending Confirmation",
-                "color": "#17A2B8"
-            }
+            "metadata": null
         }
     },
     "initialState": "COMPLIANT",

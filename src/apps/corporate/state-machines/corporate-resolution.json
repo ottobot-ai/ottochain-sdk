@@ -434,61 +434,37 @@
   "states": {
     "DRAFT": {
       "description": "Resolution drafted but not yet formally proposed",
-      "metadata": {
-        "displayName": "Draft",
-        "color": "#6C757D"
-      }
+      "metadata": null
     },
     "PROPOSED": {
       "description": "Resolution formally proposed and awaiting vote",
-      "metadata": {
-        "displayName": "Proposed",
-        "color": "#17A2B8"
-      }
+      "metadata": null
     },
     "VOTING": {
       "description": "Voting or consent collection in progress",
-      "metadata": {
-        "displayName": "Voting",
-        "color": "#FFC107"
-      }
+      "metadata": null
     },
     "APPROVED": {
       "description": "Resolution approved but not yet executed/effective",
-      "metadata": {
-        "displayName": "Approved",
-        "color": "#28A745"
-      }
+      "metadata": null
     },
     "EXECUTED": {
       "description": "Resolution has been carried out; authorized actions completed",
-      "metadata": {
-        "displayName": "Executed",
-        "color": "#007BFF"
-      }
+      "metadata": null
     },
     "REJECTED": {
       "description": "Resolution failed to obtain required approval",
-      "metadata": {
-        "displayName": "Rejected",
-        "color": "#DC3545"
-      },
+      "metadata": null,
       "terminal": true
     },
     "EXPIRED": {
       "description": "Resolution expired without execution",
-      "metadata": {
-        "displayName": "Expired",
-        "color": "#6C757D"
-      },
+      "metadata": null,
       "terminal": true
     },
     "RESCINDED": {
       "description": "Resolution was rescinded by subsequent action",
-      "metadata": {
-        "displayName": "Rescinded",
-        "color": "#6C757D"
-      },
+      "metadata": null,
       "terminal": true
     }
   },

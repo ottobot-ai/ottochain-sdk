@@ -9,43 +9,50 @@
       "id": {
         "value": "PROPOSED"
       },
-      "isFinal": false
+      "isFinal": false,
+      "metadata": null
     },
     "OPEN": {
       "id": {
         "value": "OPEN"
       },
-      "isFinal": false
+      "isFinal": false,
+      "metadata": null
     },
     "CLOSED": {
       "id": {
         "value": "CLOSED"
       },
-      "isFinal": false
+      "isFinal": false,
+      "metadata": null
     },
     "RESOLVING": {
       "id": {
         "value": "RESOLVING"
       },
-      "isFinal": false
+      "isFinal": false,
+      "metadata": null
     },
     "SETTLED": {
       "id": {
         "value": "SETTLED"
       },
-      "isFinal": true
+      "isFinal": true,
+      "metadata": null
     },
     "REFUNDED": {
       "id": {
         "value": "REFUNDED"
       },
-      "isFinal": true
+      "isFinal": true,
+      "metadata": null
     },
     "CANCELLED": {
       "id": {
         "value": "CANCELLED"
       },
-      "isFinal": true
+      "isFinal": true,
+      "metadata": null
     }
   },
   "initialState": {
@@ -142,9 +149,11 @@
           {
             "or": [
               {
-                "!": {
-                  "var": "state.deadline"
-                }
+                "!": [
+                  {
+                    "var": "state.deadline"
+                  }
+                ]
               },
               {
                 "<=": [
@@ -385,23 +394,25 @@
             ]
           },
           {
-            "!": {
-              "in": [
-                {
-                  "var": "event.agent"
-                },
-                {
-                  "map": [
-                    {
-                      "var": "state.resolutions"
-                    },
-                    {
-                      "var": "oracle"
-                    }
-                  ]
-                }
-              ]
-            }
+            "!": [
+              {
+                "in": [
+                  {
+                    "var": "event.agent"
+                  },
+                  {
+                    "map": [
+                      {
+                        "var": "state.resolutions"
+                      },
+                      {
+                        "var": "oracle"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
@@ -634,16 +645,18 @@
             ]
           },
           {
-            "!": {
-              "getKey": [
-                {
-                  "var": "state.claims"
-                },
-                {
-                  "var": "event.agent"
-                }
-              ]
-            }
+            "!": [
+              {
+                "getKey": [
+                  {
+                    "var": "state.claims"
+                  },
+                  {
+                    "var": "event.agent"
+                  }
+                ]
+              }
+            ]
           }
         ]
       },

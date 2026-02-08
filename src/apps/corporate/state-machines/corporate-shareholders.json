@@ -478,45 +478,27 @@
   "states": {
     "SCHEDULED": {
       "description": "Meeting has been scheduled but record date not yet set",
-      "metadata": {
-        "displayName": "Scheduled",
-        "color": "#6C757D"
-      }
+      "metadata": null
     },
     "RECORD_DATE_SET": {
       "description": "Record date established; eligible shareholders determined",
-      "metadata": {
-        "displayName": "Record Date Set",
-        "color": "#17A2B8"
-      }
+      "metadata": null
     },
     "PROXY_PERIOD": {
       "description": "Proxy materials distributed; shareholders may submit proxies",
-      "metadata": {
-        "displayName": "Proxy Period Open",
-        "color": "#FFC107"
-      }
+      "metadata": null
     },
     "IN_SESSION": {
       "description": "Meeting is convened and in progress",
-      "metadata": {
-        "displayName": "In Session",
-        "color": "#007BFF"
-      }
+      "metadata": null
     },
     "VOTING": {
       "description": "Polls are open for voting on agenda items",
-      "metadata": {
-        "displayName": "Voting",
-        "color": "#28A745"
-      }
+      "metadata": null
     },
     "CLOSED": {
       "description": "Meeting concluded; results certified",
-      "metadata": {
-        "displayName": "Closed",
-        "color": "#6C757D"
-      },
+      "metadata": null,
       "terminal": true
     }
   },
