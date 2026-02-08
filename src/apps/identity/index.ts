@@ -42,6 +42,23 @@ export {
 } from '../../generated/ottochain/apps/identity/v1/attestation.js';
 
 // ---------------------------------------------------------------------------
+// Configuration Defaults
+// ---------------------------------------------------------------------------
+
+/**
+ * Default reputation configuration for agent identity
+ */
+export const DEFAULT_REPUTATION_CONFIG = {
+  baseReputation: 10,
+  completionDelta: 5,
+  vouchDelta: 2,
+  violationDelta: -10,
+  behavioralDelta: 3,
+  minReputation: 0,
+  challengeThreshold: 5,
+} as const;
+
+// ---------------------------------------------------------------------------
 // State Machine JSON Definition
 // ---------------------------------------------------------------------------
 
