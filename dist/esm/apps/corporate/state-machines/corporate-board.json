@@ -5,59 +5,124 @@
     "category": "corporate-governance",
     "description": "Board of directors state machine managing director seats, meetings, quorum, and formal board actions. Supports staggered boards with classified directors.",
     "context": {
-        "boardId": { "type": "string", "description": "Unique identifier for this board instance" },
-        "entityId": { "type": "string", "description": "Reference to parent corporate-entity" },
+        "boardId": {
+            "type": "string",
+            "description": "Unique identifier for this board instance"
+        },
+        "entityId": {
+            "type": "string",
+            "description": "Reference to parent corporate-entity"
+        },
         "directors": {
             "type": "array",
             "items": {
                 "type": "object",
                 "properties": {
-                    "directorId": { "type": "string" },
-                    "name": { "type": "string" },
-                    "email": { "type": "string" },
-                    "termStart": { "type": "string", "format": "date" },
-                    "termEnd": { "type": "string", "format": "date" },
+                    "directorId": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "termStart": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "termEnd": {
+                        "type": "string",
+                        "format": "date"
+                    },
                     "class": {
                         "type": "string",
-                        "enum": ["CLASS_I", "CLASS_II", "CLASS_III", "UNCLASSIFIED"],
+                        "enum": [
+                            "CLASS_I",
+                            "CLASS_II",
+                            "CLASS_III",
+                            "UNCLASSIFIED"
+                        ],
                         "description": "For staggered boards"
                     },
                     "status": {
                         "type": "string",
-                        "enum": ["ACTIVE", "RESIGNED", "REMOVED", "TERM_EXPIRED"]
+                        "enum": [
+                            "ACTIVE",
+                            "RESIGNED",
+                            "REMOVED",
+                            "TERM_EXPIRED"
+                        ]
                     },
-                    "isIndependent": { "type": "boolean", "description": "Independence under applicable rules" },
-                    "isChair": { "type": "boolean", "default": false },
-                    "isLeadIndependent": { "type": "boolean", "default": false },
+                    "isIndependent": {
+                        "type": "boolean",
+                        "description": "Independence under applicable rules"
+                    },
+                    "isChair": {
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "isLeadIndependent": {
+                        "type": "boolean",
+                        "default": false
+                    },
                     "committees": {
                         "type": "array",
-                        "items": { "type": "string" },
+                        "items": {
+                            "type": "string"
+                        },
                         "description": "Committee memberships by committee ID"
                     },
-                    "electedBy": { "type": "string", "description": "Resolution reference for election" },
-                    "compensationAgreementRef": { "type": "string", "nullable": true }
+                    "electedBy": {
+                        "type": "string",
+                        "description": "Resolution reference for election"
+                    },
+                    "compensationAgreementRef": {
+                        "type": "string",
+                        "nullable": true
+                    }
                 }
             }
         },
         "seats": {
             "type": "object",
             "properties": {
-                "authorized": { "type": "integer", "description": "Number of board seats authorized by bylaws" },
-                "filled": { "type": "integer" },
-                "vacant": { "type": "integer" }
+                "authorized": {
+                    "type": "integer",
+                    "description": "Number of board seats authorized by bylaws"
+                },
+                "filled": {
+                    "type": "integer"
+                },
+                "vacant": {
+                    "type": "integer"
+                }
             }
         },
         "boardStructure": {
             "type": "object",
             "properties": {
-                "isClassified": { "type": "boolean", "description": "Whether board has staggered terms" },
-                "termYears": { "type": "integer", "default": 1, "description": "Director term length" },
+                "isClassified": {
+                    "type": "boolean",
+                    "description": "Whether board has staggered terms"
+                },
+                "termYears": {
+                    "type": "integer",
+                    "default": 1,
+                    "description": "Director term length"
+                },
                 "classTerms": {
                     "type": "object",
                     "properties": {
-                        "CLASS_I": { "type": "integer" },
-                        "CLASS_II": { "type": "integer" },
-                        "CLASS_III": { "type": "integer" }
+                        "CLASS_I": {
+                            "type": "integer"
+                        },
+                        "CLASS_II": {
+                            "type": "integer"
+                        },
+                        "CLASS_III": {
+                            "type": "integer"
+                        }
                     }
                 }
             }
@@ -67,55 +132,134 @@
             "properties": {
                 "type": {
                     "type": "string",
-                    "enum": ["MAJORITY", "SUPERMAJORITY", "FIXED_NUMBER"],
+                    "enum": [
+                        "MAJORITY",
+                        "SUPERMAJORITY",
+                        "FIXED_NUMBER"
+                    ],
                     "default": "MAJORITY"
                 },
-                "threshold": { "type": "number", "description": "Fraction for majority/super, or count for fixed" },
-                "minimumRequired": { "type": "integer", "description": "Absolute minimum regardless of formula" }
+                "threshold": {
+                    "type": "number",
+                    "description": "Fraction for majority/super, or count for fixed"
+                },
+                "minimumRequired": {
+                    "type": "integer",
+                    "description": "Absolute minimum regardless of formula"
+                }
             }
         },
         "votingRules": {
             "type": "object",
             "properties": {
-                "standardApproval": { "type": "string", "enum": ["MAJORITY_PRESENT", "MAJORITY_FULL_BOARD"], "default": "MAJORITY_PRESENT" },
+                "standardApproval": {
+                    "type": "string",
+                    "enum": [
+                        "MAJORITY_PRESENT",
+                        "MAJORITY_FULL_BOARD"
+                    ],
+                    "default": "MAJORITY_PRESENT"
+                },
                 "supermajorityMatters": {
                     "type": "array",
-                    "items": { "type": "string" },
+                    "items": {
+                        "type": "string"
+                    },
                     "description": "Action types requiring supermajority"
                 },
-                "supermajorityThreshold": { "type": "number", "default": 0.6667 }
+                "supermajorityThreshold": {
+                    "type": "number",
+                    "default": 0.6667
+                }
             }
         },
         "currentMeeting": {
             "type": "object",
             "nullable": true,
             "properties": {
-                "meetingId": { "type": "string" },
-                "type": { "type": "string", "enum": ["REGULAR", "SPECIAL", "ANNUAL", "ORGANIZATIONAL"] },
-                "scheduledDate": { "type": "string", "format": "date-time" },
-                "location": { "type": "string" },
-                "isVirtual": { "type": "boolean" },
-                "calledBy": { "type": "string" },
-                "noticeDate": { "type": "string", "format": "date" },
-                "agenda": { "type": "array", "items": { "type": "string" } },
+                "meetingId": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "REGULAR",
+                        "SPECIAL",
+                        "ANNUAL",
+                        "ORGANIZATIONAL"
+                    ]
+                },
+                "scheduledDate": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "isVirtual": {
+                    "type": "boolean"
+                },
+                "calledBy": {
+                    "type": "string"
+                },
+                "noticeDate": {
+                    "type": "string",
+                    "format": "date"
+                },
+                "agenda": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "attendees": {
                     "type": "array",
                     "items": {
                         "type": "object",
                         "properties": {
-                            "directorId": { "type": "string" },
-                            "present": { "type": "boolean" },
-                            "arrivedAt": { "type": "string", "format": "date-time", "nullable": true },
-                            "departedAt": { "type": "string", "format": "date-time", "nullable": true },
-                            "viaProxy": { "type": "boolean", "default": false }
+                            "directorId": {
+                                "type": "string"
+                            },
+                            "present": {
+                                "type": "boolean"
+                            },
+                            "arrivedAt": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                            },
+                            "departedAt": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                            },
+                            "viaProxy": {
+                                "type": "boolean",
+                                "default": false
+                            }
                         }
                     }
                 },
-                "quorumPresent": { "type": "boolean" },
-                "quorumCount": { "type": "integer" },
-                "openedAt": { "type": "string", "format": "date-time", "nullable": true },
-                "closedAt": { "type": "string", "format": "date-time", "nullable": true },
-                "minutesRef": { "type": "string", "nullable": true }
+                "quorumPresent": {
+                    "type": "boolean"
+                },
+                "quorumCount": {
+                    "type": "integer"
+                },
+                "openedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true
+                },
+                "closedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true
+                },
+                "minutesRef": {
+                    "type": "string",
+                    "nullable": true
+                }
             }
         },
         "meetingHistory": {
@@ -123,18 +267,42 @@
             "items": {
                 "type": "object",
                 "properties": {
-                    "meetingId": { "type": "string" },
-                    "type": { "type": "string" },
-                    "date": { "type": "string", "format": "date" },
-                    "quorumAchieved": { "type": "boolean" },
-                    "attendeeCount": { "type": "integer" },
-                    "resolutionsPassed": { "type": "array", "items": { "type": "string" } },
-                    "minutesRef": { "type": "string" }
+                    "meetingId": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "date": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "quorumAchieved": {
+                        "type": "boolean"
+                    },
+                    "attendeeCount": {
+                        "type": "integer"
+                    },
+                    "resolutionsPassed": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "minutesRef": {
+                        "type": "string"
+                    }
                 }
             }
         },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "updatedAt": { "type": "string", "format": "date-time" }
+        "createdAt": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+        }
     },
     "states": {
         "ACTIVE": {
@@ -168,15 +336,49 @@
             "event": {
                 "name": "elect_director",
                 "payload": {
-                    "directorId": { "type": "string", "required": true },
-                    "name": { "type": "string", "required": true },
-                    "email": { "type": "string" },
-                    "termStart": { "type": "string", "format": "date", "required": true },
-                    "termEnd": { "type": "string", "format": "date", "required": true },
-                    "class": { "type": "string", "enum": ["CLASS_I", "CLASS_II", "CLASS_III", "UNCLASSIFIED"] },
-                    "isIndependent": { "type": "boolean", "required": true },
-                    "electionResolutionRef": { "type": "string", "required": true, "description": "Shareholder or board resolution" },
-                    "isFillingVacancy": { "type": "boolean", "default": false }
+                    "directorId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "name": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "termStart": {
+                        "type": "string",
+                        "format": "date",
+                        "required": true
+                    },
+                    "termEnd": {
+                        "type": "string",
+                        "format": "date",
+                        "required": true
+                    },
+                    "class": {
+                        "type": "string",
+                        "enum": [
+                            "CLASS_I",
+                            "CLASS_II",
+                            "CLASS_III",
+                            "UNCLASSIFIED"
+                        ]
+                    },
+                    "isIndependent": {
+                        "type": "boolean",
+                        "required": true
+                    },
+                    "electionResolutionRef": {
+                        "type": "string",
+                        "required": true,
+                        "description": "Shareholder or board resolution"
+                    },
+                    "isFillingVacancy": {
+                        "type": "boolean",
+                        "default": false
+                    }
                 }
             },
             "guards": [
@@ -238,16 +440,31 @@
             ]
         },
         "resign_director": {
-            "from": ["ACTIVE", "IN_MEETING"],
+            "from": [
+                "ACTIVE",
+                "IN_MEETING"
+            ],
             "to": "ACTIVE",
             "description": "Director resigns from the board",
             "event": {
                 "name": "resign_director",
                 "payload": {
-                    "directorId": { "type": "string", "required": true },
-                    "effectiveDate": { "type": "string", "format": "date", "required": true },
-                    "reason": { "type": "string" },
-                    "resignationLetter": { "type": "string", "description": "Document reference" }
+                    "directorId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "effectiveDate": {
+                        "type": "string",
+                        "format": "date",
+                        "required": true
+                    },
+                    "reason": {
+                        "type": "string"
+                    },
+                    "resignationLetter": {
+                        "type": "string",
+                        "description": "Document reference"
+                    }
                 }
             },
             "guards": [
@@ -295,10 +512,23 @@
             "event": {
                 "name": "remove_for_cause",
                 "payload": {
-                    "directorId": { "type": "string", "required": true },
-                    "cause": { "type": "string", "required": true },
-                    "removalResolutionRef": { "type": "string", "required": true },
-                    "effectiveDate": { "type": "string", "format": "date", "required": true }
+                    "directorId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "cause": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "removalResolutionRef": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "effectiveDate": {
+                        "type": "string",
+                        "format": "date",
+                        "required": true
+                    }
                 }
             },
             "guards": [
@@ -354,8 +584,14 @@
             "event": {
                 "name": "designate_chair",
                 "payload": {
-                    "directorId": { "type": "string", "required": true },
-                    "resolutionRef": { "type": "string", "required": true }
+                    "directorId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "resolutionRef": {
+                        "type": "string",
+                        "required": true
+                    }
                 }
             },
             "guards": [
@@ -368,14 +604,18 @@
                 {
                     "type": "UPDATE_ARRAY_ALL",
                     "path": "directors",
-                    "updates": { "isChair": false }
+                    "updates": {
+                        "isChair": false
+                    }
                 },
                 {
                     "type": "UPDATE_ARRAY_ITEM",
                     "path": "directors",
                     "matchKey": "directorId",
                     "matchValue": "{{ event.directorId }}",
-                    "updates": { "isChair": true }
+                    "updates": {
+                        "isChair": true
+                    }
                 }
             ]
         },
@@ -386,15 +626,53 @@
             "event": {
                 "name": "call_meeting",
                 "payload": {
-                    "meetingId": { "type": "string", "required": true },
-                    "type": { "type": "string", "enum": ["REGULAR", "SPECIAL", "ANNUAL", "ORGANIZATIONAL"], "required": true },
-                    "scheduledDate": { "type": "string", "format": "date-time", "required": true },
-                    "location": { "type": "string" },
-                    "isVirtual": { "type": "boolean", "default": false },
-                    "calledBy": { "type": "string", "required": true, "description": "Director ID or officer title" },
-                    "noticeDate": { "type": "string", "format": "date", "required": true },
-                    "agenda": { "type": "array", "items": { "type": "string" } },
-                    "waiverOfNotice": { "type": "boolean", "default": false, "description": "If all directors waive notice" }
+                    "meetingId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "REGULAR",
+                            "SPECIAL",
+                            "ANNUAL",
+                            "ORGANIZATIONAL"
+                        ],
+                        "required": true
+                    },
+                    "scheduledDate": {
+                        "type": "string",
+                        "format": "date-time",
+                        "required": true
+                    },
+                    "location": {
+                        "type": "string"
+                    },
+                    "isVirtual": {
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "calledBy": {
+                        "type": "string",
+                        "required": true,
+                        "description": "Director ID or officer title"
+                    },
+                    "noticeDate": {
+                        "type": "string",
+                        "format": "date",
+                        "required": true
+                    },
+                    "agenda": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "waiverOfNotice": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "If all directors waive notice"
+                    }
                 }
             },
             "guards": [
@@ -445,9 +723,18 @@
             "event": {
                 "name": "record_attendance",
                 "payload": {
-                    "directorId": { "type": "string", "required": true },
-                    "present": { "type": "boolean", "required": true },
-                    "arrivedAt": { "type": "string", "format": "date-time" }
+                    "directorId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "present": {
+                        "type": "boolean",
+                        "required": true
+                    },
+                    "arrivedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
                 }
             },
             "guards": [
@@ -490,8 +777,15 @@
             "event": {
                 "name": "open_meeting",
                 "payload": {
-                    "openedAt": { "type": "string", "format": "date-time", "required": true },
-                    "chairPresiding": { "type": "string", "description": "Director ID presiding" }
+                    "openedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "required": true
+                    },
+                    "chairPresiding": {
+                        "type": "string",
+                        "description": "Director ID presiding"
+                    }
                 }
             },
             "guards": [
@@ -529,8 +823,15 @@
             "event": {
                 "name": "director_departs",
                 "payload": {
-                    "directorId": { "type": "string", "required": true },
-                    "departedAt": { "type": "string", "format": "date-time", "required": true }
+                    "directorId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "departedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "required": true
+                    }
                 }
             },
             "effects": [
@@ -563,7 +864,11 @@
             "event": {
                 "name": "quorum_lost",
                 "payload": {
-                    "lostAt": { "type": "string", "format": "date-time", "required": true }
+                    "lostAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "required": true
+                    }
                 }
             },
             "guards": [
@@ -591,8 +896,16 @@
             "event": {
                 "name": "quorum_restored",
                 "payload": {
-                    "restoredAt": { "type": "string", "format": "date-time", "required": true },
-                    "directorId": { "type": "string", "required": true, "description": "Joining director" }
+                    "restoredAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "required": true
+                    },
+                    "directorId": {
+                        "type": "string",
+                        "required": true,
+                        "description": "Joining director"
+                    }
                 }
             },
             "guards": [
@@ -613,16 +926,36 @@
             ]
         },
         "adjourn": {
-            "from": ["IN_MEETING", "QUORUM_LOST"],
+            "from": [
+                "IN_MEETING",
+                "QUORUM_LOST"
+            ],
             "to": "ACTIVE",
             "description": "Adjourn the board meeting",
             "event": {
                 "name": "adjourn",
                 "payload": {
-                    "closedAt": { "type": "string", "format": "date-time", "required": true },
-                    "minutesRef": { "type": "string", "description": "Reference to meeting minutes document" },
-                    "resolutionsPassed": { "type": "array", "items": { "type": "string" } },
-                    "adjournedTo": { "type": "string", "format": "date-time", "nullable": true, "description": "If adjourning to later date" }
+                    "closedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "required": true
+                    },
+                    "minutesRef": {
+                        "type": "string",
+                        "description": "Reference to meeting minutes document"
+                    },
+                    "resolutionsPassed": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "adjournedTo": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true,
+                        "description": "If adjourning to later date"
+                    }
                 }
             },
             "effects": [
@@ -672,8 +1005,14 @@
             "event": {
                 "name": "update_seats",
                 "payload": {
-                    "newAuthorizedSeats": { "type": "integer", "required": true },
-                    "bylawAmendmentRef": { "type": "string", "required": true }
+                    "newAuthorizedSeats": {
+                        "type": "integer",
+                        "required": true
+                    },
+                    "bylawAmendmentRef": {
+                        "type": "string",
+                        "required": true
+                    }
                 }
             },
             "guards": [
@@ -722,7 +1061,13 @@
     "metadata": {
         "author": "OttoChain",
         "license": "MIT",
-        "tags": ["corporate", "governance", "board", "directors", "meetings"],
+        "tags": [
+            "corporate",
+            "governance",
+            "board",
+            "directors",
+            "meetings"
+        ],
         "documentation": "https://ottochain.dev/docs/corporate/board"
     }
 }

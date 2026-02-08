@@ -408,18 +408,5 @@
       },
       "dependencies": []
     }
-  ],
-  "initialDataTemplate": {
-    "_comment": "Template for creating new contracts",
-    "schema": "Contract",
-    "title": "",
-    "description": "",
-    "proposer": "<address>",
-    "counterparty": "<address>",
-    "proposerIdentityId": null,
-    "counterpartyIdentityId": null,
-    "terms": {},
-    "completions": [],
-    "status": "PROPOSED"
-  }
+  ]
 }

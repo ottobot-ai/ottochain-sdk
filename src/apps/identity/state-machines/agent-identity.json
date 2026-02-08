@@ -452,18 +452,5 @@
       },
       "dependencies": []
     }
-  ],
-  "initialDataTemplate": {
-    "_comment": "Template for creating new agent identities",
-    "schema": "AgentIdentity",
-    "owner": "<address>",
-    "displayName": "",
-    "platform": null,
-    "platformUserId": null,
-    "reputation": 10,
-    "vouches": [],
-    "completedContracts": 0,
-    "violations": 0,
-    "status": "REGISTERED"
-  }
+  ]
 }

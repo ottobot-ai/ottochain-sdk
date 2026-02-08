@@ -5,73 +5,180 @@
     "category": "corporate-governance",
     "description": "Securities state machine tracking the lifecycle of equity from authorization through issuance, transfer, and retirement. Manages stock certificates, book entry positions, and restricted securities.",
     "context": {
-        "securityId": { "type": "string", "description": "Unique identifier for this security lot/certificate" },
-        "entityId": { "type": "string", "description": "Reference to parent corporate-entity" },
-        "shareClass": { "type": "string", "description": "Share class ID from corporate-entity" },
-        "shareClassName": { "type": "string", "description": "Human-readable class name" },
-        "certificateNumber": { "type": "string", "nullable": true, "description": "For certificated shares" },
-        "cusip": { "type": "string", "nullable": true, "description": "CUSIP number if assigned" },
-        "shareCount": { "type": "integer", "description": "Number of shares in this lot" },
-        "parValue": { "type": "number", "description": "Par value per share" },
-        "issuancePrice": { "type": "number", "nullable": true, "description": "Price per share at issuance" },
-        "issuanceDate": { "type": "string", "format": "date", "nullable": true },
+        "securityId": {
+            "type": "string",
+            "description": "Unique identifier for this security lot/certificate"
+        },
+        "entityId": {
+            "type": "string",
+            "description": "Reference to parent corporate-entity"
+        },
+        "shareClass": {
+            "type": "string",
+            "description": "Share class ID from corporate-entity"
+        },
+        "shareClassName": {
+            "type": "string",
+            "description": "Human-readable class name"
+        },
+        "certificateNumber": {
+            "type": "string",
+            "nullable": true,
+            "description": "For certificated shares"
+        },
+        "cusip": {
+            "type": "string",
+            "nullable": true,
+            "description": "CUSIP number if assigned"
+        },
+        "shareCount": {
+            "type": "integer",
+            "description": "Number of shares in this lot"
+        },
+        "parValue": {
+            "type": "number",
+            "description": "Par value per share"
+        },
+        "issuancePrice": {
+            "type": "number",
+            "nullable": true,
+            "description": "Price per share at issuance"
+        },
+        "issuanceDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+        },
         "form": {
             "type": "string",
-            "enum": ["CERTIFICATED", "BOOK_ENTRY", "DRS"],
+            "enum": [
+                "CERTIFICATED",
+                "BOOK_ENTRY",
+                "DRS"
+            ],
             "description": "Physical certificate, book entry, or Direct Registration System"
         },
         "holder": {
             "type": "object",
             "nullable": true,
             "properties": {
-                "holderId": { "type": "string" },
-                "holderType": { "type": "string", "enum": ["INDIVIDUAL", "ENTITY", "TRUST", "TREASURY"] },
-                "name": { "type": "string" },
-                "taxId": { "type": "string", "nullable": true },
-                "address": { "type": "object", "nullable": true },
-                "acquisitionDate": { "type": "string", "format": "date" },
+                "holderId": {
+                    "type": "string"
+                },
+                "holderType": {
+                    "type": "string",
+                    "enum": [
+                        "INDIVIDUAL",
+                        "ENTITY",
+                        "TRUST",
+                        "TREASURY"
+                    ]
+                },
+                "name": {
+                    "type": "string"
+                },
+                "taxId": {
+                    "type": "string",
+                    "nullable": true
+                },
+                "address": {
+                    "type": "object",
+                    "nullable": true
+                },
+                "acquisitionDate": {
+                    "type": "string",
+                    "format": "date"
+                },
                 "acquisitionMethod": {
                     "type": "string",
-                    "enum": ["ORIGINAL_ISSUANCE", "PURCHASE", "GIFT", "INHERITANCE", "STOCK_SPLIT", "CONVERSION", "EXERCISE"]
+                    "enum": [
+                        "ORIGINAL_ISSUANCE",
+                        "PURCHASE",
+                        "GIFT",
+                        "INHERITANCE",
+                        "STOCK_SPLIT",
+                        "CONVERSION",
+                        "EXERCISE"
+                    ]
                 },
-                "costBasis": { "type": "number", "nullable": true }
+                "costBasis": {
+                    "type": "number",
+                    "nullable": true
+                }
             }
         },
         "restrictions": {
             "type": "object",
             "properties": {
-                "isRestricted": { "type": "boolean", "default": false },
+                "isRestricted": {
+                    "type": "boolean",
+                    "default": false
+                },
                 "restrictionType": {
                     "type": "array",
                     "items": {
                         "type": "string",
-                        "enum": ["RULE_144", "SECTION_4(a)(2)", "REG_D", "REG_S", "LOCK_UP", "VESTING", "RIGHT_OF_FIRST_REFUSAL"]
+                        "enum": [
+                            "RULE_144",
+                            "SECTION_4(a)(2)",
+                            "REG_D",
+                            "REG_S",
+                            "LOCK_UP",
+                            "VESTING",
+                            "RIGHT_OF_FIRST_REFUSAL"
+                        ]
                     }
                 },
-                "restrictionEndDate": { "type": "string", "format": "date", "nullable": true },
+                "restrictionEndDate": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true
+                },
                 "legends": {
                     "type": "array",
-                    "items": { "type": "string" },
+                    "items": {
+                        "type": "string"
+                    },
                     "description": "Legend text on certificates"
                 },
                 "vestingSchedule": {
                     "type": "object",
                     "nullable": true,
                     "properties": {
-                        "vestingStartDate": { "type": "string", "format": "date" },
-                        "totalShares": { "type": "integer" },
-                        "vestedShares": { "type": "integer" },
-                        "vestingScheduleRef": { "type": "string" }
+                        "vestingStartDate": {
+                            "type": "string",
+                            "format": "date"
+                        },
+                        "totalShares": {
+                            "type": "integer"
+                        },
+                        "vestedShares": {
+                            "type": "integer"
+                        },
+                        "vestingScheduleRef": {
+                            "type": "string"
+                        }
                     }
                 },
-                "lockUpExpiration": { "type": "string", "format": "date", "nullable": true },
+                "lockUpExpiration": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true
+                },
                 "rofr": {
                     "type": "object",
                     "nullable": true,
                     "description": "Right of First Refusal",
                     "properties": {
-                        "holderIds": { "type": "array", "items": { "type": "string" } },
-                        "noticePeriodDays": { "type": "integer" }
+                        "holderIds": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "noticePeriodDays": {
+                            "type": "integer"
+                        }
                     }
                 }
             }
@@ -81,27 +188,57 @@
             "nullable": true,
             "description": "For shares in AUTHORIZED state",
             "properties": {
-                "authorizedDate": { "type": "string", "format": "date" },
-                "charterProvision": { "type": "string" },
-                "authorizedShares": { "type": "integer" }
+                "authorizedDate": {
+                    "type": "string",
+                    "format": "date"
+                },
+                "charterProvision": {
+                    "type": "string"
+                },
+                "authorizedShares": {
+                    "type": "integer"
+                }
             }
         },
         "issuanceDetails": {
             "type": "object",
             "nullable": true,
             "properties": {
-                "boardResolutionRef": { "type": "string" },
-                "issuanceAgreementRef": { "type": "string" },
+                "boardResolutionRef": {
+                    "type": "string"
+                },
+                "issuanceAgreementRef": {
+                    "type": "string"
+                },
                 "consideration": {
                     "type": "object",
                     "properties": {
-                        "type": { "type": "string", "enum": ["CASH", "PROPERTY", "SERVICES", "DEBT_CONVERSION", "STOCK_CONVERSION"] },
-                        "value": { "type": "number" },
-                        "description": { "type": "string" }
+                        "type": {
+                            "type": "string",
+                            "enum": [
+                                "CASH",
+                                "PROPERTY",
+                                "SERVICES",
+                                "DEBT_CONVERSION",
+                                "STOCK_CONVERSION"
+                            ]
+                        },
+                        "value": {
+                            "type": "number"
+                        },
+                        "description": {
+                            "type": "string"
+                        }
                     }
                 },
-                "exemptionUsed": { "type": "string", "nullable": true },
-                "accreditedInvestor": { "type": "boolean", "nullable": true }
+                "exemptionUsed": {
+                    "type": "string",
+                    "nullable": true
+                },
+                "accreditedInvestor": {
+                    "type": "boolean",
+                    "nullable": true
+                }
             }
         },
         "transferHistory": {
@@ -109,14 +246,39 @@
             "items": {
                 "type": "object",
                 "properties": {
-                    "transferId": { "type": "string" },
-                    "transferDate": { "type": "string", "format": "date" },
-                    "fromHolderId": { "type": "string" },
-                    "toHolderId": { "type": "string" },
-                    "shares": { "type": "integer" },
-                    "transferType": { "type": "string", "enum": ["SALE", "GIFT", "INHERITANCE", "INTERNAL"] },
-                    "pricePerShare": { "type": "number", "nullable": true },
-                    "transferAgentConfirmation": { "type": "string", "nullable": true }
+                    "transferId": {
+                        "type": "string"
+                    },
+                    "transferDate": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "fromHolderId": {
+                        "type": "string"
+                    },
+                    "toHolderId": {
+                        "type": "string"
+                    },
+                    "shares": {
+                        "type": "integer"
+                    },
+                    "transferType": {
+                        "type": "string",
+                        "enum": [
+                            "SALE",
+                            "GIFT",
+                            "INHERITANCE",
+                            "INTERNAL"
+                        ]
+                    },
+                    "pricePerShare": {
+                        "type": "number",
+                        "nullable": true
+                    },
+                    "transferAgentConfirmation": {
+                        "type": "string",
+                        "nullable": true
+                    }
                 }
             }
         },
@@ -126,13 +288,37 @@
             "items": {
                 "type": "object",
                 "properties": {
-                    "actionId": { "type": "string" },
-                    "actionType": { "type": "string", "enum": ["STOCK_SPLIT", "REVERSE_SPLIT", "STOCK_DIVIDEND", "CONVERSION", "RECLASSIFICATION"] },
-                    "actionDate": { "type": "string", "format": "date" },
-                    "ratio": { "type": "string", "nullable": true, "description": "e.g., 2:1 for split" },
-                    "sharesBeforeAction": { "type": "integer" },
-                    "sharesAfterAction": { "type": "integer" },
-                    "resolutionRef": { "type": "string" }
+                    "actionId": {
+                        "type": "string"
+                    },
+                    "actionType": {
+                        "type": "string",
+                        "enum": [
+                            "STOCK_SPLIT",
+                            "REVERSE_SPLIT",
+                            "STOCK_DIVIDEND",
+                            "CONVERSION",
+                            "RECLASSIFICATION"
+                        ]
+                    },
+                    "actionDate": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "ratio": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "e.g., 2:1 for split"
+                    },
+                    "sharesBeforeAction": {
+                        "type": "integer"
+                    },
+                    "sharesAfterAction": {
+                        "type": "integer"
+                    },
+                    "resolutionRef": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -140,14 +326,36 @@
             "type": "object",
             "nullable": true,
             "properties": {
-                "retiredDate": { "type": "string", "format": "date" },
-                "retirementMethod": { "type": "string", "enum": ["REPURCHASE", "REDEMPTION", "CANCELLATION", "CONVERSION"] },
-                "repurchasePrice": { "type": "number", "nullable": true },
-                "boardResolutionRef": { "type": "string" }
+                "retiredDate": {
+                    "type": "string",
+                    "format": "date"
+                },
+                "retirementMethod": {
+                    "type": "string",
+                    "enum": [
+                        "REPURCHASE",
+                        "REDEMPTION",
+                        "CANCELLATION",
+                        "CONVERSION"
+                    ]
+                },
+                "repurchasePrice": {
+                    "type": "number",
+                    "nullable": true
+                },
+                "boardResolutionRef": {
+                    "type": "string"
+                }
             }
         },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "updatedAt": { "type": "string", "format": "date-time" }
+        "createdAt": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+        }
     },
     "states": {
         "AUTHORIZED": {
@@ -196,14 +404,38 @@
             "event": {
                 "name": "authorize_shares",
                 "payload": {
-                    "securityId": { "type": "string", "required": true },
-                    "entityId": { "type": "string", "required": true },
-                    "shareClass": { "type": "string", "required": true },
-                    "shareClassName": { "type": "string", "required": true },
-                    "shareCount": { "type": "integer", "required": true },
-                    "parValue": { "type": "number", "required": true },
-                    "authorizedDate": { "type": "string", "format": "date", "required": true },
-                    "charterProvision": { "type": "string" }
+                    "securityId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "entityId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "shareClass": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "shareClassName": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "shareCount": {
+                        "type": "integer",
+                        "required": true
+                    },
+                    "parValue": {
+                        "type": "number",
+                        "required": true
+                    },
+                    "authorizedDate": {
+                        "type": "string",
+                        "format": "date",
+                        "required": true
+                    },
+                    "charterProvision": {
+                        "type": "string"
+                    }
                 }
             },
             "effects": [
@@ -265,21 +497,65 @@
             "event": {
                 "name": "issue_shares",
                 "payload": {
-                    "holderId": { "type": "string", "required": true },
-                    "holderType": { "type": "string", "required": true },
-                    "holderName": { "type": "string", "required": true },
-                    "address": { "type": "object" },
-                    "issuanceDate": { "type": "string", "format": "date", "required": true },
-                    "issuancePrice": { "type": "number" },
-                    "form": { "type": "string", "enum": ["CERTIFICATED", "BOOK_ENTRY", "DRS"], "required": true },
-                    "certificateNumber": { "type": "string" },
-                    "boardResolutionRef": { "type": "string", "required": true },
-                    "consideration": { "type": "object", "required": true },
-                    "isRestricted": { "type": "boolean", "default": false },
-                    "restrictionType": { "type": "array" },
-                    "legends": { "type": "array" },
-                    "exemptionUsed": { "type": "string" },
-                    "accreditedInvestor": { "type": "boolean" }
+                    "holderId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "holderType": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "holderName": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "address": {
+                        "type": "object"
+                    },
+                    "issuanceDate": {
+                        "type": "string",
+                        "format": "date",
+                        "required": true
+                    },
+                    "issuancePrice": {
+                        "type": "number"
+                    },
+                    "form": {
+                        "type": "string",
+                        "enum": [
+                            "CERTIFICATED",
+                            "BOOK_ENTRY",
+                            "DRS"
+                        ],
+                        "required": true
+                    },
+                    "certificateNumber": {
+                        "type": "string"
+                    },
+                    "boardResolutionRef": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "consideration": {
+                        "type": "object",
+                        "required": true
+                    },
+                    "isRestricted": {
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "restrictionType": {
+                        "type": "array"
+                    },
+                    "legends": {
+                        "type": "array"
+                    },
+                    "exemptionUsed": {
+                        "type": "string"
+                    },
+                    "accreditedInvestor": {
+                        "type": "boolean"
+                    }
                 }
             },
             "guards": [
@@ -376,14 +652,37 @@
             "event": {
                 "name": "initiate_transfer",
                 "payload": {
-                    "transferId": { "type": "string", "required": true },
-                    "toHolderId": { "type": "string", "required": true },
-                    "toHolderName": { "type": "string", "required": true },
-                    "toHolderType": { "type": "string", "required": true },
-                    "toAddress": { "type": "object" },
-                    "transferType": { "type": "string", "required": true },
-                    "pricePerShare": { "type": "number" },
-                    "transferDate": { "type": "string", "format": "date", "required": true }
+                    "transferId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "toHolderId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "toHolderName": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "toHolderType": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "toAddress": {
+                        "type": "object"
+                    },
+                    "transferType": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "pricePerShare": {
+                        "type": "number"
+                    },
+                    "transferDate": {
+                        "type": "string",
+                        "format": "date",
+                        "required": true
+                    }
                 }
             },
             "guards": [
@@ -431,14 +730,35 @@
             "event": {
                 "name": "complete_transfer",
                 "payload": {
-                    "transferAgentConfirmation": { "type": "string" },
-                    "newCertificateNumber": { "type": "string" },
-                    "toHolderId": { "type": "string", "required": true },
-                    "toHolderName": { "type": "string", "required": true },
-                    "toHolderType": { "type": "string", "required": true },
-                    "toAddress": { "type": "object" },
-                    "completedDate": { "type": "string", "format": "date", "required": true },
-                    "costBasis": { "type": "number" }
+                    "transferAgentConfirmation": {
+                        "type": "string"
+                    },
+                    "newCertificateNumber": {
+                        "type": "string"
+                    },
+                    "toHolderId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "toHolderName": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "toHolderType": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "toAddress": {
+                        "type": "object"
+                    },
+                    "completedDate": {
+                        "type": "string",
+                        "format": "date",
+                        "required": true
+                    },
+                    "costBasis": {
+                        "type": "number"
+                    }
                 }
             },
             "effects": [
@@ -490,10 +810,22 @@
             "event": {
                 "name": "repurchase",
                 "payload": {
-                    "repurchaseDate": { "type": "string", "format": "date", "required": true },
-                    "pricePerShare": { "type": "number", "required": true },
-                    "boardResolutionRef": { "type": "string", "required": true },
-                    "repurchaseAgreementRef": { "type": "string" }
+                    "repurchaseDate": {
+                        "type": "string",
+                        "format": "date",
+                        "required": true
+                    },
+                    "pricePerShare": {
+                        "type": "number",
+                        "required": true
+                    },
+                    "boardResolutionRef": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "repurchaseAgreementRef": {
+                        "type": "string"
+                    }
                 }
             },
             "guards": [
@@ -550,13 +882,33 @@
             "event": {
                 "name": "reissue_from_treasury",
                 "payload": {
-                    "holderId": { "type": "string", "required": true },
-                    "holderName": { "type": "string", "required": true },
-                    "holderType": { "type": "string", "required": true },
-                    "address": { "type": "object" },
-                    "reissueDate": { "type": "string", "format": "date", "required": true },
-                    "issuancePrice": { "type": "number" },
-                    "boardResolutionRef": { "type": "string", "required": true }
+                    "holderId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "holderName": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "holderType": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "address": {
+                        "type": "object"
+                    },
+                    "reissueDate": {
+                        "type": "string",
+                        "format": "date",
+                        "required": true
+                    },
+                    "issuancePrice": {
+                        "type": "number"
+                    },
+                    "boardResolutionRef": {
+                        "type": "string",
+                        "required": true
+                    }
                 }
             },
             "guards": [
@@ -594,16 +946,31 @@
             ]
         },
         "retire": {
-            "from": ["ISSUED", "TREASURY"],
+            "from": [
+                "ISSUED",
+                "TREASURY"
+            ],
             "to": "RETIRED",
             "description": "Retire shares (cancel them)",
             "event": {
                 "name": "retire",
                 "payload": {
-                    "retiredDate": { "type": "string", "format": "date", "required": true },
-                    "retirementMethod": { "type": "string", "required": true },
-                    "boardResolutionRef": { "type": "string", "required": true },
-                    "repurchasePrice": { "type": "number" }
+                    "retiredDate": {
+                        "type": "string",
+                        "format": "date",
+                        "required": true
+                    },
+                    "retirementMethod": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "boardResolutionRef": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "repurchasePrice": {
+                        "type": "number"
+                    }
                 }
             },
             "guards": [
@@ -650,11 +1017,28 @@
             "event": {
                 "name": "stock_split",
                 "payload": {
-                    "actionId": { "type": "string", "required": true },
-                    "splitRatio": { "type": "string", "required": true, "description": "e.g., '2:1' for 2-for-1 split" },
-                    "effectiveDate": { "type": "string", "format": "date", "required": true },
-                    "resolutionRef": { "type": "string", "required": true },
-                    "newShareCount": { "type": "integer", "required": true }
+                    "actionId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "splitRatio": {
+                        "type": "string",
+                        "required": true,
+                        "description": "e.g., '2:1' for 2-for-1 split"
+                    },
+                    "effectiveDate": {
+                        "type": "string",
+                        "format": "date",
+                        "required": true
+                    },
+                    "resolutionRef": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "newShareCount": {
+                        "type": "integer",
+                        "required": true
+                    }
                 }
             },
             "effects": [
@@ -694,13 +1078,38 @@
             "event": {
                 "name": "declare_dividend",
                 "payload": {
-                    "actionId": { "type": "string", "required": true },
-                    "dividendType": { "type": "string", "enum": ["CASH", "STOCK"], "required": true },
-                    "recordDate": { "type": "string", "format": "date", "required": true },
-                    "paymentDate": { "type": "string", "format": "date", "required": true },
-                    "cashAmount": { "type": "number" },
-                    "stockShares": { "type": "integer" },
-                    "resolutionRef": { "type": "string", "required": true }
+                    "actionId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "dividendType": {
+                        "type": "string",
+                        "enum": [
+                            "CASH",
+                            "STOCK"
+                        ],
+                        "required": true
+                    },
+                    "recordDate": {
+                        "type": "string",
+                        "format": "date",
+                        "required": true
+                    },
+                    "paymentDate": {
+                        "type": "string",
+                        "format": "date",
+                        "required": true
+                    },
+                    "cashAmount": {
+                        "type": "number"
+                    },
+                    "stockShares": {
+                        "type": "integer"
+                    },
+                    "resolutionRef": {
+                        "type": "string",
+                        "required": true
+                    }
                 }
             },
             "guards": [
@@ -748,10 +1157,21 @@
             "event": {
                 "name": "remove_restriction",
                 "payload": {
-                    "restrictionType": { "type": "string", "required": true },
-                    "removedDate": { "type": "string", "format": "date", "required": true },
-                    "reason": { "type": "string" },
-                    "legalOpinionRef": { "type": "string" }
+                    "restrictionType": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "removedDate": {
+                        "type": "string",
+                        "format": "date",
+                        "required": true
+                    },
+                    "reason": {
+                        "type": "string"
+                    },
+                    "legalOpinionRef": {
+                        "type": "string"
+                    }
                 }
             },
             "effects": [
@@ -797,7 +1217,14 @@
     "metadata": {
         "author": "OttoChain",
         "license": "MIT",
-        "tags": ["corporate", "governance", "securities", "stock", "equity", "certificates"],
+        "tags": [
+            "corporate",
+            "governance",
+            "securities",
+            "stock",
+            "equity",
+            "certificates"
+        ],
         "documentation": "https://ottochain.dev/docs/corporate/securities"
     }
 }

@@ -697,19 +697,6 @@
       "dependencies": []
     }
   ],
-  "initialDataTemplate": {
-    "schema": "MultisigDAO",
-    "name": "",
-    "signers": [],
-    "threshold": 1,
-    "proposalTTLMs": 604800000,
-    "proposal": null,
-    "signatures": {},
-    "actions": [],
-    "cancelledProposals": [],
-    "metadata": {},
-    "status": "ACTIVE"
-  },
   "crossReferences": {
     "Identity": "signer verification",
     "Contract": "action execution targets",

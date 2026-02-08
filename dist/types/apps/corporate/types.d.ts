@@ -369,6 +369,9 @@ export declare const CORPORATE_DEFINITIONS: {
                 description: string;
             };
             tradeName: {
+                /**
+                 * Type of corporate entity.
+                 */
                 type: string;
                 nullable: boolean;
                 description: string;
@@ -414,7 +417,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         type: string;
                     };
                     address: {
-                        type: string; /** Total authorized shares */
+                        type: string;
                     };
                     phone: {
                         type: string;
@@ -464,6 +467,9 @@ export declare const CORPORATE_DEFINITIONS: {
                                 classId: {
                                     type: string;
                                 };
+                                /**
+                                 * Director status.
+                                 */
                                 authorized: {
                                     type: string;
                                     description: string;
@@ -485,7 +491,7 @@ export declare const CORPORATE_DEFINITIONS: {
                                     description: string;
                                 };
                                 votingRights: {
-                                    type: string;
+                                    type: string; /** Term start date (ISO 8601) */
                                     description: string;
                                 };
                                 votesPerShare: {
@@ -508,12 +514,9 @@ export declare const CORPORATE_DEFINITIONS: {
                                 };
                                 conversionRatio: {
                                     type: string;
-                                    nullable: boolean;
+                                    nullable: boolean; /** Unique board identifier */
                                 };
                                 antidilution: {
-                                    /**
-                                     * Director information.
-                                     */
                                     type: string;
                                     enum: string[];
                                     nullable: boolean;
@@ -536,6 +539,9 @@ export declare const CORPORATE_DEFINITIONS: {
             incorporators: {
                 type: string;
                 items: {
+                    /**
+                     * Shareholder meeting type.
+                     */
                     type: string;
                     properties: {
                         name: {
@@ -562,18 +568,18 @@ export declare const CORPORATE_DEFINITIONS: {
                     type: string;
                 };
                 description: string;
-            };
+            }; /** Share holdings by class */
             suspensionReason: {
                 type: string;
                 nullable: boolean;
             };
             suspensionDate: {
-                type: string;
+                type: string; /** Total voting power */
                 format: string;
-                nullable: boolean;
+                nullable: boolean; /** Proxy granted to (if any) */
             };
             dissolutionDate: {
-                type: string; /** Seat information */
+                type: string;
                 format: string;
                 nullable: boolean;
             };
@@ -584,6 +590,7 @@ export declare const CORPORATE_DEFINITIONS: {
             charterAmendments: {
                 type: string;
                 items: {
+                    /** Item title */
                     type: string;
                     properties: {
                         amendmentId: {
@@ -602,6 +609,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         };
                         filedDate: {
                             type: string;
+                            /** Fiscal year */
                             format: string;
                         };
                     };
@@ -620,10 +628,8 @@ export declare const CORPORATE_DEFINITIONS: {
             INCORPORATING: {
                 description: string;
                 metadata: {
-                    displayName: string;
-                    color: string; /**
-                     * Shareholder information.
-                     */
+                    displayName: string; /** Meeting agenda */
+                    color: string;
                 };
             };
             ACTIVE: {
@@ -632,7 +638,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     displayName: string;
                     color: string;
                 };
-            };
+            }; /** Vote tallies */
             SUSPENDED: {
                 description: string;
                 metadata: {
@@ -644,7 +650,7 @@ export declare const CORPORATE_DEFINITIONS: {
                 description: string;
                 metadata: {
                     displayName: string;
-                    color: string; /** Item type */
+                    color: string;
                 };
                 terminal: boolean;
             };
@@ -654,7 +660,9 @@ export declare const CORPORATE_DEFINITIONS: {
             incorporate: {
                 from: string;
                 to: string;
-                description: string; /** Unique meeting identifier */
+                description: string; /**
+                 * Security holder information.
+                 */
                 event: {
                     name: string;
                     payload: {
@@ -679,11 +687,12 @@ export declare const CORPORATE_DEFINITIONS: {
                     expression: string;
                 }[];
                 effects: ({
+                    /** Transfer restrictions */
                     type: string;
                     path: string;
                     value: string;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -692,7 +701,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         legalName: string;
                         jurisdiction: string;
                         formationDate: string;
-                    }; /** Holder's name */
+                    };
                     path?: undefined;
                     value?: undefined;
                 })[];
@@ -748,7 +757,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     description: string;
                     expression: string;
                     crossMachine: {
-                        machine: string; /** Creation timestamp */
+                        machine: string;
                         instanceRef: string;
                         requiredState: string;
                     };
@@ -766,7 +775,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     condition?: undefined;
                     then?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     condition: string;
@@ -778,7 +787,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     path?: undefined;
                     value?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
@@ -786,15 +795,12 @@ export declare const CORPORATE_DEFINITIONS: {
                     condition?: undefined;
                     then?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
                     payload: {
                         entityId: string;
-                        /**
-                         * Corporate governance state machine definitions.
-                         */
                         amendmentId: string;
                         amendmentType: string;
                     };
@@ -930,7 +936,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         effectiveDate: string;
                     };
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -976,7 +982,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     path: string;
                     value: string;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -1024,7 +1030,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     path: string;
                     value: null;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -1079,7 +1085,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     path: string;
                     value: string;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -1119,7 +1125,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     path: string;
                     value: string;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -1191,9 +1197,6 @@ export declare const CORPORATE_DEFINITIONS: {
                 type: string;
                 items: {
                     type: string;
-                    /**
-                     * Type of corporate entity.
-                     */
                     properties: {
                         directorId: {
                             type: string;
@@ -1208,6 +1211,9 @@ export declare const CORPORATE_DEFINITIONS: {
                             type: string;
                             format: string;
                         };
+                        /**
+                         * Entity lifecycle state.
+                         */
                         termEnd: {
                             type: string;
                             format: string;
@@ -1228,7 +1234,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         isChair: {
                             type: string;
                             default: boolean;
-                        };
+                        }; /** Par value per share */
                         isLeadIndependent: {
                             type: string;
                             default: boolean;
@@ -1242,9 +1248,10 @@ export declare const CORPORATE_DEFINITIONS: {
                         };
                         electedBy: {
                             type: string;
-                            description: string;
+                            description: string; /** Legal name of the entity */
                         };
                         compensationAgreementRef: {
+                            /** Type of entity */
                             type: string;
                             nullable: boolean;
                         };
@@ -1259,9 +1266,6 @@ export declare const CORPORATE_DEFINITIONS: {
                         description: string;
                     };
                     filled: {
-                        /**
-                         * Corporate entity state.
-                         */
                         type: string;
                     };
                     vacant: {
@@ -1310,9 +1314,6 @@ export declare const CORPORATE_DEFINITIONS: {
                         description: string;
                     };
                     minimumRequired: {
-                        /**
-                         * Director status.
-                         */
                         type: string;
                         description: string;
                     };
@@ -1325,7 +1326,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         type: string;
                         enum: string[];
                         default: string;
-                    };
+                    }; /** Attendee information */
                     supermajorityMatters: {
                         type: string;
                         items: {
@@ -1337,17 +1338,17 @@ export declare const CORPORATE_DEFINITIONS: {
                         type: string;
                         default: number;
                     };
-                };
+                }; /** Associated entity ID */
             };
             currentMeeting: {
-                type: string; /** Director's email */
+                type: string;
                 nullable: boolean;
                 properties: {
                     meetingId: {
                         type: string;
                     };
                     type: {
-                        type: string;
+                        type: string; /** Quorum rules */
                         enum: string[];
                     };
                     scheduledDate: {
@@ -1358,6 +1359,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         type: string;
                     };
                     isVirtual: {
+                        /** Current state */
                         type: string;
                     };
                     calledBy: {
@@ -1392,8 +1394,8 @@ export declare const CORPORATE_DEFINITIONS: {
                                 departedAt: {
                                     type: string;
                                     format: string;
-                                    nullable: boolean; /** Board of directors */
-                                }; /** Board of directors */
+                                    nullable: boolean;
+                                };
                                 viaProxy: {
                                     type: string;
                                     default: boolean;
@@ -1446,9 +1448,6 @@ export declare const CORPORATE_DEFINITIONS: {
                         };
                         resolutionsPassed: {
                             type: string;
-                            /**
-                             * Agenda item status.
-                             */
                             items: {
                                 type: string;
                             };
@@ -1465,7 +1464,6 @@ export declare const CORPORATE_DEFINITIONS: {
             };
             updatedAt: {
                 type: string;
-                /** Unique shareholder identifier */
                 format: string;
             };
         };
@@ -1490,13 +1488,13 @@ export declare const CORPORATE_DEFINITIONS: {
                     displayName: string;
                     color: string;
                 };
-            };
+            }; /** Type of holder */
         };
         initialState: string;
         transitions: {
             elect_director: {
                 from: string;
-                to: string; /** Unique meeting identifier */
+                to: string;
                 description: string;
                 event: {
                     name: string;
@@ -1504,14 +1502,14 @@ export declare const CORPORATE_DEFINITIONS: {
                         directorId: {
                             type: string;
                             required: boolean;
-                        };
+                        }; /** Associated entity ID */
                         name: {
-                            type: string;
+                            type: string; /** Share class identifier */
                             required: boolean;
                         };
                         email: {
                             type: string;
-                        };
+                        }; /** Number of shares */
                         termStart: {
                             type: string;
                             format: string;
@@ -1548,7 +1546,7 @@ export declare const CORPORATE_DEFINITIONS: {
                 }[];
                 effects: ({
                     type: string;
-                    path: string; /** Holder's name */
+                    path: string;
                     value: {
                         directorId: string;
                         name: string;
@@ -1565,14 +1563,14 @@ export declare const CORPORATE_DEFINITIONS: {
                     };
                     amount?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
                     amount: number;
                     value?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -1588,7 +1586,7 @@ export declare const CORPORATE_DEFINITIONS: {
                 })[];
             };
             resign_director: {
-                from: string[]; /** Transfer history */
+                from: string[];
                 to: string;
                 description: string;
                 event: {
@@ -1600,7 +1598,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         };
                         effectiveDate: {
                             type: string;
-                            format: string; /** Creation timestamp */
+                            format: string;
                             required: boolean;
                         };
                         reason: {
@@ -1627,7 +1625,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     };
                     amount?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
@@ -1636,7 +1634,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     matchValue?: undefined;
                     updates?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -1702,7 +1700,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     };
                     amount?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
@@ -1711,7 +1709,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     matchValue?: undefined;
                     updates?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -1839,7 +1837,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         quorumCount: number;
                     };
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -1926,7 +1924,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     path: string;
                     value: string;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -2071,7 +2069,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     path: string;
                     value: string;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
@@ -2085,13 +2083,13 @@ export declare const CORPORATE_DEFINITIONS: {
                         minutesRef: string;
                     };
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
                     value: null;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -2177,9 +2175,15 @@ export declare const CORPORATE_DEFINITIONS: {
         context: {
             meetingId: {
                 type: string;
+                /**
+                 * Type of corporate entity.
+                 */
                 description: string;
             };
             entityId: {
+                /**
+                 * Type of corporate entity.
+                 */
                 type: string;
                 description: string;
             };
@@ -2212,7 +2216,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         default: boolean;
                     };
                 };
-            };
+            }; /** Country code (ISO 3166-1) */
             calledBy: {
                 type: string;
                 properties: {
@@ -2268,7 +2272,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         format: string;
                     };
                     resolutionRef: {
-                        type: string; /** Legal name of the entity */
+                        type: string;
                     };
                 };
             };
@@ -2289,7 +2293,6 @@ export declare const CORPORATE_DEFINITIONS: {
                             items: {
                                 type: string;
                                 properties: {
-                                    /** Share structure */
                                     shareClass: {
                                         type: string;
                                     };
@@ -2299,10 +2302,10 @@ export declare const CORPORATE_DEFINITIONS: {
                                     votes: {
                                         type: string;
                                         description: string;
-                                    };
+                                    }; /** Director's name */
                                 };
                             };
-                        };
+                        }; /** Director's email */
                         totalVotes: {
                             type: string;
                         };
@@ -2327,7 +2330,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     };
                     threshold: {
                         type: string;
-                        default: number;
+                        default: number; /** Whether quorum is present */
                         description: string;
                     };
                     sharesRequired: {
@@ -2335,7 +2338,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     };
                     sharesRepresented: {
                         type: string;
-                        default: number;
+                        default: number; /** Associated entity ID */
                     };
                     quorumMet: {
                         type: string;
@@ -2359,7 +2362,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         };
                         description: {
                             type: string;
-                        }; /** Whether director is board chair */
+                        };
                         type: {
                             type: string;
                             enum: string[];
@@ -2402,7 +2405,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     };
                     endDate: {
                         type: string;
-                        format: string; /** Current state */
+                        format: string;
                         description: string;
                     };
                     proxyMaterials: {
@@ -2415,9 +2418,6 @@ export declare const CORPORATE_DEFINITIONS: {
                                 type: string;
                             };
                             annualReportRef: {
-                                /**
-                                 * Shareholder meeting type.
-                                 */
                                 type: string;
                                 nullable: boolean;
                             };
@@ -2441,9 +2441,9 @@ export declare const CORPORATE_DEFINITIONS: {
                             description: string;
                         };
                         shareholderId: {
-                            type: string; /** Share holdings by class */
+                            type: string;
                             description: string;
-                        };
+                        }; /** Creation timestamp */
                         shareClass: {
                             type: string;
                         };
@@ -2462,9 +2462,10 @@ export declare const CORPORATE_DEFINITIONS: {
                         votesWithhold: {
                             type: string;
                             default: number;
-                            description: string;
+                            description: string; /** Unique holder identifier */
                         };
                         cumulativeVoteAllocation: {
+                            /** Type of holder */
                             type: string;
                             additionalProperties: {
                                 type: string;
@@ -2493,11 +2494,11 @@ export declare const CORPORATE_DEFINITIONS: {
                         };
                         forVotes: {
                             type: string;
-                            default: number;
+                            default: number; /** Issuance date */
                         };
                         againstVotes: {
                             type: string;
-                            default: number;
+                            default: number; /** Certificate number (if certificated) */
                         };
                         abstainVotes: {
                             type: string;
@@ -2544,9 +2545,6 @@ export declare const CORPORATE_DEFINITIONS: {
                     appointedBy: {
                         type: string;
                     };
-                    /**
-                     * Security form.
-                     */
                     appointmentDate: {
                         type: string;
                         format: string;
@@ -2578,7 +2576,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         nullable: boolean;
                     };
                     adjournedAt: {
-                        type: string; /** Holder's name */
+                        type: string;
                         format: string;
                         nullable: boolean;
                     };
@@ -2601,11 +2599,14 @@ export declare const CORPORATE_DEFINITIONS: {
                     };
                     certificateRef: {
                         type: string;
-                    }; /** Associated entity ID */
+                    };
                 };
             };
+            /**
+             * Union of all corporate state types.
+             */
             createdAt: {
-                type: string; /** Share class identifier */
+                type: string;
                 format: string;
             };
             updatedAt: {
@@ -2620,7 +2621,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     displayName: string;
                     color: string;
                 };
-            }; /** Security form */
+            };
             RECORD_DATE_SET: {
                 description: string;
                 metadata: {
@@ -2706,7 +2707,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     path: string;
                     value: string;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
@@ -2715,7 +2716,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         resolutionRef: string;
                     };
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -2774,7 +2775,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     path: string;
                     value: string;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -2818,7 +2819,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         resolutionRef: string;
                     };
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -2909,13 +2910,13 @@ export declare const CORPORATE_DEFINITIONS: {
                         };
                     };
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
                     value: string;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -3024,19 +3025,19 @@ export declare const CORPORATE_DEFINITIONS: {
                         secretaryPresent: string;
                     };
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
                     value: string;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
                     value: boolean;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -3271,7 +3272,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     array?: undefined;
                     do?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
@@ -3279,7 +3280,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     array?: undefined;
                     do?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     array: string;
@@ -3296,7 +3297,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     path?: undefined;
                     value?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -3338,7 +3339,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     path: string;
                     value: string;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -3412,7 +3413,9 @@ export declare const CORPORATE_DEFINITIONS: {
                             type: string;
                         };
                         title: {
-                            type: string;
+                            type: string; /**
+                             * Entity lifecycle state.
+                             */
                             enum: string[];
                             description: string;
                         };
@@ -3423,7 +3426,6 @@ export declare const CORPORATE_DEFINITIONS: {
                         };
                         status: {
                             type: string;
-                            /** State/province of incorporation */
                             enum: string[];
                         };
                         appointedDate: {
@@ -3432,10 +3434,9 @@ export declare const CORPORATE_DEFINITIONS: {
                         };
                         appointmentResolutionRef: {
                             type: string;
-                        }; /** Unique class identifier */
+                        };
                         terminationDate: {
                             type: string;
-                            /** Human-readable class name */
                             format: string;
                             nullable: boolean;
                         };
@@ -3450,15 +3451,14 @@ export declare const CORPORATE_DEFINITIONS: {
                         };
                         directorId: {
                             type: string;
-                            nullable: boolean; /** Whether shares have voting rights */
+                            nullable: boolean;
                         };
                         compensationAgreementRef: {
                             type: string;
                             nullable: boolean;
-                        };
+                        }; /** Share structure */
                         authorityLevel: {
                             type: string;
-                            /** Liquidation preference multiple */
                             enum: string[];
                             description: string;
                         };
@@ -3467,7 +3467,6 @@ export declare const CORPORATE_DEFINITIONS: {
                             nullable: boolean;
                             description: string;
                         };
-                        /** Legal name of the entity */
                         signatureAuthority: {
                             type: string;
                             properties: {
@@ -3498,7 +3497,7 @@ export declare const CORPORATE_DEFINITIONS: {
                             };
                         };
                         delegatedAuthorities: {
-                            type: string; /** Current state */
+                            type: string;
                             items: {
                                 type: string;
                                 properties: {
@@ -3508,16 +3507,10 @@ export declare const CORPORATE_DEFINITIONS: {
                                     authority: {
                                         type: string;
                                     };
-                                    /**
-                                     * Director status.
-                                     */
                                     scope: {
                                         type: string;
                                     };
                                     delegatedBy: {
-                                        /**
-                                         * Director status.
-                                         */
                                         type: string;
                                     };
                                     delegatedOn: {
@@ -3534,16 +3527,13 @@ export declare const CORPORATE_DEFINITIONS: {
                                         default: boolean;
                                     };
                                 };
-                            };
+                            }; /** Current meeting (if in session) */
                         };
                     };
                 };
             };
             appointmentAuthority: {
                 type: string;
-                /**
-                 * Director information.
-                 */
                 description: string;
                 properties: {
                     boardAppoints: {
@@ -3564,14 +3554,14 @@ export declare const CORPORATE_DEFINITIONS: {
                         type: string;
                         items: {
                             type: string;
-                        }; /** Unique meeting identifier */
+                        };
                         default: string[];
                     };
                     secretaryAppoints: {
                         type: string;
                         items: {
-                            type: string; /** Attendee information */
-                        }; /** Attendee information */
+                            type: string;
+                        };
                         default: string[];
                     };
                 };
@@ -3597,14 +3587,14 @@ export declare const CORPORATE_DEFINITIONS: {
                                     };
                                     name: {
                                         type: string;
-                                    }; /** Quorum rules */
+                                    };
                                     priority: {
                                         type: string;
                                     };
                                     readiness: {
                                         type: string;
                                         enum: string[];
-                                    }; /** Meeting history */
+                                    };
                                 };
                             };
                         };
@@ -3614,7 +3604,7 @@ export declare const CORPORATE_DEFINITIONS: {
             vacantPositions: {
                 type: string;
                 items: {
-                    type: string; /** Current state */
+                    type: string;
                 };
                 description: string;
             };
@@ -3636,7 +3626,7 @@ export declare const CORPORATE_DEFINITIONS: {
                 };
             };
         };
-        initialState: string;
+        initialState: string; /** Creation timestamp */
         transitions: {
             appoint_officer: {
                 from: string;
@@ -3652,7 +3642,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         personId: {
                             type: string;
                             required: boolean;
-                        }; /** Total voting power */
+                        };
                         name: {
                             type: string;
                             required: boolean;
@@ -3669,25 +3659,25 @@ export declare const CORPORATE_DEFINITIONS: {
                             format: string;
                             required: boolean;
                         };
+                        /**
+                         * Corporate securities state.
+                         */
                         appointmentResolutionRef: {
                             type: string;
-                            /** Item title */
                             required: boolean;
                         };
                         reportsTo: {
                             type: string;
-                        };
+                        }; /** Associated entity ID */
                         isBoardMember: {
                             type: string;
                             default: boolean;
-                        };
+                        }; /** Share class name */
                         directorId: {
                             type: string;
                         };
-                        /**
-                         * Corporate shareholders meeting state.
-                         */
                         authorityLevel: {
+                            /** Par value */
                             type: string;
                             default: string;
                         };
@@ -3698,16 +3688,16 @@ export declare const CORPORATE_DEFINITIONS: {
                             type: string;
                         };
                         isInterim: {
-                            type: string;
+                            type: string; /** Current holder */
                             default: boolean;
-                        }; /** Type of meeting */
+                        };
                     };
                 };
                 guards: ({
                     name: string;
                     description: string;
                     crossMachine: {
-                        machine: string;
+                        machine: string; /** Transfer history */
                         instanceRef: string;
                         requiredState: string;
                     };
@@ -3747,13 +3737,13 @@ export declare const CORPORATE_DEFINITIONS: {
                         delegatedAuthorities: never[];
                     };
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
                     value: string;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -3762,7 +3752,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         officerId: string;
                         name: string;
                         title: string;
-                        appointedDate: string; /** Current holder */
+                        appointedDate: string;
                     };
                     path?: undefined;
                     value?: undefined;
@@ -3822,7 +3812,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     };
                     expression?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
@@ -3831,11 +3821,8 @@ export declare const CORPORATE_DEFINITIONS: {
                     matchValue?: undefined;
                     updates?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
-                    /**
-                     * Corporate governance state machine definitions.
-                     */
                     type: string;
                     eventType: string;
                     payload: {
@@ -3891,7 +3878,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     };
                     expression?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
@@ -3900,7 +3887,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     matchValue?: undefined;
                     updates?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -3977,7 +3964,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         revoked: boolean;
                     };
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -4032,7 +4019,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         revoked: boolean;
                     };
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -4133,7 +4120,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         appointmentResolutionRef: string;
                     };
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -4238,6 +4225,9 @@ export declare const CORPORATE_DEFINITIONS: {
                 description: string;
             };
             sections: {
+                /**
+                 * Entity lifecycle state.
+                 */
                 type: string;
                 description: string;
                 items: {
@@ -4257,17 +4247,17 @@ export declare const CORPORATE_DEFINITIONS: {
                             type: string;
                         };
                         amendmentRequirement: {
-                            type: string;
+                            type: string; /** Human-readable class name */
                             enum: string[];
                             description: string;
                         };
                         supermajorityThreshold: {
                             type: string;
                             nullable: boolean;
-                        }; /** Total authorized shares */
+                        };
                         lastModifiedVersion: {
                             type: string;
-                        }; /** Shares issued to date */
+                        };
                     };
                 };
             };
@@ -4301,11 +4291,10 @@ export declare const CORPORATE_DEFINITIONS: {
                             sectionRef: {
                                 type: string;
                             };
-                        }; /** Jurisdiction of incorporation */
+                        };
                     };
                     meetingNotice: {
                         type: string;
-                        /** Date of formation (ISO 8601) */
                         properties: {
                             annualMeetingNotice: {
                                 type: string;
@@ -4393,7 +4382,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     };
                     boardApprovalRef: {
                         type: string;
-                        nullable: boolean;
+                        nullable: boolean; /** Current state */
                     };
                     shareholderApprovalRef: {
                         type: string;
@@ -4411,17 +4400,18 @@ export declare const CORPORATE_DEFINITIONS: {
                     type: string;
                     properties: {
                         amendmentId: {
-                            type: string;
+                            type: string; /**
+                             * Shareholder information.
+                             */
                         };
                         version: {
                             type: string;
                         };
                         description: {
                             type: string;
-                        }; /** Unique board identifier */
+                        };
                         sectionsAffected: {
                             type: string;
-                            /** Associated entity ID */
                             items: {
                                 type: string;
                             };
@@ -4444,18 +4434,18 @@ export declare const CORPORATE_DEFINITIONS: {
                         };
                         documentRef: {
                             type: string;
-                        }; /** Meeting history */
+                        };
                     };
                 };
             };
             createdAt: {
-                type: string;
+                type: string; /** Unique meeting identifier */
                 format: string;
             };
             updatedAt: {
                 type: string;
                 format: string;
-            }; /** Current state */
+            };
         };
         states: {
             DRAFT: {
@@ -4476,7 +4466,6 @@ export declare const CORPORATE_DEFINITIONS: {
                 description: string;
                 metadata: {
                     displayName: string;
-                    /** Unique shareholder identifier */
                     color: string;
                 };
             };
@@ -4494,7 +4483,7 @@ export declare const CORPORATE_DEFINITIONS: {
                             type: string;
                             format: string;
                             required: boolean;
-                        };
+                        }; /** Creation timestamp */
                         adoptedBy: {
                             type: string;
                             enum: string[];
@@ -4505,10 +4494,13 @@ export declare const CORPORATE_DEFINITIONS: {
                             required: boolean;
                         };
                         documentRef: {
-                            type: string; /** Vote type required */
+                            type: string;
                             required: boolean;
                         };
                         sections: {
+                            /**
+                             * Security holder information.
+                             */
                             type: string;
                             required: boolean;
                         };
@@ -4518,11 +4510,11 @@ export declare const CORPORATE_DEFINITIONS: {
                     };
                 };
                 effects: ({
-                    type: string;
+                    type: string; /** Date acquired */
                     path: string;
                     value: string;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -4539,6 +4531,7 @@ export declare const CORPORATE_DEFINITIONS: {
                 from: string;
                 to: string;
                 description: string;
+                /** Authorization info */
                 event: {
                     name: string;
                     payload: {
@@ -4552,7 +4545,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         };
                         proposedBy: {
                             type: string;
-                            required: boolean;
+                            required: boolean; /** Current state */
                             description: string;
                         };
                         sectionsAffected: {
@@ -4581,7 +4574,7 @@ export declare const CORPORATE_DEFINITIONS: {
                                     proposedContent: {
                                         type: string;
                                     };
-                                }; /** Cost basis */
+                                };
                             };
                         };
                     };
@@ -4597,7 +4590,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     expression: string;
                     value?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
@@ -4612,12 +4605,12 @@ export declare const CORPORATE_DEFINITIONS: {
                     };
                     expression?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
                     payload: {
-                        entityId: string; /** Current state */
+                        entityId: string;
                         amendmentId: string;
                         sectionsAffected: string;
                     };
@@ -4679,9 +4672,6 @@ export declare const CORPORATE_DEFINITIONS: {
                             type: string;
                             description: string;
                         };
-                        /**
-                         * Union of all corporate state types.
-                         */
                         newDocumentRef: {
                             type: string;
                             required: boolean;
@@ -4701,7 +4691,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     array?: undefined;
                     do?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
@@ -4710,7 +4700,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     array?: undefined;
                     do?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     array: string;
@@ -4728,7 +4718,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     expression?: undefined;
                     value?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
@@ -4747,7 +4737,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     array?: undefined;
                     do?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
@@ -4756,7 +4746,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     array?: undefined;
                     do?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -4795,7 +4785,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     path: string;
                     value: string;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -4811,7 +4801,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     path: string;
                     value: null;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 })[];
             };
             restate: {
@@ -4857,14 +4847,14 @@ export declare const CORPORATE_DEFINITIONS: {
                     expression: string;
                     value?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
                     value: string;
                     expression?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
@@ -4880,7 +4870,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     };
                     expression?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -4954,6 +4944,9 @@ export declare const CORPORATE_DEFINITIONS: {
             isStanding: {
                 type: string;
                 default: boolean;
+                /**
+                 * Jurisdiction information.
+                 */
                 description: string;
             };
             createdDate: {
@@ -4978,19 +4971,21 @@ export declare const CORPORATE_DEFINITIONS: {
                     adoptedDate: {
                         type: string;
                         format: string;
-                    };
+                    }; /** Par value per share */
                     lastReviewedDate: {
                         type: string;
                         format: string;
                     };
                     documentRef: {
-                        type: string; /** Total authorized shares */
+                        type: string;
                     };
                     purposes: {
                         type: string;
                         items: {
                             type: string;
-                        };
+                        }; /**
+                         * Corporate entity state.
+                         */
                     };
                     responsibilities: {
                         type: string;
@@ -5010,6 +5005,7 @@ export declare const CORPORATE_DEFINITIONS: {
                 type: string;
                 properties: {
                     minimumMembers: {
+                        /** Registered agent information */
                         type: string;
                         default: number;
                     };
@@ -5022,13 +5018,12 @@ export declare const CORPORATE_DEFINITIONS: {
                     };
                     financialExpertRequired: {
                         type: string;
-                        /** Legal name of the entity */
                         default: boolean;
                         description: string;
-                    }; /** Type of entity */
+                    };
                     independenceStandard: {
                         type: string;
-                        enum: string[]; /** Date of formation (ISO 8601) */
+                        enum: string[];
                         nullable: boolean;
                     };
                 };
@@ -5055,6 +5050,7 @@ export declare const CORPORATE_DEFINITIONS: {
                             type: string;
                             format: string;
                         };
+                        /** Director's email */
                         appointmentResolutionRef: {
                             type: string;
                         };
@@ -5078,9 +5074,6 @@ export declare const CORPORATE_DEFINITIONS: {
                 };
             };
             quorumRules: {
-                /**
-                 * Board meeting type.
-                 */
                 type: string;
                 properties: {
                     type: {
@@ -5117,7 +5110,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         type: string;
                         items: {
                             type: string;
-                        };
+                        }; /** Creation timestamp */
                     };
                     quorumPresent: {
                         type: string;
@@ -5131,21 +5124,20 @@ export declare const CORPORATE_DEFINITIONS: {
                         type: string;
                         format: string;
                         nullable: boolean;
-                    }; /** Unique meeting identifier */
+                    };
                 };
             };
             meetingHistory: {
                 type: string;
                 items: {
                     type: string;
-                    /** Scheduled date (ISO 8601) */
                     properties: {
                         meetingId: {
                             type: string;
                         };
                         date: {
                             type: string;
-                            format: string;
+                            format: string; /** Shareholder's name */
                         };
                         attendeeCount: {
                             type: string;
@@ -5163,7 +5155,7 @@ export declare const CORPORATE_DEFINITIONS: {
                 };
             };
             annualReviewDate: {
-                type: string; /** Associated entity ID */
+                type: string;
                 format: string;
                 nullable: boolean;
             };
@@ -5177,7 +5169,6 @@ export declare const CORPORATE_DEFINITIONS: {
             };
             updatedAt: {
                 type: string;
-                /** Quorum rules */
                 format: string;
             };
         };
@@ -5186,7 +5177,7 @@ export declare const CORPORATE_DEFINITIONS: {
                 description: string;
                 metadata: {
                     displayName: string;
-                    color: string;
+                    color: string; /** Type of meeting */
                 };
             };
             ACTIVE: {
@@ -5205,9 +5196,6 @@ export declare const CORPORATE_DEFINITIONS: {
             };
             NON_COMPLIANT: {
                 description: string;
-                /**
-                 * Agenda item status.
-                 */
                 metadata: {
                     displayName: string;
                     color: string;
@@ -5244,11 +5232,11 @@ export declare const CORPORATE_DEFINITIONS: {
                             required: boolean;
                         };
                         name: {
-                            /** Item title */
                             type: string;
                             required: boolean;
                         };
                         committeeType: {
+                            /** Unique holder identifier */
                             type: string;
                             required: boolean;
                         };
@@ -5272,7 +5260,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     name: string;
                     crossMachine: {
                         machine: string;
-                        instanceRef: string;
+                        instanceRef: string; /** Number of shares */
                         requiredState: string;
                     };
                 }[];
@@ -5281,21 +5269,19 @@ export declare const CORPORATE_DEFINITIONS: {
                     path: string;
                     value: string;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
                     value: never[];
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
                     payload: {
                         committeeId: string;
-                        name: string; /**
-                         * Holder type.
-                         */
+                        name: string;
                         type: string;
                     };
                     path?: undefined;
@@ -5334,7 +5320,6 @@ export declare const CORPORATE_DEFINITIONS: {
                             type: string;
                             default: boolean;
                         };
-                        /** Share class identifier */
                         boardResolutionRef: {
                             type: string;
                             required: boolean;
@@ -5342,7 +5327,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     };
                 };
                 guards: ({
-                    name: string; /** Par value */
+                    name: string;
                     description: string;
                     crossMachine: {
                         machine: string;
@@ -5370,7 +5355,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     path?: undefined;
                     value?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
@@ -5388,7 +5373,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     condition?: undefined;
                     then?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -5433,7 +5418,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         removedDate: string;
                     };
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -5518,7 +5503,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         reportingRequirements: string;
                     };
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -5741,7 +5726,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     filter?: undefined;
                     updates?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
@@ -5752,7 +5737,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     };
                     value?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -5816,6 +5801,9 @@ export declare const CORPORATE_DEFINITIONS: {
             };
             category: {
                 type: string;
+                /**
+                 * Jurisdiction information.
+                 */
                 enum: string[];
                 description: string;
             };
@@ -5825,15 +5813,14 @@ export declare const CORPORATE_DEFINITIONS: {
             };
             proposedBy: {
                 type: string;
-                /** Human-readable class name */
                 properties: {
                     type: {
-                        type: string; /** Total authorized shares */
+                        type: string;
                         enum: string[];
                     };
                     personId: {
                         type: string;
-                    }; /** Shares currently outstanding */
+                    };
                     name: {
                         type: string;
                     };
@@ -5841,12 +5828,12 @@ export declare const CORPORATE_DEFINITIONS: {
             };
             resolvedText: {
                 type: string;
-                description: string; /** Votes per share (if votingRights is true) */
-            }; /** Votes per share (if votingRights is true) */
+                description: string;
+            };
             whereAsClauses: {
                 type: string;
                 items: {
-                    type: string;
+                    type: string; /** Date of formation (ISO 8601) */
                 };
                 description: string;
             };
@@ -5900,6 +5887,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     shareholderClassVotes: {
                         type: string;
                         items: {
+                            /** Whether director is independent */
                             type: string;
                         };
                         description: string;
@@ -5912,7 +5900,7 @@ export declare const CORPORATE_DEFINITIONS: {
                 description: string;
                 properties: {
                     meetingType: {
-                        type: string;
+                        type: string; /** Attendee information */
                         enum: string[];
                     };
                     meetingId: {
@@ -5920,8 +5908,8 @@ export declare const CORPORATE_DEFINITIONS: {
                     };
                     meetingDate: {
                         type: string;
-                        format: string; /** Director's email */
-                    }; /** Director's email */
+                        format: string;
+                    };
                 };
             };
             voting: {
@@ -5935,7 +5923,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     votingClosedAt: {
                         type: string;
                         format: string;
-                        nullable: boolean;
+                        nullable: boolean; /** Current meeting (if in session) */
                     };
                     votes: {
                         type: string;
@@ -5949,6 +5937,9 @@ export declare const CORPORATE_DEFINITIONS: {
                                     type: string;
                                 };
                                 voterType: {
+                                    /**
+                                     * Shareholder meeting type.
+                                     */
                                     type: string;
                                     enum: string[];
                                 };
@@ -5964,7 +5955,7 @@ export declare const CORPORATE_DEFINITIONS: {
                                 timestamp: {
                                     type: string;
                                     format: string;
-                                }; /** Associated entity ID */
+                                };
                                 comment: {
                                     type: string;
                                     nullable: boolean;
@@ -5972,7 +5963,6 @@ export declare const CORPORATE_DEFINITIONS: {
                             };
                         };
                     };
-                    /** Seat information */
                     tally: {
                         type: string;
                         properties: {
@@ -5984,6 +5974,7 @@ export declare const CORPORATE_DEFINITIONS: {
                                 type: string;
                                 default: number;
                             };
+                            /** Current status */
                             abstain: {
                                 type: string;
                                 default: number;
@@ -5999,13 +5990,12 @@ export declare const CORPORATE_DEFINITIONS: {
                                 type: string;
                             };
                         };
-                    }; /** Current state */
+                    };
                 };
             };
             writtenConsent: {
-                /** Creation timestamp */
                 type: string;
-                nullable: boolean;
+                nullable: boolean; /** Record date information */
                 description: string;
                 properties: {
                     consentForm: {
@@ -6026,8 +6016,8 @@ export declare const CORPORATE_DEFINITIONS: {
                             type: string;
                             properties: {
                                 consentorId: {
-                                    type: string; /** Unique shareholder identifier */
-                                }; /** Unique shareholder identifier */
+                                    type: string;
+                                };
                                 consentorName: {
                                     type: string;
                                 };
@@ -6070,7 +6060,9 @@ export declare const CORPORATE_DEFINITIONS: {
                     };
                     certifiedBy: {
                         type: string;
-                    };
+                    }; /**
+                     * Corporate securities state.
+                     */
                     certificationDate: {
                         type: string;
                         format: string;
@@ -6084,7 +6076,7 @@ export declare const CORPORATE_DEFINITIONS: {
             };
             expirationDate: {
                 type: string;
-                format: string; /** Type of meeting */
+                format: string;
                 nullable: boolean;
                 description: string;
             };
@@ -6100,6 +6092,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         type: string;
                     };
                     executionNotes: {
+                        /** Current holder */
                         type: string;
                     };
                     resultingActions: {
@@ -6147,9 +6140,6 @@ export declare const CORPORATE_DEFINITIONS: {
                             type: string;
                         };
                         relationship: {
-                            /**
-                             * Security form.
-                             */
                             type: string;
                             enum: string[];
                         };
@@ -6158,9 +6148,7 @@ export declare const CORPORATE_DEFINITIONS: {
             };
             createdAt: {
                 type: string;
-                format: string; /**
-                 * Holder type.
-                 */
+                format: string;
             };
             updatedAt: {
                 type: string;
@@ -6200,14 +6188,14 @@ export declare const CORPORATE_DEFINITIONS: {
                 description: string;
                 metadata: {
                     displayName: string;
-                    color: string; /** Security form */
+                    color: string;
                 };
             };
             REJECTED: {
                 description: string;
                 metadata: {
                     displayName: string;
-                    color: string; /** Transfer restrictions */
+                    color: string;
                 };
                 terminal: boolean;
             };
@@ -6316,7 +6304,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     path: string;
                     value: string;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -6542,7 +6530,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     path: string;
                     value: string;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
@@ -6554,7 +6542,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         certificationDate: string;
                     };
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -6591,7 +6579,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     path: string;
                     value: string;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
@@ -6603,7 +6591,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         certificationDate: string;
                     };
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -6649,7 +6637,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         resultingActions: string;
                     };
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -6731,7 +6719,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         relationship?: undefined;
                     };
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
@@ -6743,7 +6731,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         reason?: undefined;
                     };
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -6842,14 +6830,14 @@ export declare const CORPORATE_DEFINITIONS: {
                         votes: {
                             type: string;
                         };
-                        /**
-                         * Entity lifecycle state.
-                         */
                         certificateNumbers: {
                             type: string;
                             items: {
                                 type: string;
                             };
+                            /**
+                             * Jurisdiction information.
+                             */
                             nullable: boolean;
                         };
                     };
@@ -6860,6 +6848,9 @@ export declare const CORPORATE_DEFINITIONS: {
                 description: string;
             };
             holderId: {
+                /**
+                 * Share class definition.
+                 */
                 type: string;
                 description: string;
             };
@@ -6874,7 +6865,7 @@ export declare const CORPORATE_DEFINITIONS: {
             proxyType: {
                 type: string;
                 enum: string[];
-                description: string; /** Shares issued to date */
+                description: string;
             };
             scope: {
                 type: string;
@@ -6894,7 +6885,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         items: {
                             type: string;
                         };
-                        nullable: boolean;
+                        nullable: boolean; /** Registered agent information */
                         description: string;
                     };
                     votingInstructions: {
@@ -6913,7 +6904,7 @@ export declare const CORPORATE_DEFINITIONS: {
                                     type: string;
                                     additionalProperties: {
                                         type: string;
-                                    }; /** Incorporators */
+                                    };
                                     nullable: boolean;
                                     description: string;
                                 };
@@ -6923,7 +6914,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     discretionaryAuthority: {
                         type: string;
                         default: boolean;
-                        description: string; /** Creation timestamp */
+                        description: string;
                     };
                 };
             };
@@ -6942,9 +6933,6 @@ export declare const CORPORATE_DEFINITIONS: {
             };
             revocability: {
                 type: string;
-                /**
-                 * Board meeting type.
-                 */
                 properties: {
                     isRevocable: {
                         type: string;
@@ -6958,8 +6946,11 @@ export declare const CORPORATE_DEFINITIONS: {
                     };
                     irrevocableUntil: {
                         type: string;
+                        /**
+                         * Corporate board state.
+                         */
                         format: string;
-                        nullable: boolean; /** Director's email */
+                        nullable: boolean;
                     };
                 };
             };
@@ -6968,17 +6959,15 @@ export declare const CORPORATE_DEFINITIONS: {
                 description: string;
                 properties: {
                     cardId: {
-                        type: string;
+                        type: string; /** Seat information */
                     };
                     format: {
                         type: string;
-                        enum: string[]; /** Whether director is board chair */
+                        enum: string[];
                     };
                     signedDate: {
                         type: string;
-                        format: string; /**
-                         * Board meeting state.
-                         */
+                        format: string;
                     };
                     signatureVerified: {
                         type: string;
@@ -6993,7 +6982,6 @@ export declare const CORPORATE_DEFINITIONS: {
                     };
                 };
             };
-            /** Attendee information */
             votesExercised: {
                 type: string;
                 description: string;
@@ -7007,8 +6995,11 @@ export declare const CORPORATE_DEFINITIONS: {
                             type: string;
                         };
                         voteCast: {
-                            type: string; /** Associated entity ID */
-                            enum: string[]; /** Board of directors */
+                            type: string;
+                            /**
+                             * Shareholder information.
+                             */
+                            enum: string[];
                         };
                         voteCount: {
                             type: string;
@@ -7035,6 +7026,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         type: string;
                     };
                     revocationMethod: {
+                        /** Vote type required */
                         type: string;
                         enum: string[];
                         description: string;
@@ -7061,7 +7053,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     displayName: string;
                     color: string;
                 };
-            }; /** Unique shareholder identifier */
+            };
             ACTIVE: {
                 description: string;
                 metadata: {
@@ -7109,7 +7101,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         };
                         entityId: {
                             type: string;
-                            required: boolean;
+                            required: boolean; /** Holder's name */
                         };
                         grantorId: {
                             type: string;
@@ -7164,7 +7156,7 @@ export declare const CORPORATE_DEFINITIONS: {
                 guards: {
                     name: string;
                     description: string;
-                    expression: string;
+                    expression: string; /** Current state */
                 }[];
                 effects: ({
                     type: string;
@@ -7172,21 +7164,21 @@ export declare const CORPORATE_DEFINITIONS: {
                     value: string;
                     expression?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
                     expression: string;
                     value?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
                     value: never[];
                     expression?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -7276,7 +7268,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         votedBy: string;
                     };
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -7356,7 +7348,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         supersedingProxyId: string;
                     };
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -7424,7 +7416,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         supersedingProxyId: string;
                     };
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -7507,9 +7499,12 @@ export declare const CORPORATE_DEFINITIONS: {
                 nullable: boolean;
                 description: string;
             };
+            /**
+             * Share class definition.
+             */
             issuanceDate: {
                 type: string;
-                format: string;
+                format: string; /** Unique class identifier */
                 nullable: boolean;
             };
             form: {
@@ -7518,7 +7513,6 @@ export declare const CORPORATE_DEFINITIONS: {
                 description: string;
             };
             holder: {
-                /** Human-readable class name */
                 type: string;
                 nullable: boolean;
                 properties: {
@@ -7539,16 +7533,13 @@ export declare const CORPORATE_DEFINITIONS: {
                     address: {
                         type: string;
                         nullable: boolean;
-                    };
+                    }; /** Jurisdiction of incorporation */
                     acquisitionDate: {
                         type: string;
                         format: string;
                     };
                     acquisitionMethod: {
                         type: string;
-                        /**
-                         * Corporate entity state.
-                         */
                         enum: string[];
                     };
                     costBasis: {
@@ -7562,8 +7553,8 @@ export declare const CORPORATE_DEFINITIONS: {
                 properties: {
                     isRestricted: {
                         type: string;
-                        default: boolean; /** Date of formation (ISO 8601) */
-                    }; /** Date of formation (ISO 8601) */
+                        default: boolean;
+                    };
                     restrictionType: {
                         type: string;
                         items: {
@@ -7588,6 +7579,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         nullable: boolean;
                         properties: {
                             vestingStartDate: {
+                                /** Current status */
                                 type: string;
                                 format: string;
                             };
@@ -7627,12 +7619,12 @@ export declare const CORPORATE_DEFINITIONS: {
             };
             authorization: {
                 type: string;
-                nullable: boolean; /** Term end date (ISO 8601) */
-                description: string; /** Current status */
+                nullable: boolean;
+                description: string;
                 properties: {
                     authorizedDate: {
                         type: string;
-                        format: string;
+                        format: string; /** Meeting history */
                     };
                     charterProvision: {
                         type: string;
@@ -7648,7 +7640,7 @@ export declare const CORPORATE_DEFINITIONS: {
                 properties: {
                     boardResolutionRef: {
                         type: string;
-                    }; /** Scheduled date (ISO 8601) */
+                    };
                     issuanceAgreementRef: {
                         type: string;
                     };
@@ -7669,7 +7661,6 @@ export declare const CORPORATE_DEFINITIONS: {
                     };
                     exemptionUsed: {
                         type: string;
-                        /** Board of directors */
                         nullable: boolean;
                     };
                     accreditedInvestor: {
@@ -7732,7 +7723,7 @@ export declare const CORPORATE_DEFINITIONS: {
                             format: string;
                         };
                         ratio: {
-                            type: string;
+                            type: string; /** Creation timestamp */
                             nullable: boolean;
                             description: string;
                         };
@@ -7774,7 +7765,7 @@ export declare const CORPORATE_DEFINITIONS: {
                 format: string;
             };
             updatedAt: {
-                type: string; /** Associated entity ID */
+                type: string;
                 format: string;
             };
         };
@@ -7784,7 +7775,7 @@ export declare const CORPORATE_DEFINITIONS: {
                 metadata: {
                     displayName: string;
                     color: string;
-                };
+                }; /** Issuance date */
             };
             ISSUED: {
                 description: string;
@@ -7792,14 +7783,14 @@ export declare const CORPORATE_DEFINITIONS: {
                     displayName: string;
                     color: string;
                 };
-            };
+            }; /** Current holder */
             TREASURY: {
                 description: string;
                 metadata: {
                     displayName: string;
                     color: string;
                 };
-            }; /** Votes cast */
+            };
             TRANSFERRED: {
                 description: string;
                 metadata: {
@@ -7831,9 +7822,6 @@ export declare const CORPORATE_DEFINITIONS: {
                         };
                         entityId: {
                             type: string;
-                            /**
-                             * Holder type.
-                             */
                             required: boolean;
                         };
                         shareClass: {
@@ -7851,7 +7839,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         parValue: {
                             type: string;
                             required: boolean;
-                        }; /** Holder's name */
+                        };
                         authorizedDate: {
                             type: string;
                             format: string;
@@ -7958,7 +7946,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     path: string;
                     value: string;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
@@ -7979,7 +7967,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         accreditedInvestor?: undefined;
                     };
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
@@ -8000,7 +7988,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         accreditedInvestor?: undefined;
                     };
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
@@ -8021,7 +8009,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         legends?: undefined;
                     };
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -8095,7 +8083,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         pricePerShare: string;
                     };
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -8165,7 +8153,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     matchValue?: undefined;
                     updates?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     condition: string;
@@ -8180,7 +8168,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     matchValue?: undefined;
                     updates?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
@@ -8193,7 +8181,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     condition?: undefined;
                     then?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -8262,7 +8250,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         costBasis?: undefined;
                     };
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
@@ -8282,7 +8270,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         pricePerShare?: undefined;
                     };
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -8352,7 +8340,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         costBasis: string;
                     };
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -8407,13 +8395,13 @@ export declare const CORPORATE_DEFINITIONS: {
                         boardResolutionRef: string;
                     };
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
                     value: null;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -8470,13 +8458,13 @@ export declare const CORPORATE_DEFINITIONS: {
                         resolutionRef: string;
                     };
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
                     value: string;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -8593,7 +8581,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     value: string;
                     expression?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
@@ -8601,7 +8589,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     operation?: undefined;
                     value?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -8700,9 +8688,11 @@ export declare const CORPORATE_DEFINITIONS: {
                     type: string;
                     properties: {
                         filingId: {
+                            /** Whether shares have voting rights */
                             type: string;
                         };
                         filingType: {
+                            /** Votes per share (if votingRights is true) */
                             type: string;
                             enum: string[];
                         };
@@ -8737,6 +8727,9 @@ export declare const CORPORATE_DEFINITIONS: {
                             type: string;
                             nullable: boolean;
                         };
+                        /**
+                         * Board quorum rule type.
+                         */
                         notes: {
                             type: string;
                             nullable: boolean;
@@ -8748,6 +8741,7 @@ export declare const CORPORATE_DEFINITIONS: {
                 type: string;
                 description: string;
                 items: {
+                    /** Director's name */
                     type: string;
                     properties: {
                         jurisdiction: {
@@ -8760,7 +8754,7 @@ export declare const CORPORATE_DEFINITIONS: {
                             type: string;
                         };
                         agentPhone: {
-                            type: string;
+                            type: string; /** Whether director is board chair */
                         };
                         agentEmail: {
                             type: string;
@@ -8790,20 +8784,21 @@ export declare const CORPORATE_DEFINITIONS: {
                     type: string;
                     properties: {
                         deficiencyId: {
+                            /** Board of directors */
                             type: string;
                         };
                         jurisdiction: {
                             type: string;
                         };
                         type: {
-                            type: string;
-                            enum: string[]; /** Director's email */
+                            type: string; /** Quorum rules */
+                            enum: string[];
                         };
                         description: {
                             type: string;
                         };
                         noticeDate: {
-                            type: string;
+                            type: string; /** Creation timestamp */
                             format: string;
                         };
                         noticeRef: {
@@ -8846,7 +8841,6 @@ export declare const CORPORATE_DEFINITIONS: {
                         filingType: {
                             type: string;
                         };
-                        /** Unique board identifier */
                         jurisdiction: {
                             type: string;
                         };
@@ -8855,7 +8849,7 @@ export declare const CORPORATE_DEFINITIONS: {
                             format: string;
                         };
                         periodCovered: {
-                            type: string; /** Seat information */
+                            type: string;
                         };
                         confirmationNumber: {
                             type: string;
@@ -8867,9 +8861,9 @@ export declare const CORPORATE_DEFINITIONS: {
                             type: string;
                         };
                         documentRef: {
-                            type: string;
+                            type: string; /** Scheduled date (ISO 8601) */
                         };
-                    }; /** Current meeting (if in session) */
+                    };
                 };
             };
             goodStandingCertificates: {
@@ -8885,7 +8879,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         };
                         issuedDate: {
                             type: string;
-                            format: string;
+                            format: string; /** Meeting agenda */
                         };
                         validThrough: {
                             type: string;
@@ -8912,9 +8906,6 @@ export declare const CORPORATE_DEFINITIONS: {
                         type: string;
                     };
                     overdueFilings: {
-                        /**
-                         * Shareholder information.
-                         */
                         type: string;
                     };
                     upcomingDeadlines30Days: {
@@ -8938,20 +8929,20 @@ export declare const CORPORATE_DEFINITIONS: {
         states: {
             COMPLIANT: {
                 description: string;
-                /** Whether shareholder has voted */
                 metadata: {
-                    displayName: string;
+                    displayName: string; /** Method of acquisition */
                     color: string;
                 };
             };
             REVIEW_PENDING: {
-                description: string; /** Item type */
+                description: string;
                 metadata: {
                     displayName: string;
                     color: string;
                 };
             };
             DEFICIENT: {
+                /** Associated entity ID */
                 description: string;
                 metadata: {
                     displayName: string;
@@ -8963,7 +8954,7 @@ export declare const CORPORATE_DEFINITIONS: {
                 metadata: {
                     displayName: string;
                     color: string;
-                };
+                }; /** Certificate number (if certificated) */
             };
         };
         initialState: string;
@@ -8977,11 +8968,10 @@ export declare const CORPORATE_DEFINITIONS: {
                     payload: {
                         complianceId: {
                             type: string;
-                            required: boolean; /** Meeting agenda */
+                            required: boolean;
                         };
                         entityId: {
                             type: string;
-                            /** Votes cast */
                             required: boolean;
                         };
                         jurisdiction: {
@@ -9027,7 +9017,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         filingId: {
                             type: string;
                             required: boolean;
-                        }; /** Current holder */
+                        };
                         filingType: {
                             type: string;
                             required: boolean;
@@ -9127,7 +9117,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     };
                     value?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
@@ -9146,7 +9136,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     matchValue?: undefined;
                     updates?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -9214,7 +9204,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     };
                     value?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
@@ -9231,7 +9221,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     matchValue?: undefined;
                     updates?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -9306,7 +9296,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         serviceAgreementRef: string;
                     };
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -9347,7 +9337,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     path: string;
                     value: string;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -9418,21 +9408,21 @@ export declare const CORPORATE_DEFINITIONS: {
                     };
                     amount?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
                     amount: number;
                     value?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
                     value: string;
                     amount?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -9536,7 +9526,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     amount?: undefined;
                     value?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
@@ -9546,7 +9536,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     updates?: undefined;
                     value?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
@@ -9556,7 +9546,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     updates?: undefined;
                     amount?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -9660,7 +9650,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     path?: undefined;
                     value?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
@@ -9668,7 +9658,7 @@ export declare const CORPORATE_DEFINITIONS: {
                     condition?: undefined;
                     then?: undefined;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;
@@ -9792,13 +9782,13 @@ export declare const CORPORATE_DEFINITIONS: {
                         status: string;
                     };
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     path: string;
                     value: string;
                     eventType?: undefined;
-                    payload?: undefined; /** Holder's name */
+                    payload?: undefined;
                 } | {
                     type: string;
                     eventType: string;

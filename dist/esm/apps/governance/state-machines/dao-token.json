@@ -665,24 +665,6 @@
             "dependencies": []
         }
     ],
-    "initialDataTemplate": {
-        "schema": "TokenDAO",
-        "name": "",
-        "tokenId": "",
-        "balances": {},
-        "delegations": {},
-        "proposalThreshold": 1000,
-        "votingPeriodMs": 259200000,
-        "timelockMs": 86400000,
-        "quorum": 10000,
-        "proposal": null,
-        "votes": null,
-        "executedProposals": [],
-        "rejectedProposals": [],
-        "cancelledProposals": [],
-        "metadata": {},
-        "status": "ACTIVE"
-    },
     "crossReferences": {
         "Identity": "voter verification",
         "Token": "balance snapshots",

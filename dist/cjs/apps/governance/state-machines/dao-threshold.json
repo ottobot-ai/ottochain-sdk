@@ -641,22 +641,6 @@
             "dependencies": []
         }
     ],
-    "initialDataTemplate": {
-        "schema": "ThresholdDAO",
-        "name": "",
-        "members": [],
-        "memberJoinedAt": {},
-        "memberThreshold": 20,
-        "voteThreshold": 30,
-        "proposeThreshold": 50,
-        "quorum": 3,
-        "votingPeriodMs": 604800000,
-        "proposal": null,
-        "votes": null,
-        "history": [],
-        "metadata": {},
-        "status": "ACTIVE"
-    },
     "crossReferences": {
         "Identity": "member verification",
         "Reputation": "threshold checks",

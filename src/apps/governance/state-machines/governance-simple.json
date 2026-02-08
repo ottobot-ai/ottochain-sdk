@@ -667,20 +667,5 @@
       },
       "dependencies": []
     }
-  ],
-  "initialDataTemplate": {
-    "schema": "Governance",
-    "name": "",
-    "admins": [],
-    "members": {},
-    "rules": {},
-    "votingPeriodMs": 604800000,
-    "passingThreshold": 0.5,
-    "disputeQuorum": 3,
-    "proposal": null,
-    "dispute": null,
-    "votes": {},
-    "history": [],
-    "status": "ACTIVE"
-  }
+  ]
 }

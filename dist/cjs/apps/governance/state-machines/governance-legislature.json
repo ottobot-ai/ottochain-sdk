@@ -638,48 +638,6 @@
             "dependencies": []
         }
     ],
-    "initialDataTemplate": {
-        "_comment": "Template for creating governance proposals",
-        "schema": "Governance",
-        "governanceType": "dao | multisig | council | bilateral | dictator",
-        "proposal": {
-            "title": "",
-            "description": "",
-            "discussionUrl": "",
-            "actions": []
-        },
-        "config": {
-            "votingMechanism": "simple | supermajority | quadratic | conviction | ranked",
-            "quorumType": "percentage | absolute",
-            "quorumValue": 0.1,
-            "passingThreshold": 0.5,
-            "votingPeriodMs": 259200000,
-            "vetoPeriodMs": 86400000,
-            "gracePeriodMs": 86400000,
-            "allowDelegation": true,
-            "openVoting": false,
-            "onePersonOneVote": false,
-            "convictionHalfLifeMs": 604800000
-        },
-        "roles": {
-            "_comment": "Role arrays - empty means open/unrestricted",
-            "proposers": [],
-            "voters": [],
-            "executors": [],
-            "vetoers": [],
-            "admins": []
-        },
-        "votes": {},
-        "delegations": {},
-        "tally": {
-            "for": 0,
-            "against": 0,
-            "abstain": 0,
-            "quorumReached": false,
-            "passed": false
-        },
-        "status": "DRAFT"
-    },
     "presets": {
         "_comment": "Common governance configurations",
         "bilateral": {
