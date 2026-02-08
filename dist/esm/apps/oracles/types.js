@@ -4,34 +4,12 @@
  * Constants, types, and utilities for the Oracle system on OttoChain.
  * Oracles provide truth resolution for markets and disputes.
  *
- * Note: When proto files are generated, enums will move to generated types.
+ * Core types (OracleState, Oracle, etc.) are exported from proto-generated
+ * types in index.ts.
  *
  * @packageDocumentation
  */
-// ---------------------------------------------------------------------------
-// Enums (will be replaced by proto-generated versions)
-// ---------------------------------------------------------------------------
-/**
- * Oracle lifecycle states
- */
-export var OracleState;
-(function (OracleState) {
-    OracleState[OracleState["UNSPECIFIED"] = 0] = "UNSPECIFIED";
-    /** Oracle has registered but not yet staked */
-    OracleState[OracleState["REGISTERED"] = 1] = "REGISTERED";
-    /** Oracle is staked and available for assignments */
-    OracleState[OracleState["ACTIVE"] = 2] = "ACTIVE";
-    /** Oracle is currently assigned to resolve a market */
-    OracleState[OracleState["ASSIGNED"] = 3] = "ASSIGNED";
-    /** Oracle has submitted a resolution, in challenge period */
-    OracleState[OracleState["SUBMITTED"] = 4] = "SUBMITTED";
-    /** Oracle is under review due to dispute */
-    OracleState[OracleState["CHALLENGED"] = 5] = "CHALLENGED";
-    /** Oracle is suspended due to slashing */
-    OracleState[OracleState["SUSPENDED"] = 6] = "SUSPENDED";
-    /** Oracle has withdrawn stake and exited */
-    OracleState[OracleState["WITHDRAWN"] = 7] = "WITHDRAWN";
-})(OracleState || (OracleState = {}));
+import { OracleState } from '../../generated/ottochain/apps/oracles/v1/oracle_pb.js';
 /**
  * Types of oracle resolutions
  */
@@ -92,16 +70,14 @@ export const SLASHING_PERCENTAGES = {
 // State Machine Transitions
 // ---------------------------------------------------------------------------
 /**
- * Valid transitions for each oracle state
+ * Valid transitions for each oracle state (aligned with proto OracleState enum)
  */
 export const ORACLE_TRANSITIONS = {
     [OracleState.UNSPECIFIED]: [],
-    [OracleState.REGISTERED]: ['stake', 'withdraw'],
-    [OracleState.ACTIVE]: ['assign', 'unstake'],
-    [OracleState.ASSIGNED]: ['submit', 'timeout'],
-    [OracleState.SUBMITTED]: ['finalize', 'challenge'],
-    [OracleState.CHALLENGED]: ['uphold', 'overturn'],
-    [OracleState.SUSPENDED]: ['begin_probation', 'permanent_ban'],
+    [OracleState.UNREGISTERED]: ['register'],
+    [OracleState.REGISTERED]: ['activate', 'withdraw'],
+    [OracleState.ACTIVE]: ['add_stake', 'record_resolution', 'slash', 'withdraw'],
+    [OracleState.SLASHED]: ['reactivate', 'withdraw'],
     [OracleState.WITHDRAWN]: [], // Terminal state
 };
 /**

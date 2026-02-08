@@ -3,42 +3,12 @@
  *
  * Constants, types, and utilities for the Markets application on OttoChain.
  *
- * Note: When proto files are generated, enums will move to generated types.
+ * Core types (MarketType, MarketState, Market, Commitment, Resolution) are
+ * exported from proto-generated types in index.ts.
  *
  * @packageDocumentation
  */
-/**
- * Market lifecycle states
- */
-export declare enum MarketState {
-    UNSPECIFIED = 0,
-    /** Market is open for commitments */
-    OPEN = 1,
-    /** Commitment period has ended, awaiting resolution */
-    CLOSED = 2,
-    /** Oracle has resolved the outcome */
-    RESOLVED = 3,
-    /** Payouts distributed to winners */
-    SETTLED = 4,
-    /** Market cancelled, refunds issued */
-    CANCELLED = 5,
-    /** Market is disputed */
-    DISPUTED = 6
-}
-/**
- * Types of markets supported
- */
-export declare enum MarketType {
-    UNSPECIFIED = 0,
-    /** Binary or multi-outcome prediction market */
-    PREDICTION = 1,
-    /** Ascending/descending price auction */
-    AUCTION = 2,
-    /** All-or-nothing crowdfunding */
-    CROWDFUND = 3,
-    /** Group buying with volume discounts */
-    GROUP_BUY = 4
-}
+import { MarketType, MarketState } from '../../generated/ottochain/apps/markets/v1/market_pb.js';
 /**
  * Commitment direction (for prediction markets)
  */
@@ -77,7 +47,7 @@ export declare const DEFAULT_MARKET_CONFIG: MarketConfig;
  */
 export declare const MARKET_TYPE_CONFIGS: Record<MarketType, Partial<MarketConfig>>;
 /**
- * Valid transitions for each market state
+ * Valid transitions for each market state (aligned with proto MarketState enum)
  */
 export declare const MARKET_TRANSITIONS: Record<MarketState, readonly string[]>;
 /**

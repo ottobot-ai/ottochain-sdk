@@ -4,49 +4,14 @@
  *
  * Constants, types, and utilities for the Markets application on OttoChain.
  *
- * Note: When proto files are generated, enums will move to generated types.
+ * Core types (MarketType, MarketState, Market, Commitment, Resolution) are
+ * exported from proto-generated types in index.ts.
  *
  * @packageDocumentation
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isMarketType = exports.isMarketState = exports.calculateGroupBuyDiscount = exports.calculateCrowdfundProgress = exports.validateCommitment = exports.calculateRefund = exports.calculatePayout = exports.calculateFees = exports.calculateNetCommitment = exports.isTerminalMarketState = exports.MARKET_TRANSITIONS = exports.MARKET_TYPE_CONFIGS = exports.DEFAULT_MARKET_CONFIG = exports.CommitmentSide = exports.MarketType = exports.MarketState = void 0;
-// ---------------------------------------------------------------------------
-// Enums (will be replaced by proto-generated versions)
-// ---------------------------------------------------------------------------
-/**
- * Market lifecycle states
- */
-var MarketState;
-(function (MarketState) {
-    MarketState[MarketState["UNSPECIFIED"] = 0] = "UNSPECIFIED";
-    /** Market is open for commitments */
-    MarketState[MarketState["OPEN"] = 1] = "OPEN";
-    /** Commitment period has ended, awaiting resolution */
-    MarketState[MarketState["CLOSED"] = 2] = "CLOSED";
-    /** Oracle has resolved the outcome */
-    MarketState[MarketState["RESOLVED"] = 3] = "RESOLVED";
-    /** Payouts distributed to winners */
-    MarketState[MarketState["SETTLED"] = 4] = "SETTLED";
-    /** Market cancelled, refunds issued */
-    MarketState[MarketState["CANCELLED"] = 5] = "CANCELLED";
-    /** Market is disputed */
-    MarketState[MarketState["DISPUTED"] = 6] = "DISPUTED";
-})(MarketState || (exports.MarketState = MarketState = {}));
-/**
- * Types of markets supported
- */
-var MarketType;
-(function (MarketType) {
-    MarketType[MarketType["UNSPECIFIED"] = 0] = "UNSPECIFIED";
-    /** Binary or multi-outcome prediction market */
-    MarketType[MarketType["PREDICTION"] = 1] = "PREDICTION";
-    /** Ascending/descending price auction */
-    MarketType[MarketType["AUCTION"] = 2] = "AUCTION";
-    /** All-or-nothing crowdfunding */
-    MarketType[MarketType["CROWDFUND"] = 3] = "CROWDFUND";
-    /** Group buying with volume discounts */
-    MarketType[MarketType["GROUP_BUY"] = 4] = "GROUP_BUY";
-})(MarketType || (exports.MarketType = MarketType = {}));
+exports.isMarketType = exports.isMarketState = exports.calculateGroupBuyDiscount = exports.calculateCrowdfundProgress = exports.validateCommitment = exports.calculateRefund = exports.calculatePayout = exports.calculateFees = exports.calculateNetCommitment = exports.isTerminalMarketState = exports.MARKET_TRANSITIONS = exports.MARKET_TYPE_CONFIGS = exports.DEFAULT_MARKET_CONFIG = exports.CommitmentSide = void 0;
+const market_pb_js_1 = require("../../generated/ottochain/apps/markets/v1/market_pb.js");
 /**
  * Commitment direction (for prediction markets)
  */
@@ -73,24 +38,24 @@ exports.DEFAULT_MARKET_CONFIG = {
  * Type-specific market configurations
  */
 exports.MARKET_TYPE_CONFIGS = {
-    [MarketType.UNSPECIFIED]: {},
-    [MarketType.PREDICTION]: {
+    [market_pb_js_1.MarketType.UNSPECIFIED]: {},
+    [market_pb_js_1.MarketType.PREDICTION]: {
         platformFeePercent: 0.02,
         oracleFeePercent: 0.02,
     },
-    [MarketType.AUCTION]: {
+    [market_pb_js_1.MarketType.AUCTION]: {
         platformFeePercent: 0.025,
         creatorFeePercent: 0,
         oracleFeePercent: 0,
         minQuorum: 1n,
     },
-    [MarketType.CROWDFUND]: {
+    [market_pb_js_1.MarketType.CROWDFUND]: {
         platformFeePercent: 0.03,
         creatorFeePercent: 0,
         oracleFeePercent: 0,
         disputeWindowEpochs: 0,
     },
-    [MarketType.GROUP_BUY]: {
+    [market_pb_js_1.MarketType.GROUP_BUY]: {
         platformFeePercent: 0.015,
         creatorFeePercent: 0.01,
         oracleFeePercent: 0,
@@ -100,24 +65,26 @@ exports.MARKET_TYPE_CONFIGS = {
 // State Machine Transitions
 // ---------------------------------------------------------------------------
 /**
- * Valid transitions for each market state
+ * Valid transitions for each market state (aligned with proto MarketState enum)
  */
 exports.MARKET_TRANSITIONS = {
-    [MarketState.UNSPECIFIED]: [],
-    [MarketState.OPEN]: ['close', 'cancel'],
-    [MarketState.CLOSED]: ['resolve', 'dispute', 'cancel'],
-    [MarketState.RESOLVED]: ['settle', 'dispute'],
-    [MarketState.SETTLED]: [], // Terminal state
-    [MarketState.CANCELLED]: [], // Terminal state
-    [MarketState.DISPUTED]: ['resolve_dispute', 'cancel'],
+    [market_pb_js_1.MarketState.UNSPECIFIED]: [],
+    [market_pb_js_1.MarketState.PROPOSED]: ['open', 'cancel'],
+    [market_pb_js_1.MarketState.OPEN]: ['close', 'cancel', 'commit'],
+    [market_pb_js_1.MarketState.CLOSED]: ['submit_resolution', 'refund'],
+    [market_pb_js_1.MarketState.RESOLVING]: ['submit_resolution', 'finalize', 'refund'],
+    [market_pb_js_1.MarketState.SETTLED]: ['claim'], // Terminal (only claims allowed)
+    [market_pb_js_1.MarketState.REFUNDED]: [], // Terminal state
+    [market_pb_js_1.MarketState.CANCELLED]: [], // Terminal state
 };
 /**
  * Check if a market state is terminal
  */
 function isTerminalMarketState(state) {
     return [
-        MarketState.SETTLED,
-        MarketState.CANCELLED,
+        market_pb_js_1.MarketState.SETTLED,
+        market_pb_js_1.MarketState.REFUNDED,
+        market_pb_js_1.MarketState.CANCELLED,
     ].includes(state);
 }
 exports.isTerminalMarketState = isTerminalMarketState;
@@ -144,7 +111,7 @@ exports.calculateNetCommitment = calculateNetCommitment;
  * @param marketType - Type of market for type-specific fees
  * @returns Fee breakdown object
  */
-function calculateFees(amount, marketType = MarketType.PREDICTION) {
+function calculateFees(amount, marketType = market_pb_js_1.MarketType.PREDICTION) {
     const typeConfig = { ...exports.DEFAULT_MARKET_CONFIG, ...exports.MARKET_TYPE_CONFIGS[marketType] };
     const platform = (amount * BigInt(Math.floor(typeConfig.platformFeePercent * 10000))) / 10000n;
     const creator = (amount * BigInt(Math.floor(typeConfig.creatorFeePercent * 10000))) / 10000n;
@@ -166,7 +133,7 @@ exports.calculateFees = calculateFees;
  * @param marketType - Type of market for fee calculation
  * @returns Payout amount
  */
-function calculatePayout(shares, marketType = MarketType.PREDICTION) {
+function calculatePayout(shares, marketType = market_pb_js_1.MarketType.PREDICTION) {
     if (shares.winningPool === 0n)
         return 0n;
     const fees = calculateFees(shares.losingPool, marketType);
@@ -194,7 +161,7 @@ exports.calculateRefund = calculateRefund;
  */
 function validateCommitment(amount, marketState, config = {}) {
     const minCommitment = config.minCommitment ?? exports.DEFAULT_MARKET_CONFIG.minCommitment;
-    if (marketState !== MarketState.OPEN) {
+    if (marketState !== market_pb_js_1.MarketState.OPEN) {
         return { valid: false, reason: 'Market is not open for commitments' };
     }
     if (amount < minCommitment) {
@@ -240,13 +207,13 @@ exports.calculateGroupBuyDiscount = calculateGroupBuyDiscount;
  * Check if a value is a valid MarketState
  */
 function isMarketState(value) {
-    return typeof value === 'number' && value in MarketState;
+    return typeof value === 'number' && value in market_pb_js_1.MarketState;
 }
 exports.isMarketState = isMarketState;
 /**
  * Check if a value is a valid MarketType
  */
 function isMarketType(value) {
-    return typeof value === 'number' && value in MarketType;
+    return typeof value === 'number' && value in market_pb_js_1.MarketType;
 }
 exports.isMarketType = isMarketType;
