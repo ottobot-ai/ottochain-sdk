@@ -21,7 +21,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getIdentityDefinition = exports.attestationTypeToJSON = exports.attestationTypeFromJSON = exports.ReputationConfig = exports.ChallengeRequest = exports.VouchRequest = exports.Attestation = exports.ReputationDelta = exports.AttestationType = exports.platformToJSON = exports.platformFromJSON = exports.agentStateToJSON = exports.agentStateFromJSON = exports.AgentIdentityDefinition = exports.AgentIdentity = exports.PlatformLink = exports.Platform = exports.AgentState = void 0;
+exports.getIdentityDefinition = exports.DEFAULT_REPUTATION_CONFIG = exports.attestationTypeToJSON = exports.attestationTypeFromJSON = exports.ReputationConfig = exports.ChallengeRequest = exports.VouchRequest = exports.Attestation = exports.ReputationDelta = exports.AttestationType = exports.platformToJSON = exports.platformFromJSON = exports.agentStateToJSON = exports.agentStateFromJSON = exports.AgentIdentityDefinition = exports.AgentIdentity = exports.PlatformLink = exports.Platform = exports.AgentState = void 0;
 // Re-export generated protobuf types (source of truth)
 var agent_js_1 = require("../../generated/ottochain/apps/identity/v1/agent.js");
 Object.defineProperty(exports, "AgentState", { enumerable: true, get: function () { return agent_js_1.AgentState; } });
@@ -42,6 +42,21 @@ Object.defineProperty(exports, "ChallengeRequest", { enumerable: true, get: func
 Object.defineProperty(exports, "ReputationConfig", { enumerable: true, get: function () { return attestation_js_1.ReputationConfig; } });
 Object.defineProperty(exports, "attestationTypeFromJSON", { enumerable: true, get: function () { return attestation_js_1.attestationTypeFromJSON; } });
 Object.defineProperty(exports, "attestationTypeToJSON", { enumerable: true, get: function () { return attestation_js_1.attestationTypeToJSON; } });
+// ---------------------------------------------------------------------------
+// Configuration Defaults
+// ---------------------------------------------------------------------------
+/**
+ * Default reputation configuration for agent identity
+ */
+exports.DEFAULT_REPUTATION_CONFIG = {
+    baseReputation: 10,
+    completionDelta: 5,
+    vouchDelta: 2,
+    violationDelta: -10,
+    behavioralDelta: 3,
+    minReputation: 0,
+    challengeThreshold: 5,
+};
 // ---------------------------------------------------------------------------
 // State Machine JSON Definition
 // ---------------------------------------------------------------------------
