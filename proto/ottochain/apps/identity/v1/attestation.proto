@@ -27,8 +27,8 @@ message ReputationDelta {
 message Attestation {
   string id = 1;
   AttestationType type = 2;
-  ottochain.v1.Address subject = 3;      // Agent receiving attestation
-  ottochain.v1.Address issuer = 4;       // Agent or platform issuing
+  string subject = 3;      // Agent receiving attestation
+  string issuer = 4;       // Agent or platform issuing
   Platform issuer_platform = 5;          // If issued by platform
   int32 delta = 6;                       // Reputation change
   string reason = 7;
@@ -38,15 +38,15 @@ message Attestation {
 
 // Vouch request - one agent vouching for another
 message VouchRequest {
-  ottochain.v1.Address from_address = 1;
-  ottochain.v1.Address to_address = 2;
+  string from_address = 1;
+  string to_address = 2;
   string reason = 3;
 }
 
 // Challenge request - disputing an agent's behavior
 message ChallengeRequest {
-  ottochain.v1.Address challenger = 1;
-  ottochain.v1.Address challenged = 2;
+  string challenger = 1;
+  string challenged = 2;
   string evidence = 3;
   string reason = 4;
 }

@@ -1,5 +1,4 @@
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
-import { Address } from "../../../v1/common.js";
 export declare const protobufPackage = "ottochain.apps.contracts.v1";
 /** Contract lifecycle states */
 export declare enum ContractState {
@@ -26,8 +25,8 @@ export interface Contract {
     id: string;
     /** Human-readable ID */
     contractId: string;
-    proposer?: Address | undefined;
-    counterparty?: Address | undefined;
+    proposer: string;
+    counterparty: string;
     state: ContractState;
     /** Flexible terms structure */
     terms?: {
@@ -41,8 +40,8 @@ export interface Contract {
 }
 /** Propose a new contract */
 export interface ProposeContractRequest {
-    proposer?: Address | undefined;
-    counterparty?: Address | undefined;
+    proposer: string;
+    counterparty: string;
     terms?: {
         [key: string]: any;
     } | undefined;
@@ -51,24 +50,24 @@ export interface ProposeContractRequest {
 /** Accept a proposed contract */
 export interface AcceptContractRequest {
     contractId: string;
-    acceptor?: Address | undefined;
+    acceptor: string;
 }
 /** Complete a contract with proof */
 export interface CompleteContractRequest {
     contractId: string;
-    completer?: Address | undefined;
+    completer: string;
     proof: string;
 }
 /** Reject a proposed contract */
 export interface RejectContractRequest {
     contractId: string;
-    rejector?: Address | undefined;
+    rejector: string;
     reason: string;
 }
 /** Dispute a contract */
 export interface DisputeContractRequest {
     contractId: string;
-    disputant?: Address | undefined;
+    disputant: string;
     evidence: string;
     reason: string;
 }

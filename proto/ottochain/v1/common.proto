@@ -2,29 +2,25 @@ syntax = "proto3";
 
 package ottochain.v1;
 
-import "google/protobuf/struct.proto";
+// =============================================================================
+// OttoChain Common Types
+// =============================================================================
+//
+// This file previously defined wrapper messages (Address, FiberOrdinal, etc.)
+// but these have been removed in favor of plain primitives for wire format
+// compatibility with the metagraph's JSON Logic engine.
+//
+// The metagraph stores addresses as plain strings in JsonLogicValue:
+//   "signers" -> ArrayValue(List(StrValue("DAG1..."), StrValue("DAG2...")))
+//
+// TypeScript type aliases are provided in src/types.ts for semantic meaning.
+// =============================================================================
 
-// Fiber sequence number (non-negative)
-message FiberOrdinal {
-  int64 value = 1;
-}
-
-// Snapshot ordinal from Constellation framework
-message SnapshotOrdinal {
-  int64 value = 1;
-}
-
-// State identifier for state machines
-message StateId {
-  string value = 1;
-}
-
-// Hash value
-message HashValue {
-  string value = 1;
-}
-
-// DAG address (Constellation network address)
-message Address {
-  string value = 1;
-}
+// Note: All wrapper messages removed. Use string/int64 directly in proto files.
+// See src/types.ts for TypeScript type aliases:
+//   - Address = string (DAG address)
+//   - FiberId = string (UUID)
+//   - StateId = string (state machine state identifier)
+//   - HashValue = string (hex-encoded hash)
+//   - FiberOrdinal = number (sequence number)
+//   - SnapshotOrdinal = number (Constellation snapshot ordinal)

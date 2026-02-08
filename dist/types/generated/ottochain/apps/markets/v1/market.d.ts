@@ -1,5 +1,4 @@
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
-import { Address } from "../../../v1/common.js";
 export declare const protobufPackage = "ottochain.apps.markets.v1";
 /** Type of market mechanism */
 export declare enum MarketType {
@@ -42,7 +41,7 @@ export declare function marketStateToNumber(object: MarketState): number;
 /** Agent commitment to a market position */
 export interface Commitment {
     /** Committing agent's address */
-    agent?: Address | undefined;
+    agent: string;
     /** Token amount committed */
     amount: number;
     /** Position data (outcome choice, bid, etc.) */
@@ -55,7 +54,7 @@ export interface Commitment {
 /** Oracle resolution submission */
 export interface Resolution {
     /** Oracle's address */
-    oracle?: Address | undefined;
+    oracle: string;
     /** Resolved outcome identifier */
     outcome: string;
     /** Evidence/proof of outcome */
@@ -70,7 +69,7 @@ export interface Market {
     /** Type of market mechanism */
     marketType: MarketType;
     /** Market creator's address */
-    creator?: Address | undefined;
+    creator: string;
     /** Human-readable market title */
     title: string;
     /** Market-specific terms and rules */
@@ -84,7 +83,7 @@ export interface Market {
     /** All agent commitments */
     commitments: Commitment[];
     /** Designated oracle addresses */
-    oracles: Address[];
+    oracles: string[];
     /** Required oracle agreement count */
     quorum: number;
     /** Oracle resolution submissions */
@@ -99,20 +98,20 @@ export interface Market {
 /** Create a new market */
 export interface CreateMarketRequest {
     marketType: MarketType;
-    creator?: Address | undefined;
+    creator: string;
     title: string;
     terms?: {
         [key: string]: any;
     } | undefined;
     deadline?: Date | undefined;
     threshold: number;
-    oracles: Address[];
+    oracles: string[];
     quorum: number;
 }
 /** Commit to a market position */
 export interface CommitToMarketRequest {
     marketId: string;
-    agent?: Address | undefined;
+    agent: string;
     amount: number;
     positionData?: {
         [key: string]: any;
@@ -121,14 +120,14 @@ export interface CommitToMarketRequest {
 /** Submit oracle resolution */
 export interface SubmitResolutionRequest {
     marketId: string;
-    oracle?: Address | undefined;
+    oracle: string;
     outcome: string;
     proof: string;
 }
 /** Cancel a market (creator only, before CLOSED) */
 export interface CancelMarketRequest {
     marketId: string;
-    creator?: Address | undefined;
+    creator: string;
     reason: string;
 }
 /** Market state machine definition */

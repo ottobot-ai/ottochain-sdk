@@ -21,8 +21,8 @@ enum ContractState {
 message Contract {
   string id = 1;
   string contract_id = 2;                    // Human-readable ID
-  ottochain.v1.Address proposer = 3;
-  ottochain.v1.Address counterparty = 4;
+  string proposer = 3;
+  string counterparty = 4;
   ContractState state = 5;
   google.protobuf.Struct terms = 6;          // Flexible terms structure
   google.protobuf.Timestamp proposed_at = 7;
@@ -33,8 +33,8 @@ message Contract {
 
 // Propose a new contract
 message ProposeContractRequest {
-  ottochain.v1.Address proposer = 1;
-  ottochain.v1.Address counterparty = 2;
+  string proposer = 1;
+  string counterparty = 2;
   google.protobuf.Struct terms = 3;
   string description = 4;
 }
@@ -42,27 +42,27 @@ message ProposeContractRequest {
 // Accept a proposed contract
 message AcceptContractRequest {
   string contract_id = 1;
-  ottochain.v1.Address acceptor = 2;
+  string acceptor = 2;
 }
 
 // Complete a contract with proof
 message CompleteContractRequest {
   string contract_id = 1;
-  ottochain.v1.Address completer = 2;
+  string completer = 2;
   string proof = 3;
 }
 
 // Reject a proposed contract
 message RejectContractRequest {
   string contract_id = 1;
-  ottochain.v1.Address rejector = 2;
+  string rejector = 2;
   string reason = 3;
 }
 
 // Dispute a contract
 message DisputeContractRequest {
   string contract_id = 1;
-  ottochain.v1.Address disputant = 2;
+  string disputant = 2;
   string evidence = 3;
   string reason = 4;
 }

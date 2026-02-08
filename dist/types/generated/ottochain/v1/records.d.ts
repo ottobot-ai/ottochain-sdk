@@ -1,19 +1,25 @@
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
-import { Address, FiberOrdinal, HashValue, SnapshotOrdinal, StateId } from "./common.js";
 import { AccessControlPolicy, EventReceipt, FiberLogEntry, FiberStatus, ScriptInvocation, StateMachineDefinition } from "./fiber.js";
 export declare const protobufPackage = "ottochain.v1";
 /** State machine fiber record - on-chain representation */
 export interface StateMachineFiberRecord {
     fiberId: string;
-    creationOrdinal?: SnapshotOrdinal | undefined;
-    previousUpdateOrdinal?: SnapshotOrdinal | undefined;
-    latestUpdateOrdinal?: SnapshotOrdinal | undefined;
+    /** Snapshot ordinal */
+    creationOrdinal: number;
+    /** Snapshot ordinal */
+    previousUpdateOrdinal: number;
+    /** Snapshot ordinal */
+    latestUpdateOrdinal: number;
     definition?: StateMachineDefinition | undefined;
-    currentState?: StateId | undefined;
+    /** State ID */
+    currentState: string;
     stateData?: any | undefined;
-    stateDataHash?: HashValue | undefined;
-    sequenceNumber?: FiberOrdinal | undefined;
-    owners: Address[];
+    /** Hash value */
+    stateDataHash: string;
+    /** Fiber ordinal */
+    sequenceNumber: number;
+    /** DAG addresses */
+    owners: string[];
     status: FiberStatus;
     lastReceipt?: EventReceipt | undefined;
     parentFiberId?: string | undefined;
@@ -22,22 +28,30 @@ export interface StateMachineFiberRecord {
 /** Script fiber record - on-chain representation */
 export interface ScriptFiberRecord {
     fiberId: string;
-    creationOrdinal?: SnapshotOrdinal | undefined;
-    latestUpdateOrdinal?: SnapshotOrdinal | undefined;
+    /** Snapshot ordinal */
+    creationOrdinal: number;
+    /** Snapshot ordinal */
+    latestUpdateOrdinal: number;
     scriptProgram?: any | undefined;
     stateData?: any | undefined;
-    stateDataHash?: HashValue | undefined;
+    /** Hash value */
+    stateDataHash?: string | undefined;
     accessControl?: AccessControlPolicy | undefined;
-    sequenceNumber?: FiberOrdinal | undefined;
-    owners: Address[];
+    /** Fiber ordinal */
+    sequenceNumber: number;
+    /** DAG addresses */
+    owners: string[];
     status: FiberStatus;
     lastInvocation?: ScriptInvocation | undefined;
 }
 /** Fiber commit - lightweight proof in on-chain state */
 export interface FiberCommit {
-    recordHash?: HashValue | undefined;
-    stateDataHash?: HashValue | undefined;
-    sequenceNumber?: FiberOrdinal | undefined;
+    /** Hash value */
+    recordHash: string;
+    /** Hash value */
+    stateDataHash?: string | undefined;
+    /** Fiber ordinal */
+    sequenceNumber: number;
 }
 /** On-chain state */
 export interface OnChainState {

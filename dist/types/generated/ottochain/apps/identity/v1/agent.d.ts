@@ -1,5 +1,4 @@
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
-import { Address } from "../../../v1/common.js";
 export declare const protobufPackage = "ottochain.apps.identity.v1";
 /** Agent lifecycle states in the identity state machine */
 export declare enum AgentState {
@@ -44,7 +43,7 @@ export interface PlatformLink {
 }
 /** Agent identity on-chain state */
 export interface AgentIdentity {
-    address?: Address | undefined;
+    address: string;
     publicKey: string;
     displayName: string;
     reputation: number;

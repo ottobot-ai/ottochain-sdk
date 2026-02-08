@@ -9,7 +9,6 @@ exports.ReputationConfig = exports.ChallengeRequest = exports.VouchRequest = exp
 /* eslint-disable */
 const wire_1 = require("@bufbuild/protobuf/wire");
 const timestamp_js_1 = require("../../../../google/protobuf/timestamp.js");
-const common_js_1 = require("../../../v1/common.js");
 const agent_js_1 = require("./agent.js");
 exports.protobufPackage = "ottochain.apps.identity.v1";
 /** Types of attestations that affect reputation */
@@ -196,8 +195,8 @@ function createBaseAttestation() {
     return {
         id: "",
         type: AttestationType.ATTESTATION_TYPE_UNSPECIFIED,
-        subject: undefined,
-        issuer: undefined,
+        subject: "",
+        issuer: "",
         issuerPlatform: agent_js_1.Platform.PLATFORM_UNSPECIFIED,
         delta: 0,
         reason: "",
@@ -213,11 +212,11 @@ exports.Attestation = {
         if (message.type !== AttestationType.ATTESTATION_TYPE_UNSPECIFIED) {
             writer.uint32(16).int32(attestationTypeToNumber(message.type));
         }
-        if (message.subject !== undefined) {
-            common_js_1.Address.encode(message.subject, writer.uint32(26).fork()).join();
+        if (message.subject !== "") {
+            writer.uint32(26).string(message.subject);
         }
-        if (message.issuer !== undefined) {
-            common_js_1.Address.encode(message.issuer, writer.uint32(34).fork()).join();
+        if (message.issuer !== "") {
+            writer.uint32(34).string(message.issuer);
         }
         if (message.issuerPlatform !== agent_js_1.Platform.PLATFORM_UNSPECIFIED) {
             writer.uint32(40).int32((0, agent_js_1.platformToNumber)(message.issuerPlatform));
@@ -261,14 +260,14 @@ exports.Attestation = {
                     if (tag !== 26) {
                         break;
                     }
-                    message.subject = common_js_1.Address.decode(reader, reader.uint32());
+                    message.subject = reader.string();
                     continue;
                 }
                 case 4: {
                     if (tag !== 34) {
                         break;
                     }
-                    message.issuer = common_js_1.Address.decode(reader, reader.uint32());
+                    message.issuer = reader.string();
                     continue;
                 }
                 case 5: {
@@ -318,8 +317,8 @@ exports.Attestation = {
         return {
             id: isSet(object.id) ? globalThis.String(object.id) : "",
             type: isSet(object.type) ? attestationTypeFromJSON(object.type) : AttestationType.ATTESTATION_TYPE_UNSPECIFIED,
-            subject: isSet(object.subject) ? common_js_1.Address.fromJSON(object.subject) : undefined,
-            issuer: isSet(object.issuer) ? common_js_1.Address.fromJSON(object.issuer) : undefined,
+            subject: isSet(object.subject) ? globalThis.String(object.subject) : "",
+            issuer: isSet(object.issuer) ? globalThis.String(object.issuer) : "",
             issuerPlatform: isSet(object.issuerPlatform)
                 ? (0, agent_js_1.platformFromJSON)(object.issuerPlatform)
                 : isSet(object.issuer_platform)
@@ -347,11 +346,11 @@ exports.Attestation = {
         if (message.type !== AttestationType.ATTESTATION_TYPE_UNSPECIFIED) {
             obj.type = attestationTypeToJSON(message.type);
         }
-        if (message.subject !== undefined) {
-            obj.subject = common_js_1.Address.toJSON(message.subject);
+        if (message.subject !== "") {
+            obj.subject = message.subject;
         }
-        if (message.issuer !== undefined) {
-            obj.issuer = common_js_1.Address.toJSON(message.issuer);
+        if (message.issuer !== "") {
+            obj.issuer = message.issuer;
         }
         if (message.issuerPlatform !== agent_js_1.Platform.PLATFORM_UNSPECIFIED) {
             obj.issuerPlatform = (0, agent_js_1.platformToJSON)(message.issuerPlatform);
@@ -377,12 +376,8 @@ exports.Attestation = {
         const message = createBaseAttestation();
         message.id = object.id ?? "";
         message.type = object.type ?? AttestationType.ATTESTATION_TYPE_UNSPECIFIED;
-        message.subject = (object.subject !== undefined && object.subject !== null)
-            ? common_js_1.Address.fromPartial(object.subject)
-            : undefined;
-        message.issuer = (object.issuer !== undefined && object.issuer !== null)
-            ? common_js_1.Address.fromPartial(object.issuer)
-            : undefined;
+        message.subject = object.subject ?? "";
+        message.issuer = object.issuer ?? "";
         message.issuerPlatform = object.issuerPlatform ?? agent_js_1.Platform.PLATFORM_UNSPECIFIED;
         message.delta = object.delta ?? 0;
         message.reason = object.reason ?? "";
@@ -392,15 +387,15 @@ exports.Attestation = {
     },
 };
 function createBaseVouchRequest() {
-    return { fromAddress: undefined, toAddress: undefined, reason: "" };
+    return { fromAddress: "", toAddress: "", reason: "" };
 }
 exports.VouchRequest = {
     encode(message, writer = new wire_1.BinaryWriter()) {
-        if (message.fromAddress !== undefined) {
-            common_js_1.Address.encode(message.fromAddress, writer.uint32(10).fork()).join();
+        if (message.fromAddress !== "") {
+            writer.uint32(10).string(message.fromAddress);
         }
-        if (message.toAddress !== undefined) {
-            common_js_1.Address.encode(message.toAddress, writer.uint32(18).fork()).join();
+        if (message.toAddress !== "") {
+            writer.uint32(18).string(message.toAddress);
         }
         if (message.reason !== "") {
             writer.uint32(26).string(message.reason);
@@ -418,14 +413,14 @@ exports.VouchRequest = {
                     if (tag !== 10) {
                         break;
                     }
-                    message.fromAddress = common_js_1.Address.decode(reader, reader.uint32());
+                    message.fromAddress = reader.string();
                     continue;
                 }
                 case 2: {
                     if (tag !== 18) {
                         break;
                     }
-                    message.toAddress = common_js_1.Address.decode(reader, reader.uint32());
+                    message.toAddress = reader.string();
                     continue;
                 }
                 case 3: {
@@ -446,25 +441,25 @@ exports.VouchRequest = {
     fromJSON(object) {
         return {
             fromAddress: isSet(object.fromAddress)
-                ? common_js_1.Address.fromJSON(object.fromAddress)
+                ? globalThis.String(object.fromAddress)
                 : isSet(object.from_address)
-                    ? common_js_1.Address.fromJSON(object.from_address)
-                    : undefined,
+                    ? globalThis.String(object.from_address)
+                    : "",
             toAddress: isSet(object.toAddress)
-                ? common_js_1.Address.fromJSON(object.toAddress)
+                ? globalThis.String(object.toAddress)
                 : isSet(object.to_address)
-                    ? common_js_1.Address.fromJSON(object.to_address)
-                    : undefined,
+                    ? globalThis.String(object.to_address)
+                    : "",
             reason: isSet(object.reason) ? globalThis.String(object.reason) : "",
         };
     },
     toJSON(message) {
         const obj = {};
-        if (message.fromAddress !== undefined) {
-            obj.fromAddress = common_js_1.Address.toJSON(message.fromAddress);
+        if (message.fromAddress !== "") {
+            obj.fromAddress = message.fromAddress;
         }
-        if (message.toAddress !== undefined) {
-            obj.toAddress = common_js_1.Address.toJSON(message.toAddress);
+        if (message.toAddress !== "") {
+            obj.toAddress = message.toAddress;
         }
         if (message.reason !== "") {
             obj.reason = message.reason;
@@ -476,26 +471,22 @@ exports.VouchRequest = {
     },
     fromPartial(object) {
         const message = createBaseVouchRequest();
-        message.fromAddress = (object.fromAddress !== undefined && object.fromAddress !== null)
-            ? common_js_1.Address.fromPartial(object.fromAddress)
-            : undefined;
-        message.toAddress = (object.toAddress !== undefined && object.toAddress !== null)
-            ? common_js_1.Address.fromPartial(object.toAddress)
-            : undefined;
+        message.fromAddress = object.fromAddress ?? "";
+        message.toAddress = object.toAddress ?? "";
         message.reason = object.reason ?? "";
         return message;
     },
 };
 function createBaseChallengeRequest() {
-    return { challenger: undefined, challenged: undefined, evidence: "", reason: "" };
+    return { challenger: "", challenged: "", evidence: "", reason: "" };
 }
 exports.ChallengeRequest = {
     encode(message, writer = new wire_1.BinaryWriter()) {
-        if (message.challenger !== undefined) {
-            common_js_1.Address.encode(message.challenger, writer.uint32(10).fork()).join();
+        if (message.challenger !== "") {
+            writer.uint32(10).string(message.challenger);
         }
-        if (message.challenged !== undefined) {
-            common_js_1.Address.encode(message.challenged, writer.uint32(18).fork()).join();
+        if (message.challenged !== "") {
+            writer.uint32(18).string(message.challenged);
         }
         if (message.evidence !== "") {
             writer.uint32(26).string(message.evidence);
@@ -516,14 +507,14 @@ exports.ChallengeRequest = {
                     if (tag !== 10) {
                         break;
                     }
-                    message.challenger = common_js_1.Address.decode(reader, reader.uint32());
+                    message.challenger = reader.string();
                     continue;
                 }
                 case 2: {
                     if (tag !== 18) {
                         break;
                     }
-                    message.challenged = common_js_1.Address.decode(reader, reader.uint32());
+                    message.challenged = reader.string();
                     continue;
                 }
                 case 3: {
@@ -550,19 +541,19 @@ exports.ChallengeRequest = {
     },
     fromJSON(object) {
         return {
-            challenger: isSet(object.challenger) ? common_js_1.Address.fromJSON(object.challenger) : undefined,
-            challenged: isSet(object.challenged) ? common_js_1.Address.fromJSON(object.challenged) : undefined,
+            challenger: isSet(object.challenger) ? globalThis.String(object.challenger) : "",
+            challenged: isSet(object.challenged) ? globalThis.String(object.challenged) : "",
             evidence: isSet(object.evidence) ? globalThis.String(object.evidence) : "",
             reason: isSet(object.reason) ? globalThis.String(object.reason) : "",
         };
     },
     toJSON(message) {
         const obj = {};
-        if (message.challenger !== undefined) {
-            obj.challenger = common_js_1.Address.toJSON(message.challenger);
+        if (message.challenger !== "") {
+            obj.challenger = message.challenger;
         }
-        if (message.challenged !== undefined) {
-            obj.challenged = common_js_1.Address.toJSON(message.challenged);
+        if (message.challenged !== "") {
+            obj.challenged = message.challenged;
         }
         if (message.evidence !== "") {
             obj.evidence = message.evidence;
@@ -577,12 +568,8 @@ exports.ChallengeRequest = {
     },
     fromPartial(object) {
         const message = createBaseChallengeRequest();
-        message.challenger = (object.challenger !== undefined && object.challenger !== null)
-            ? common_js_1.Address.fromPartial(object.challenger)
-            : undefined;
-        message.challenged = (object.challenged !== undefined && object.challenged !== null)
-            ? common_js_1.Address.fromPartial(object.challenged)
-            : undefined;
+        message.challenger = object.challenger ?? "";
+        message.challenged = object.challenged ?? "";
         message.evidence = object.evidence ?? "";
         message.reason = object.reason ?? "";
         return message;

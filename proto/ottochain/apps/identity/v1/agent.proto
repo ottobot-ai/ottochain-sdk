@@ -37,7 +37,7 @@ message PlatformLink {
 
 // Agent identity on-chain state
 message AgentIdentity {
-  ottochain.v1.Address address = 1;
+  string address = 1;
   string public_key = 2;
   string display_name = 3;
   int32 reputation = 4;

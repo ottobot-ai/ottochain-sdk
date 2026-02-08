@@ -30,6 +30,8 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.assert = exports.safeParse = exports.validateKeyPair = exports.validateAddress = exports.validatePublicKey = exports.validatePrivateKey = exports.validate = exports.CompleteContractRequestSchema = exports.AcceptContractRequestSchema = exports.ProposeContractRequestSchema = exports.ContractTermsSchema = exports.PlatformLinkSchema = exports.AgentIdentityRegistrationSchema = exports.TransferParamsSchema = exports.CurrencyTransactionSchema = exports.CurrencyTransactionValueSchema = exports.TransactionReferenceSchema = exports.SignedSchema = exports.SignatureProofSchema = exports.KeyPairSchema = exports.PublicKeySchema = exports.PrivateKeySchema = exports.DagAddressSchema = exports.wrapError = exports.isErrorCode = exports.ErrorCode = exports.TransactionError = exports.SigningError = exports.ValidationError = exports.NetworkError = exports.OttoChainError = void 0;
+// Type aliases for semantic clarity (matches wire format)
+__exportStar(require("./types.js"), exports);
 // Metakit utilities (signing, hashing, HTTP client)
 __exportStar(require("./metakit/index.js"), exports);
 // Generated protobuf types (canonical definitions)

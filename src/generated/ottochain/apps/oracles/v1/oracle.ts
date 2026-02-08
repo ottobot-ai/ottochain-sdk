@@ -7,7 +7,6 @@
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { Timestamp } from "../../../../google/protobuf/timestamp.js";
-import { Address } from "../../../v1/common.js";
 
 export const protobufPackage = "ottochain.apps.oracles.v1";
 
@@ -123,9 +122,7 @@ export interface Oracle {
   /** Unique oracle identifier */
   id: string;
   /** Oracle's DAG address */
-  address?:
-    | Address
-    | undefined;
+  address: string;
   /** Current staked amount */
   stake: number;
   /** Reputation metrics */
@@ -154,7 +151,7 @@ export interface Oracle {
 
 /** Register a new oracle */
 export interface RegisterOracleRequest {
-  address?: Address | undefined;
+  address: string;
   initialStake: number;
   domains: string[];
 }
@@ -162,20 +159,20 @@ export interface RegisterOracleRequest {
 /** Activate a registered oracle */
 export interface ActivateOracleRequest {
   oracleId: string;
-  address?: Address | undefined;
+  address: string;
 }
 
 /** Add stake to oracle */
 export interface AddStakeRequest {
   oracleId: string;
-  address?: Address | undefined;
+  address: string;
   amount: number;
 }
 
 /** Withdraw stake (initiates cooldown) */
 export interface WithdrawStakeRequest {
   oracleId: string;
-  address?: Address | undefined;
+  address: string;
   amount: number;
 }
 
@@ -190,7 +187,7 @@ export interface SlashOracleRequest {
 /** Withdraw oracle from service */
 export interface WithdrawOracleRequest {
   oracleId: string;
-  address?: Address | undefined;
+  address: string;
 }
 
 /** Oracle state machine definition */
@@ -444,7 +441,7 @@ export const SlashingEvent: MessageFns<SlashingEvent> = {
 function createBaseOracle(): Oracle {
   return {
     id: "",
-    address: undefined,
+    address: "",
     stake: 0,
     reputation: undefined,
     accuracy: 0,
@@ -463,8 +460,8 @@ export const Oracle: MessageFns<Oracle> = {
     if (message.id !== "") {
       writer.uint32(10).string(message.id);
     }
-    if (message.address !== undefined) {
-      Address.encode(message.address, writer.uint32(18).fork()).join();
+    if (message.address !== "") {
+      writer.uint32(18).string(message.address);
     }
     if (message.stake !== 0) {
       writer.uint32(24).int64(message.stake);
@@ -519,7 +516,7 @@ export const Oracle: MessageFns<Oracle> = {
             break;
           }
 
-          message.address = Address.decode(reader, reader.uint32());
+          message.address = reader.string();
           continue;
         }
         case 3: {
@@ -614,7 +611,7 @@ export const Oracle: MessageFns<Oracle> = {
   fromJSON(object: any): Oracle {
     return {
       id: isSet(object.id) ? globalThis.String(object.id) : "",
-      address: isSet(object.address) ? Address.fromJSON(object.address) : undefined,
+      address: isSet(object.address) ? globalThis.String(object.address) : "",
       stake: isSet(object.stake) ? globalThis.Number(object.stake) : 0,
       reputation: isSet(object.reputation) ? OracleReputation.fromJSON(object.reputation) : undefined,
       accuracy: isSet(object.accuracy) ? globalThis.Number(object.accuracy) : 0,
@@ -653,8 +650,8 @@ export const Oracle: MessageFns<Oracle> = {
     if (message.id !== "") {
       obj.id = message.id;
     }
-    if (message.address !== undefined) {
-      obj.address = Address.toJSON(message.address);
+    if (message.address !== "") {
+      obj.address = message.address;
     }
     if (message.stake !== 0) {
       obj.stake = Math.round(message.stake);
@@ -695,9 +692,7 @@ export const Oracle: MessageFns<Oracle> = {
   fromPartial<I extends Exact<DeepPartial<Oracle>, I>>(object: I): Oracle {
     const message = createBaseOracle();
     message.id = object.id ?? "";
-    message.address = (object.address !== undefined && object.address !== null)
-      ? Address.fromPartial(object.address)
-      : undefined;
+    message.address = object.address ?? "";
     message.stake = object.stake ?? 0;
     message.reputation = (object.reputation !== undefined && object.reputation !== null)
       ? OracleReputation.fromPartial(object.reputation)
@@ -715,13 +710,13 @@ export const Oracle: MessageFns<Oracle> = {
 };
 
 function createBaseRegisterOracleRequest(): RegisterOracleRequest {
-  return { address: undefined, initialStake: 0, domains: [] };
+  return { address: "", initialStake: 0, domains: [] };
 }
 
 export const RegisterOracleRequest: MessageFns<RegisterOracleRequest> = {
   encode(message: RegisterOracleRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.address !== undefined) {
-      Address.encode(message.address, writer.uint32(10).fork()).join();
+    if (message.address !== "") {
+      writer.uint32(10).string(message.address);
     }
     if (message.initialStake !== 0) {
       writer.uint32(16).int64(message.initialStake);
@@ -744,7 +739,7 @@ export const RegisterOracleRequest: MessageFns<RegisterOracleRequest> = {
             break;
           }
 
-          message.address = Address.decode(reader, reader.uint32());
+          message.address = reader.string();
           continue;
         }
         case 2: {
@@ -774,7 +769,7 @@ export const RegisterOracleRequest: MessageFns<RegisterOracleRequest> = {
 
   fromJSON(object: any): RegisterOracleRequest {
     return {
-      address: isSet(object.address) ? Address.fromJSON(object.address) : undefined,
+      address: isSet(object.address) ? globalThis.String(object.address) : "",
       initialStake: isSet(object.initialStake)
         ? globalThis.Number(object.initialStake)
         : isSet(object.initial_stake)
@@ -786,8 +781,8 @@ export const RegisterOracleRequest: MessageFns<RegisterOracleRequest> = {
 
   toJSON(message: RegisterOracleRequest): unknown {
     const obj: any = {};
-    if (message.address !== undefined) {
-      obj.address = Address.toJSON(message.address);
+    if (message.address !== "") {
+      obj.address = message.address;
     }
     if (message.initialStake !== 0) {
       obj.initialStake = Math.round(message.initialStake);
@@ -803,9 +798,7 @@ export const RegisterOracleRequest: MessageFns<RegisterOracleRequest> = {
   },
   fromPartial<I extends Exact<DeepPartial<RegisterOracleRequest>, I>>(object: I): RegisterOracleRequest {
     const message = createBaseRegisterOracleRequest();
-    message.address = (object.address !== undefined && object.address !== null)
-      ? Address.fromPartial(object.address)
-      : undefined;
+    message.address = object.address ?? "";
     message.initialStake = object.initialStake ?? 0;
     message.domains = object.domains?.map((e) => e) || [];
     return message;
@@ -813,7 +806,7 @@ export const RegisterOracleRequest: MessageFns<RegisterOracleRequest> = {
 };
 
 function createBaseActivateOracleRequest(): ActivateOracleRequest {
-  return { oracleId: "", address: undefined };
+  return { oracleId: "", address: "" };
 }
 
 export const ActivateOracleRequest: MessageFns<ActivateOracleRequest> = {
@@ -821,8 +814,8 @@ export const ActivateOracleRequest: MessageFns<ActivateOracleRequest> = {
     if (message.oracleId !== "") {
       writer.uint32(10).string(message.oracleId);
     }
-    if (message.address !== undefined) {
-      Address.encode(message.address, writer.uint32(18).fork()).join();
+    if (message.address !== "") {
+      writer.uint32(18).string(message.address);
     }
     return writer;
   },
@@ -847,7 +840,7 @@ export const ActivateOracleRequest: MessageFns<ActivateOracleRequest> = {
             break;
           }
 
-          message.address = Address.decode(reader, reader.uint32());
+          message.address = reader.string();
           continue;
         }
       }
@@ -866,7 +859,7 @@ export const ActivateOracleRequest: MessageFns<ActivateOracleRequest> = {
         : isSet(object.oracle_id)
         ? globalThis.String(object.oracle_id)
         : "",
-      address: isSet(object.address) ? Address.fromJSON(object.address) : undefined,
+      address: isSet(object.address) ? globalThis.String(object.address) : "",
     };
   },
 
@@ -875,8 +868,8 @@ export const ActivateOracleRequest: MessageFns<ActivateOracleRequest> = {
     if (message.oracleId !== "") {
       obj.oracleId = message.oracleId;
     }
-    if (message.address !== undefined) {
-      obj.address = Address.toJSON(message.address);
+    if (message.address !== "") {
+      obj.address = message.address;
     }
     return obj;
   },
@@ -887,15 +880,13 @@ export const ActivateOracleRequest: MessageFns<ActivateOracleRequest> = {
   fromPartial<I extends Exact<DeepPartial<ActivateOracleRequest>, I>>(object: I): ActivateOracleRequest {
     const message = createBaseActivateOracleRequest();
     message.oracleId = object.oracleId ?? "";
-    message.address = (object.address !== undefined && object.address !== null)
-      ? Address.fromPartial(object.address)
-      : undefined;
+    message.address = object.address ?? "";
     return message;
   },
 };
 
 function createBaseAddStakeRequest(): AddStakeRequest {
-  return { oracleId: "", address: undefined, amount: 0 };
+  return { oracleId: "", address: "", amount: 0 };
 }
 
 export const AddStakeRequest: MessageFns<AddStakeRequest> = {
@@ -903,8 +894,8 @@ export const AddStakeRequest: MessageFns<AddStakeRequest> = {
     if (message.oracleId !== "") {
       writer.uint32(10).string(message.oracleId);
     }
-    if (message.address !== undefined) {
-      Address.encode(message.address, writer.uint32(18).fork()).join();
+    if (message.address !== "") {
+      writer.uint32(18).string(message.address);
     }
     if (message.amount !== 0) {
       writer.uint32(24).int64(message.amount);
@@ -932,7 +923,7 @@ export const AddStakeRequest: MessageFns<AddStakeRequest> = {
             break;
           }
 
-          message.address = Address.decode(reader, reader.uint32());
+          message.address = reader.string();
           continue;
         }
         case 3: {
@@ -959,7 +950,7 @@ export const AddStakeRequest: MessageFns<AddStakeRequest> = {
         : isSet(object.oracle_id)
         ? globalThis.String(object.oracle_id)
         : "",
-      address: isSet(object.address) ? Address.fromJSON(object.address) : undefined,
+      address: isSet(object.address) ? globalThis.String(object.address) : "",
       amount: isSet(object.amount) ? globalThis.Number(object.amount) : 0,
     };
   },
@@ -969,8 +960,8 @@ export const AddStakeRequest: MessageFns<AddStakeRequest> = {
     if (message.oracleId !== "") {
       obj.oracleId = message.oracleId;
     }
-    if (message.address !== undefined) {
-      obj.address = Address.toJSON(message.address);
+    if (message.address !== "") {
+      obj.address = message.address;
     }
     if (message.amount !== 0) {
       obj.amount = Math.round(message.amount);
@@ -984,16 +975,14 @@ export const AddStakeRequest: MessageFns<AddStakeRequest> = {
   fromPartial<I extends Exact<DeepPartial<AddStakeRequest>, I>>(object: I): AddStakeRequest {
     const message = createBaseAddStakeRequest();
     message.oracleId = object.oracleId ?? "";
-    message.address = (object.address !== undefined && object.address !== null)
-      ? Address.fromPartial(object.address)
-      : undefined;
+    message.address = object.address ?? "";
     message.amount = object.amount ?? 0;
     return message;
   },
 };
 
 function createBaseWithdrawStakeRequest(): WithdrawStakeRequest {
-  return { oracleId: "", address: undefined, amount: 0 };
+  return { oracleId: "", address: "", amount: 0 };
 }
 
 export const WithdrawStakeRequest: MessageFns<WithdrawStakeRequest> = {
@@ -1001,8 +990,8 @@ export const WithdrawStakeRequest: MessageFns<WithdrawStakeRequest> = {
     if (message.oracleId !== "") {
       writer.uint32(10).string(message.oracleId);
     }
-    if (message.address !== undefined) {
-      Address.encode(message.address, writer.uint32(18).fork()).join();
+    if (message.address !== "") {
+      writer.uint32(18).string(message.address);
     }
     if (message.amount !== 0) {
       writer.uint32(24).int64(message.amount);
@@ -1030,7 +1019,7 @@ export const WithdrawStakeRequest: MessageFns<WithdrawStakeRequest> = {
             break;
           }
 
-          message.address = Address.decode(reader, reader.uint32());
+          message.address = reader.string();
           continue;
         }
         case 3: {
@@ -1057,7 +1046,7 @@ export const WithdrawStakeRequest: MessageFns<WithdrawStakeRequest> = {
         : isSet(object.oracle_id)
         ? globalThis.String(object.oracle_id)
         : "",
-      address: isSet(object.address) ? Address.fromJSON(object.address) : undefined,
+      address: isSet(object.address) ? globalThis.String(object.address) : "",
       amount: isSet(object.amount) ? globalThis.Number(object.amount) : 0,
     };
   },
@@ -1067,8 +1056,8 @@ export const WithdrawStakeRequest: MessageFns<WithdrawStakeRequest> = {
     if (message.oracleId !== "") {
       obj.oracleId = message.oracleId;
     }
-    if (message.address !== undefined) {
-      obj.address = Address.toJSON(message.address);
+    if (message.address !== "") {
+      obj.address = message.address;
     }
     if (message.amount !== 0) {
       obj.amount = Math.round(message.amount);
@@ -1082,9 +1071,7 @@ export const WithdrawStakeRequest: MessageFns<WithdrawStakeRequest> = {
   fromPartial<I extends Exact<DeepPartial<WithdrawStakeRequest>, I>>(object: I): WithdrawStakeRequest {
     const message = createBaseWithdrawStakeRequest();
     message.oracleId = object.oracleId ?? "";
-    message.address = (object.address !== undefined && object.address !== null)
-      ? Address.fromPartial(object.address)
-      : undefined;
+    message.address = object.address ?? "";
     message.amount = object.amount ?? 0;
     return message;
   },
@@ -1207,7 +1194,7 @@ export const SlashOracleRequest: MessageFns<SlashOracleRequest> = {
 };
 
 function createBaseWithdrawOracleRequest(): WithdrawOracleRequest {
-  return { oracleId: "", address: undefined };
+  return { oracleId: "", address: "" };
 }
 
 export const WithdrawOracleRequest: MessageFns<WithdrawOracleRequest> = {
@@ -1215,8 +1202,8 @@ export const WithdrawOracleRequest: MessageFns<WithdrawOracleRequest> = {
     if (message.oracleId !== "") {
       writer.uint32(10).string(message.oracleId);
     }
-    if (message.address !== undefined) {
-      Address.encode(message.address, writer.uint32(18).fork()).join();
+    if (message.address !== "") {
+      writer.uint32(18).string(message.address);
     }
     return writer;
   },
@@ -1241,7 +1228,7 @@ export const WithdrawOracleRequest: MessageFns<WithdrawOracleRequest> = {
             break;
           }
 
-          message.address = Address.decode(reader, reader.uint32());
+          message.address = reader.string();
           continue;
         }
       }
@@ -1260,7 +1247,7 @@ export const WithdrawOracleRequest: MessageFns<WithdrawOracleRequest> = {
         : isSet(object.oracle_id)
         ? globalThis.String(object.oracle_id)
         : "",
-      address: isSet(object.address) ? Address.fromJSON(object.address) : undefined,
+      address: isSet(object.address) ? globalThis.String(object.address) : "",
     };
   },
 
@@ -1269,8 +1256,8 @@ export const WithdrawOracleRequest: MessageFns<WithdrawOracleRequest> = {
     if (message.oracleId !== "") {
       obj.oracleId = message.oracleId;
     }
-    if (message.address !== undefined) {
-      obj.address = Address.toJSON(message.address);
+    if (message.address !== "") {
+      obj.address = message.address;
     }
     return obj;
   },
@@ -1281,9 +1268,7 @@ export const WithdrawOracleRequest: MessageFns<WithdrawOracleRequest> = {
   fromPartial<I extends Exact<DeepPartial<WithdrawOracleRequest>, I>>(object: I): WithdrawOracleRequest {
     const message = createBaseWithdrawOracleRequest();
     message.oracleId = object.oracleId ?? "";
-    message.address = (object.address !== undefined && object.address !== null)
-      ? Address.fromPartial(object.address)
-      : undefined;
+    message.address = object.address ?? "";
     return message;
   },
 };

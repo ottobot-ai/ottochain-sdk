@@ -1,5 +1,4 @@
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
-import { Address } from "../../../v1/common.js";
 export declare const protobufPackage = "ottochain.apps.governance.v1";
 /** Type of DAO governance model */
 export declare enum DAOType {
@@ -70,7 +69,7 @@ export interface Proposal {
     payload?: {
         [key: string]: any;
     } | undefined;
-    proposer?: Address | undefined;
+    proposer: string;
     proposedAt?: Date | undefined;
     deadline?: Date | undefined;
     queuedAt?: Date | undefined;
@@ -78,7 +77,7 @@ export interface Proposal {
 }
 /** Vote record */
 export interface Vote {
-    voter?: Address | undefined;
+    voter: string;
     choice: VoteChoice;
     weight: number;
     votedAt?: Date | undefined;
@@ -92,8 +91,8 @@ export interface VoteTally {
 }
 export interface SingleOwnerDAO {
     name: string;
-    owner?: Address | undefined;
-    pendingOwner?: Address | undefined;
+    owner: string;
+    pendingOwner: string;
     transferInitiatedAt?: Date | undefined;
     actions: SingleOwnerAction[];
     ownershipHistory: OwnershipTransfer[];
@@ -109,13 +108,13 @@ export interface SingleOwnerAction {
     executedAt?: Date | undefined;
 }
 export interface OwnershipTransfer {
-    from?: Address | undefined;
-    to?: Address | undefined;
+    from: string;
+    to: string;
     at?: Date | undefined;
 }
 export interface MultisigDAO {
     name: string;
-    signers: Address[];
+    signers: string[];
     threshold: number;
     proposalTtlMs: number;
     proposal?: Proposal | undefined;
@@ -184,7 +183,7 @@ export interface TokenProposalResult {
 }
 export interface ThresholdDAO {
     name: string;
-    members: Address[];
+    members: string[];
     memberJoinedAt: {
         [key: string]: number;
     };
@@ -207,9 +206,9 @@ export interface ThresholdDAO_MemberJoinedAtEntry {
     value: number;
 }
 export interface ThresholdVotes {
-    votesFor: Address[];
-    votesAgainst: Address[];
-    votesAbstain: Address[];
+    votesFor: string[];
+    votesAgainst: string[];
+    votesAbstain: string[];
 }
 export interface ThresholdHistoryEntry {
     /** "executed" | "rejected" */
@@ -221,7 +220,7 @@ export interface ThresholdHistoryEntry {
 export interface CreateDAORequest {
     daoType: DAOType;
     name: string;
-    creator?: Address | undefined;
+    creator: string;
     metadata?: DAOMetadata | undefined;
     /** Type-specific config (signers, thresholds, etc.) */
     config?: {
@@ -230,7 +229,7 @@ export interface CreateDAORequest {
 }
 export interface ProposeRequest {
     daoId: string;
-    proposer?: Address | undefined;
+    proposer: string;
     title: string;
     description: string;
     actionType: string;
@@ -240,12 +239,12 @@ export interface ProposeRequest {
 }
 export interface VoteRequest {
     daoId: string;
-    voter?: Address | undefined;
+    voter: string;
     choice: VoteChoice;
 }
 export interface ExecuteRequest {
     daoId: string;
-    executor?: Address | undefined;
+    executor: string;
 }
 export declare const DAOMetadata: MessageFns<DAOMetadata>;
 export declare const Proposal: MessageFns<Proposal>;

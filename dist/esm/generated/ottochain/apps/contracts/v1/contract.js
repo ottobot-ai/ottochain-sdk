@@ -7,7 +7,6 @@
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { Struct } from "../../../../google/protobuf/struct.js";
 import { Timestamp } from "../../../../google/protobuf/timestamp.js";
-import { Address } from "../../../v1/common.js";
 export const protobufPackage = "ottochain.apps.contracts.v1";
 /** Contract lifecycle states */
 export var ContractState;
@@ -102,8 +101,8 @@ function createBaseContract() {
     return {
         id: "",
         contractId: "",
-        proposer: undefined,
-        counterparty: undefined,
+        proposer: "",
+        counterparty: "",
         state: ContractState.CONTRACT_STATE_UNSPECIFIED,
         terms: undefined,
         proposedAt: undefined,
@@ -120,11 +119,11 @@ export const Contract = {
         if (message.contractId !== "") {
             writer.uint32(18).string(message.contractId);
         }
-        if (message.proposer !== undefined) {
-            Address.encode(message.proposer, writer.uint32(26).fork()).join();
+        if (message.proposer !== "") {
+            writer.uint32(26).string(message.proposer);
         }
-        if (message.counterparty !== undefined) {
-            Address.encode(message.counterparty, writer.uint32(34).fork()).join();
+        if (message.counterparty !== "") {
+            writer.uint32(34).string(message.counterparty);
         }
         if (message.state !== ContractState.CONTRACT_STATE_UNSPECIFIED) {
             writer.uint32(40).int32(contractStateToNumber(message.state));
@@ -171,14 +170,14 @@ export const Contract = {
                     if (tag !== 26) {
                         break;
                     }
-                    message.proposer = Address.decode(reader, reader.uint32());
+                    message.proposer = reader.string();
                     continue;
                 }
                 case 4: {
                     if (tag !== 34) {
                         break;
                     }
-                    message.counterparty = Address.decode(reader, reader.uint32());
+                    message.counterparty = reader.string();
                     continue;
                 }
                 case 5: {
@@ -239,8 +238,8 @@ export const Contract = {
                 : isSet(object.contract_id)
                     ? globalThis.String(object.contract_id)
                     : "",
-            proposer: isSet(object.proposer) ? Address.fromJSON(object.proposer) : undefined,
-            counterparty: isSet(object.counterparty) ? Address.fromJSON(object.counterparty) : undefined,
+            proposer: isSet(object.proposer) ? globalThis.String(object.proposer) : "",
+            counterparty: isSet(object.counterparty) ? globalThis.String(object.counterparty) : "",
             state: isSet(object.state) ? contractStateFromJSON(object.state) : ContractState.CONTRACT_STATE_UNSPECIFIED,
             terms: isObject(object.terms) ? object.terms : undefined,
             proposedAt: isSet(object.proposedAt)
@@ -273,11 +272,11 @@ export const Contract = {
         if (message.contractId !== "") {
             obj.contractId = message.contractId;
         }
-        if (message.proposer !== undefined) {
-            obj.proposer = Address.toJSON(message.proposer);
+        if (message.proposer !== "") {
+            obj.proposer = message.proposer;
         }
-        if (message.counterparty !== undefined) {
-            obj.counterparty = Address.toJSON(message.counterparty);
+        if (message.counterparty !== "") {
+            obj.counterparty = message.counterparty;
         }
         if (message.state !== ContractState.CONTRACT_STATE_UNSPECIFIED) {
             obj.state = contractStateToJSON(message.state);
@@ -306,12 +305,8 @@ export const Contract = {
         const message = createBaseContract();
         message.id = object.id ?? "";
         message.contractId = object.contractId ?? "";
-        message.proposer = (object.proposer !== undefined && object.proposer !== null)
-            ? Address.fromPartial(object.proposer)
-            : undefined;
-        message.counterparty = (object.counterparty !== undefined && object.counterparty !== null)
-            ? Address.fromPartial(object.counterparty)
-            : undefined;
+        message.proposer = object.proposer ?? "";
+        message.counterparty = object.counterparty ?? "";
         message.state = object.state ?? ContractState.CONTRACT_STATE_UNSPECIFIED;
         message.terms = object.terms ?? undefined;
         message.proposedAt = object.proposedAt ?? undefined;
@@ -322,15 +317,15 @@ export const Contract = {
     },
 };
 function createBaseProposeContractRequest() {
-    return { proposer: undefined, counterparty: undefined, terms: undefined, description: "" };
+    return { proposer: "", counterparty: "", terms: undefined, description: "" };
 }
 export const ProposeContractRequest = {
     encode(message, writer = new BinaryWriter()) {
-        if (message.proposer !== undefined) {
-            Address.encode(message.proposer, writer.uint32(10).fork()).join();
+        if (message.proposer !== "") {
+            writer.uint32(10).string(message.proposer);
         }
-        if (message.counterparty !== undefined) {
-            Address.encode(message.counterparty, writer.uint32(18).fork()).join();
+        if (message.counterparty !== "") {
+            writer.uint32(18).string(message.counterparty);
         }
         if (message.terms !== undefined) {
             Struct.encode(Struct.wrap(message.terms), writer.uint32(26).fork()).join();
@@ -351,14 +346,14 @@ export const ProposeContractRequest = {
                     if (tag !== 10) {
                         break;
                     }
-                    message.proposer = Address.decode(reader, reader.uint32());
+                    message.proposer = reader.string();
                     continue;
                 }
                 case 2: {
                     if (tag !== 18) {
                         break;
                     }
-                    message.counterparty = Address.decode(reader, reader.uint32());
+                    message.counterparty = reader.string();
                     continue;
                 }
                 case 3: {
@@ -385,19 +380,19 @@ export const ProposeContractRequest = {
     },
     fromJSON(object) {
         return {
-            proposer: isSet(object.proposer) ? Address.fromJSON(object.proposer) : undefined,
-            counterparty: isSet(object.counterparty) ? Address.fromJSON(object.counterparty) : undefined,
+            proposer: isSet(object.proposer) ? globalThis.String(object.proposer) : "",
+            counterparty: isSet(object.counterparty) ? globalThis.String(object.counterparty) : "",
             terms: isObject(object.terms) ? object.terms : undefined,
             description: isSet(object.description) ? globalThis.String(object.description) : "",
         };
     },
     toJSON(message) {
         const obj = {};
-        if (message.proposer !== undefined) {
-            obj.proposer = Address.toJSON(message.proposer);
+        if (message.proposer !== "") {
+            obj.proposer = message.proposer;
         }
-        if (message.counterparty !== undefined) {
-            obj.counterparty = Address.toJSON(message.counterparty);
+        if (message.counterparty !== "") {
+            obj.counterparty = message.counterparty;
         }
         if (message.terms !== undefined) {
             obj.terms = message.terms;
@@ -412,27 +407,23 @@ export const ProposeContractRequest = {
     },
     fromPartial(object) {
         const message = createBaseProposeContractRequest();
-        message.proposer = (object.proposer !== undefined && object.proposer !== null)
-            ? Address.fromPartial(object.proposer)
-            : undefined;
-        message.counterparty = (object.counterparty !== undefined && object.counterparty !== null)
-            ? Address.fromPartial(object.counterparty)
-            : undefined;
+        message.proposer = object.proposer ?? "";
+        message.counterparty = object.counterparty ?? "";
         message.terms = object.terms ?? undefined;
         message.description = object.description ?? "";
         return message;
     },
 };
 function createBaseAcceptContractRequest() {
-    return { contractId: "", acceptor: undefined };
+    return { contractId: "", acceptor: "" };
 }
 export const AcceptContractRequest = {
     encode(message, writer = new BinaryWriter()) {
         if (message.contractId !== "") {
             writer.uint32(10).string(message.contractId);
         }
-        if (message.acceptor !== undefined) {
-            Address.encode(message.acceptor, writer.uint32(18).fork()).join();
+        if (message.acceptor !== "") {
+            writer.uint32(18).string(message.acceptor);
         }
         return writer;
     },
@@ -454,7 +445,7 @@ export const AcceptContractRequest = {
                     if (tag !== 18) {
                         break;
                     }
-                    message.acceptor = Address.decode(reader, reader.uint32());
+                    message.acceptor = reader.string();
                     continue;
                 }
             }
@@ -472,7 +463,7 @@ export const AcceptContractRequest = {
                 : isSet(object.contract_id)
                     ? globalThis.String(object.contract_id)
                     : "",
-            acceptor: isSet(object.acceptor) ? Address.fromJSON(object.acceptor) : undefined,
+            acceptor: isSet(object.acceptor) ? globalThis.String(object.acceptor) : "",
         };
     },
     toJSON(message) {
@@ -480,8 +471,8 @@ export const AcceptContractRequest = {
         if (message.contractId !== "") {
             obj.contractId = message.contractId;
         }
-        if (message.acceptor !== undefined) {
-            obj.acceptor = Address.toJSON(message.acceptor);
+        if (message.acceptor !== "") {
+            obj.acceptor = message.acceptor;
         }
         return obj;
     },
@@ -491,22 +482,20 @@ export const AcceptContractRequest = {
     fromPartial(object) {
         const message = createBaseAcceptContractRequest();
         message.contractId = object.contractId ?? "";
-        message.acceptor = (object.acceptor !== undefined && object.acceptor !== null)
-            ? Address.fromPartial(object.acceptor)
-            : undefined;
+        message.acceptor = object.acceptor ?? "";
         return message;
     },
 };
 function createBaseCompleteContractRequest() {
-    return { contractId: "", completer: undefined, proof: "" };
+    return { contractId: "", completer: "", proof: "" };
 }
 export const CompleteContractRequest = {
     encode(message, writer = new BinaryWriter()) {
         if (message.contractId !== "") {
             writer.uint32(10).string(message.contractId);
         }
-        if (message.completer !== undefined) {
-            Address.encode(message.completer, writer.uint32(18).fork()).join();
+        if (message.completer !== "") {
+            writer.uint32(18).string(message.completer);
         }
         if (message.proof !== "") {
             writer.uint32(26).string(message.proof);
@@ -531,7 +520,7 @@ export const CompleteContractRequest = {
                     if (tag !== 18) {
                         break;
                     }
-                    message.completer = Address.decode(reader, reader.uint32());
+                    message.completer = reader.string();
                     continue;
                 }
                 case 3: {
@@ -556,7 +545,7 @@ export const CompleteContractRequest = {
                 : isSet(object.contract_id)
                     ? globalThis.String(object.contract_id)
                     : "",
-            completer: isSet(object.completer) ? Address.fromJSON(object.completer) : undefined,
+            completer: isSet(object.completer) ? globalThis.String(object.completer) : "",
             proof: isSet(object.proof) ? globalThis.String(object.proof) : "",
         };
     },
@@ -565,8 +554,8 @@ export const CompleteContractRequest = {
         if (message.contractId !== "") {
             obj.contractId = message.contractId;
         }
-        if (message.completer !== undefined) {
-            obj.completer = Address.toJSON(message.completer);
+        if (message.completer !== "") {
+            obj.completer = message.completer;
         }
         if (message.proof !== "") {
             obj.proof = message.proof;
@@ -579,23 +568,21 @@ export const CompleteContractRequest = {
     fromPartial(object) {
         const message = createBaseCompleteContractRequest();
         message.contractId = object.contractId ?? "";
-        message.completer = (object.completer !== undefined && object.completer !== null)
-            ? Address.fromPartial(object.completer)
-            : undefined;
+        message.completer = object.completer ?? "";
         message.proof = object.proof ?? "";
         return message;
     },
 };
 function createBaseRejectContractRequest() {
-    return { contractId: "", rejector: undefined, reason: "" };
+    return { contractId: "", rejector: "", reason: "" };
 }
 export const RejectContractRequest = {
     encode(message, writer = new BinaryWriter()) {
         if (message.contractId !== "") {
             writer.uint32(10).string(message.contractId);
         }
-        if (message.rejector !== undefined) {
-            Address.encode(message.rejector, writer.uint32(18).fork()).join();
+        if (message.rejector !== "") {
+            writer.uint32(18).string(message.rejector);
         }
         if (message.reason !== "") {
             writer.uint32(26).string(message.reason);
@@ -620,7 +607,7 @@ export const RejectContractRequest = {
                     if (tag !== 18) {
                         break;
                     }
-                    message.rejector = Address.decode(reader, reader.uint32());
+                    message.rejector = reader.string();
                     continue;
                 }
                 case 3: {
@@ -645,7 +632,7 @@ export const RejectContractRequest = {
                 : isSet(object.contract_id)
                     ? globalThis.String(object.contract_id)
                     : "",
-            rejector: isSet(object.rejector) ? Address.fromJSON(object.rejector) : undefined,
+            rejector: isSet(object.rejector) ? globalThis.String(object.rejector) : "",
             reason: isSet(object.reason) ? globalThis.String(object.reason) : "",
         };
     },
@@ -654,8 +641,8 @@ export const RejectContractRequest = {
         if (message.contractId !== "") {
             obj.contractId = message.contractId;
         }
-        if (message.rejector !== undefined) {
-            obj.rejector = Address.toJSON(message.rejector);
+        if (message.rejector !== "") {
+            obj.rejector = message.rejector;
         }
         if (message.reason !== "") {
             obj.reason = message.reason;
@@ -668,23 +655,21 @@ export const RejectContractRequest = {
     fromPartial(object) {
         const message = createBaseRejectContractRequest();
         message.contractId = object.contractId ?? "";
-        message.rejector = (object.rejector !== undefined && object.rejector !== null)
-            ? Address.fromPartial(object.rejector)
-            : undefined;
+        message.rejector = object.rejector ?? "";
         message.reason = object.reason ?? "";
         return message;
     },
 };
 function createBaseDisputeContractRequest() {
-    return { contractId: "", disputant: undefined, evidence: "", reason: "" };
+    return { contractId: "", disputant: "", evidence: "", reason: "" };
 }
 export const DisputeContractRequest = {
     encode(message, writer = new BinaryWriter()) {
         if (message.contractId !== "") {
             writer.uint32(10).string(message.contractId);
         }
-        if (message.disputant !== undefined) {
-            Address.encode(message.disputant, writer.uint32(18).fork()).join();
+        if (message.disputant !== "") {
+            writer.uint32(18).string(message.disputant);
         }
         if (message.evidence !== "") {
             writer.uint32(26).string(message.evidence);
@@ -712,7 +697,7 @@ export const DisputeContractRequest = {
                     if (tag !== 18) {
                         break;
                     }
-                    message.disputant = Address.decode(reader, reader.uint32());
+                    message.disputant = reader.string();
                     continue;
                 }
                 case 3: {
@@ -744,7 +729,7 @@ export const DisputeContractRequest = {
                 : isSet(object.contract_id)
                     ? globalThis.String(object.contract_id)
                     : "",
-            disputant: isSet(object.disputant) ? Address.fromJSON(object.disputant) : undefined,
+            disputant: isSet(object.disputant) ? globalThis.String(object.disputant) : "",
             evidence: isSet(object.evidence) ? globalThis.String(object.evidence) : "",
             reason: isSet(object.reason) ? globalThis.String(object.reason) : "",
         };
@@ -754,8 +739,8 @@ export const DisputeContractRequest = {
         if (message.contractId !== "") {
             obj.contractId = message.contractId;
         }
-        if (message.disputant !== undefined) {
-            obj.disputant = Address.toJSON(message.disputant);
+        if (message.disputant !== "") {
+            obj.disputant = message.disputant;
         }
         if (message.evidence !== "") {
             obj.evidence = message.evidence;
@@ -771,9 +756,7 @@ export const DisputeContractRequest = {
     fromPartial(object) {
         const message = createBaseDisputeContractRequest();
         message.contractId = object.contractId ?? "";
-        message.disputant = (object.disputant !== undefined && object.disputant !== null)
-            ? Address.fromPartial(object.disputant)
-            : undefined;
+        message.disputant = object.disputant ?? "";
         message.evidence = object.evidence ?? "";
         message.reason = object.reason ?? "";
         return message;

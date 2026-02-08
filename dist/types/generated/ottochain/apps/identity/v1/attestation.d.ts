@@ -1,5 +1,4 @@
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
-import { Address } from "../../../v1/common.js";
 import { Platform } from "./agent.js";
 export declare const protobufPackage = "ottochain.apps.identity.v1";
 /** Types of attestations that affect reputation */
@@ -30,9 +29,9 @@ export interface Attestation {
     id: string;
     type: AttestationType;
     /** Agent receiving attestation */
-    subject?: Address | undefined;
+    subject: string;
     /** Agent or platform issuing */
-    issuer?: Address | undefined;
+    issuer: string;
     /** If issued by platform */
     issuerPlatform: Platform;
     /** Reputation change */
@@ -43,14 +42,14 @@ export interface Attestation {
 }
 /** Vouch request - one agent vouching for another */
 export interface VouchRequest {
-    fromAddress?: Address | undefined;
-    toAddress?: Address | undefined;
+    fromAddress: string;
+    toAddress: string;
     reason: string;
 }
 /** Challenge request - disputing an agent's behavior */
 export interface ChallengeRequest {
-    challenger?: Address | undefined;
-    challenged?: Address | undefined;
+    challenger: string;
+    challenged: string;
     evidence: string;
     reason: string;
 }

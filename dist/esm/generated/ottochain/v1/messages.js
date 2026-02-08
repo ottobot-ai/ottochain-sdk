@@ -6,7 +6,6 @@
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { Value } from "../../google/protobuf/struct.js";
-import { FiberOrdinal } from "./common.js";
 import { AccessControlPolicy, StateMachineDefinition } from "./fiber.js";
 export const protobufPackage = "ottochain.v1";
 function createBaseCreateStateMachine() {
@@ -122,7 +121,7 @@ export const CreateStateMachine = {
     },
 };
 function createBaseTransitionStateMachine() {
-    return { fiberId: "", eventName: "", payload: undefined, targetSequenceNumber: undefined };
+    return { fiberId: "", eventName: "", payload: undefined, targetSequenceNumber: 0 };
 }
 export const TransitionStateMachine = {
     encode(message, writer = new BinaryWriter()) {
@@ -135,8 +134,8 @@ export const TransitionStateMachine = {
         if (message.payload !== undefined) {
             Value.encode(Value.wrap(message.payload), writer.uint32(26).fork()).join();
         }
-        if (message.targetSequenceNumber !== undefined) {
-            FiberOrdinal.encode(message.targetSequenceNumber, writer.uint32(34).fork()).join();
+        if (message.targetSequenceNumber !== 0) {
+            writer.uint32(32).int64(message.targetSequenceNumber);
         }
         return writer;
     },
@@ -169,10 +168,10 @@ export const TransitionStateMachine = {
                     continue;
                 }
                 case 4: {
-                    if (tag !== 34) {
+                    if (tag !== 32) {
                         break;
                     }
-                    message.targetSequenceNumber = FiberOrdinal.decode(reader, reader.uint32());
+                    message.targetSequenceNumber = longToNumber(reader.int64());
                     continue;
                 }
             }
@@ -197,10 +196,10 @@ export const TransitionStateMachine = {
                     : "",
             payload: isSet(object?.payload) ? object.payload : undefined,
             targetSequenceNumber: isSet(object.targetSequenceNumber)
-                ? FiberOrdinal.fromJSON(object.targetSequenceNumber)
+                ? globalThis.Number(object.targetSequenceNumber)
                 : isSet(object.target_sequence_number)
-                    ? FiberOrdinal.fromJSON(object.target_sequence_number)
-                    : undefined,
+                    ? globalThis.Number(object.target_sequence_number)
+                    : 0,
         };
     },
     toJSON(message) {
@@ -214,8 +213,8 @@ export const TransitionStateMachine = {
         if (message.payload !== undefined) {
             obj.payload = message.payload;
         }
-        if (message.targetSequenceNumber !== undefined) {
-            obj.targetSequenceNumber = FiberOrdinal.toJSON(message.targetSequenceNumber);
+        if (message.targetSequenceNumber !== 0) {
+            obj.targetSequenceNumber = Math.round(message.targetSequenceNumber);
         }
         return obj;
     },
@@ -227,22 +226,20 @@ export const TransitionStateMachine = {
         message.fiberId = object.fiberId ?? "";
         message.eventName = object.eventName ?? "";
         message.payload = object.payload ?? undefined;
-        message.targetSequenceNumber = (object.targetSequenceNumber !== undefined && object.targetSequenceNumber !== null)
-            ? FiberOrdinal.fromPartial(object.targetSequenceNumber)
-            : undefined;
+        message.targetSequenceNumber = object.targetSequenceNumber ?? 0;
         return message;
     },
 };
 function createBaseArchiveStateMachine() {
-    return { fiberId: "", targetSequenceNumber: undefined };
+    return { fiberId: "", targetSequenceNumber: 0 };
 }
 export const ArchiveStateMachine = {
     encode(message, writer = new BinaryWriter()) {
         if (message.fiberId !== "") {
             writer.uint32(10).string(message.fiberId);
         }
-        if (message.targetSequenceNumber !== undefined) {
-            FiberOrdinal.encode(message.targetSequenceNumber, writer.uint32(18).fork()).join();
+        if (message.targetSequenceNumber !== 0) {
+            writer.uint32(16).int64(message.targetSequenceNumber);
         }
         return writer;
     },
@@ -261,10 +258,10 @@ export const ArchiveStateMachine = {
                     continue;
                 }
                 case 2: {
-                    if (tag !== 18) {
+                    if (tag !== 16) {
                         break;
                     }
-                    message.targetSequenceNumber = FiberOrdinal.decode(reader, reader.uint32());
+                    message.targetSequenceNumber = longToNumber(reader.int64());
                     continue;
                 }
             }
@@ -283,10 +280,10 @@ export const ArchiveStateMachine = {
                     ? globalThis.String(object.fiber_id)
                     : "",
             targetSequenceNumber: isSet(object.targetSequenceNumber)
-                ? FiberOrdinal.fromJSON(object.targetSequenceNumber)
+                ? globalThis.Number(object.targetSequenceNumber)
                 : isSet(object.target_sequence_number)
-                    ? FiberOrdinal.fromJSON(object.target_sequence_number)
-                    : undefined,
+                    ? globalThis.Number(object.target_sequence_number)
+                    : 0,
         };
     },
     toJSON(message) {
@@ -294,8 +291,8 @@ export const ArchiveStateMachine = {
         if (message.fiberId !== "") {
             obj.fiberId = message.fiberId;
         }
-        if (message.targetSequenceNumber !== undefined) {
-            obj.targetSequenceNumber = FiberOrdinal.toJSON(message.targetSequenceNumber);
+        if (message.targetSequenceNumber !== 0) {
+            obj.targetSequenceNumber = Math.round(message.targetSequenceNumber);
         }
         return obj;
     },
@@ -305,9 +302,7 @@ export const ArchiveStateMachine = {
     fromPartial(object) {
         const message = createBaseArchiveStateMachine();
         message.fiberId = object.fiberId ?? "";
-        message.targetSequenceNumber = (object.targetSequenceNumber !== undefined && object.targetSequenceNumber !== null)
-            ? FiberOrdinal.fromPartial(object.targetSequenceNumber)
-            : undefined;
+        message.targetSequenceNumber = object.targetSequenceNumber ?? 0;
         return message;
     },
 };
@@ -428,7 +423,7 @@ export const CreateScript = {
     },
 };
 function createBaseInvokeScript() {
-    return { fiberId: "", method: "", args: undefined, targetSequenceNumber: undefined };
+    return { fiberId: "", method: "", args: undefined, targetSequenceNumber: 0 };
 }
 export const InvokeScript = {
     encode(message, writer = new BinaryWriter()) {
@@ -441,8 +436,8 @@ export const InvokeScript = {
         if (message.args !== undefined) {
             Value.encode(Value.wrap(message.args), writer.uint32(26).fork()).join();
         }
-        if (message.targetSequenceNumber !== undefined) {
-            FiberOrdinal.encode(message.targetSequenceNumber, writer.uint32(34).fork()).join();
+        if (message.targetSequenceNumber !== 0) {
+            writer.uint32(32).int64(message.targetSequenceNumber);
         }
         return writer;
     },
@@ -475,10 +470,10 @@ export const InvokeScript = {
                     continue;
                 }
                 case 4: {
-                    if (tag !== 34) {
+                    if (tag !== 32) {
                         break;
                     }
-                    message.targetSequenceNumber = FiberOrdinal.decode(reader, reader.uint32());
+                    message.targetSequenceNumber = longToNumber(reader.int64());
                     continue;
                 }
             }
@@ -499,10 +494,10 @@ export const InvokeScript = {
             method: isSet(object.method) ? globalThis.String(object.method) : "",
             args: isSet(object?.args) ? object.args : undefined,
             targetSequenceNumber: isSet(object.targetSequenceNumber)
-                ? FiberOrdinal.fromJSON(object.targetSequenceNumber)
+                ? globalThis.Number(object.targetSequenceNumber)
                 : isSet(object.target_sequence_number)
-                    ? FiberOrdinal.fromJSON(object.target_sequence_number)
-                    : undefined,
+                    ? globalThis.Number(object.target_sequence_number)
+                    : 0,
         };
     },
     toJSON(message) {
@@ -516,8 +511,8 @@ export const InvokeScript = {
         if (message.args !== undefined) {
             obj.args = message.args;
         }
-        if (message.targetSequenceNumber !== undefined) {
-            obj.targetSequenceNumber = FiberOrdinal.toJSON(message.targetSequenceNumber);
+        if (message.targetSequenceNumber !== 0) {
+            obj.targetSequenceNumber = Math.round(message.targetSequenceNumber);
         }
         return obj;
     },
@@ -529,9 +524,7 @@ export const InvokeScript = {
         message.fiberId = object.fiberId ?? "";
         message.method = object.method ?? "";
         message.args = object.args ?? undefined;
-        message.targetSequenceNumber = (object.targetSequenceNumber !== undefined && object.targetSequenceNumber !== null)
-            ? FiberOrdinal.fromPartial(object.targetSequenceNumber)
-            : undefined;
+        message.targetSequenceNumber = object.targetSequenceNumber ?? 0;
         return message;
     },
 };
@@ -729,6 +722,16 @@ export const OttochainMessage = {
         return message;
     },
 };
+function longToNumber(int64) {
+    const num = globalThis.Number(int64.toString());
+    if (num > globalThis.Number.MAX_SAFE_INTEGER) {
+        throw new globalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
+    }
+    if (num < globalThis.Number.MIN_SAFE_INTEGER) {
+        throw new globalThis.Error("Value is smaller than Number.MIN_SAFE_INTEGER");
+    }
+    return num;
+}
 function isSet(value) {
     return value !== null && value !== undefined;
 }

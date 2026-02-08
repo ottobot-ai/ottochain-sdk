@@ -2,7 +2,6 @@ syntax = "proto3";
 
 package ottochain.v1;
 
-import "ottochain/v1/common.proto";
 import "google/protobuf/struct.proto";
 
 // Fiber lifecycle status
@@ -25,7 +24,7 @@ message AccessControlPolicy {
 message PublicAccess {}
 
 message WhitelistAccess {
-  repeated Address addresses = 1;
+  repeated string addresses = 1;  // DAG addresses
 }
 
 message FiberOwnedAccess {
@@ -35,7 +34,7 @@ message FiberOwnedAccess {
 // State machine definition
 message StateMachineDefinition {
   google.protobuf.Struct states = 1;
-  StateId initial_state = 2;
+  string initial_state = 2;  // State ID
   repeated google.protobuf.Struct transitions = 3;
   optional google.protobuf.Struct metadata = 4;
 }
@@ -50,11 +49,11 @@ message EmittedEvent {
 // Event receipt - log entry for state machine transition
 message EventReceipt {
   string fiber_id = 1;
-  FiberOrdinal sequence_number = 2;
+  int64 sequence_number = 2;  // Fiber ordinal
   string event_name = 3;
-  SnapshotOrdinal ordinal = 4;
-  StateId from_state = 5;
-  StateId to_state = 6;
+  int64 ordinal = 4;  // Snapshot ordinal
+  string from_state = 5;  // State ID
+  string to_state = 6;  // State ID
   bool success = 7;
   int64 gas_used = 8;
   int32 triggers_fired = 9;
@@ -70,8 +69,8 @@ message ScriptInvocation {
   google.protobuf.Value args = 3;
   google.protobuf.Value result = 4;
   int64 gas_used = 5;
-  SnapshotOrdinal invoked_at = 6;
-  Address invoked_by = 7;
+  int64 invoked_at = 6;  // Snapshot ordinal
+  string invoked_by = 7;  // DAG address
 }
 
 // Fiber log entry - union of event receipt or script invocation

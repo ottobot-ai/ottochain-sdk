@@ -1,5 +1,4 @@
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
-import { FiberOrdinal } from "./common.js";
 import { AccessControlPolicy, StateMachineDefinition } from "./fiber.js";
 export declare const protobufPackage = "ottochain.v1";
 /** Create a new state machine fiber */
@@ -14,12 +13,14 @@ export interface TransitionStateMachine {
     fiberId: string;
     eventName: string;
     payload?: any | undefined;
-    targetSequenceNumber?: FiberOrdinal | undefined;
+    /** Fiber ordinal */
+    targetSequenceNumber: number;
 }
 /** Archive a state machine fiber */
 export interface ArchiveStateMachine {
     fiberId: string;
-    targetSequenceNumber?: FiberOrdinal | undefined;
+    /** Fiber ordinal */
+    targetSequenceNumber: number;
 }
 /** Create a new script fiber */
 export interface CreateScript {
@@ -33,7 +34,8 @@ export interface InvokeScript {
     fiberId: string;
     method: string;
     args?: any | undefined;
-    targetSequenceNumber?: FiberOrdinal | undefined;
+    /** Fiber ordinal */
+    targetSequenceNumber: number;
 }
 /** Union message type for all OttoChain operations */
 export interface OttochainMessage {

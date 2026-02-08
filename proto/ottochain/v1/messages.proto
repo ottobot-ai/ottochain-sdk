@@ -2,7 +2,6 @@ syntax = "proto3";
 
 package ottochain.v1;
 
-import "ottochain/v1/common.proto";
 import "ottochain/v1/fiber.proto";
 import "google/protobuf/struct.proto";
 
@@ -19,13 +18,13 @@ message TransitionStateMachine {
   string fiber_id = 1;
   string event_name = 2;
   google.protobuf.Value payload = 3;
-  FiberOrdinal target_sequence_number = 4;
+  int64 target_sequence_number = 4;  // Fiber ordinal
 }
 
 // Archive a state machine fiber
 message ArchiveStateMachine {
   string fiber_id = 1;
-  FiberOrdinal target_sequence_number = 2;
+  int64 target_sequence_number = 2;  // Fiber ordinal
 }
 
 // Create a new script fiber
@@ -41,7 +40,7 @@ message InvokeScript {
   string fiber_id = 1;
   string method = 2;
   google.protobuf.Value args = 3;
-  FiberOrdinal target_sequence_number = 4;
+  int64 target_sequence_number = 4;  // Fiber ordinal
 }
 
 // Union message type for all OttoChain operations

@@ -7,7 +7,6 @@
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { Timestamp } from "../../../../google/protobuf/timestamp.js";
-import { Address as Address1 } from "../../../v1/common.js";
 
 export const protobufPackage = "ottochain.apps.corporate.v1";
 
@@ -517,7 +516,7 @@ export interface RegisteredAgent {
 
 export interface Incorporator {
   name: string;
-  address?: Address1 | undefined;
+  address: string;
 }
 
 export interface ShareStructure {
@@ -585,7 +584,7 @@ export interface Officer {
   title: string;
   email: string;
   appointedAt?: Date | undefined;
-  appointedBy?: Address1 | undefined;
+  appointedBy: string;
   status: OfficerStatus;
 }
 
@@ -593,7 +592,7 @@ export interface OfficerAction {
   actionType: string;
   officerId: string;
   at?: Date | undefined;
-  by?: Address1 | undefined;
+  by: string;
 }
 
 export interface CorporateShareholders {
@@ -610,7 +609,7 @@ export interface CorporateShareholders_VotingPowerEntry {
 }
 
 export interface Shareholder {
-  address?: Address1 | undefined;
+  address: string;
   name: string;
   holdings: ShareHolding[];
   firstAcquired?: Date | undefined;
@@ -630,16 +629,14 @@ export interface CorporateResolution {
   /** BOARD, SHAREHOLDER, UNANIMOUS_WRITTEN */
   resolutionType: string;
   status: ResolutionStatus;
-  proposedBy?: Address1 | undefined;
+  proposedBy: string;
   proposedAt?: Date | undefined;
   votes: ResolutionVote[];
   adoptedAt?: Date | undefined;
 }
 
 export interface ResolutionVote {
-  voter?:
-    | Address1
-    | undefined;
+  voter: string;
   /** FOR, AGAINST, ABSTAIN */
   vote: string;
   weight: number;
@@ -655,7 +652,7 @@ export interface CorporateSecurities {
 export interface SecurityIssuance {
   issuanceId: string;
   classId: string;
-  recipient?: Address1 | undefined;
+  recipient: string;
   shares: number;
   pricePerShareCents: number;
   issuedAt?: Date | undefined;
@@ -665,8 +662,8 @@ export interface SecurityIssuance {
 export interface SecurityTransfer {
   transferId: string;
   classId: string;
-  from?: Address1 | undefined;
-  to?: Address1 | undefined;
+  from: string;
+  to: string;
   shares: number;
   transferredAt?: Date | undefined;
 }
@@ -715,7 +712,7 @@ export interface AppointDirectorRequest {
 export interface IssueSharesRequest {
   entityId: string;
   classId: string;
-  recipient?: Address1 | undefined;
+  recipient: string;
   shares: number;
   pricePerShareCents: number;
   authorizationResolutionId: string;
@@ -726,7 +723,7 @@ export interface ProposeResolutionRequest {
   title: string;
   body: string;
   resolutionType: string;
-  proposer?: Address1 | undefined;
+  proposer: string;
 }
 
 function createBaseJurisdiction(): Jurisdiction {
@@ -1501,7 +1498,7 @@ export const RegisteredAgent: MessageFns<RegisteredAgent> = {
 };
 
 function createBaseIncorporator(): Incorporator {
-  return { name: "", address: undefined };
+  return { name: "", address: "" };
 }
 
 export const Incorporator: MessageFns<Incorporator> = {
@@ -1509,8 +1506,8 @@ export const Incorporator: MessageFns<Incorporator> = {
     if (message.name !== "") {
       writer.uint32(10).string(message.name);
     }
-    if (message.address !== undefined) {
-      Address1.encode(message.address, writer.uint32(18).fork()).join();
+    if (message.address !== "") {
+      writer.uint32(18).string(message.address);
     }
     return writer;
   },
@@ -1535,7 +1532,7 @@ export const Incorporator: MessageFns<Incorporator> = {
             break;
           }
 
-          message.address = Address1.decode(reader, reader.uint32());
+          message.address = reader.string();
           continue;
         }
       }
@@ -1550,7 +1547,7 @@ export const Incorporator: MessageFns<Incorporator> = {
   fromJSON(object: any): Incorporator {
     return {
       name: isSet(object.name) ? globalThis.String(object.name) : "",
-      address: isSet(object.address) ? Address1.fromJSON(object.address) : undefined,
+      address: isSet(object.address) ? globalThis.String(object.address) : "",
     };
   },
 
@@ -1559,8 +1556,8 @@ export const Incorporator: MessageFns<Incorporator> = {
     if (message.name !== "") {
       obj.name = message.name;
     }
-    if (message.address !== undefined) {
-      obj.address = Address1.toJSON(message.address);
+    if (message.address !== "") {
+      obj.address = message.address;
     }
     return obj;
   },
@@ -1571,9 +1568,7 @@ export const Incorporator: MessageFns<Incorporator> = {
   fromPartial<I extends Exact<DeepPartial<Incorporator>, I>>(object: I): Incorporator {
     const message = createBaseIncorporator();
     message.name = object.name ?? "";
-    message.address = (object.address !== undefined && object.address !== null)
-      ? Address1.fromPartial(object.address)
-      : undefined;
+    message.address = object.address ?? "";
     return message;
   },
 };
@@ -2592,7 +2587,7 @@ function createBaseOfficer(): Officer {
     title: "",
     email: "",
     appointedAt: undefined,
-    appointedBy: undefined,
+    appointedBy: "",
     status: OfficerStatus.OFFICER_STATUS_UNSPECIFIED,
   };
 }
@@ -2614,8 +2609,8 @@ export const Officer: MessageFns<Officer> = {
     if (message.appointedAt !== undefined) {
       Timestamp.encode(toTimestamp(message.appointedAt), writer.uint32(42).fork()).join();
     }
-    if (message.appointedBy !== undefined) {
-      Address1.encode(message.appointedBy, writer.uint32(50).fork()).join();
+    if (message.appointedBy !== "") {
+      writer.uint32(50).string(message.appointedBy);
     }
     if (message.status !== OfficerStatus.OFFICER_STATUS_UNSPECIFIED) {
       writer.uint32(56).int32(officerStatusToNumber(message.status));
@@ -2675,7 +2670,7 @@ export const Officer: MessageFns<Officer> = {
             break;
           }
 
-          message.appointedBy = Address1.decode(reader, reader.uint32());
+          message.appointedBy = reader.string();
           continue;
         }
         case 7: {
@@ -2711,10 +2706,10 @@ export const Officer: MessageFns<Officer> = {
         ? fromJsonTimestamp(object.appointed_at)
         : undefined,
       appointedBy: isSet(object.appointedBy)
-        ? Address1.fromJSON(object.appointedBy)
+        ? globalThis.String(object.appointedBy)
         : isSet(object.appointed_by)
-        ? Address1.fromJSON(object.appointed_by)
-        : undefined,
+        ? globalThis.String(object.appointed_by)
+        : "",
       status: isSet(object.status) ? officerStatusFromJSON(object.status) : OfficerStatus.OFFICER_STATUS_UNSPECIFIED,
     };
   },
@@ -2736,8 +2731,8 @@ export const Officer: MessageFns<Officer> = {
     if (message.appointedAt !== undefined) {
       obj.appointedAt = message.appointedAt.toISOString();
     }
-    if (message.appointedBy !== undefined) {
-      obj.appointedBy = Address1.toJSON(message.appointedBy);
+    if (message.appointedBy !== "") {
+      obj.appointedBy = message.appointedBy;
     }
     if (message.status !== OfficerStatus.OFFICER_STATUS_UNSPECIFIED) {
       obj.status = officerStatusToJSON(message.status);
@@ -2755,16 +2750,14 @@ export const Officer: MessageFns<Officer> = {
     message.title = object.title ?? "";
     message.email = object.email ?? "";
     message.appointedAt = object.appointedAt ?? undefined;
-    message.appointedBy = (object.appointedBy !== undefined && object.appointedBy !== null)
-      ? Address1.fromPartial(object.appointedBy)
-      : undefined;
+    message.appointedBy = object.appointedBy ?? "";
     message.status = object.status ?? OfficerStatus.OFFICER_STATUS_UNSPECIFIED;
     return message;
   },
 };
 
 function createBaseOfficerAction(): OfficerAction {
-  return { actionType: "", officerId: "", at: undefined, by: undefined };
+  return { actionType: "", officerId: "", at: undefined, by: "" };
 }
 
 export const OfficerAction: MessageFns<OfficerAction> = {
@@ -2778,8 +2771,8 @@ export const OfficerAction: MessageFns<OfficerAction> = {
     if (message.at !== undefined) {
       Timestamp.encode(toTimestamp(message.at), writer.uint32(26).fork()).join();
     }
-    if (message.by !== undefined) {
-      Address1.encode(message.by, writer.uint32(34).fork()).join();
+    if (message.by !== "") {
+      writer.uint32(34).string(message.by);
     }
     return writer;
   },
@@ -2820,7 +2813,7 @@ export const OfficerAction: MessageFns<OfficerAction> = {
             break;
           }
 
-          message.by = Address1.decode(reader, reader.uint32());
+          message.by = reader.string();
           continue;
         }
       }
@@ -2845,7 +2838,7 @@ export const OfficerAction: MessageFns<OfficerAction> = {
         ? globalThis.String(object.officer_id)
         : "",
       at: isSet(object.at) ? fromJsonTimestamp(object.at) : undefined,
-      by: isSet(object.by) ? Address1.fromJSON(object.by) : undefined,
+      by: isSet(object.by) ? globalThis.String(object.by) : "",
     };
   },
 
@@ -2860,8 +2853,8 @@ export const OfficerAction: MessageFns<OfficerAction> = {
     if (message.at !== undefined) {
       obj.at = message.at.toISOString();
     }
-    if (message.by !== undefined) {
-      obj.by = Address1.toJSON(message.by);
+    if (message.by !== "") {
+      obj.by = message.by;
     }
     return obj;
   },
@@ -2874,7 +2867,7 @@ export const OfficerAction: MessageFns<OfficerAction> = {
     message.actionType = object.actionType ?? "";
     message.officerId = object.officerId ?? "";
     message.at = object.at ?? undefined;
-    message.by = (object.by !== undefined && object.by !== null) ? Address1.fromPartial(object.by) : undefined;
+    message.by = object.by ?? "";
     return message;
   },
 };
@@ -3111,13 +3104,13 @@ export const CorporateShareholders_VotingPowerEntry: MessageFns<CorporateShareho
 };
 
 function createBaseShareholder(): Shareholder {
-  return { address: undefined, name: "", holdings: [], firstAcquired: undefined };
+  return { address: "", name: "", holdings: [], firstAcquired: undefined };
 }
 
 export const Shareholder: MessageFns<Shareholder> = {
   encode(message: Shareholder, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.address !== undefined) {
-      Address1.encode(message.address, writer.uint32(10).fork()).join();
+    if (message.address !== "") {
+      writer.uint32(10).string(message.address);
     }
     if (message.name !== "") {
       writer.uint32(18).string(message.name);
@@ -3143,7 +3136,7 @@ export const Shareholder: MessageFns<Shareholder> = {
             break;
           }
 
-          message.address = Address1.decode(reader, reader.uint32());
+          message.address = reader.string();
           continue;
         }
         case 2: {
@@ -3181,7 +3174,7 @@ export const Shareholder: MessageFns<Shareholder> = {
 
   fromJSON(object: any): Shareholder {
     return {
-      address: isSet(object.address) ? Address1.fromJSON(object.address) : undefined,
+      address: isSet(object.address) ? globalThis.String(object.address) : "",
       name: isSet(object.name) ? globalThis.String(object.name) : "",
       holdings: globalThis.Array.isArray(object?.holdings)
         ? object.holdings.map((e: any) => ShareHolding.fromJSON(e))
@@ -3196,8 +3189,8 @@ export const Shareholder: MessageFns<Shareholder> = {
 
   toJSON(message: Shareholder): unknown {
     const obj: any = {};
-    if (message.address !== undefined) {
-      obj.address = Address1.toJSON(message.address);
+    if (message.address !== "") {
+      obj.address = message.address;
     }
     if (message.name !== "") {
       obj.name = message.name;
@@ -3216,9 +3209,7 @@ export const Shareholder: MessageFns<Shareholder> = {
   },
   fromPartial<I extends Exact<DeepPartial<Shareholder>, I>>(object: I): Shareholder {
     const message = createBaseShareholder();
-    message.address = (object.address !== undefined && object.address !== null)
-      ? Address1.fromPartial(object.address)
-      : undefined;
+    message.address = object.address ?? "";
     message.name = object.name ?? "";
     message.holdings = object.holdings?.map((e) => ShareHolding.fromPartial(e)) || [];
     message.firstAcquired = object.firstAcquired ?? undefined;
@@ -3334,7 +3325,7 @@ function createBaseCorporateResolution(): CorporateResolution {
     body: "",
     resolutionType: "",
     status: ResolutionStatus.RESOLUTION_STATUS_UNSPECIFIED,
-    proposedBy: undefined,
+    proposedBy: "",
     proposedAt: undefined,
     votes: [],
     adoptedAt: undefined,
@@ -3361,8 +3352,8 @@ export const CorporateResolution: MessageFns<CorporateResolution> = {
     if (message.status !== ResolutionStatus.RESOLUTION_STATUS_UNSPECIFIED) {
       writer.uint32(48).int32(resolutionStatusToNumber(message.status));
     }
-    if (message.proposedBy !== undefined) {
-      Address1.encode(message.proposedBy, writer.uint32(58).fork()).join();
+    if (message.proposedBy !== "") {
+      writer.uint32(58).string(message.proposedBy);
     }
     if (message.proposedAt !== undefined) {
       Timestamp.encode(toTimestamp(message.proposedAt), writer.uint32(66).fork()).join();
@@ -3436,7 +3427,7 @@ export const CorporateResolution: MessageFns<CorporateResolution> = {
             break;
           }
 
-          message.proposedBy = Address1.decode(reader, reader.uint32());
+          message.proposedBy = reader.string();
           continue;
         }
         case 8: {
@@ -3495,10 +3486,10 @@ export const CorporateResolution: MessageFns<CorporateResolution> = {
         ? resolutionStatusFromJSON(object.status)
         : ResolutionStatus.RESOLUTION_STATUS_UNSPECIFIED,
       proposedBy: isSet(object.proposedBy)
-        ? Address1.fromJSON(object.proposedBy)
+        ? globalThis.String(object.proposedBy)
         : isSet(object.proposed_by)
-        ? Address1.fromJSON(object.proposed_by)
-        : undefined,
+        ? globalThis.String(object.proposed_by)
+        : "",
       proposedAt: isSet(object.proposedAt)
         ? fromJsonTimestamp(object.proposedAt)
         : isSet(object.proposed_at)
@@ -3535,8 +3526,8 @@ export const CorporateResolution: MessageFns<CorporateResolution> = {
     if (message.status !== ResolutionStatus.RESOLUTION_STATUS_UNSPECIFIED) {
       obj.status = resolutionStatusToJSON(message.status);
     }
-    if (message.proposedBy !== undefined) {
-      obj.proposedBy = Address1.toJSON(message.proposedBy);
+    if (message.proposedBy !== "") {
+      obj.proposedBy = message.proposedBy;
     }
     if (message.proposedAt !== undefined) {
       obj.proposedAt = message.proposedAt.toISOString();
@@ -3561,9 +3552,7 @@ export const CorporateResolution: MessageFns<CorporateResolution> = {
     message.body = object.body ?? "";
     message.resolutionType = object.resolutionType ?? "";
     message.status = object.status ?? ResolutionStatus.RESOLUTION_STATUS_UNSPECIFIED;
-    message.proposedBy = (object.proposedBy !== undefined && object.proposedBy !== null)
-      ? Address1.fromPartial(object.proposedBy)
-      : undefined;
+    message.proposedBy = object.proposedBy ?? "";
     message.proposedAt = object.proposedAt ?? undefined;
     message.votes = object.votes?.map((e) => ResolutionVote.fromPartial(e)) || [];
     message.adoptedAt = object.adoptedAt ?? undefined;
@@ -3572,13 +3561,13 @@ export const CorporateResolution: MessageFns<CorporateResolution> = {
 };
 
 function createBaseResolutionVote(): ResolutionVote {
-  return { voter: undefined, vote: "", weight: 0, votedAt: undefined };
+  return { voter: "", vote: "", weight: 0, votedAt: undefined };
 }
 
 export const ResolutionVote: MessageFns<ResolutionVote> = {
   encode(message: ResolutionVote, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.voter !== undefined) {
-      Address1.encode(message.voter, writer.uint32(10).fork()).join();
+    if (message.voter !== "") {
+      writer.uint32(10).string(message.voter);
     }
     if (message.vote !== "") {
       writer.uint32(18).string(message.vote);
@@ -3604,7 +3593,7 @@ export const ResolutionVote: MessageFns<ResolutionVote> = {
             break;
           }
 
-          message.voter = Address1.decode(reader, reader.uint32());
+          message.voter = reader.string();
           continue;
         }
         case 2: {
@@ -3642,7 +3631,7 @@ export const ResolutionVote: MessageFns<ResolutionVote> = {
 
   fromJSON(object: any): ResolutionVote {
     return {
-      voter: isSet(object.voter) ? Address1.fromJSON(object.voter) : undefined,
+      voter: isSet(object.voter) ? globalThis.String(object.voter) : "",
       vote: isSet(object.vote) ? globalThis.String(object.vote) : "",
       weight: isSet(object.weight) ? globalThis.Number(object.weight) : 0,
       votedAt: isSet(object.votedAt)
@@ -3655,8 +3644,8 @@ export const ResolutionVote: MessageFns<ResolutionVote> = {
 
   toJSON(message: ResolutionVote): unknown {
     const obj: any = {};
-    if (message.voter !== undefined) {
-      obj.voter = Address1.toJSON(message.voter);
+    if (message.voter !== "") {
+      obj.voter = message.voter;
     }
     if (message.vote !== "") {
       obj.vote = message.vote;
@@ -3675,9 +3664,7 @@ export const ResolutionVote: MessageFns<ResolutionVote> = {
   },
   fromPartial<I extends Exact<DeepPartial<ResolutionVote>, I>>(object: I): ResolutionVote {
     const message = createBaseResolutionVote();
-    message.voter = (object.voter !== undefined && object.voter !== null)
-      ? Address1.fromPartial(object.voter)
-      : undefined;
+    message.voter = object.voter ?? "";
     message.vote = object.vote ?? "";
     message.weight = object.weight ?? 0;
     message.votedAt = object.votedAt ?? undefined;
@@ -3789,7 +3776,7 @@ function createBaseSecurityIssuance(): SecurityIssuance {
   return {
     issuanceId: "",
     classId: "",
-    recipient: undefined,
+    recipient: "",
     shares: 0,
     pricePerShareCents: 0,
     issuedAt: undefined,
@@ -3805,8 +3792,8 @@ export const SecurityIssuance: MessageFns<SecurityIssuance> = {
     if (message.classId !== "") {
       writer.uint32(18).string(message.classId);
     }
-    if (message.recipient !== undefined) {
-      Address1.encode(message.recipient, writer.uint32(26).fork()).join();
+    if (message.recipient !== "") {
+      writer.uint32(26).string(message.recipient);
     }
     if (message.shares !== 0) {
       writer.uint32(32).int64(message.shares);
@@ -3851,7 +3838,7 @@ export const SecurityIssuance: MessageFns<SecurityIssuance> = {
             break;
           }
 
-          message.recipient = Address1.decode(reader, reader.uint32());
+          message.recipient = reader.string();
           continue;
         }
         case 4: {
@@ -3907,7 +3894,7 @@ export const SecurityIssuance: MessageFns<SecurityIssuance> = {
         : isSet(object.class_id)
         ? globalThis.String(object.class_id)
         : "",
-      recipient: isSet(object.recipient) ? Address1.fromJSON(object.recipient) : undefined,
+      recipient: isSet(object.recipient) ? globalThis.String(object.recipient) : "",
       shares: isSet(object.shares) ? globalThis.Number(object.shares) : 0,
       pricePerShareCents: isSet(object.pricePerShareCents)
         ? globalThis.Number(object.pricePerShareCents)
@@ -3935,8 +3922,8 @@ export const SecurityIssuance: MessageFns<SecurityIssuance> = {
     if (message.classId !== "") {
       obj.classId = message.classId;
     }
-    if (message.recipient !== undefined) {
-      obj.recipient = Address1.toJSON(message.recipient);
+    if (message.recipient !== "") {
+      obj.recipient = message.recipient;
     }
     if (message.shares !== 0) {
       obj.shares = Math.round(message.shares);
@@ -3960,9 +3947,7 @@ export const SecurityIssuance: MessageFns<SecurityIssuance> = {
     const message = createBaseSecurityIssuance();
     message.issuanceId = object.issuanceId ?? "";
     message.classId = object.classId ?? "";
-    message.recipient = (object.recipient !== undefined && object.recipient !== null)
-      ? Address1.fromPartial(object.recipient)
-      : undefined;
+    message.recipient = object.recipient ?? "";
     message.shares = object.shares ?? 0;
     message.pricePerShareCents = object.pricePerShareCents ?? 0;
     message.issuedAt = object.issuedAt ?? undefined;
@@ -3972,7 +3957,7 @@ export const SecurityIssuance: MessageFns<SecurityIssuance> = {
 };
 
 function createBaseSecurityTransfer(): SecurityTransfer {
-  return { transferId: "", classId: "", from: undefined, to: undefined, shares: 0, transferredAt: undefined };
+  return { transferId: "", classId: "", from: "", to: "", shares: 0, transferredAt: undefined };
 }
 
 export const SecurityTransfer: MessageFns<SecurityTransfer> = {
@@ -3983,11 +3968,11 @@ export const SecurityTransfer: MessageFns<SecurityTransfer> = {
     if (message.classId !== "") {
       writer.uint32(18).string(message.classId);
     }
-    if (message.from !== undefined) {
-      Address1.encode(message.from, writer.uint32(26).fork()).join();
+    if (message.from !== "") {
+      writer.uint32(26).string(message.from);
     }
-    if (message.to !== undefined) {
-      Address1.encode(message.to, writer.uint32(34).fork()).join();
+    if (message.to !== "") {
+      writer.uint32(34).string(message.to);
     }
     if (message.shares !== 0) {
       writer.uint32(40).int64(message.shares);
@@ -4026,7 +4011,7 @@ export const SecurityTransfer: MessageFns<SecurityTransfer> = {
             break;
           }
 
-          message.from = Address1.decode(reader, reader.uint32());
+          message.from = reader.string();
           continue;
         }
         case 4: {
@@ -4034,7 +4019,7 @@ export const SecurityTransfer: MessageFns<SecurityTransfer> = {
             break;
           }
 
-          message.to = Address1.decode(reader, reader.uint32());
+          message.to = reader.string();
           continue;
         }
         case 5: {
@@ -4074,8 +4059,8 @@ export const SecurityTransfer: MessageFns<SecurityTransfer> = {
         : isSet(object.class_id)
         ? globalThis.String(object.class_id)
         : "",
-      from: isSet(object.from) ? Address1.fromJSON(object.from) : undefined,
-      to: isSet(object.to) ? Address1.fromJSON(object.to) : undefined,
+      from: isSet(object.from) ? globalThis.String(object.from) : "",
+      to: isSet(object.to) ? globalThis.String(object.to) : "",
       shares: isSet(object.shares) ? globalThis.Number(object.shares) : 0,
       transferredAt: isSet(object.transferredAt)
         ? fromJsonTimestamp(object.transferredAt)
@@ -4093,11 +4078,11 @@ export const SecurityTransfer: MessageFns<SecurityTransfer> = {
     if (message.classId !== "") {
       obj.classId = message.classId;
     }
-    if (message.from !== undefined) {
-      obj.from = Address1.toJSON(message.from);
+    if (message.from !== "") {
+      obj.from = message.from;
     }
-    if (message.to !== undefined) {
-      obj.to = Address1.toJSON(message.to);
+    if (message.to !== "") {
+      obj.to = message.to;
     }
     if (message.shares !== 0) {
       obj.shares = Math.round(message.shares);
@@ -4115,8 +4100,8 @@ export const SecurityTransfer: MessageFns<SecurityTransfer> = {
     const message = createBaseSecurityTransfer();
     message.transferId = object.transferId ?? "";
     message.classId = object.classId ?? "";
-    message.from = (object.from !== undefined && object.from !== null) ? Address1.fromPartial(object.from) : undefined;
-    message.to = (object.to !== undefined && object.to !== null) ? Address1.fromPartial(object.to) : undefined;
+    message.from = object.from ?? "";
+    message.to = object.to ?? "";
     message.shares = object.shares ?? 0;
     message.transferredAt = object.transferredAt ?? undefined;
     return message;
@@ -4825,14 +4810,7 @@ export const AppointDirectorRequest: MessageFns<AppointDirectorRequest> = {
 };
 
 function createBaseIssueSharesRequest(): IssueSharesRequest {
-  return {
-    entityId: "",
-    classId: "",
-    recipient: undefined,
-    shares: 0,
-    pricePerShareCents: 0,
-    authorizationResolutionId: "",
-  };
+  return { entityId: "", classId: "", recipient: "", shares: 0, pricePerShareCents: 0, authorizationResolutionId: "" };
 }
 
 export const IssueSharesRequest: MessageFns<IssueSharesRequest> = {
@@ -4843,8 +4821,8 @@ export const IssueSharesRequest: MessageFns<IssueSharesRequest> = {
     if (message.classId !== "") {
       writer.uint32(18).string(message.classId);
     }
-    if (message.recipient !== undefined) {
-      Address1.encode(message.recipient, writer.uint32(26).fork()).join();
+    if (message.recipient !== "") {
+      writer.uint32(26).string(message.recipient);
     }
     if (message.shares !== 0) {
       writer.uint32(32).int64(message.shares);
@@ -4886,7 +4864,7 @@ export const IssueSharesRequest: MessageFns<IssueSharesRequest> = {
             break;
           }
 
-          message.recipient = Address1.decode(reader, reader.uint32());
+          message.recipient = reader.string();
           continue;
         }
         case 4: {
@@ -4934,7 +4912,7 @@ export const IssueSharesRequest: MessageFns<IssueSharesRequest> = {
         : isSet(object.class_id)
         ? globalThis.String(object.class_id)
         : "",
-      recipient: isSet(object.recipient) ? Address1.fromJSON(object.recipient) : undefined,
+      recipient: isSet(object.recipient) ? globalThis.String(object.recipient) : "",
       shares: isSet(object.shares) ? globalThis.Number(object.shares) : 0,
       pricePerShareCents: isSet(object.pricePerShareCents)
         ? globalThis.Number(object.pricePerShareCents)
@@ -4957,8 +4935,8 @@ export const IssueSharesRequest: MessageFns<IssueSharesRequest> = {
     if (message.classId !== "") {
       obj.classId = message.classId;
     }
-    if (message.recipient !== undefined) {
-      obj.recipient = Address1.toJSON(message.recipient);
+    if (message.recipient !== "") {
+      obj.recipient = message.recipient;
     }
     if (message.shares !== 0) {
       obj.shares = Math.round(message.shares);
@@ -4979,9 +4957,7 @@ export const IssueSharesRequest: MessageFns<IssueSharesRequest> = {
     const message = createBaseIssueSharesRequest();
     message.entityId = object.entityId ?? "";
     message.classId = object.classId ?? "";
-    message.recipient = (object.recipient !== undefined && object.recipient !== null)
-      ? Address1.fromPartial(object.recipient)
-      : undefined;
+    message.recipient = object.recipient ?? "";
     message.shares = object.shares ?? 0;
     message.pricePerShareCents = object.pricePerShareCents ?? 0;
     message.authorizationResolutionId = object.authorizationResolutionId ?? "";
@@ -4990,7 +4966,7 @@ export const IssueSharesRequest: MessageFns<IssueSharesRequest> = {
 };
 
 function createBaseProposeResolutionRequest(): ProposeResolutionRequest {
-  return { entityId: "", title: "", body: "", resolutionType: "", proposer: undefined };
+  return { entityId: "", title: "", body: "", resolutionType: "", proposer: "" };
 }
 
 export const ProposeResolutionRequest: MessageFns<ProposeResolutionRequest> = {
@@ -5007,8 +4983,8 @@ export const ProposeResolutionRequest: MessageFns<ProposeResolutionRequest> = {
     if (message.resolutionType !== "") {
       writer.uint32(34).string(message.resolutionType);
     }
-    if (message.proposer !== undefined) {
-      Address1.encode(message.proposer, writer.uint32(42).fork()).join();
+    if (message.proposer !== "") {
+      writer.uint32(42).string(message.proposer);
     }
     return writer;
   },
@@ -5057,7 +5033,7 @@ export const ProposeResolutionRequest: MessageFns<ProposeResolutionRequest> = {
             break;
           }
 
-          message.proposer = Address1.decode(reader, reader.uint32());
+          message.proposer = reader.string();
           continue;
         }
       }
@@ -5083,7 +5059,7 @@ export const ProposeResolutionRequest: MessageFns<ProposeResolutionRequest> = {
         : isSet(object.resolution_type)
         ? globalThis.String(object.resolution_type)
         : "",
-      proposer: isSet(object.proposer) ? Address1.fromJSON(object.proposer) : undefined,
+      proposer: isSet(object.proposer) ? globalThis.String(object.proposer) : "",
     };
   },
 
@@ -5101,8 +5077,8 @@ export const ProposeResolutionRequest: MessageFns<ProposeResolutionRequest> = {
     if (message.resolutionType !== "") {
       obj.resolutionType = message.resolutionType;
     }
-    if (message.proposer !== undefined) {
-      obj.proposer = Address1.toJSON(message.proposer);
+    if (message.proposer !== "") {
+      obj.proposer = message.proposer;
     }
     return obj;
   },
@@ -5116,9 +5092,7 @@ export const ProposeResolutionRequest: MessageFns<ProposeResolutionRequest> = {
     message.title = object.title ?? "";
     message.body = object.body ?? "";
     message.resolutionType = object.resolutionType ?? "";
-    message.proposer = (object.proposer !== undefined && object.proposer !== null)
-      ? Address1.fromPartial(object.proposer)
-      : undefined;
+    message.proposer = object.proposer ?? "";
     return message;
   },
 };

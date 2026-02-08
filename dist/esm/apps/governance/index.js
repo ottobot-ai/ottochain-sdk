@@ -80,7 +80,7 @@ export function signaturesNeeded(state) {
  * Check if agent is a signer
  */
 export function isSigner(state, agent) {
-    return state.signers.some(s => s.value === agent);
+    return state.signers.includes(agent);
 }
 /**
  * Check if agent has signed current proposal
@@ -141,7 +141,7 @@ export function meetsThreshold(state, reputation, action) {
  * Check if agent is a member
  */
 export function isMember(state, agent) {
-    return state.members.some(m => m.value === agent);
+    return state.members.includes(agent);
 }
 /**
  * Check if threshold proposal has quorum

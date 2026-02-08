@@ -9,7 +9,6 @@ exports.AgentIdentityDefinition = exports.AgentIdentity = exports.PlatformLink =
 /* eslint-disable */
 const wire_1 = require("@bufbuild/protobuf/wire");
 const timestamp_js_1 = require("../../../../google/protobuf/timestamp.js");
-const common_js_1 = require("../../../v1/common.js");
 exports.protobufPackage = "ottochain.apps.identity.v1";
 /** Agent lifecycle states in the identity state machine */
 var AgentState;
@@ -314,7 +313,7 @@ exports.PlatformLink = {
 };
 function createBaseAgentIdentity() {
     return {
-        address: undefined,
+        address: "",
         publicKey: "",
         displayName: "",
         reputation: 0,
@@ -326,8 +325,8 @@ function createBaseAgentIdentity() {
 }
 exports.AgentIdentity = {
     encode(message, writer = new wire_1.BinaryWriter()) {
-        if (message.address !== undefined) {
-            common_js_1.Address.encode(message.address, writer.uint32(10).fork()).join();
+        if (message.address !== "") {
+            writer.uint32(10).string(message.address);
         }
         if (message.publicKey !== "") {
             writer.uint32(18).string(message.publicKey);
@@ -363,7 +362,7 @@ exports.AgentIdentity = {
                     if (tag !== 10) {
                         break;
                     }
-                    message.address = common_js_1.Address.decode(reader, reader.uint32());
+                    message.address = reader.string();
                     continue;
                 }
                 case 2: {
@@ -425,7 +424,7 @@ exports.AgentIdentity = {
     },
     fromJSON(object) {
         return {
-            address: isSet(object.address) ? common_js_1.Address.fromJSON(object.address) : undefined,
+            address: isSet(object.address) ? globalThis.String(object.address) : "",
             publicKey: isSet(object.publicKey)
                 ? globalThis.String(object.publicKey)
                 : isSet(object.public_key)
@@ -457,8 +456,8 @@ exports.AgentIdentity = {
     },
     toJSON(message) {
         const obj = {};
-        if (message.address !== undefined) {
-            obj.address = common_js_1.Address.toJSON(message.address);
+        if (message.address !== "") {
+            obj.address = message.address;
         }
         if (message.publicKey !== "") {
             obj.publicKey = message.publicKey;
@@ -488,9 +487,7 @@ exports.AgentIdentity = {
     },
     fromPartial(object) {
         const message = createBaseAgentIdentity();
-        message.address = (object.address !== undefined && object.address !== null)
-            ? common_js_1.Address.fromPartial(object.address)
-            : undefined;
+        message.address = object.address ?? "";
         message.publicKey = object.publicKey ?? "";
         message.displayName = object.displayName ?? "";
         message.reputation = object.reputation ?? 0;

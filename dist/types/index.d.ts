@@ -13,6 +13,7 @@
  *
  * @packageDocumentation
  */
+export * from './types.js';
 export * from './metakit/index.js';
 export * from './generated/index.js';
 export { OttoChainError, NetworkError, ValidationError, SigningError, TransactionError, ErrorCode, isErrorCode, wrapError, } from './errors.js';

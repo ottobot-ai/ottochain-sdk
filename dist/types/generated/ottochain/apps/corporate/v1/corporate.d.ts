@@ -1,5 +1,4 @@
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
-import { Address as Address1 } from "../../../v1/common.js";
 export declare const protobufPackage = "ottochain.apps.corporate.v1";
 /** Type of corporate entity */
 export declare enum EntityType {
@@ -133,7 +132,7 @@ export interface RegisteredAgent {
 }
 export interface Incorporator {
     name: string;
-    address?: Address1 | undefined;
+    address: string;
 }
 export interface ShareStructure {
     classes: ShareClass[];
@@ -192,14 +191,14 @@ export interface Officer {
     title: string;
     email: string;
     appointedAt?: Date | undefined;
-    appointedBy?: Address1 | undefined;
+    appointedBy: string;
     status: OfficerStatus;
 }
 export interface OfficerAction {
     actionType: string;
     officerId: string;
     at?: Date | undefined;
-    by?: Address1 | undefined;
+    by: string;
 }
 export interface CorporateShareholders {
     entityId: string;
@@ -215,7 +214,7 @@ export interface CorporateShareholders_VotingPowerEntry {
     value: number;
 }
 export interface Shareholder {
-    address?: Address1 | undefined;
+    address: string;
     name: string;
     holdings: ShareHolding[];
     firstAcquired?: Date | undefined;
@@ -233,13 +232,13 @@ export interface CorporateResolution {
     /** BOARD, SHAREHOLDER, UNANIMOUS_WRITTEN */
     resolutionType: string;
     status: ResolutionStatus;
-    proposedBy?: Address1 | undefined;
+    proposedBy: string;
     proposedAt?: Date | undefined;
     votes: ResolutionVote[];
     adoptedAt?: Date | undefined;
 }
 export interface ResolutionVote {
-    voter?: Address1 | undefined;
+    voter: string;
     /** FOR, AGAINST, ABSTAIN */
     vote: string;
     weight: number;
@@ -253,7 +252,7 @@ export interface CorporateSecurities {
 export interface SecurityIssuance {
     issuanceId: string;
     classId: string;
-    recipient?: Address1 | undefined;
+    recipient: string;
     shares: number;
     pricePerShareCents: number;
     issuedAt?: Date | undefined;
@@ -262,8 +261,8 @@ export interface SecurityIssuance {
 export interface SecurityTransfer {
     transferId: string;
     classId: string;
-    from?: Address1 | undefined;
-    to?: Address1 | undefined;
+    from: string;
+    to: string;
     shares: number;
     transferredAt?: Date | undefined;
 }
@@ -306,7 +305,7 @@ export interface AppointDirectorRequest {
 export interface IssueSharesRequest {
     entityId: string;
     classId: string;
-    recipient?: Address1 | undefined;
+    recipient: string;
     shares: number;
     pricePerShareCents: number;
     authorizationResolutionId: string;
@@ -316,7 +315,7 @@ export interface ProposeResolutionRequest {
     title: string;
     body: string;
     resolutionType: string;
-    proposer?: Address1 | undefined;
+    proposer: string;
 }
 export declare const Jurisdiction: MessageFns<Jurisdiction>;
 export declare const Address: MessageFns<Address>;
