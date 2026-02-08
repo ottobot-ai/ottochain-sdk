@@ -10,25 +10,29 @@
       "id": {
         "value": "ACTIVE"
       },
-      "isFinal": false
+      "isFinal": false,
+      "metadata": null
     },
     "VOTING": {
       "id": {
         "value": "VOTING"
       },
-      "isFinal": false
+      "isFinal": false,
+      "metadata": null
     },
     "QUEUED": {
       "id": {
         "value": "QUEUED"
       },
-      "isFinal": false
+      "isFinal": false,
+      "metadata": null
     },
     "DISSOLVED": {
       "id": {
         "value": "DISSOLVED"
       },
-      "isFinal": true
+      "isFinal": true,
+      "metadata": null
     }
   },
   "initialState": {
@@ -139,16 +143,18 @@
             ]
           },
           {
-            "!": {
-              "getKey": [
-                {
-                  "var": "state.votes.voters"
-                },
-                {
-                  "var": "event.agent"
-                }
-              ]
-            }
+            "!": [
+              {
+                "getKey": [
+                  {
+                    "var": "state.votes.voters"
+                  },
+                  {
+                    "var": "event.agent"
+                  }
+                ]
+              }
+            ]
           },
           {
             "<=": [

@@ -9,37 +9,43 @@
       "id": {
         "value": "PROPOSED"
       },
-      "isFinal": false
+      "isFinal": false,
+      "metadata": null
     },
     "ACTIVE": {
       "id": {
         "value": "ACTIVE"
       },
-      "isFinal": false
+      "isFinal": false,
+      "metadata": null
     },
     "COMPLETED": {
       "id": {
         "value": "COMPLETED"
       },
-      "isFinal": true
+      "isFinal": true,
+      "metadata": null
     },
     "DISPUTED": {
       "id": {
         "value": "DISPUTED"
       },
-      "isFinal": false
+      "isFinal": false,
+      "metadata": null
     },
     "REJECTED": {
       "id": {
         "value": "REJECTED"
       },
-      "isFinal": true
+      "isFinal": true,
+      "metadata": null
     },
     "CANCELLED": {
       "id": {
         "value": "CANCELLED"
       },
-      "isFinal": true
+      "isFinal": true,
+      "metadata": null
     }
   },
   "initialState": {
@@ -189,23 +195,25 @@
             ]
           },
           {
-            "!": {
-              "in": [
-                {
-                  "var": "event.agent"
-                },
-                {
-                  "map": [
-                    {
-                      "var": "state.completions"
-                    },
-                    {
-                      "var": "agent"
-                    }
-                  ]
-                }
-              ]
-            }
+            "!": [
+              {
+                "in": [
+                  {
+                    "var": "event.agent"
+                  },
+                  {
+                    "map": [
+                      {
+                        "var": "state.completions"
+                      },
+                      {
+                        "var": "agent"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
           }
         ]
       },

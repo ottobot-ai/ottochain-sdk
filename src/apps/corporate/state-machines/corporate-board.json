@@ -307,24 +307,15 @@
   "states": {
     "ACTIVE": {
       "description": "Board is constituted and able to conduct business. Default state between meetings.",
-      "metadata": {
-        "displayName": "Active",
-        "color": "#28A745"
-      }
+      "metadata": null
     },
     "IN_MEETING": {
       "description": "Board meeting is in session with quorum present. Can take formal actions.",
-      "metadata": {
-        "displayName": "In Meeting",
-        "color": "#007BFF"
-      }
+      "metadata": null
     },
     "QUORUM_LOST": {
       "description": "Meeting in progress but quorum lost due to departures. No further action until quorum restored or adjourned.",
-      "metadata": {
-        "displayName": "Quorum Lost",
-        "color": "#FFC107"
-      }
+      "metadata": null
     }
   },
   "initialState": "ACTIVE",

@@ -265,24 +265,15 @@
     "states": {
         "DRAFT": {
             "description": "Initial bylaws being drafted prior to incorporation or adoption",
-            "metadata": {
-                "displayName": "Draft",
-                "color": "#FFA500"
-            }
+            "metadata": null
         },
         "ADOPTED": {
             "description": "Bylaws have been formally adopted and are in effect",
-            "metadata": {
-                "displayName": "Adopted",
-                "color": "#28A745"
-            }
+            "metadata": null
         },
         "AMENDING": {
             "description": "Amendment in progress - proposed changes pending approval",
-            "metadata": {
-                "displayName": "Amendment Pending",
-                "color": "#FFC107"
-            }
+            "metadata": null
         }
     },
     "initialState": "DRAFT",

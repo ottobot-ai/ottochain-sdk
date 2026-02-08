@@ -9,49 +9,57 @@
       "id": {
         "value": "RECEIVED"
       },
-      "isFinal": false
+      "isFinal": false,
+      "metadata": null
     },
     "PLANNING": {
       "id": {
         "value": "PLANNING"
       },
-      "isFinal": false
+      "isFinal": false,
+      "metadata": null
     },
     "EXECUTING": {
       "id": {
         "value": "EXECUTING"
       },
-      "isFinal": false
+      "isFinal": false,
+      "metadata": null
     },
     "PAUSED": {
       "id": {
         "value": "PAUSED"
       },
-      "isFinal": false
+      "isFinal": false,
+      "metadata": null
     },
     "COMPLETED": {
       "id": {
         "value": "COMPLETED"
       },
-      "isFinal": true
+      "isFinal": true,
+      "metadata": null
     },
     "FAILED": {
       "id": {
         "value": "FAILED"
       },
-      "isFinal": true
+      "isFinal": true,
+      "metadata": null
     },
     "BLOCKED": {
       "id": {
         "value": "BLOCKED"
       },
-      "isFinal": true
+      "isFinal": true,
+      "metadata": null
     },
     "VETOED": {
       "id": {
         "value": "VETOED"
       },
-      "isFinal": true
+      "isFinal": true,
+      "metadata": null
     }
   },
   "initialState": {
@@ -299,9 +307,11 @@
             ]
           },
           {
-            "!": {
-              "var": "state.judicialHold"
-            }
+            "!": [
+              {
+                "var": "state.judicialHold"
+              }
+            ]
           }
         ]
       },

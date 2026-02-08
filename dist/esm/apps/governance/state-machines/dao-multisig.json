@@ -10,19 +10,22 @@
             "id": {
                 "value": "ACTIVE"
             },
-            "isFinal": false
+            "isFinal": false,
+            "metadata": null
         },
         "PENDING": {
             "id": {
                 "value": "PENDING"
             },
-            "isFinal": false
+            "isFinal": false,
+            "metadata": null
         },
         "DISSOLVED": {
             "id": {
                 "value": "DISSOLVED"
             },
-            "isFinal": true
+            "isFinal": true,
+            "metadata": null
         }
     },
     "initialState": {
@@ -117,16 +120,18 @@
                         ]
                     },
                     {
-                        "!": {
-                            "getKey": [
-                                {
-                                    "var": "state.signatures"
-                                },
-                                {
-                                    "var": "event.agent"
-                                }
-                            ]
-                        }
+                        "!": [
+                            {
+                                "getKey": [
+                                    {
+                                        "var": "state.signatures"
+                                    },
+                                    {
+                                        "var": "event.agent"
+                                    }
+                                ]
+                            }
+                        ]
                     },
                     {
                         "<": [

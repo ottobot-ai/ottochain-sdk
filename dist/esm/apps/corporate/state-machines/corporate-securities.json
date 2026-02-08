@@ -360,38 +360,23 @@
     "states": {
         "AUTHORIZED": {
             "description": "Shares authorized by charter but not yet issued",
-            "metadata": {
-                "displayName": "Authorized",
-                "color": "#6C757D"
-            }
+            "metadata": null
         },
         "ISSUED": {
             "description": "Shares issued and held by a shareholder",
-            "metadata": {
-                "displayName": "Issued",
-                "color": "#28A745"
-            }
+            "metadata": null
         },
         "TREASURY": {
             "description": "Shares repurchased and held by the company",
-            "metadata": {
-                "displayName": "Treasury",
-                "color": "#FFC107"
-            }
+            "metadata": null
         },
         "TRANSFERRED": {
             "description": "Transitional state during transfer between holders",
-            "metadata": {
-                "displayName": "In Transfer",
-                "color": "#17A2B8"
-            }
+            "metadata": null
         },
         "RETIRED": {
             "description": "Shares cancelled and returned to authorized but unissued",
-            "metadata": {
-                "displayName": "Retired",
-                "color": "#6C757D"
-            },
+            "metadata": null,
             "terminal": true
         }
     },

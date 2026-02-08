@@ -9,55 +9,64 @@
       "id": {
         "value": "FILED"
       },
-      "isFinal": false
+      "isFinal": false,
+      "metadata": null
     },
     "REVIEW": {
       "id": {
         "value": "REVIEW"
       },
-      "isFinal": false
+      "isFinal": false,
+      "metadata": null
     },
     "HEARING": {
       "id": {
         "value": "HEARING"
       },
-      "isFinal": false
+      "isFinal": false,
+      "metadata": null
     },
     "DELIBERATION": {
       "id": {
         "value": "DELIBERATION"
       },
-      "isFinal": false
+      "isFinal": false,
+      "metadata": null
     },
     "RULING": {
       "id": {
         "value": "RULING"
       },
-      "isFinal": false
+      "isFinal": false,
+      "metadata": null
     },
     "ENFORCING": {
       "id": {
         "value": "ENFORCING"
       },
-      "isFinal": false
+      "isFinal": false,
+      "metadata": null
     },
     "CLOSED": {
       "id": {
         "value": "CLOSED"
       },
-      "isFinal": true
+      "isFinal": true,
+      "metadata": null
     },
     "DISMISSED": {
       "id": {
         "value": "DISMISSED"
       },
-      "isFinal": true
+      "isFinal": true,
+      "metadata": null
     },
     "APPEALED": {
       "id": {
         "value": "APPEALED"
       },
-      "isFinal": false
+      "isFinal": false,
+      "metadata": null
     }
   },
   "initialState": {
@@ -353,16 +362,18 @@
             ]
           },
           {
-            "!": {
-              "getKey": [
-                {
-                  "var": "state.votes"
-                },
-                {
-                  "var": "event.agent"
-                }
-              ]
-            }
+            "!": [
+              {
+                "getKey": [
+                  {
+                    "var": "state.votes"
+                  },
+                  {
+                    "var": "event.agent"
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
@@ -482,9 +493,11 @@
       },
       "eventName": "close",
       "guard": {
-        "!": {
-          "var": "state.ruling.remedy"
-        }
+        "!": [
+          {
+            "var": "state.ruling.remedy"
+          }
+        ]
       },
       "effect": {
         "merge": [

@@ -9,55 +9,64 @@
             "id": {
                 "value": "DRAFT"
             },
-            "isFinal": false
+            "isFinal": false,
+            "metadata": null
         },
         "ACTIVE": {
             "id": {
                 "value": "ACTIVE"
             },
-            "isFinal": false
+            "isFinal": false,
+            "metadata": null
         },
         "PENDING": {
             "id": {
                 "value": "PENDING"
             },
-            "isFinal": false
+            "isFinal": false,
+            "metadata": null
         },
         "EXECUTING": {
             "id": {
                 "value": "EXECUTING"
             },
-            "isFinal": false
+            "isFinal": false,
+            "metadata": null
         },
         "EXECUTED": {
             "id": {
                 "value": "EXECUTED"
             },
-            "isFinal": true
+            "isFinal": true,
+            "metadata": null
         },
         "VETOED": {
             "id": {
                 "value": "VETOED"
             },
-            "isFinal": true
+            "isFinal": true,
+            "metadata": null
         },
         "DEFEATED": {
             "id": {
                 "value": "DEFEATED"
             },
-            "isFinal": true
+            "isFinal": true,
+            "metadata": null
         },
         "EXPIRED": {
             "id": {
                 "value": "EXPIRED"
             },
-            "isFinal": true
+            "isFinal": true,
+            "metadata": null
         },
         "CANCELLED": {
             "id": {
                 "value": "CANCELLED"
             },
-            "isFinal": true
+            "isFinal": true,
+            "metadata": null
         }
     },
     "initialState": {
@@ -138,16 +147,18 @@
                         ]
                     },
                     {
-                        "!": {
-                            "getKey": [
-                                {
-                                    "var": "state.votes"
-                                },
-                                {
-                                    "var": "event.agent"
-                                }
-                            ]
-                        }
+                        "!": [
+                            {
+                                "getKey": [
+                                    {
+                                        "var": "state.votes"
+                                    },
+                                    {
+                                        "var": "event.agent"
+                                    }
+                                ]
+                            }
+                        ]
                     },
                     {
                         "or": [
@@ -235,16 +246,18 @@
                         ]
                     },
                     {
-                        "!": {
-                            "getKey": [
-                                {
-                                    "var": "state.votes"
-                                },
-                                {
-                                    "var": "event.agent"
-                                }
-                            ]
-                        }
+                        "!": [
+                            {
+                                "getKey": [
+                                    {
+                                        "var": "state.votes"
+                                    },
+                                    {
+                                        "var": "event.agent"
+                                    }
+                                ]
+                            }
+                        ]
                     }
                 ]
             },
@@ -351,9 +364,11 @@
                         ]
                     },
                     {
-                        "!": {
-                            "var": "state.tally.passed"
-                        }
+                        "!": [
+                            {
+                                "var": "state.tally.passed"
+                            }
+                        ]
                     }
                 ]
             },

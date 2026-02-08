@@ -284,10 +284,7 @@
   "states": {
     "ACTIVE": {
       "description": "Officer roster is active. This is the only state - all changes are self-transitions.",
-      "metadata": {
-        "displayName": "Active",
-        "color": "#28A745"
-      }
+      "metadata": null
     }
   },
   "initialState": "ACTIVE",

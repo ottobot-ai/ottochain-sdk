@@ -6,108 +6,197 @@
   },
   "states": {
     "REGISTERED": {
-      "id": { "value": "REGISTERED" },
+      "id": {
+        "value": "REGISTERED"
+      },
       "isFinal": false,
       "metadata": null
     },
     "ACTIVE": {
-      "id": { "value": "ACTIVE" },
+      "id": {
+        "value": "ACTIVE"
+      },
       "isFinal": false,
       "metadata": null
     },
     "CHALLENGED": {
-      "id": { "value": "CHALLENGED" },
+      "id": {
+        "value": "CHALLENGED"
+      },
       "isFinal": false,
       "metadata": null
     },
     "SUSPENDED": {
-      "id": { "value": "SUSPENDED" },
+      "id": {
+        "value": "SUSPENDED"
+      },
       "isFinal": false,
       "metadata": null
     },
     "PROBATION": {
-      "id": { "value": "PROBATION" },
+      "id": {
+        "value": "PROBATION"
+      },
       "isFinal": false,
       "metadata": null
     },
     "WITHDRAWN": {
-      "id": { "value": "WITHDRAWN" },
+      "id": {
+        "value": "WITHDRAWN"
+      },
       "isFinal": true,
       "metadata": null
     }
   },
-  "initialState": { "value": "REGISTERED" },
+  "initialState": {
+    "value": "REGISTERED"
+  },
   "transitions": [
     {
-      "from": { "value": "REGISTERED" },
-      "to": { "value": "ACTIVE" },
+      "from": {
+        "value": "REGISTERED"
+      },
+      "to": {
+        "value": "ACTIVE"
+      },
       "eventName": "activate",
-      "guard": { "==": [1, 1] },
+      "guard": {
+        "==": [
+          1,
+          1
+        ]
+      },
       "effect": {
         "merge": [
-          { "var": "state" },
+          {
+            "var": "state"
+          },
           {
             "status": "ACTIVE",
-            "activatedAt": { "var": "$timestamp" }
+            "activatedAt": {
+              "var": "$timestamp"
+            }
           }
         ]
       },
       "dependencies": []
     },
     {
-      "from": { "value": "ACTIVE" },
-      "to": { "value": "ACTIVE" },
+      "from": {
+        "value": "ACTIVE"
+      },
+      "to": {
+        "value": "ACTIVE"
+      },
       "eventName": "receive_vouch",
-      "guard": { "!!": [{ "var": "event.from" }] },
+      "guard": {
+        "!!": [
+          {
+            "var": "event.from"
+          }
+        ]
+      },
       "effect": {
         "merge": [
-          { "var": "state" },
           {
-            "reputation": { "+": [{ "var": "state.reputation" }, 2] }
+            "var": "state"
+          },
+          {
+            "reputation": {
+              "+": [
+                {
+                  "var": "state.reputation"
+                },
+                2
+              ]
+            }
           }
         ]
       },
       "dependencies": []
     },
     {
-      "from": { "value": "ACTIVE" },
-      "to": { "value": "ACTIVE" },
+      "from": {
+        "value": "ACTIVE"
+      },
+      "to": {
+        "value": "ACTIVE"
+      },
       "eventName": "receive_completion",
-      "guard": { "==": [1, 1] },
+      "guard": {
+        "==": [
+          1,
+          1
+        ]
+      },
       "effect": {
         "merge": [
-          { "var": "state" },
           {
-            "reputation": { "+": [{ "var": "state.reputation" }, 5] }
+            "var": "state"
+          },
+          {
+            "reputation": {
+              "+": [
+                {
+                  "var": "state.reputation"
+                },
+                5
+              ]
+            }
           }
         ]
       },
       "dependencies": []
     },
     {
-      "from": { "value": "ACTIVE" },
-      "to": { "value": "CHALLENGED" },
+      "from": {
+        "value": "ACTIVE"
+      },
+      "to": {
+        "value": "CHALLENGED"
+      },
       "eventName": "challenge",
-      "guard": { "!!": [{ "var": "event.challenger" }] },
+      "guard": {
+        "!!": [
+          {
+            "var": "event.challenger"
+          }
+        ]
+      },
       "effect": {
         "merge": [
-          { "var": "state" },
+          {
+            "var": "state"
+          },
           {
             "status": "CHALLENGED",
-            "challengedBy": { "var": "event.challenger" }
+            "challengedBy": {
+              "var": "event.challenger"
+            }
           }
         ]
       },
       "dependencies": []
     },
     {
-      "from": { "value": "CHALLENGED" },
-      "to": { "value": "ACTIVE" },
+      "from": {
+        "value": "CHALLENGED"
+      },
+      "to": {
+        "value": "ACTIVE"
+      },
       "eventName": "dismiss_challenge",
-      "guard": { "==": [1, 1] },
+      "guard": {
+        "==": [
+          1,
+          1
+        ]
+      },
       "effect": {
         "merge": [
-          { "var": "state" },
+          {
+            "var": "state"
+          },
           {
             "status": "ACTIVE",
             "challengedBy": null
@@ -117,45 +206,82 @@
       "dependencies": []
     },
     {
-      "from": { "value": "CHALLENGED" },
-      "to": { "value": "SUSPENDED" },
+      "from": {
+        "value": "CHALLENGED"
+      },
+      "to": {
+        "value": "SUSPENDED"
+      },
       "eventName": "uphold_challenge",
-      "guard": { "==": [1, 1] },
+      "guard": {
+        "==": [
+          1,
+          1
+        ]
+      },
       "effect": {
         "merge": [
-          { "var": "state" },
+          {
+            "var": "state"
+          },
           {
             "status": "SUSPENDED",
-            "suspendedAt": { "var": "$timestamp" }
+            "suspendedAt": {
+              "var": "$timestamp"
+            }
           }
         ]
       },
       "dependencies": []
     },
     {
-      "from": { "value": "SUSPENDED" },
-      "to": { "value": "PROBATION" },
+      "from": {
+        "value": "SUSPENDED"
+      },
+      "to": {
+        "value": "PROBATION"
+      },
       "eventName": "begin_probation",
-      "guard": { "==": [1, 1] },
+      "guard": {
+        "==": [
+          1,
+          1
+        ]
+      },
       "effect": {
         "merge": [
-          { "var": "state" },
+          {
+            "var": "state"
+          },
           {
             "status": "PROBATION",
-            "probationStartedAt": { "var": "$timestamp" }
+            "probationStartedAt": {
+              "var": "$timestamp"
+            }
           }
         ]
       },
       "dependencies": []
     },
     {
-      "from": { "value": "PROBATION" },
-      "to": { "value": "ACTIVE" },
+      "from": {
+        "value": "PROBATION"
+      },
+      "to": {
+        "value": "ACTIVE"
+      },
       "eventName": "complete_probation",
-      "guard": { "==": [1, 1] },
+      "guard": {
+        "==": [
+          1,
+          1
+        ]
+      },
       "effect": {
         "merge": [
-          { "var": "state" },
+          {
+            "var": "state"
+          },
           {
             "status": "ACTIVE",
             "probationStartedAt": null
@@ -165,13 +291,24 @@
       "dependencies": []
     },
     {
-      "from": { "value": "ACTIVE" },
-      "to": { "value": "WITHDRAWN" },
+      "from": {
+        "value": "ACTIVE"
+      },
+      "to": {
+        "value": "WITHDRAWN"
+      },
       "eventName": "withdraw",
-      "guard": { "==": [1, 1] },
+      "guard": {
+        "==": [
+          1,
+          1
+        ]
+      },
       "effect": {
         "merge": [
-          { "var": "state" },
+          {
+            "var": "state"
+          },
           {
             "status": "WITHDRAWN"
           }

@@ -273,31 +273,19 @@
   "states": {
     "INCORPORATING": {
       "description": "Initial state during formation process. Articles filed but not yet approved by state.",
-      "metadata": {
-        "displayName": "Incorporating",
-        "color": "#FFA500"
-      }
+      "metadata": null
     },
     "ACTIVE": {
       "description": "Corporation is in good standing and authorized to conduct business.",
-      "metadata": {
-        "displayName": "Active / Good Standing",
-        "color": "#28A745"
-      }
+      "metadata": null
     },
     "SUSPENDED": {
       "description": "Corporate powers suspended due to compliance failure (tax, filings, etc). Can be reinstated.",
-      "metadata": {
-        "displayName": "Suspended",
-        "color": "#DC3545"
-      }
+      "metadata": null
     },
     "DISSOLVED": {
       "description": "Corporation has been legally dissolved. Terminal state.",
-      "metadata": {
-        "displayName": "Dissolved",
-        "color": "#6C757D"
-      },
+      "metadata": null,
       "terminal": true
     }
   },
