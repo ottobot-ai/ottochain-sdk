@@ -16,6 +16,7 @@
  * @packageDocumentation
  */
 export * from './types.js';
+export { EntityType as EntityTypeProto, EntityState as EntityStateProto, DirectorStatus as DirectorStatusProto, OfficerStatus as OfficerStatusProto, BoardMeetingType as BoardMeetingTypeProto, ResolutionStatus as ResolutionStatusProto, Jurisdiction as JurisdictionProto, Address, ShareClass as ShareClassProto, CorporateEntity, RegisteredAgent, Incorporator, ShareStructure, CorporateBoard, Director as DirectorProto, SeatInfo, QuorumRules, BoardMeeting as BoardMeetingProto, MeetingAttendee, CorporateOfficers, Officer, OfficerAction, CorporateShareholders, Shareholder as ShareholderProto, ShareHolding, CorporateResolution, ResolutionVote, CorporateSecurities, SecurityIssuance, SecurityTransfer, CorporateCompliance, FilingRecord, ComplianceRequirement, CreateEntityRequest, AppointDirectorRequest, IssueSharesRequest, ProposeResolutionRequest, } from '../../generated/ottochain/apps/corporate/v1/corporate_pb.js';
 /**
  * Corporate state machine types.
  */

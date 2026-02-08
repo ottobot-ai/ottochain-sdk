@@ -5,6 +5,13 @@
  *
  * @example
  * ```typescript
+ * import { DAOType, DAOStatus, getDAODefinition } from '@ottochain/sdk/apps/governance';
+ *
+ * const multisigDef = getDAODefinition('Multisig');
+ * ```
+ *
+ * @example
+ * ```typescript
  * import { governance } from '@ottochain/sdk/apps';
  *
  * // Create initial state for a 2-of-3 multisig
@@ -23,6 +30,7 @@
  * @packageDocumentation
  */
 export * from './types.js';
+export { DAOType as DAOTypeProto, DAOStatus as DAOStatusProto, ProposalStatus as ProposalStatusProto, VoteChoice as VoteChoiceProto, DAOMetadata as DAOMetadataProto, Proposal, Vote, VoteTally, SingleOwnerDAO, SingleOwnerAction as SingleOwnerActionProto, OwnershipTransfer as OwnershipTransferProto, MultisigDAO, MultisigAction as MultisigActionProto, TokenDAO, TokenProposalResult as TokenProposalResultProto, ThresholdDAO, ThresholdVotes as ThresholdVotesProto, ThresholdHistoryEntry as ThresholdHistoryEntryProto, CreateDAORequest, ProposeRequest, VoteRequest, ExecuteRequest, } from '../../generated/ottochain/apps/governance/v1/governance_pb.js';
 /**
  * DAO type for selecting state machine definition.
  */

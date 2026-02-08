@@ -34,8 +34,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getCorporateDefinition = exports.CORPORATE_DEFINITIONS = void 0;
+exports.getCorporateDefinition = exports.CORPORATE_DEFINITIONS = exports.ResolutionStatusProto = exports.BoardMeetingTypeProto = exports.OfficerStatusProto = exports.DirectorStatusProto = exports.EntityStateProto = exports.EntityTypeProto = void 0;
 __exportStar(require("./types.js"), exports);
+// Proto-generated types (prefixed to avoid conflicts with TS types)
+var corporate_pb_js_1 = require("../../generated/ottochain/apps/corporate/v1/corporate_pb.js");
+Object.defineProperty(exports, "EntityTypeProto", { enumerable: true, get: function () { return corporate_pb_js_1.EntityType; } });
+Object.defineProperty(exports, "EntityStateProto", { enumerable: true, get: function () { return corporate_pb_js_1.EntityState; } });
+Object.defineProperty(exports, "DirectorStatusProto", { enumerable: true, get: function () { return corporate_pb_js_1.DirectorStatus; } });
+Object.defineProperty(exports, "OfficerStatusProto", { enumerable: true, get: function () { return corporate_pb_js_1.OfficerStatus; } });
+Object.defineProperty(exports, "BoardMeetingTypeProto", { enumerable: true, get: function () { return corporate_pb_js_1.BoardMeetingType; } });
+Object.defineProperty(exports, "ResolutionStatusProto", { enumerable: true, get: function () { return corporate_pb_js_1.ResolutionStatus; } });
 // ---------------------------------------------------------------------------
 // State Machine JSON Definitions
 // ---------------------------------------------------------------------------

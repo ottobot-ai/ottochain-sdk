@@ -16,6 +16,8 @@
  * @packageDocumentation
  */
 export * from './types.js';
+// Proto-generated types (prefixed to avoid conflicts with TS types)
+export { EntityType as EntityTypeProto, EntityState as EntityStateProto, DirectorStatus as DirectorStatusProto, OfficerStatus as OfficerStatusProto, BoardMeetingType as BoardMeetingTypeProto, ResolutionStatus as ResolutionStatusProto, } from '../../generated/ottochain/apps/corporate/v1/corporate_pb.js';
 // ---------------------------------------------------------------------------
 // State Machine JSON Definitions
 // ---------------------------------------------------------------------------

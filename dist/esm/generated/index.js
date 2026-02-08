@@ -20,3 +20,9 @@ export * from './ottochain/apps/contracts/v1/contract_pb.js';
 export * from './ottochain/apps/markets/v1/market_pb.js';
 // App: Oracles
 export * from './ottochain/apps/oracles/v1/oracle_pb.js';
+// App: Governance (selective export to avoid conflicts)
+export { DAOType, DAOStatus, ProposalStatus, VoteChoice, } from './ottochain/apps/governance/v1/governance_pb.js';
+// App: Corporate (selective export to avoid conflicts with Address)
+export { EntityType, EntityState, DirectorStatus, OfficerStatus, BoardMeetingType, ResolutionStatus,
+// Note: Address not exported here - use ottochain.v1.Address from common_pb
+ } from './ottochain/apps/corporate/v1/corporate_pb.js';
