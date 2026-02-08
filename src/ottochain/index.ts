@@ -72,8 +72,5 @@ export {
 export type { Checkpoint, MetagraphClientConfig } from './metagraph-client.js';
 export { MetagraphClient } from './metagraph-client.js';
 
-// Governance and DAO types
-export * from './governance.js';
-
-// Corporate governance types
-export * from './corporate.js';
+// Note: Governance and Corporate types are now in src/apps/
+// Import from '@ottochain/sdk/apps' instead

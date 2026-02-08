@@ -9,7 +9,5 @@
 export * as proto from '../generated/index.js';
 export { decodeOnChainState, getSnapshotOnChainState, getLatestOnChainState, getLogsForFiber, getEventReceipts, getScriptInvocations, extractOnChainState, } from './snapshot.js';
 export { MetagraphClient } from './metagraph-client.js';
-// Governance and DAO types
-export * from './governance.js';
-// Corporate governance types
-export * from './corporate.js';
+// Note: Governance and Corporate types are now in src/apps/
+// Import from '@ottochain/sdk/apps' instead

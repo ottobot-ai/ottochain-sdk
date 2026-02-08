@@ -791,10 +791,10 @@ export declare const CORPORATE_DEFINITIONS: {
                     type: string;
                     eventType: string;
                     payload: {
+                        entityId: string;
                         /**
                          * Corporate governance state machine definitions.
                          */
-                        entityId: string;
                         amendmentId: string;
                         amendmentType: string;
                     };
@@ -822,9 +822,7 @@ export declare const CORPORATE_DEFINITIONS: {
                         authorized: {
                             type: string;
                             required: boolean;
-                        }; /**
-                         * Union of all corporate state types.
-                         */
+                        };
                         parValue: {
                             type: string;
                             required: boolean;
@@ -3835,6 +3833,9 @@ export declare const CORPORATE_DEFINITIONS: {
                     eventType?: undefined;
                     payload?: undefined; /** Holder's name */
                 } | {
+                    /**
+                     * Corporate governance state machine definitions.
+                     */
                     type: string;
                     eventType: string;
                     payload: {
@@ -4678,6 +4679,9 @@ export declare const CORPORATE_DEFINITIONS: {
                             type: string;
                             description: string;
                         };
+                        /**
+                         * Union of all corporate state types.
+                         */
                         newDocumentRef: {
                             type: string;
                             required: boolean;

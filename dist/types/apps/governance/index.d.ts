@@ -23,6 +23,30 @@
  * @packageDocumentation
  */
 export * from './types.js';
+/**
+ * DAO type for selecting state machine definition.
+ */
+export type DAOType = 'Single' | 'Multisig' | 'Threshold' | 'Token';
+/**
+ * Governance type for selecting state machine definition.
+ */
+export type GovernanceType = 'Legislature' | 'Executive' | 'Judiciary' | 'Constitution' | 'Simple';
+/**
+ * DAO state machine definitions mapped by type.
+ */
+export declare const DAO_DEFINITIONS: Record<DAOType, unknown>;
+/**
+ * Governance state machine definitions mapped by type.
+ */
+export declare const GOVERNANCE_DEFINITIONS: Record<GovernanceType, unknown>;
+/**
+ * Get the state machine definition for a DAO type.
+ */
+export declare function getDAODefinition(daoType: DAOType): unknown;
+/**
+ * Get the state machine definition for a governance type.
+ */
+export declare function getGovernanceDefinition(governanceType: GovernanceType): unknown;
 import type { SingleOwnerDAOState, MultisigDAOState, TokenDAOState, ThresholdDAOState, DAOMetadata } from './types.js';
 /**
  * Create initial state for a SingleOwnerDAO

@@ -37,9 +37,65 @@ var __createBinding = (this && this.__createBinding) || (Object.create ? (functi
 var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.thresholdHasQuorum = exports.isMember = exports.meetsThreshold = exports.canPropose = exports.isPassing = exports.hasQuorum = exports.getVotingPower = exports.hasSigned = exports.isSigner = exports.signaturesNeeded = exports.isThresholdMet = exports.createThresholdState = exports.createTokenState = exports.createMultisigState = exports.createSingleOwnerState = void 0;
+exports.thresholdHasQuorum = exports.isMember = exports.meetsThreshold = exports.canPropose = exports.isPassing = exports.hasQuorum = exports.getVotingPower = exports.hasSigned = exports.isSigner = exports.signaturesNeeded = exports.isThresholdMet = exports.createThresholdState = exports.createTokenState = exports.createMultisigState = exports.createSingleOwnerState = exports.getGovernanceDefinition = exports.getDAODefinition = exports.GOVERNANCE_DEFINITIONS = exports.DAO_DEFINITIONS = void 0;
 __exportStar(require("./types.js"), exports);
+// ---------------------------------------------------------------------------
+// State Machine JSON Definitions
+// ---------------------------------------------------------------------------
+const dao_multisig_json_1 = __importDefault(require("./state-machines/dao-multisig.json"));
+const dao_single_json_1 = __importDefault(require("./state-machines/dao-single.json"));
+const dao_threshold_json_1 = __importDefault(require("./state-machines/dao-threshold.json"));
+const dao_token_json_1 = __importDefault(require("./state-machines/dao-token.json"));
+const governance_constitution_json_1 = __importDefault(require("./state-machines/governance-constitution.json"));
+const governance_executive_json_1 = __importDefault(require("./state-machines/governance-executive.json"));
+const governance_judiciary_json_1 = __importDefault(require("./state-machines/governance-judiciary.json"));
+const governance_legislature_json_1 = __importDefault(require("./state-machines/governance-legislature.json"));
+const governance_simple_json_1 = __importDefault(require("./state-machines/governance-simple.json"));
+/**
+ * DAO state machine definitions mapped by type.
+ */
+exports.DAO_DEFINITIONS = {
+    Single: dao_single_json_1.default,
+    Multisig: dao_multisig_json_1.default,
+    Threshold: dao_threshold_json_1.default,
+    Token: dao_token_json_1.default,
+};
+/**
+ * Governance state machine definitions mapped by type.
+ */
+exports.GOVERNANCE_DEFINITIONS = {
+    Legislature: governance_legislature_json_1.default,
+    Executive: governance_executive_json_1.default,
+    Judiciary: governance_judiciary_json_1.default,
+    Constitution: governance_constitution_json_1.default,
+    Simple: governance_simple_json_1.default,
+};
+/**
+ * Get the state machine definition for a DAO type.
+ */
+function getDAODefinition(daoType) {
+    const def = exports.DAO_DEFINITIONS[daoType];
+    if (!def) {
+        throw new Error(`Unknown DAO type: ${daoType}`);
+    }
+    return def;
+}
+exports.getDAODefinition = getDAODefinition;
+/**
+ * Get the state machine definition for a governance type.
+ */
+function getGovernanceDefinition(governanceType) {
+    const def = exports.GOVERNANCE_DEFINITIONS[governanceType];
+    if (!def) {
+        throw new Error(`Unknown governance type: ${governanceType}`);
+    }
+    return def;
+}
+exports.getGovernanceDefinition = getGovernanceDefinition;
 // =============================================================================
 // State Factories
 // =============================================================================

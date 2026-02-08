@@ -32,9 +32,11 @@ export * as contracts from './contracts/index.js';
 export * as markets from './markets/index.js';
 export * as oracles from './oracles/index.js';
 export * as governance from './governance/index.js';
+export * as corporate from './corporate/index.js';
 // Also allow direct imports
 export * from './identity/index.js';
 export * from './contracts/index.js';
 export * from './markets/index.js';
 export * from './oracles/index.js';
 export * from './governance/index.js';
+export * from './corporate/index.js';
