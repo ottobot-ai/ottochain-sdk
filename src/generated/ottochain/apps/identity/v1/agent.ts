@@ -7,7 +7,6 @@
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { Timestamp } from "../../../../google/protobuf/timestamp.js";
-import { Address } from "../../../v1/common.js";
 
 export const protobufPackage = "ottochain.apps.identity.v1";
 
@@ -192,7 +191,7 @@ export interface PlatformLink {
 
 /** Agent identity on-chain state */
 export interface AgentIdentity {
-  address?: Address | undefined;
+  address: string;
   publicKey: string;
   displayName: string;
   reputation: number;
@@ -359,7 +358,7 @@ export const PlatformLink: MessageFns<PlatformLink> = {
 
 function createBaseAgentIdentity(): AgentIdentity {
   return {
-    address: undefined,
+    address: "",
     publicKey: "",
     displayName: "",
     reputation: 0,
@@ -372,8 +371,8 @@ function createBaseAgentIdentity(): AgentIdentity {
 
 export const AgentIdentity: MessageFns<AgentIdentity> = {
   encode(message: AgentIdentity, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.address !== undefined) {
-      Address.encode(message.address, writer.uint32(10).fork()).join();
+    if (message.address !== "") {
+      writer.uint32(10).string(message.address);
     }
     if (message.publicKey !== "") {
       writer.uint32(18).string(message.publicKey);
@@ -411,7 +410,7 @@ export const AgentIdentity: MessageFns<AgentIdentity> = {
             break;
           }
 
-          message.address = Address.decode(reader, reader.uint32());
+          message.address = reader.string();
           continue;
         }
         case 2: {
@@ -481,7 +480,7 @@ export const AgentIdentity: MessageFns<AgentIdentity> = {
 
   fromJSON(object: any): AgentIdentity {
     return {
-      address: isSet(object.address) ? Address.fromJSON(object.address) : undefined,
+      address: isSet(object.address) ? globalThis.String(object.address) : "",
       publicKey: isSet(object.publicKey)
         ? globalThis.String(object.publicKey)
         : isSet(object.public_key)
@@ -514,8 +513,8 @@ export const AgentIdentity: MessageFns<AgentIdentity> = {
 
   toJSON(message: AgentIdentity): unknown {
     const obj: any = {};
-    if (message.address !== undefined) {
-      obj.address = Address.toJSON(message.address);
+    if (message.address !== "") {
+      obj.address = message.address;
     }
     if (message.publicKey !== "") {
       obj.publicKey = message.publicKey;
@@ -546,9 +545,7 @@ export const AgentIdentity: MessageFns<AgentIdentity> = {
   },
   fromPartial<I extends Exact<DeepPartial<AgentIdentity>, I>>(object: I): AgentIdentity {
     const message = createBaseAgentIdentity();
-    message.address = (object.address !== undefined && object.address !== null)
-      ? Address.fromPartial(object.address)
-      : undefined;
+    message.address = object.address ?? "";
     message.publicKey = object.publicKey ?? "";
     message.displayName = object.displayName ?? "";
     message.reputation = object.reputation ?? 0;

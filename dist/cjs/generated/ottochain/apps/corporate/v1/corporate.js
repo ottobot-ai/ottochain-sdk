@@ -10,7 +10,6 @@ exports.ProposeResolutionRequest = exports.IssueSharesRequest = exports.AppointD
 /* eslint-disable */
 const wire_1 = require("@bufbuild/protobuf/wire");
 const timestamp_js_1 = require("../../../../google/protobuf/timestamp.js");
-const common_js_1 = require("../../../v1/common.js");
 exports.protobufPackage = "ottochain.apps.corporate.v1";
 /** Type of corporate entity */
 var EntityType;
@@ -1179,15 +1178,15 @@ exports.RegisteredAgent = {
     },
 };
 function createBaseIncorporator() {
-    return { name: "", address: undefined };
+    return { name: "", address: "" };
 }
 exports.Incorporator = {
     encode(message, writer = new wire_1.BinaryWriter()) {
         if (message.name !== "") {
             writer.uint32(10).string(message.name);
         }
-        if (message.address !== undefined) {
-            common_js_1.Address.encode(message.address, writer.uint32(18).fork()).join();
+        if (message.address !== "") {
+            writer.uint32(18).string(message.address);
         }
         return writer;
     },
@@ -1209,7 +1208,7 @@ exports.Incorporator = {
                     if (tag !== 18) {
                         break;
                     }
-                    message.address = common_js_1.Address.decode(reader, reader.uint32());
+                    message.address = reader.string();
                     continue;
                 }
             }
@@ -1223,7 +1222,7 @@ exports.Incorporator = {
     fromJSON(object) {
         return {
             name: isSet(object.name) ? globalThis.String(object.name) : "",
-            address: isSet(object.address) ? common_js_1.Address.fromJSON(object.address) : undefined,
+            address: isSet(object.address) ? globalThis.String(object.address) : "",
         };
     },
     toJSON(message) {
@@ -1231,8 +1230,8 @@ exports.Incorporator = {
         if (message.name !== "") {
             obj.name = message.name;
         }
-        if (message.address !== undefined) {
-            obj.address = common_js_1.Address.toJSON(message.address);
+        if (message.address !== "") {
+            obj.address = message.address;
         }
         return obj;
     },
@@ -1242,9 +1241,7 @@ exports.Incorporator = {
     fromPartial(object) {
         const message = createBaseIncorporator();
         message.name = object.name ?? "";
-        message.address = (object.address !== undefined && object.address !== null)
-            ? common_js_1.Address.fromPartial(object.address)
-            : undefined;
+        message.address = object.address ?? "";
         return message;
     },
 };
@@ -2180,7 +2177,7 @@ function createBaseOfficer() {
         title: "",
         email: "",
         appointedAt: undefined,
-        appointedBy: undefined,
+        appointedBy: "",
         status: OfficerStatus.OFFICER_STATUS_UNSPECIFIED,
     };
 }
@@ -2201,8 +2198,8 @@ exports.Officer = {
         if (message.appointedAt !== undefined) {
             timestamp_js_1.Timestamp.encode(toTimestamp(message.appointedAt), writer.uint32(42).fork()).join();
         }
-        if (message.appointedBy !== undefined) {
-            common_js_1.Address.encode(message.appointedBy, writer.uint32(50).fork()).join();
+        if (message.appointedBy !== "") {
+            writer.uint32(50).string(message.appointedBy);
         }
         if (message.status !== OfficerStatus.OFFICER_STATUS_UNSPECIFIED) {
             writer.uint32(56).int32(officerStatusToNumber(message.status));
@@ -2255,7 +2252,7 @@ exports.Officer = {
                     if (tag !== 50) {
                         break;
                     }
-                    message.appointedBy = common_js_1.Address.decode(reader, reader.uint32());
+                    message.appointedBy = reader.string();
                     continue;
                 }
                 case 7: {
@@ -2289,10 +2286,10 @@ exports.Officer = {
                     ? fromJsonTimestamp(object.appointed_at)
                     : undefined,
             appointedBy: isSet(object.appointedBy)
-                ? common_js_1.Address.fromJSON(object.appointedBy)
+                ? globalThis.String(object.appointedBy)
                 : isSet(object.appointed_by)
-                    ? common_js_1.Address.fromJSON(object.appointed_by)
-                    : undefined,
+                    ? globalThis.String(object.appointed_by)
+                    : "",
             status: isSet(object.status) ? officerStatusFromJSON(object.status) : OfficerStatus.OFFICER_STATUS_UNSPECIFIED,
         };
     },
@@ -2313,8 +2310,8 @@ exports.Officer = {
         if (message.appointedAt !== undefined) {
             obj.appointedAt = message.appointedAt.toISOString();
         }
-        if (message.appointedBy !== undefined) {
-            obj.appointedBy = common_js_1.Address.toJSON(message.appointedBy);
+        if (message.appointedBy !== "") {
+            obj.appointedBy = message.appointedBy;
         }
         if (message.status !== OfficerStatus.OFFICER_STATUS_UNSPECIFIED) {
             obj.status = officerStatusToJSON(message.status);
@@ -2331,15 +2328,13 @@ exports.Officer = {
         message.title = object.title ?? "";
         message.email = object.email ?? "";
         message.appointedAt = object.appointedAt ?? undefined;
-        message.appointedBy = (object.appointedBy !== undefined && object.appointedBy !== null)
-            ? common_js_1.Address.fromPartial(object.appointedBy)
-            : undefined;
+        message.appointedBy = object.appointedBy ?? "";
         message.status = object.status ?? OfficerStatus.OFFICER_STATUS_UNSPECIFIED;
         return message;
     },
 };
 function createBaseOfficerAction() {
-    return { actionType: "", officerId: "", at: undefined, by: undefined };
+    return { actionType: "", officerId: "", at: undefined, by: "" };
 }
 exports.OfficerAction = {
     encode(message, writer = new wire_1.BinaryWriter()) {
@@ -2352,8 +2347,8 @@ exports.OfficerAction = {
         if (message.at !== undefined) {
             timestamp_js_1.Timestamp.encode(toTimestamp(message.at), writer.uint32(26).fork()).join();
         }
-        if (message.by !== undefined) {
-            common_js_1.Address.encode(message.by, writer.uint32(34).fork()).join();
+        if (message.by !== "") {
+            writer.uint32(34).string(message.by);
         }
         return writer;
     },
@@ -2389,7 +2384,7 @@ exports.OfficerAction = {
                     if (tag !== 34) {
                         break;
                     }
-                    message.by = common_js_1.Address.decode(reader, reader.uint32());
+                    message.by = reader.string();
                     continue;
                 }
             }
@@ -2413,7 +2408,7 @@ exports.OfficerAction = {
                     ? globalThis.String(object.officer_id)
                     : "",
             at: isSet(object.at) ? fromJsonTimestamp(object.at) : undefined,
-            by: isSet(object.by) ? common_js_1.Address.fromJSON(object.by) : undefined,
+            by: isSet(object.by) ? globalThis.String(object.by) : "",
         };
     },
     toJSON(message) {
@@ -2427,8 +2422,8 @@ exports.OfficerAction = {
         if (message.at !== undefined) {
             obj.at = message.at.toISOString();
         }
-        if (message.by !== undefined) {
-            obj.by = common_js_1.Address.toJSON(message.by);
+        if (message.by !== "") {
+            obj.by = message.by;
         }
         return obj;
     },
@@ -2440,7 +2435,7 @@ exports.OfficerAction = {
         message.actionType = object.actionType ?? "";
         message.officerId = object.officerId ?? "";
         message.at = object.at ?? undefined;
-        message.by = (object.by !== undefined && object.by !== null) ? common_js_1.Address.fromPartial(object.by) : undefined;
+        message.by = object.by ?? "";
         return message;
     },
 };
@@ -2645,12 +2640,12 @@ exports.CorporateShareholders_VotingPowerEntry = {
     },
 };
 function createBaseShareholder() {
-    return { address: undefined, name: "", holdings: [], firstAcquired: undefined };
+    return { address: "", name: "", holdings: [], firstAcquired: undefined };
 }
 exports.Shareholder = {
     encode(message, writer = new wire_1.BinaryWriter()) {
-        if (message.address !== undefined) {
-            common_js_1.Address.encode(message.address, writer.uint32(10).fork()).join();
+        if (message.address !== "") {
+            writer.uint32(10).string(message.address);
         }
         if (message.name !== "") {
             writer.uint32(18).string(message.name);
@@ -2674,7 +2669,7 @@ exports.Shareholder = {
                     if (tag !== 10) {
                         break;
                     }
-                    message.address = common_js_1.Address.decode(reader, reader.uint32());
+                    message.address = reader.string();
                     continue;
                 }
                 case 2: {
@@ -2708,7 +2703,7 @@ exports.Shareholder = {
     },
     fromJSON(object) {
         return {
-            address: isSet(object.address) ? common_js_1.Address.fromJSON(object.address) : undefined,
+            address: isSet(object.address) ? globalThis.String(object.address) : "",
             name: isSet(object.name) ? globalThis.String(object.name) : "",
             holdings: globalThis.Array.isArray(object?.holdings)
                 ? object.holdings.map((e) => exports.ShareHolding.fromJSON(e))
@@ -2722,8 +2717,8 @@ exports.Shareholder = {
     },
     toJSON(message) {
         const obj = {};
-        if (message.address !== undefined) {
-            obj.address = common_js_1.Address.toJSON(message.address);
+        if (message.address !== "") {
+            obj.address = message.address;
         }
         if (message.name !== "") {
             obj.name = message.name;
@@ -2741,9 +2736,7 @@ exports.Shareholder = {
     },
     fromPartial(object) {
         const message = createBaseShareholder();
-        message.address = (object.address !== undefined && object.address !== null)
-            ? common_js_1.Address.fromPartial(object.address)
-            : undefined;
+        message.address = object.address ?? "";
         message.name = object.name ?? "";
         message.holdings = object.holdings?.map((e) => exports.ShareHolding.fromPartial(e)) || [];
         message.firstAcquired = object.firstAcquired ?? undefined;
@@ -2849,7 +2842,7 @@ function createBaseCorporateResolution() {
         body: "",
         resolutionType: "",
         status: ResolutionStatus.RESOLUTION_STATUS_UNSPECIFIED,
-        proposedBy: undefined,
+        proposedBy: "",
         proposedAt: undefined,
         votes: [],
         adoptedAt: undefined,
@@ -2875,8 +2868,8 @@ exports.CorporateResolution = {
         if (message.status !== ResolutionStatus.RESOLUTION_STATUS_UNSPECIFIED) {
             writer.uint32(48).int32(resolutionStatusToNumber(message.status));
         }
-        if (message.proposedBy !== undefined) {
-            common_js_1.Address.encode(message.proposedBy, writer.uint32(58).fork()).join();
+        if (message.proposedBy !== "") {
+            writer.uint32(58).string(message.proposedBy);
         }
         if (message.proposedAt !== undefined) {
             timestamp_js_1.Timestamp.encode(toTimestamp(message.proposedAt), writer.uint32(66).fork()).join();
@@ -2942,7 +2935,7 @@ exports.CorporateResolution = {
                     if (tag !== 58) {
                         break;
                     }
-                    message.proposedBy = common_js_1.Address.decode(reader, reader.uint32());
+                    message.proposedBy = reader.string();
                     continue;
                 }
                 case 8: {
@@ -2997,10 +2990,10 @@ exports.CorporateResolution = {
                 ? resolutionStatusFromJSON(object.status)
                 : ResolutionStatus.RESOLUTION_STATUS_UNSPECIFIED,
             proposedBy: isSet(object.proposedBy)
-                ? common_js_1.Address.fromJSON(object.proposedBy)
+                ? globalThis.String(object.proposedBy)
                 : isSet(object.proposed_by)
-                    ? common_js_1.Address.fromJSON(object.proposed_by)
-                    : undefined,
+                    ? globalThis.String(object.proposed_by)
+                    : "",
             proposedAt: isSet(object.proposedAt)
                 ? fromJsonTimestamp(object.proposedAt)
                 : isSet(object.proposed_at)
@@ -3036,8 +3029,8 @@ exports.CorporateResolution = {
         if (message.status !== ResolutionStatus.RESOLUTION_STATUS_UNSPECIFIED) {
             obj.status = resolutionStatusToJSON(message.status);
         }
-        if (message.proposedBy !== undefined) {
-            obj.proposedBy = common_js_1.Address.toJSON(message.proposedBy);
+        if (message.proposedBy !== "") {
+            obj.proposedBy = message.proposedBy;
         }
         if (message.proposedAt !== undefined) {
             obj.proposedAt = message.proposedAt.toISOString();
@@ -3061,9 +3054,7 @@ exports.CorporateResolution = {
         message.body = object.body ?? "";
         message.resolutionType = object.resolutionType ?? "";
         message.status = object.status ?? ResolutionStatus.RESOLUTION_STATUS_UNSPECIFIED;
-        message.proposedBy = (object.proposedBy !== undefined && object.proposedBy !== null)
-            ? common_js_1.Address.fromPartial(object.proposedBy)
-            : undefined;
+        message.proposedBy = object.proposedBy ?? "";
         message.proposedAt = object.proposedAt ?? undefined;
         message.votes = object.votes?.map((e) => exports.ResolutionVote.fromPartial(e)) || [];
         message.adoptedAt = object.adoptedAt ?? undefined;
@@ -3071,12 +3062,12 @@ exports.CorporateResolution = {
     },
 };
 function createBaseResolutionVote() {
-    return { voter: undefined, vote: "", weight: 0, votedAt: undefined };
+    return { voter: "", vote: "", weight: 0, votedAt: undefined };
 }
 exports.ResolutionVote = {
     encode(message, writer = new wire_1.BinaryWriter()) {
-        if (message.voter !== undefined) {
-            common_js_1.Address.encode(message.voter, writer.uint32(10).fork()).join();
+        if (message.voter !== "") {
+            writer.uint32(10).string(message.voter);
         }
         if (message.vote !== "") {
             writer.uint32(18).string(message.vote);
@@ -3100,7 +3091,7 @@ exports.ResolutionVote = {
                     if (tag !== 10) {
                         break;
                     }
-                    message.voter = common_js_1.Address.decode(reader, reader.uint32());
+                    message.voter = reader.string();
                     continue;
                 }
                 case 2: {
@@ -3134,7 +3125,7 @@ exports.ResolutionVote = {
     },
     fromJSON(object) {
         return {
-            voter: isSet(object.voter) ? common_js_1.Address.fromJSON(object.voter) : undefined,
+            voter: isSet(object.voter) ? globalThis.String(object.voter) : "",
             vote: isSet(object.vote) ? globalThis.String(object.vote) : "",
             weight: isSet(object.weight) ? globalThis.Number(object.weight) : 0,
             votedAt: isSet(object.votedAt)
@@ -3146,8 +3137,8 @@ exports.ResolutionVote = {
     },
     toJSON(message) {
         const obj = {};
-        if (message.voter !== undefined) {
-            obj.voter = common_js_1.Address.toJSON(message.voter);
+        if (message.voter !== "") {
+            obj.voter = message.voter;
         }
         if (message.vote !== "") {
             obj.vote = message.vote;
@@ -3165,9 +3156,7 @@ exports.ResolutionVote = {
     },
     fromPartial(object) {
         const message = createBaseResolutionVote();
-        message.voter = (object.voter !== undefined && object.voter !== null)
-            ? common_js_1.Address.fromPartial(object.voter)
-            : undefined;
+        message.voter = object.voter ?? "";
         message.vote = object.vote ?? "";
         message.weight = object.weight ?? 0;
         message.votedAt = object.votedAt ?? undefined;
@@ -3269,7 +3258,7 @@ function createBaseSecurityIssuance() {
     return {
         issuanceId: "",
         classId: "",
-        recipient: undefined,
+        recipient: "",
         shares: 0,
         pricePerShareCents: 0,
         issuedAt: undefined,
@@ -3284,8 +3273,8 @@ exports.SecurityIssuance = {
         if (message.classId !== "") {
             writer.uint32(18).string(message.classId);
         }
-        if (message.recipient !== undefined) {
-            common_js_1.Address.encode(message.recipient, writer.uint32(26).fork()).join();
+        if (message.recipient !== "") {
+            writer.uint32(26).string(message.recipient);
         }
         if (message.shares !== 0) {
             writer.uint32(32).int64(message.shares);
@@ -3326,7 +3315,7 @@ exports.SecurityIssuance = {
                     if (tag !== 26) {
                         break;
                     }
-                    message.recipient = common_js_1.Address.decode(reader, reader.uint32());
+                    message.recipient = reader.string();
                     continue;
                 }
                 case 4: {
@@ -3377,7 +3366,7 @@ exports.SecurityIssuance = {
                 : isSet(object.class_id)
                     ? globalThis.String(object.class_id)
                     : "",
-            recipient: isSet(object.recipient) ? common_js_1.Address.fromJSON(object.recipient) : undefined,
+            recipient: isSet(object.recipient) ? globalThis.String(object.recipient) : "",
             shares: isSet(object.shares) ? globalThis.Number(object.shares) : 0,
             pricePerShareCents: isSet(object.pricePerShareCents)
                 ? globalThis.Number(object.pricePerShareCents)
@@ -3404,8 +3393,8 @@ exports.SecurityIssuance = {
         if (message.classId !== "") {
             obj.classId = message.classId;
         }
-        if (message.recipient !== undefined) {
-            obj.recipient = common_js_1.Address.toJSON(message.recipient);
+        if (message.recipient !== "") {
+            obj.recipient = message.recipient;
         }
         if (message.shares !== 0) {
             obj.shares = Math.round(message.shares);
@@ -3428,9 +3417,7 @@ exports.SecurityIssuance = {
         const message = createBaseSecurityIssuance();
         message.issuanceId = object.issuanceId ?? "";
         message.classId = object.classId ?? "";
-        message.recipient = (object.recipient !== undefined && object.recipient !== null)
-            ? common_js_1.Address.fromPartial(object.recipient)
-            : undefined;
+        message.recipient = object.recipient ?? "";
         message.shares = object.shares ?? 0;
         message.pricePerShareCents = object.pricePerShareCents ?? 0;
         message.issuedAt = object.issuedAt ?? undefined;
@@ -3439,7 +3426,7 @@ exports.SecurityIssuance = {
     },
 };
 function createBaseSecurityTransfer() {
-    return { transferId: "", classId: "", from: undefined, to: undefined, shares: 0, transferredAt: undefined };
+    return { transferId: "", classId: "", from: "", to: "", shares: 0, transferredAt: undefined };
 }
 exports.SecurityTransfer = {
     encode(message, writer = new wire_1.BinaryWriter()) {
@@ -3449,11 +3436,11 @@ exports.SecurityTransfer = {
         if (message.classId !== "") {
             writer.uint32(18).string(message.classId);
         }
-        if (message.from !== undefined) {
-            common_js_1.Address.encode(message.from, writer.uint32(26).fork()).join();
+        if (message.from !== "") {
+            writer.uint32(26).string(message.from);
         }
-        if (message.to !== undefined) {
-            common_js_1.Address.encode(message.to, writer.uint32(34).fork()).join();
+        if (message.to !== "") {
+            writer.uint32(34).string(message.to);
         }
         if (message.shares !== 0) {
             writer.uint32(40).int64(message.shares);
@@ -3488,14 +3475,14 @@ exports.SecurityTransfer = {
                     if (tag !== 26) {
                         break;
                     }
-                    message.from = common_js_1.Address.decode(reader, reader.uint32());
+                    message.from = reader.string();
                     continue;
                 }
                 case 4: {
                     if (tag !== 34) {
                         break;
                     }
-                    message.to = common_js_1.Address.decode(reader, reader.uint32());
+                    message.to = reader.string();
                     continue;
                 }
                 case 5: {
@@ -3532,8 +3519,8 @@ exports.SecurityTransfer = {
                 : isSet(object.class_id)
                     ? globalThis.String(object.class_id)
                     : "",
-            from: isSet(object.from) ? common_js_1.Address.fromJSON(object.from) : undefined,
-            to: isSet(object.to) ? common_js_1.Address.fromJSON(object.to) : undefined,
+            from: isSet(object.from) ? globalThis.String(object.from) : "",
+            to: isSet(object.to) ? globalThis.String(object.to) : "",
             shares: isSet(object.shares) ? globalThis.Number(object.shares) : 0,
             transferredAt: isSet(object.transferredAt)
                 ? fromJsonTimestamp(object.transferredAt)
@@ -3550,11 +3537,11 @@ exports.SecurityTransfer = {
         if (message.classId !== "") {
             obj.classId = message.classId;
         }
-        if (message.from !== undefined) {
-            obj.from = common_js_1.Address.toJSON(message.from);
+        if (message.from !== "") {
+            obj.from = message.from;
         }
-        if (message.to !== undefined) {
-            obj.to = common_js_1.Address.toJSON(message.to);
+        if (message.to !== "") {
+            obj.to = message.to;
         }
         if (message.shares !== 0) {
             obj.shares = Math.round(message.shares);
@@ -3571,8 +3558,8 @@ exports.SecurityTransfer = {
         const message = createBaseSecurityTransfer();
         message.transferId = object.transferId ?? "";
         message.classId = object.classId ?? "";
-        message.from = (object.from !== undefined && object.from !== null) ? common_js_1.Address.fromPartial(object.from) : undefined;
-        message.to = (object.to !== undefined && object.to !== null) ? common_js_1.Address.fromPartial(object.to) : undefined;
+        message.from = object.from ?? "";
+        message.to = object.to ?? "";
         message.shares = object.shares ?? 0;
         message.transferredAt = object.transferredAt ?? undefined;
         return message;
@@ -4225,14 +4212,7 @@ exports.AppointDirectorRequest = {
     },
 };
 function createBaseIssueSharesRequest() {
-    return {
-        entityId: "",
-        classId: "",
-        recipient: undefined,
-        shares: 0,
-        pricePerShareCents: 0,
-        authorizationResolutionId: "",
-    };
+    return { entityId: "", classId: "", recipient: "", shares: 0, pricePerShareCents: 0, authorizationResolutionId: "" };
 }
 exports.IssueSharesRequest = {
     encode(message, writer = new wire_1.BinaryWriter()) {
@@ -4242,8 +4222,8 @@ exports.IssueSharesRequest = {
         if (message.classId !== "") {
             writer.uint32(18).string(message.classId);
         }
-        if (message.recipient !== undefined) {
-            common_js_1.Address.encode(message.recipient, writer.uint32(26).fork()).join();
+        if (message.recipient !== "") {
+            writer.uint32(26).string(message.recipient);
         }
         if (message.shares !== 0) {
             writer.uint32(32).int64(message.shares);
@@ -4281,7 +4261,7 @@ exports.IssueSharesRequest = {
                     if (tag !== 26) {
                         break;
                     }
-                    message.recipient = common_js_1.Address.decode(reader, reader.uint32());
+                    message.recipient = reader.string();
                     continue;
                 }
                 case 4: {
@@ -4325,7 +4305,7 @@ exports.IssueSharesRequest = {
                 : isSet(object.class_id)
                     ? globalThis.String(object.class_id)
                     : "",
-            recipient: isSet(object.recipient) ? common_js_1.Address.fromJSON(object.recipient) : undefined,
+            recipient: isSet(object.recipient) ? globalThis.String(object.recipient) : "",
             shares: isSet(object.shares) ? globalThis.Number(object.shares) : 0,
             pricePerShareCents: isSet(object.pricePerShareCents)
                 ? globalThis.Number(object.pricePerShareCents)
@@ -4347,8 +4327,8 @@ exports.IssueSharesRequest = {
         if (message.classId !== "") {
             obj.classId = message.classId;
         }
-        if (message.recipient !== undefined) {
-            obj.recipient = common_js_1.Address.toJSON(message.recipient);
+        if (message.recipient !== "") {
+            obj.recipient = message.recipient;
         }
         if (message.shares !== 0) {
             obj.shares = Math.round(message.shares);
@@ -4368,9 +4348,7 @@ exports.IssueSharesRequest = {
         const message = createBaseIssueSharesRequest();
         message.entityId = object.entityId ?? "";
         message.classId = object.classId ?? "";
-        message.recipient = (object.recipient !== undefined && object.recipient !== null)
-            ? common_js_1.Address.fromPartial(object.recipient)
-            : undefined;
+        message.recipient = object.recipient ?? "";
         message.shares = object.shares ?? 0;
         message.pricePerShareCents = object.pricePerShareCents ?? 0;
         message.authorizationResolutionId = object.authorizationResolutionId ?? "";
@@ -4378,7 +4356,7 @@ exports.IssueSharesRequest = {
     },
 };
 function createBaseProposeResolutionRequest() {
-    return { entityId: "", title: "", body: "", resolutionType: "", proposer: undefined };
+    return { entityId: "", title: "", body: "", resolutionType: "", proposer: "" };
 }
 exports.ProposeResolutionRequest = {
     encode(message, writer = new wire_1.BinaryWriter()) {
@@ -4394,8 +4372,8 @@ exports.ProposeResolutionRequest = {
         if (message.resolutionType !== "") {
             writer.uint32(34).string(message.resolutionType);
         }
-        if (message.proposer !== undefined) {
-            common_js_1.Address.encode(message.proposer, writer.uint32(42).fork()).join();
+        if (message.proposer !== "") {
+            writer.uint32(42).string(message.proposer);
         }
         return writer;
     },
@@ -4438,7 +4416,7 @@ exports.ProposeResolutionRequest = {
                     if (tag !== 42) {
                         break;
                     }
-                    message.proposer = common_js_1.Address.decode(reader, reader.uint32());
+                    message.proposer = reader.string();
                     continue;
                 }
             }
@@ -4463,7 +4441,7 @@ exports.ProposeResolutionRequest = {
                 : isSet(object.resolution_type)
                     ? globalThis.String(object.resolution_type)
                     : "",
-            proposer: isSet(object.proposer) ? common_js_1.Address.fromJSON(object.proposer) : undefined,
+            proposer: isSet(object.proposer) ? globalThis.String(object.proposer) : "",
         };
     },
     toJSON(message) {
@@ -4480,8 +4458,8 @@ exports.ProposeResolutionRequest = {
         if (message.resolutionType !== "") {
             obj.resolutionType = message.resolutionType;
         }
-        if (message.proposer !== undefined) {
-            obj.proposer = common_js_1.Address.toJSON(message.proposer);
+        if (message.proposer !== "") {
+            obj.proposer = message.proposer;
         }
         return obj;
     },
@@ -4494,9 +4472,7 @@ exports.ProposeResolutionRequest = {
         message.title = object.title ?? "";
         message.body = object.body ?? "";
         message.resolutionType = object.resolutionType ?? "";
-        message.proposer = (object.proposer !== undefined && object.proposer !== null)
-            ? common_js_1.Address.fromPartial(object.proposer)
-            : undefined;
+        message.proposer = object.proposer ?? "";
         return message;
     },
 };

@@ -6,7 +6,6 @@
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { Timestamp } from "../../../../google/protobuf/timestamp.js";
-import { Address } from "../../../v1/common.js";
 import { Platform, platformFromJSON, platformToJSON, platformToNumber } from "./agent.js";
 export const protobufPackage = "ottochain.apps.identity.v1";
 /** Types of attestations that affect reputation */
@@ -190,8 +189,8 @@ function createBaseAttestation() {
     return {
         id: "",
         type: AttestationType.ATTESTATION_TYPE_UNSPECIFIED,
-        subject: undefined,
-        issuer: undefined,
+        subject: "",
+        issuer: "",
         issuerPlatform: Platform.PLATFORM_UNSPECIFIED,
         delta: 0,
         reason: "",
@@ -207,11 +206,11 @@ export const Attestation = {
         if (message.type !== AttestationType.ATTESTATION_TYPE_UNSPECIFIED) {
             writer.uint32(16).int32(attestationTypeToNumber(message.type));
         }
-        if (message.subject !== undefined) {
-            Address.encode(message.subject, writer.uint32(26).fork()).join();
+        if (message.subject !== "") {
+            writer.uint32(26).string(message.subject);
         }
-        if (message.issuer !== undefined) {
-            Address.encode(message.issuer, writer.uint32(34).fork()).join();
+        if (message.issuer !== "") {
+            writer.uint32(34).string(message.issuer);
         }
         if (message.issuerPlatform !== Platform.PLATFORM_UNSPECIFIED) {
             writer.uint32(40).int32(platformToNumber(message.issuerPlatform));
@@ -255,14 +254,14 @@ export const Attestation = {
                     if (tag !== 26) {
                         break;
                     }
-                    message.subject = Address.decode(reader, reader.uint32());
+                    message.subject = reader.string();
                     continue;
                 }
                 case 4: {
                     if (tag !== 34) {
                         break;
                     }
-                    message.issuer = Address.decode(reader, reader.uint32());
+                    message.issuer = reader.string();
                     continue;
                 }
                 case 5: {
@@ -312,8 +311,8 @@ export const Attestation = {
         return {
             id: isSet(object.id) ? globalThis.String(object.id) : "",
             type: isSet(object.type) ? attestationTypeFromJSON(object.type) : AttestationType.ATTESTATION_TYPE_UNSPECIFIED,
-            subject: isSet(object.subject) ? Address.fromJSON(object.subject) : undefined,
-            issuer: isSet(object.issuer) ? Address.fromJSON(object.issuer) : undefined,
+            subject: isSet(object.subject) ? globalThis.String(object.subject) : "",
+            issuer: isSet(object.issuer) ? globalThis.String(object.issuer) : "",
             issuerPlatform: isSet(object.issuerPlatform)
                 ? platformFromJSON(object.issuerPlatform)
                 : isSet(object.issuer_platform)
@@ -341,11 +340,11 @@ export const Attestation = {
         if (message.type !== AttestationType.ATTESTATION_TYPE_UNSPECIFIED) {
             obj.type = attestationTypeToJSON(message.type);
         }
-        if (message.subject !== undefined) {
-            obj.subject = Address.toJSON(message.subject);
+        if (message.subject !== "") {
+            obj.subject = message.subject;
         }
-        if (message.issuer !== undefined) {
-            obj.issuer = Address.toJSON(message.issuer);
+        if (message.issuer !== "") {
+            obj.issuer = message.issuer;
         }
         if (message.issuerPlatform !== Platform.PLATFORM_UNSPECIFIED) {
             obj.issuerPlatform = platformToJSON(message.issuerPlatform);
@@ -371,12 +370,8 @@ export const Attestation = {
         const message = createBaseAttestation();
         message.id = object.id ?? "";
         message.type = object.type ?? AttestationType.ATTESTATION_TYPE_UNSPECIFIED;
-        message.subject = (object.subject !== undefined && object.subject !== null)
-            ? Address.fromPartial(object.subject)
-            : undefined;
-        message.issuer = (object.issuer !== undefined && object.issuer !== null)
-            ? Address.fromPartial(object.issuer)
-            : undefined;
+        message.subject = object.subject ?? "";
+        message.issuer = object.issuer ?? "";
         message.issuerPlatform = object.issuerPlatform ?? Platform.PLATFORM_UNSPECIFIED;
         message.delta = object.delta ?? 0;
         message.reason = object.reason ?? "";
@@ -386,15 +381,15 @@ export const Attestation = {
     },
 };
 function createBaseVouchRequest() {
-    return { fromAddress: undefined, toAddress: undefined, reason: "" };
+    return { fromAddress: "", toAddress: "", reason: "" };
 }
 export const VouchRequest = {
     encode(message, writer = new BinaryWriter()) {
-        if (message.fromAddress !== undefined) {
-            Address.encode(message.fromAddress, writer.uint32(10).fork()).join();
+        if (message.fromAddress !== "") {
+            writer.uint32(10).string(message.fromAddress);
         }
-        if (message.toAddress !== undefined) {
-            Address.encode(message.toAddress, writer.uint32(18).fork()).join();
+        if (message.toAddress !== "") {
+            writer.uint32(18).string(message.toAddress);
         }
         if (message.reason !== "") {
             writer.uint32(26).string(message.reason);
@@ -412,14 +407,14 @@ export const VouchRequest = {
                     if (tag !== 10) {
                         break;
                     }
-                    message.fromAddress = Address.decode(reader, reader.uint32());
+                    message.fromAddress = reader.string();
                     continue;
                 }
                 case 2: {
                     if (tag !== 18) {
                         break;
                     }
-                    message.toAddress = Address.decode(reader, reader.uint32());
+                    message.toAddress = reader.string();
                     continue;
                 }
                 case 3: {
@@ -440,25 +435,25 @@ export const VouchRequest = {
     fromJSON(object) {
         return {
             fromAddress: isSet(object.fromAddress)
-                ? Address.fromJSON(object.fromAddress)
+                ? globalThis.String(object.fromAddress)
                 : isSet(object.from_address)
-                    ? Address.fromJSON(object.from_address)
-                    : undefined,
+                    ? globalThis.String(object.from_address)
+                    : "",
             toAddress: isSet(object.toAddress)
-                ? Address.fromJSON(object.toAddress)
+                ? globalThis.String(object.toAddress)
                 : isSet(object.to_address)
-                    ? Address.fromJSON(object.to_address)
-                    : undefined,
+                    ? globalThis.String(object.to_address)
+                    : "",
             reason: isSet(object.reason) ? globalThis.String(object.reason) : "",
         };
     },
     toJSON(message) {
         const obj = {};
-        if (message.fromAddress !== undefined) {
-            obj.fromAddress = Address.toJSON(message.fromAddress);
+        if (message.fromAddress !== "") {
+            obj.fromAddress = message.fromAddress;
         }
-        if (message.toAddress !== undefined) {
-            obj.toAddress = Address.toJSON(message.toAddress);
+        if (message.toAddress !== "") {
+            obj.toAddress = message.toAddress;
         }
         if (message.reason !== "") {
             obj.reason = message.reason;
@@ -470,26 +465,22 @@ export const VouchRequest = {
     },
     fromPartial(object) {
         const message = createBaseVouchRequest();
-        message.fromAddress = (object.fromAddress !== undefined && object.fromAddress !== null)
-            ? Address.fromPartial(object.fromAddress)
-            : undefined;
-        message.toAddress = (object.toAddress !== undefined && object.toAddress !== null)
-            ? Address.fromPartial(object.toAddress)
-            : undefined;
+        message.fromAddress = object.fromAddress ?? "";
+        message.toAddress = object.toAddress ?? "";
         message.reason = object.reason ?? "";
         return message;
     },
 };
 function createBaseChallengeRequest() {
-    return { challenger: undefined, challenged: undefined, evidence: "", reason: "" };
+    return { challenger: "", challenged: "", evidence: "", reason: "" };
 }
 export const ChallengeRequest = {
     encode(message, writer = new BinaryWriter()) {
-        if (message.challenger !== undefined) {
-            Address.encode(message.challenger, writer.uint32(10).fork()).join();
+        if (message.challenger !== "") {
+            writer.uint32(10).string(message.challenger);
         }
-        if (message.challenged !== undefined) {
-            Address.encode(message.challenged, writer.uint32(18).fork()).join();
+        if (message.challenged !== "") {
+            writer.uint32(18).string(message.challenged);
         }
         if (message.evidence !== "") {
             writer.uint32(26).string(message.evidence);
@@ -510,14 +501,14 @@ export const ChallengeRequest = {
                     if (tag !== 10) {
                         break;
                     }
-                    message.challenger = Address.decode(reader, reader.uint32());
+                    message.challenger = reader.string();
                     continue;
                 }
                 case 2: {
                     if (tag !== 18) {
                         break;
                     }
-                    message.challenged = Address.decode(reader, reader.uint32());
+                    message.challenged = reader.string();
                     continue;
                 }
                 case 3: {
@@ -544,19 +535,19 @@ export const ChallengeRequest = {
     },
     fromJSON(object) {
         return {
-            challenger: isSet(object.challenger) ? Address.fromJSON(object.challenger) : undefined,
-            challenged: isSet(object.challenged) ? Address.fromJSON(object.challenged) : undefined,
+            challenger: isSet(object.challenger) ? globalThis.String(object.challenger) : "",
+            challenged: isSet(object.challenged) ? globalThis.String(object.challenged) : "",
             evidence: isSet(object.evidence) ? globalThis.String(object.evidence) : "",
             reason: isSet(object.reason) ? globalThis.String(object.reason) : "",
         };
     },
     toJSON(message) {
         const obj = {};
-        if (message.challenger !== undefined) {
-            obj.challenger = Address.toJSON(message.challenger);
+        if (message.challenger !== "") {
+            obj.challenger = message.challenger;
         }
-        if (message.challenged !== undefined) {
-            obj.challenged = Address.toJSON(message.challenged);
+        if (message.challenged !== "") {
+            obj.challenged = message.challenged;
         }
         if (message.evidence !== "") {
             obj.evidence = message.evidence;
@@ -571,12 +562,8 @@ export const ChallengeRequest = {
     },
     fromPartial(object) {
         const message = createBaseChallengeRequest();
-        message.challenger = (object.challenger !== undefined && object.challenger !== null)
-            ? Address.fromPartial(object.challenger)
-            : undefined;
-        message.challenged = (object.challenged !== undefined && object.challenged !== null)
-            ? Address.fromPartial(object.challenged)
-            : undefined;
+        message.challenger = object.challenger ?? "";
+        message.challenged = object.challenged ?? "";
         message.evidence = object.evidence ?? "";
         message.reason = object.reason ?? "";
         return message;

@@ -8,7 +8,6 @@
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { Struct } from "../../../../google/protobuf/struct.js";
 import { Timestamp } from "../../../../google/protobuf/timestamp.js";
-import { Address } from "../../../v1/common.js";
 
 export const protobufPackage = "ottochain.apps.governance.v1";
 
@@ -303,7 +302,7 @@ export interface Proposal {
   description: string;
   actionType: string;
   payload?: { [key: string]: any } | undefined;
-  proposer?: Address | undefined;
+  proposer: string;
   proposedAt?: Date | undefined;
   deadline?: Date | undefined;
   queuedAt?: Date | undefined;
@@ -312,7 +311,7 @@ export interface Proposal {
 
 /** Vote record */
 export interface Vote {
-  voter?: Address | undefined;
+  voter: string;
   choice: VoteChoice;
   weight: number;
   votedAt?: Date | undefined;
@@ -328,8 +327,8 @@ export interface VoteTally {
 
 export interface SingleOwnerDAO {
   name: string;
-  owner?: Address | undefined;
-  pendingOwner?: Address | undefined;
+  owner: string;
+  pendingOwner: string;
   transferInitiatedAt?: Date | undefined;
   actions: SingleOwnerAction[];
   ownershipHistory: OwnershipTransfer[];
@@ -345,14 +344,14 @@ export interface SingleOwnerAction {
 }
 
 export interface OwnershipTransfer {
-  from?: Address | undefined;
-  to?: Address | undefined;
+  from: string;
+  to: string;
   at?: Date | undefined;
 }
 
 export interface MultisigDAO {
   name: string;
-  signers: Address[];
+  signers: string[];
   threshold: number;
   proposalTtlMs: number;
   proposal?:
@@ -425,7 +424,7 @@ export interface TokenProposalResult {
 
 export interface ThresholdDAO {
   name: string;
-  members: Address[];
+  members: string[];
   memberJoinedAt: { [key: string]: number };
   /** Thresholds */
   memberThreshold: number;
@@ -450,9 +449,9 @@ export interface ThresholdDAO_MemberJoinedAtEntry {
 }
 
 export interface ThresholdVotes {
-  votesFor: Address[];
-  votesAgainst: Address[];
-  votesAbstain: Address[];
+  votesFor: string[];
+  votesAgainst: string[];
+  votesAbstain: string[];
 }
 
 export interface ThresholdHistoryEntry {
@@ -466,7 +465,7 @@ export interface ThresholdHistoryEntry {
 export interface CreateDAORequest {
   daoType: DAOType;
   name: string;
-  creator?: Address | undefined;
+  creator: string;
   metadata?:
     | DAOMetadata
     | undefined;
@@ -476,7 +475,7 @@ export interface CreateDAORequest {
 
 export interface ProposeRequest {
   daoId: string;
-  proposer?: Address | undefined;
+  proposer: string;
   title: string;
   description: string;
   actionType: string;
@@ -485,13 +484,13 @@ export interface ProposeRequest {
 
 export interface VoteRequest {
   daoId: string;
-  voter?: Address | undefined;
+  voter: string;
   choice: VoteChoice;
 }
 
 export interface ExecuteRequest {
   daoId: string;
-  executor?: Address | undefined;
+  executor: string;
 }
 
 function createBaseDAOMetadata(): DAOMetadata {
@@ -609,7 +608,7 @@ function createBaseProposal(): Proposal {
     description: "",
     actionType: "",
     payload: undefined,
-    proposer: undefined,
+    proposer: "",
     proposedAt: undefined,
     deadline: undefined,
     queuedAt: undefined,
@@ -634,8 +633,8 @@ export const Proposal: MessageFns<Proposal> = {
     if (message.payload !== undefined) {
       Struct.encode(Struct.wrap(message.payload), writer.uint32(42).fork()).join();
     }
-    if (message.proposer !== undefined) {
-      Address.encode(message.proposer, writer.uint32(50).fork()).join();
+    if (message.proposer !== "") {
+      writer.uint32(50).string(message.proposer);
     }
     if (message.proposedAt !== undefined) {
       Timestamp.encode(toTimestamp(message.proposedAt), writer.uint32(58).fork()).join();
@@ -704,7 +703,7 @@ export const Proposal: MessageFns<Proposal> = {
             break;
           }
 
-          message.proposer = Address.decode(reader, reader.uint32());
+          message.proposer = reader.string();
           continue;
         }
         case 7: {
@@ -759,7 +758,7 @@ export const Proposal: MessageFns<Proposal> = {
         ? globalThis.String(object.action_type)
         : "",
       payload: isObject(object.payload) ? object.payload : undefined,
-      proposer: isSet(object.proposer) ? Address.fromJSON(object.proposer) : undefined,
+      proposer: isSet(object.proposer) ? globalThis.String(object.proposer) : "",
       proposedAt: isSet(object.proposedAt)
         ? fromJsonTimestamp(object.proposedAt)
         : isSet(object.proposed_at)
@@ -796,8 +795,8 @@ export const Proposal: MessageFns<Proposal> = {
     if (message.payload !== undefined) {
       obj.payload = message.payload;
     }
-    if (message.proposer !== undefined) {
-      obj.proposer = Address.toJSON(message.proposer);
+    if (message.proposer !== "") {
+      obj.proposer = message.proposer;
     }
     if (message.proposedAt !== undefined) {
       obj.proposedAt = message.proposedAt.toISOString();
@@ -824,9 +823,7 @@ export const Proposal: MessageFns<Proposal> = {
     message.description = object.description ?? "";
     message.actionType = object.actionType ?? "";
     message.payload = object.payload ?? undefined;
-    message.proposer = (object.proposer !== undefined && object.proposer !== null)
-      ? Address.fromPartial(object.proposer)
-      : undefined;
+    message.proposer = object.proposer ?? "";
     message.proposedAt = object.proposedAt ?? undefined;
     message.deadline = object.deadline ?? undefined;
     message.queuedAt = object.queuedAt ?? undefined;
@@ -836,13 +833,13 @@ export const Proposal: MessageFns<Proposal> = {
 };
 
 function createBaseVote(): Vote {
-  return { voter: undefined, choice: VoteChoice.VOTE_CHOICE_UNSPECIFIED, weight: 0, votedAt: undefined };
+  return { voter: "", choice: VoteChoice.VOTE_CHOICE_UNSPECIFIED, weight: 0, votedAt: undefined };
 }
 
 export const Vote: MessageFns<Vote> = {
   encode(message: Vote, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.voter !== undefined) {
-      Address.encode(message.voter, writer.uint32(10).fork()).join();
+    if (message.voter !== "") {
+      writer.uint32(10).string(message.voter);
     }
     if (message.choice !== VoteChoice.VOTE_CHOICE_UNSPECIFIED) {
       writer.uint32(16).int32(voteChoiceToNumber(message.choice));
@@ -868,7 +865,7 @@ export const Vote: MessageFns<Vote> = {
             break;
           }
 
-          message.voter = Address.decode(reader, reader.uint32());
+          message.voter = reader.string();
           continue;
         }
         case 2: {
@@ -906,7 +903,7 @@ export const Vote: MessageFns<Vote> = {
 
   fromJSON(object: any): Vote {
     return {
-      voter: isSet(object.voter) ? Address.fromJSON(object.voter) : undefined,
+      voter: isSet(object.voter) ? globalThis.String(object.voter) : "",
       choice: isSet(object.choice) ? voteChoiceFromJSON(object.choice) : VoteChoice.VOTE_CHOICE_UNSPECIFIED,
       weight: isSet(object.weight) ? globalThis.Number(object.weight) : 0,
       votedAt: isSet(object.votedAt)
@@ -919,8 +916,8 @@ export const Vote: MessageFns<Vote> = {
 
   toJSON(message: Vote): unknown {
     const obj: any = {};
-    if (message.voter !== undefined) {
-      obj.voter = Address.toJSON(message.voter);
+    if (message.voter !== "") {
+      obj.voter = message.voter;
     }
     if (message.choice !== VoteChoice.VOTE_CHOICE_UNSPECIFIED) {
       obj.choice = voteChoiceToJSON(message.choice);
@@ -939,9 +936,7 @@ export const Vote: MessageFns<Vote> = {
   },
   fromPartial<I extends Exact<DeepPartial<Vote>, I>>(object: I): Vote {
     const message = createBaseVote();
-    message.voter = (object.voter !== undefined && object.voter !== null)
-      ? Address.fromPartial(object.voter)
-      : undefined;
+    message.voter = object.voter ?? "";
     message.choice = object.choice ?? VoteChoice.VOTE_CHOICE_UNSPECIFIED;
     message.weight = object.weight ?? 0;
     message.votedAt = object.votedAt ?? undefined;
@@ -1072,8 +1067,8 @@ export const VoteTally: MessageFns<VoteTally> = {
 function createBaseSingleOwnerDAO(): SingleOwnerDAO {
   return {
     name: "",
-    owner: undefined,
-    pendingOwner: undefined,
+    owner: "",
+    pendingOwner: "",
     transferInitiatedAt: undefined,
     actions: [],
     ownershipHistory: [],
@@ -1087,11 +1082,11 @@ export const SingleOwnerDAO: MessageFns<SingleOwnerDAO> = {
     if (message.name !== "") {
       writer.uint32(10).string(message.name);
     }
-    if (message.owner !== undefined) {
-      Address.encode(message.owner, writer.uint32(18).fork()).join();
+    if (message.owner !== "") {
+      writer.uint32(18).string(message.owner);
     }
-    if (message.pendingOwner !== undefined) {
-      Address.encode(message.pendingOwner, writer.uint32(26).fork()).join();
+    if (message.pendingOwner !== "") {
+      writer.uint32(26).string(message.pendingOwner);
     }
     if (message.transferInitiatedAt !== undefined) {
       Timestamp.encode(toTimestamp(message.transferInitiatedAt), writer.uint32(34).fork()).join();
@@ -1131,7 +1126,7 @@ export const SingleOwnerDAO: MessageFns<SingleOwnerDAO> = {
             break;
           }
 
-          message.owner = Address.decode(reader, reader.uint32());
+          message.owner = reader.string();
           continue;
         }
         case 3: {
@@ -1139,7 +1134,7 @@ export const SingleOwnerDAO: MessageFns<SingleOwnerDAO> = {
             break;
           }
 
-          message.pendingOwner = Address.decode(reader, reader.uint32());
+          message.pendingOwner = reader.string();
           continue;
         }
         case 4: {
@@ -1194,12 +1189,12 @@ export const SingleOwnerDAO: MessageFns<SingleOwnerDAO> = {
   fromJSON(object: any): SingleOwnerDAO {
     return {
       name: isSet(object.name) ? globalThis.String(object.name) : "",
-      owner: isSet(object.owner) ? Address.fromJSON(object.owner) : undefined,
+      owner: isSet(object.owner) ? globalThis.String(object.owner) : "",
       pendingOwner: isSet(object.pendingOwner)
-        ? Address.fromJSON(object.pendingOwner)
+        ? globalThis.String(object.pendingOwner)
         : isSet(object.pending_owner)
-        ? Address.fromJSON(object.pending_owner)
-        : undefined,
+        ? globalThis.String(object.pending_owner)
+        : "",
       transferInitiatedAt: isSet(object.transferInitiatedAt)
         ? fromJsonTimestamp(object.transferInitiatedAt)
         : isSet(object.transfer_initiated_at)
@@ -1223,11 +1218,11 @@ export const SingleOwnerDAO: MessageFns<SingleOwnerDAO> = {
     if (message.name !== "") {
       obj.name = message.name;
     }
-    if (message.owner !== undefined) {
-      obj.owner = Address.toJSON(message.owner);
+    if (message.owner !== "") {
+      obj.owner = message.owner;
     }
-    if (message.pendingOwner !== undefined) {
-      obj.pendingOwner = Address.toJSON(message.pendingOwner);
+    if (message.pendingOwner !== "") {
+      obj.pendingOwner = message.pendingOwner;
     }
     if (message.transferInitiatedAt !== undefined) {
       obj.transferInitiatedAt = message.transferInitiatedAt.toISOString();
@@ -1253,12 +1248,8 @@ export const SingleOwnerDAO: MessageFns<SingleOwnerDAO> = {
   fromPartial<I extends Exact<DeepPartial<SingleOwnerDAO>, I>>(object: I): SingleOwnerDAO {
     const message = createBaseSingleOwnerDAO();
     message.name = object.name ?? "";
-    message.owner = (object.owner !== undefined && object.owner !== null)
-      ? Address.fromPartial(object.owner)
-      : undefined;
-    message.pendingOwner = (object.pendingOwner !== undefined && object.pendingOwner !== null)
-      ? Address.fromPartial(object.pendingOwner)
-      : undefined;
+    message.owner = object.owner ?? "";
+    message.pendingOwner = object.pendingOwner ?? "";
     message.transferInitiatedAt = object.transferInitiatedAt ?? undefined;
     message.actions = object.actions?.map((e) => SingleOwnerAction.fromPartial(e)) || [];
     message.ownershipHistory = object.ownershipHistory?.map((e) => OwnershipTransfer.fromPartial(e)) || [];
@@ -1387,16 +1378,16 @@ export const SingleOwnerAction: MessageFns<SingleOwnerAction> = {
 };
 
 function createBaseOwnershipTransfer(): OwnershipTransfer {
-  return { from: undefined, to: undefined, at: undefined };
+  return { from: "", to: "", at: undefined };
 }
 
 export const OwnershipTransfer: MessageFns<OwnershipTransfer> = {
   encode(message: OwnershipTransfer, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.from !== undefined) {
-      Address.encode(message.from, writer.uint32(10).fork()).join();
+    if (message.from !== "") {
+      writer.uint32(10).string(message.from);
     }
-    if (message.to !== undefined) {
-      Address.encode(message.to, writer.uint32(18).fork()).join();
+    if (message.to !== "") {
+      writer.uint32(18).string(message.to);
     }
     if (message.at !== undefined) {
       Timestamp.encode(toTimestamp(message.at), writer.uint32(26).fork()).join();
@@ -1416,7 +1407,7 @@ export const OwnershipTransfer: MessageFns<OwnershipTransfer> = {
             break;
           }
 
-          message.from = Address.decode(reader, reader.uint32());
+          message.from = reader.string();
           continue;
         }
         case 2: {
@@ -1424,7 +1415,7 @@ export const OwnershipTransfer: MessageFns<OwnershipTransfer> = {
             break;
           }
 
-          message.to = Address.decode(reader, reader.uint32());
+          message.to = reader.string();
           continue;
         }
         case 3: {
@@ -1446,19 +1437,19 @@ export const OwnershipTransfer: MessageFns<OwnershipTransfer> = {
 
   fromJSON(object: any): OwnershipTransfer {
     return {
-      from: isSet(object.from) ? Address.fromJSON(object.from) : undefined,
-      to: isSet(object.to) ? Address.fromJSON(object.to) : undefined,
+      from: isSet(object.from) ? globalThis.String(object.from) : "",
+      to: isSet(object.to) ? globalThis.String(object.to) : "",
       at: isSet(object.at) ? fromJsonTimestamp(object.at) : undefined,
     };
   },
 
   toJSON(message: OwnershipTransfer): unknown {
     const obj: any = {};
-    if (message.from !== undefined) {
-      obj.from = Address.toJSON(message.from);
+    if (message.from !== "") {
+      obj.from = message.from;
     }
-    if (message.to !== undefined) {
-      obj.to = Address.toJSON(message.to);
+    if (message.to !== "") {
+      obj.to = message.to;
     }
     if (message.at !== undefined) {
       obj.at = message.at.toISOString();
@@ -1471,8 +1462,8 @@ export const OwnershipTransfer: MessageFns<OwnershipTransfer> = {
   },
   fromPartial<I extends Exact<DeepPartial<OwnershipTransfer>, I>>(object: I): OwnershipTransfer {
     const message = createBaseOwnershipTransfer();
-    message.from = (object.from !== undefined && object.from !== null) ? Address.fromPartial(object.from) : undefined;
-    message.to = (object.to !== undefined && object.to !== null) ? Address.fromPartial(object.to) : undefined;
+    message.from = object.from ?? "";
+    message.to = object.to ?? "";
     message.at = object.at ?? undefined;
     return message;
   },
@@ -1499,7 +1490,7 @@ export const MultisigDAO: MessageFns<MultisigDAO> = {
       writer.uint32(10).string(message.name);
     }
     for (const v of message.signers) {
-      Address.encode(v!, writer.uint32(18).fork()).join();
+      writer.uint32(18).string(v!);
     }
     if (message.threshold !== 0) {
       writer.uint32(24).int32(message.threshold);
@@ -1548,7 +1539,7 @@ export const MultisigDAO: MessageFns<MultisigDAO> = {
             break;
           }
 
-          message.signers.push(Address.decode(reader, reader.uint32()));
+          message.signers.push(reader.string());
           continue;
         }
         case 3: {
@@ -1630,7 +1621,7 @@ export const MultisigDAO: MessageFns<MultisigDAO> = {
   fromJSON(object: any): MultisigDAO {
     return {
       name: isSet(object.name) ? globalThis.String(object.name) : "",
-      signers: globalThis.Array.isArray(object?.signers) ? object.signers.map((e: any) => Address.fromJSON(e)) : [],
+      signers: globalThis.Array.isArray(object?.signers) ? object.signers.map((e: any) => globalThis.String(e)) : [],
       threshold: isSet(object.threshold) ? globalThis.Number(object.threshold) : 0,
       proposalTtlMs: isSet(object.proposalTtlMs)
         ? globalThis.Number(object.proposalTtlMs)
@@ -1666,7 +1657,7 @@ export const MultisigDAO: MessageFns<MultisigDAO> = {
       obj.name = message.name;
     }
     if (message.signers?.length) {
-      obj.signers = message.signers.map((e) => Address.toJSON(e));
+      obj.signers = message.signers;
     }
     if (message.threshold !== 0) {
       obj.threshold = Math.round(message.threshold);
@@ -1707,7 +1698,7 @@ export const MultisigDAO: MessageFns<MultisigDAO> = {
   fromPartial<I extends Exact<DeepPartial<MultisigDAO>, I>>(object: I): MultisigDAO {
     const message = createBaseMultisigDAO();
     message.name = object.name ?? "";
-    message.signers = object.signers?.map((e) => Address.fromPartial(e)) || [];
+    message.signers = object.signers?.map((e) => e) || [];
     message.threshold = object.threshold ?? 0;
     message.proposalTtlMs = object.proposalTtlMs ?? 0;
     message.proposal = (object.proposal !== undefined && object.proposal !== null)
@@ -2669,7 +2660,7 @@ export const ThresholdDAO: MessageFns<ThresholdDAO> = {
       writer.uint32(10).string(message.name);
     }
     for (const v of message.members) {
-      Address.encode(v!, writer.uint32(18).fork()).join();
+      writer.uint32(18).string(v!);
     }
     globalThis.Object.entries(message.memberJoinedAt).forEach(([key, value]: [string, number]) => {
       ThresholdDAO_MemberJoinedAtEntry.encode({ key: key as any, value }, writer.uint32(26).fork()).join();
@@ -2727,7 +2718,7 @@ export const ThresholdDAO: MessageFns<ThresholdDAO> = {
             break;
           }
 
-          message.members.push(Address.decode(reader, reader.uint32()));
+          message.members.push(reader.string());
           continue;
         }
         case 3: {
@@ -2833,7 +2824,7 @@ export const ThresholdDAO: MessageFns<ThresholdDAO> = {
   fromJSON(object: any): ThresholdDAO {
     return {
       name: isSet(object.name) ? globalThis.String(object.name) : "",
-      members: globalThis.Array.isArray(object?.members) ? object.members.map((e: any) => Address.fromJSON(e)) : [],
+      members: globalThis.Array.isArray(object?.members) ? object.members.map((e: any) => globalThis.String(e)) : [],
       memberJoinedAt: isObject(object.memberJoinedAt)
         ? (globalThis.Object.entries(object.memberJoinedAt) as [string, any][]).reduce(
           (acc: { [key: string]: number }, [key, value]: [string, any]) => {
@@ -2888,7 +2879,7 @@ export const ThresholdDAO: MessageFns<ThresholdDAO> = {
       obj.name = message.name;
     }
     if (message.members?.length) {
-      obj.members = message.members.map((e) => Address.toJSON(e));
+      obj.members = message.members;
     }
     if (message.memberJoinedAt) {
       const entries = globalThis.Object.entries(message.memberJoinedAt) as [string, number][];
@@ -2938,7 +2929,7 @@ export const ThresholdDAO: MessageFns<ThresholdDAO> = {
   fromPartial<I extends Exact<DeepPartial<ThresholdDAO>, I>>(object: I): ThresholdDAO {
     const message = createBaseThresholdDAO();
     message.name = object.name ?? "";
-    message.members = object.members?.map((e) => Address.fromPartial(e)) || [];
+    message.members = object.members?.map((e) => e) || [];
     message.memberJoinedAt = (globalThis.Object.entries(object.memberJoinedAt ?? {}) as [string, number][]).reduce(
       (acc: { [key: string]: number }, [key, value]: [string, number]) => {
         if (value !== undefined) {
@@ -3055,13 +3046,13 @@ function createBaseThresholdVotes(): ThresholdVotes {
 export const ThresholdVotes: MessageFns<ThresholdVotes> = {
   encode(message: ThresholdVotes, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     for (const v of message.votesFor) {
-      Address.encode(v!, writer.uint32(10).fork()).join();
+      writer.uint32(10).string(v!);
     }
     for (const v of message.votesAgainst) {
-      Address.encode(v!, writer.uint32(18).fork()).join();
+      writer.uint32(18).string(v!);
     }
     for (const v of message.votesAbstain) {
-      Address.encode(v!, writer.uint32(26).fork()).join();
+      writer.uint32(26).string(v!);
     }
     return writer;
   },
@@ -3078,7 +3069,7 @@ export const ThresholdVotes: MessageFns<ThresholdVotes> = {
             break;
           }
 
-          message.votesFor.push(Address.decode(reader, reader.uint32()));
+          message.votesFor.push(reader.string());
           continue;
         }
         case 2: {
@@ -3086,7 +3077,7 @@ export const ThresholdVotes: MessageFns<ThresholdVotes> = {
             break;
           }
 
-          message.votesAgainst.push(Address.decode(reader, reader.uint32()));
+          message.votesAgainst.push(reader.string());
           continue;
         }
         case 3: {
@@ -3094,7 +3085,7 @@ export const ThresholdVotes: MessageFns<ThresholdVotes> = {
             break;
           }
 
-          message.votesAbstain.push(Address.decode(reader, reader.uint32()));
+          message.votesAbstain.push(reader.string());
           continue;
         }
       }
@@ -3109,19 +3100,19 @@ export const ThresholdVotes: MessageFns<ThresholdVotes> = {
   fromJSON(object: any): ThresholdVotes {
     return {
       votesFor: globalThis.Array.isArray(object?.votesFor)
-        ? object.votesFor.map((e: any) => Address.fromJSON(e))
+        ? object.votesFor.map((e: any) => globalThis.String(e))
         : globalThis.Array.isArray(object?.votes_for)
-        ? object.votes_for.map((e: any) => Address.fromJSON(e))
+        ? object.votes_for.map((e: any) => globalThis.String(e))
         : [],
       votesAgainst: globalThis.Array.isArray(object?.votesAgainst)
-        ? object.votesAgainst.map((e: any) => Address.fromJSON(e))
+        ? object.votesAgainst.map((e: any) => globalThis.String(e))
         : globalThis.Array.isArray(object?.votes_against)
-        ? object.votes_against.map((e: any) => Address.fromJSON(e))
+        ? object.votes_against.map((e: any) => globalThis.String(e))
         : [],
       votesAbstain: globalThis.Array.isArray(object?.votesAbstain)
-        ? object.votesAbstain.map((e: any) => Address.fromJSON(e))
+        ? object.votesAbstain.map((e: any) => globalThis.String(e))
         : globalThis.Array.isArray(object?.votes_abstain)
-        ? object.votes_abstain.map((e: any) => Address.fromJSON(e))
+        ? object.votes_abstain.map((e: any) => globalThis.String(e))
         : [],
     };
   },
@@ -3129,13 +3120,13 @@ export const ThresholdVotes: MessageFns<ThresholdVotes> = {
   toJSON(message: ThresholdVotes): unknown {
     const obj: any = {};
     if (message.votesFor?.length) {
-      obj.votesFor = message.votesFor.map((e) => Address.toJSON(e));
+      obj.votesFor = message.votesFor;
     }
     if (message.votesAgainst?.length) {
-      obj.votesAgainst = message.votesAgainst.map((e) => Address.toJSON(e));
+      obj.votesAgainst = message.votesAgainst;
     }
     if (message.votesAbstain?.length) {
-      obj.votesAbstain = message.votesAbstain.map((e) => Address.toJSON(e));
+      obj.votesAbstain = message.votesAbstain;
     }
     return obj;
   },
@@ -3145,9 +3136,9 @@ export const ThresholdVotes: MessageFns<ThresholdVotes> = {
   },
   fromPartial<I extends Exact<DeepPartial<ThresholdVotes>, I>>(object: I): ThresholdVotes {
     const message = createBaseThresholdVotes();
-    message.votesFor = object.votesFor?.map((e) => Address.fromPartial(e)) || [];
-    message.votesAgainst = object.votesAgainst?.map((e) => Address.fromPartial(e)) || [];
-    message.votesAbstain = object.votesAbstain?.map((e) => Address.fromPartial(e)) || [];
+    message.votesFor = object.votesFor?.map((e) => e) || [];
+    message.votesAgainst = object.votesAgainst?.map((e) => e) || [];
+    message.votesAbstain = object.votesAbstain?.map((e) => e) || [];
     return message;
   },
 };
@@ -3269,13 +3260,7 @@ export const ThresholdHistoryEntry: MessageFns<ThresholdHistoryEntry> = {
 };
 
 function createBaseCreateDAORequest(): CreateDAORequest {
-  return {
-    daoType: DAOType.DAO_TYPE_UNSPECIFIED,
-    name: "",
-    creator: undefined,
-    metadata: undefined,
-    config: undefined,
-  };
+  return { daoType: DAOType.DAO_TYPE_UNSPECIFIED, name: "", creator: "", metadata: undefined, config: undefined };
 }
 
 export const CreateDAORequest: MessageFns<CreateDAORequest> = {
@@ -3286,8 +3271,8 @@ export const CreateDAORequest: MessageFns<CreateDAORequest> = {
     if (message.name !== "") {
       writer.uint32(18).string(message.name);
     }
-    if (message.creator !== undefined) {
-      Address.encode(message.creator, writer.uint32(26).fork()).join();
+    if (message.creator !== "") {
+      writer.uint32(26).string(message.creator);
     }
     if (message.metadata !== undefined) {
       DAOMetadata.encode(message.metadata, writer.uint32(34).fork()).join();
@@ -3326,7 +3311,7 @@ export const CreateDAORequest: MessageFns<CreateDAORequest> = {
             break;
           }
 
-          message.creator = Address.decode(reader, reader.uint32());
+          message.creator = reader.string();
           continue;
         }
         case 4: {
@@ -3362,7 +3347,7 @@ export const CreateDAORequest: MessageFns<CreateDAORequest> = {
         ? dAOTypeFromJSON(object.dao_type)
         : DAOType.DAO_TYPE_UNSPECIFIED,
       name: isSet(object.name) ? globalThis.String(object.name) : "",
-      creator: isSet(object.creator) ? Address.fromJSON(object.creator) : undefined,
+      creator: isSet(object.creator) ? globalThis.String(object.creator) : "",
       metadata: isSet(object.metadata) ? DAOMetadata.fromJSON(object.metadata) : undefined,
       config: isObject(object.config) ? object.config : undefined,
     };
@@ -3376,8 +3361,8 @@ export const CreateDAORequest: MessageFns<CreateDAORequest> = {
     if (message.name !== "") {
       obj.name = message.name;
     }
-    if (message.creator !== undefined) {
-      obj.creator = Address.toJSON(message.creator);
+    if (message.creator !== "") {
+      obj.creator = message.creator;
     }
     if (message.metadata !== undefined) {
       obj.metadata = DAOMetadata.toJSON(message.metadata);
@@ -3395,9 +3380,7 @@ export const CreateDAORequest: MessageFns<CreateDAORequest> = {
     const message = createBaseCreateDAORequest();
     message.daoType = object.daoType ?? DAOType.DAO_TYPE_UNSPECIFIED;
     message.name = object.name ?? "";
-    message.creator = (object.creator !== undefined && object.creator !== null)
-      ? Address.fromPartial(object.creator)
-      : undefined;
+    message.creator = object.creator ?? "";
     message.metadata = (object.metadata !== undefined && object.metadata !== null)
       ? DAOMetadata.fromPartial(object.metadata)
       : undefined;
@@ -3407,7 +3390,7 @@ export const CreateDAORequest: MessageFns<CreateDAORequest> = {
 };
 
 function createBaseProposeRequest(): ProposeRequest {
-  return { daoId: "", proposer: undefined, title: "", description: "", actionType: "", payload: undefined };
+  return { daoId: "", proposer: "", title: "", description: "", actionType: "", payload: undefined };
 }
 
 export const ProposeRequest: MessageFns<ProposeRequest> = {
@@ -3415,8 +3398,8 @@ export const ProposeRequest: MessageFns<ProposeRequest> = {
     if (message.daoId !== "") {
       writer.uint32(10).string(message.daoId);
     }
-    if (message.proposer !== undefined) {
-      Address.encode(message.proposer, writer.uint32(18).fork()).join();
+    if (message.proposer !== "") {
+      writer.uint32(18).string(message.proposer);
     }
     if (message.title !== "") {
       writer.uint32(26).string(message.title);
@@ -3453,7 +3436,7 @@ export const ProposeRequest: MessageFns<ProposeRequest> = {
             break;
           }
 
-          message.proposer = Address.decode(reader, reader.uint32());
+          message.proposer = reader.string();
           continue;
         }
         case 3: {
@@ -3504,7 +3487,7 @@ export const ProposeRequest: MessageFns<ProposeRequest> = {
         : isSet(object.dao_id)
         ? globalThis.String(object.dao_id)
         : "",
-      proposer: isSet(object.proposer) ? Address.fromJSON(object.proposer) : undefined,
+      proposer: isSet(object.proposer) ? globalThis.String(object.proposer) : "",
       title: isSet(object.title) ? globalThis.String(object.title) : "",
       description: isSet(object.description) ? globalThis.String(object.description) : "",
       actionType: isSet(object.actionType)
@@ -3521,8 +3504,8 @@ export const ProposeRequest: MessageFns<ProposeRequest> = {
     if (message.daoId !== "") {
       obj.daoId = message.daoId;
     }
-    if (message.proposer !== undefined) {
-      obj.proposer = Address.toJSON(message.proposer);
+    if (message.proposer !== "") {
+      obj.proposer = message.proposer;
     }
     if (message.title !== "") {
       obj.title = message.title;
@@ -3545,9 +3528,7 @@ export const ProposeRequest: MessageFns<ProposeRequest> = {
   fromPartial<I extends Exact<DeepPartial<ProposeRequest>, I>>(object: I): ProposeRequest {
     const message = createBaseProposeRequest();
     message.daoId = object.daoId ?? "";
-    message.proposer = (object.proposer !== undefined && object.proposer !== null)
-      ? Address.fromPartial(object.proposer)
-      : undefined;
+    message.proposer = object.proposer ?? "";
     message.title = object.title ?? "";
     message.description = object.description ?? "";
     message.actionType = object.actionType ?? "";
@@ -3557,7 +3538,7 @@ export const ProposeRequest: MessageFns<ProposeRequest> = {
 };
 
 function createBaseVoteRequest(): VoteRequest {
-  return { daoId: "", voter: undefined, choice: VoteChoice.VOTE_CHOICE_UNSPECIFIED };
+  return { daoId: "", voter: "", choice: VoteChoice.VOTE_CHOICE_UNSPECIFIED };
 }
 
 export const VoteRequest: MessageFns<VoteRequest> = {
@@ -3565,8 +3546,8 @@ export const VoteRequest: MessageFns<VoteRequest> = {
     if (message.daoId !== "") {
       writer.uint32(10).string(message.daoId);
     }
-    if (message.voter !== undefined) {
-      Address.encode(message.voter, writer.uint32(18).fork()).join();
+    if (message.voter !== "") {
+      writer.uint32(18).string(message.voter);
     }
     if (message.choice !== VoteChoice.VOTE_CHOICE_UNSPECIFIED) {
       writer.uint32(24).int32(voteChoiceToNumber(message.choice));
@@ -3594,7 +3575,7 @@ export const VoteRequest: MessageFns<VoteRequest> = {
             break;
           }
 
-          message.voter = Address.decode(reader, reader.uint32());
+          message.voter = reader.string();
           continue;
         }
         case 3: {
@@ -3621,7 +3602,7 @@ export const VoteRequest: MessageFns<VoteRequest> = {
         : isSet(object.dao_id)
         ? globalThis.String(object.dao_id)
         : "",
-      voter: isSet(object.voter) ? Address.fromJSON(object.voter) : undefined,
+      voter: isSet(object.voter) ? globalThis.String(object.voter) : "",
       choice: isSet(object.choice) ? voteChoiceFromJSON(object.choice) : VoteChoice.VOTE_CHOICE_UNSPECIFIED,
     };
   },
@@ -3631,8 +3612,8 @@ export const VoteRequest: MessageFns<VoteRequest> = {
     if (message.daoId !== "") {
       obj.daoId = message.daoId;
     }
-    if (message.voter !== undefined) {
-      obj.voter = Address.toJSON(message.voter);
+    if (message.voter !== "") {
+      obj.voter = message.voter;
     }
     if (message.choice !== VoteChoice.VOTE_CHOICE_UNSPECIFIED) {
       obj.choice = voteChoiceToJSON(message.choice);
@@ -3646,16 +3627,14 @@ export const VoteRequest: MessageFns<VoteRequest> = {
   fromPartial<I extends Exact<DeepPartial<VoteRequest>, I>>(object: I): VoteRequest {
     const message = createBaseVoteRequest();
     message.daoId = object.daoId ?? "";
-    message.voter = (object.voter !== undefined && object.voter !== null)
-      ? Address.fromPartial(object.voter)
-      : undefined;
+    message.voter = object.voter ?? "";
     message.choice = object.choice ?? VoteChoice.VOTE_CHOICE_UNSPECIFIED;
     return message;
   },
 };
 
 function createBaseExecuteRequest(): ExecuteRequest {
-  return { daoId: "", executor: undefined };
+  return { daoId: "", executor: "" };
 }
 
 export const ExecuteRequest: MessageFns<ExecuteRequest> = {
@@ -3663,8 +3642,8 @@ export const ExecuteRequest: MessageFns<ExecuteRequest> = {
     if (message.daoId !== "") {
       writer.uint32(10).string(message.daoId);
     }
-    if (message.executor !== undefined) {
-      Address.encode(message.executor, writer.uint32(18).fork()).join();
+    if (message.executor !== "") {
+      writer.uint32(18).string(message.executor);
     }
     return writer;
   },
@@ -3689,7 +3668,7 @@ export const ExecuteRequest: MessageFns<ExecuteRequest> = {
             break;
           }
 
-          message.executor = Address.decode(reader, reader.uint32());
+          message.executor = reader.string();
           continue;
         }
       }
@@ -3708,7 +3687,7 @@ export const ExecuteRequest: MessageFns<ExecuteRequest> = {
         : isSet(object.dao_id)
         ? globalThis.String(object.dao_id)
         : "",
-      executor: isSet(object.executor) ? Address.fromJSON(object.executor) : undefined,
+      executor: isSet(object.executor) ? globalThis.String(object.executor) : "",
     };
   },
 
@@ -3717,8 +3696,8 @@ export const ExecuteRequest: MessageFns<ExecuteRequest> = {
     if (message.daoId !== "") {
       obj.daoId = message.daoId;
     }
-    if (message.executor !== undefined) {
-      obj.executor = Address.toJSON(message.executor);
+    if (message.executor !== "") {
+      obj.executor = message.executor;
     }
     return obj;
   },
@@ -3729,9 +3708,7 @@ export const ExecuteRequest: MessageFns<ExecuteRequest> = {
   fromPartial<I extends Exact<DeepPartial<ExecuteRequest>, I>>(object: I): ExecuteRequest {
     const message = createBaseExecuteRequest();
     message.daoId = object.daoId ?? "";
-    message.executor = (object.executor !== undefined && object.executor !== null)
-      ? Address.fromPartial(object.executor)
-      : undefined;
+    message.executor = object.executor ?? "";
     return message;
   },
 };

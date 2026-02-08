@@ -1,5 +1,4 @@
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
-import { Address } from "../../../v1/common.js";
 export declare const protobufPackage = "ottochain.apps.oracles.v1";
 /** Oracle lifecycle states */
 export declare enum OracleState {
@@ -46,7 +45,7 @@ export interface Oracle {
     /** Unique oracle identifier */
     id: string;
     /** Oracle's DAG address */
-    address?: Address | undefined;
+    address: string;
     /** Current staked amount */
     stake: number;
     /** Reputation metrics */
@@ -70,25 +69,25 @@ export interface Oracle {
 }
 /** Register a new oracle */
 export interface RegisterOracleRequest {
-    address?: Address | undefined;
+    address: string;
     initialStake: number;
     domains: string[];
 }
 /** Activate a registered oracle */
 export interface ActivateOracleRequest {
     oracleId: string;
-    address?: Address | undefined;
+    address: string;
 }
 /** Add stake to oracle */
 export interface AddStakeRequest {
     oracleId: string;
-    address?: Address | undefined;
+    address: string;
     amount: number;
 }
 /** Withdraw stake (initiates cooldown) */
 export interface WithdrawStakeRequest {
     oracleId: string;
-    address?: Address | undefined;
+    address: string;
     amount: number;
 }
 /** Slash an oracle for misbehavior */
@@ -101,7 +100,7 @@ export interface SlashOracleRequest {
 /** Withdraw oracle from service */
 export interface WithdrawOracleRequest {
     oracleId: string;
-    address?: Address | undefined;
+    address: string;
 }
 /** Oracle state machine definition */
 export interface OracleDefinition {

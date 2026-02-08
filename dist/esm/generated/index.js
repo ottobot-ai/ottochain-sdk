@@ -6,8 +6,8 @@
  *
  * @packageDocumentation
  */
-// Core types
-export { FiberOrdinal, SnapshotOrdinal, StateId, HashValue, Address, } from './ottochain/v1/common.js';
+// Core types (primitives - no wrapper messages)
+// Type aliases are in src/types.ts
 export { FiberStatus, AccessControlPolicy, PublicAccess, WhitelistAccess, FiberOwnedAccess, StateMachineDefinition, EmittedEvent, EventReceipt, ScriptInvocation, FiberLogEntry, } from './ottochain/v1/fiber.js';
 export { CreateStateMachine, TransitionStateMachine, ArchiveStateMachine, CreateScript, InvokeScript, OttochainMessage, } from './ottochain/v1/messages.js';
 export { StateMachineFiberRecord, ScriptFiberRecord, FiberCommit, OnChainState, CalculatedState, } from './ottochain/v1/records.js';

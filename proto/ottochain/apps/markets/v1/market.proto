@@ -29,7 +29,7 @@ enum MarketState {
 
 // Agent commitment to a market position
 message Commitment {
-  ottochain.v1.Address agent = 1;         // Committing agent's address
+  string agent = 1;         // Committing agent's address
   int64 amount = 2;                        // Token amount committed
   google.protobuf.Struct data = 3;         // Position data (outcome choice, bid, etc.)
   google.protobuf.Timestamp timestamp = 4; // When commitment was made
@@ -37,7 +37,7 @@ message Commitment {
 
 // Oracle resolution submission
 message Resolution {
-  ottochain.v1.Address oracle = 1;         // Oracle's address
+  string oracle = 1;         // Oracle's address
   string outcome = 2;                       // Resolved outcome identifier
   string proof = 3;                         // Evidence/proof of outcome
   google.protobuf.Timestamp timestamp = 4; // When resolution was submitted
@@ -47,13 +47,13 @@ message Resolution {
 message Market {
   string id = 1;                                    // Unique market identifier
   MarketType market_type = 2;                       // Type of market mechanism
-  ottochain.v1.Address creator = 3;                 // Market creator's address
+  string creator = 3;                 // Market creator's address
   string title = 4;                                 // Human-readable market title
   google.protobuf.Struct terms = 5;                 // Market-specific terms and rules
   google.protobuf.Timestamp deadline = 6;           // When market closes for commitments
   int64 threshold = 7;                              // Minimum commitment threshold
   repeated Commitment commitments = 8;              // All agent commitments
-  repeated ottochain.v1.Address oracles = 9;        // Designated oracle addresses
+  repeated string oracles = 9;        // Designated oracle addresses
   int32 quorum = 10;                                // Required oracle agreement count
   repeated Resolution resolutions = 11;             // Oracle resolution submissions
   MarketState status = 12;                          // Current market state
@@ -64,19 +64,19 @@ message Market {
 // Create a new market
 message CreateMarketRequest {
   MarketType market_type = 1;
-  ottochain.v1.Address creator = 2;
+  string creator = 2;
   string title = 3;
   google.protobuf.Struct terms = 4;
   google.protobuf.Timestamp deadline = 5;
   int64 threshold = 6;
-  repeated ottochain.v1.Address oracles = 7;
+  repeated string oracles = 7;
   int32 quorum = 8;
 }
 
 // Commit to a market position
 message CommitToMarketRequest {
   string market_id = 1;
-  ottochain.v1.Address agent = 2;
+  string agent = 2;
   int64 amount = 3;
   google.protobuf.Struct position_data = 4;
 }
@@ -84,7 +84,7 @@ message CommitToMarketRequest {
 // Submit oracle resolution
 message SubmitResolutionRequest {
   string market_id = 1;
-  ottochain.v1.Address oracle = 2;
+  string oracle = 2;
   string outcome = 3;
   string proof = 4;
 }
@@ -92,7 +92,7 @@ message SubmitResolutionRequest {
 // Cancel a market (creator only, before CLOSED)
 message CancelMarketRequest {
   string market_id = 1;
-  ottochain.v1.Address creator = 2;
+  string creator = 2;
   string reason = 3;
 }
 

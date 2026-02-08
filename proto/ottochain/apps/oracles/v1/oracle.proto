@@ -34,7 +34,7 @@ message SlashingEvent {
 // Oracle identity and state
 message Oracle {
   string id = 1;                               // Unique oracle identifier
-  ottochain.v1.Address address = 2;            // Oracle's DAG address
+  string address = 2;            // Oracle's DAG address
   int64 stake = 3;                             // Current staked amount
   OracleReputation reputation = 4;             // Reputation metrics
   int32 accuracy = 5;                          // Current accuracy score (0-100)
@@ -49,7 +49,7 @@ message Oracle {
 
 // Register a new oracle
 message RegisterOracleRequest {
-  ottochain.v1.Address address = 1;
+  string address = 1;
   int64 initial_stake = 2;
   repeated string domains = 3;
 }
@@ -57,20 +57,20 @@ message RegisterOracleRequest {
 // Activate a registered oracle
 message ActivateOracleRequest {
   string oracle_id = 1;
-  ottochain.v1.Address address = 2;
+  string address = 2;
 }
 
 // Add stake to oracle
 message AddStakeRequest {
   string oracle_id = 1;
-  ottochain.v1.Address address = 2;
+  string address = 2;
   int64 amount = 3;
 }
 
 // Withdraw stake (initiates cooldown)
 message WithdrawStakeRequest {
   string oracle_id = 1;
-  ottochain.v1.Address address = 2;
+  string address = 2;
   int64 amount = 3;
 }
 
@@ -85,7 +85,7 @@ message SlashOracleRequest {
 // Withdraw oracle from service
 message WithdrawOracleRequest {
   string oracle_id = 1;
-  ottochain.v1.Address address = 2;
+  string address = 2;
 }
 
 // Oracle state machine definition

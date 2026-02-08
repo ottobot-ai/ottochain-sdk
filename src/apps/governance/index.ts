@@ -130,7 +130,7 @@ export function signaturesNeeded(state: MultisigDAO): number {
  * Check if agent is a signer
  */
 export function isSigner(state: MultisigDAO, agent: string): boolean {
-  return state.signers.some(s => s.value === agent);
+  return state.signers.includes(agent);
 }
 
 /**
@@ -202,7 +202,7 @@ export function meetsThreshold(
  * Check if agent is a member
  */
 export function isMember(state: ThresholdDAO, agent: string): boolean {
-  return state.members.some(m => m.value === agent);
+  return state.members.includes(agent);
 }
 
 /**

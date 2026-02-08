@@ -10,7 +10,6 @@ exports.MarketDefinition = exports.CancelMarketRequest = exports.SubmitResolutio
 const wire_1 = require("@bufbuild/protobuf/wire");
 const struct_js_1 = require("../../../../google/protobuf/struct.js");
 const timestamp_js_1 = require("../../../../google/protobuf/timestamp.js");
-const common_js_1 = require("../../../v1/common.js");
 exports.protobufPackage = "ottochain.apps.markets.v1";
 /** Type of market mechanism */
 var MarketType;
@@ -188,12 +187,12 @@ function marketStateToNumber(object) {
 }
 exports.marketStateToNumber = marketStateToNumber;
 function createBaseCommitment() {
-    return { agent: undefined, amount: 0, data: undefined, timestamp: undefined };
+    return { agent: "", amount: 0, data: undefined, timestamp: undefined };
 }
 exports.Commitment = {
     encode(message, writer = new wire_1.BinaryWriter()) {
-        if (message.agent !== undefined) {
-            common_js_1.Address.encode(message.agent, writer.uint32(10).fork()).join();
+        if (message.agent !== "") {
+            writer.uint32(10).string(message.agent);
         }
         if (message.amount !== 0) {
             writer.uint32(16).int64(message.amount);
@@ -217,7 +216,7 @@ exports.Commitment = {
                     if (tag !== 10) {
                         break;
                     }
-                    message.agent = common_js_1.Address.decode(reader, reader.uint32());
+                    message.agent = reader.string();
                     continue;
                 }
                 case 2: {
@@ -251,7 +250,7 @@ exports.Commitment = {
     },
     fromJSON(object) {
         return {
-            agent: isSet(object.agent) ? common_js_1.Address.fromJSON(object.agent) : undefined,
+            agent: isSet(object.agent) ? globalThis.String(object.agent) : "",
             amount: isSet(object.amount) ? globalThis.Number(object.amount) : 0,
             data: isObject(object.data) ? object.data : undefined,
             timestamp: isSet(object.timestamp) ? fromJsonTimestamp(object.timestamp) : undefined,
@@ -259,8 +258,8 @@ exports.Commitment = {
     },
     toJSON(message) {
         const obj = {};
-        if (message.agent !== undefined) {
-            obj.agent = common_js_1.Address.toJSON(message.agent);
+        if (message.agent !== "") {
+            obj.agent = message.agent;
         }
         if (message.amount !== 0) {
             obj.amount = Math.round(message.amount);
@@ -278,9 +277,7 @@ exports.Commitment = {
     },
     fromPartial(object) {
         const message = createBaseCommitment();
-        message.agent = (object.agent !== undefined && object.agent !== null)
-            ? common_js_1.Address.fromPartial(object.agent)
-            : undefined;
+        message.agent = object.agent ?? "";
         message.amount = object.amount ?? 0;
         message.data = object.data ?? undefined;
         message.timestamp = object.timestamp ?? undefined;
@@ -288,12 +285,12 @@ exports.Commitment = {
     },
 };
 function createBaseResolution() {
-    return { oracle: undefined, outcome: "", proof: "", timestamp: undefined };
+    return { oracle: "", outcome: "", proof: "", timestamp: undefined };
 }
 exports.Resolution = {
     encode(message, writer = new wire_1.BinaryWriter()) {
-        if (message.oracle !== undefined) {
-            common_js_1.Address.encode(message.oracle, writer.uint32(10).fork()).join();
+        if (message.oracle !== "") {
+            writer.uint32(10).string(message.oracle);
         }
         if (message.outcome !== "") {
             writer.uint32(18).string(message.outcome);
@@ -317,7 +314,7 @@ exports.Resolution = {
                     if (tag !== 10) {
                         break;
                     }
-                    message.oracle = common_js_1.Address.decode(reader, reader.uint32());
+                    message.oracle = reader.string();
                     continue;
                 }
                 case 2: {
@@ -351,7 +348,7 @@ exports.Resolution = {
     },
     fromJSON(object) {
         return {
-            oracle: isSet(object.oracle) ? common_js_1.Address.fromJSON(object.oracle) : undefined,
+            oracle: isSet(object.oracle) ? globalThis.String(object.oracle) : "",
             outcome: isSet(object.outcome) ? globalThis.String(object.outcome) : "",
             proof: isSet(object.proof) ? globalThis.String(object.proof) : "",
             timestamp: isSet(object.timestamp) ? fromJsonTimestamp(object.timestamp) : undefined,
@@ -359,8 +356,8 @@ exports.Resolution = {
     },
     toJSON(message) {
         const obj = {};
-        if (message.oracle !== undefined) {
-            obj.oracle = common_js_1.Address.toJSON(message.oracle);
+        if (message.oracle !== "") {
+            obj.oracle = message.oracle;
         }
         if (message.outcome !== "") {
             obj.outcome = message.outcome;
@@ -378,9 +375,7 @@ exports.Resolution = {
     },
     fromPartial(object) {
         const message = createBaseResolution();
-        message.oracle = (object.oracle !== undefined && object.oracle !== null)
-            ? common_js_1.Address.fromPartial(object.oracle)
-            : undefined;
+        message.oracle = object.oracle ?? "";
         message.outcome = object.outcome ?? "";
         message.proof = object.proof ?? "";
         message.timestamp = object.timestamp ?? undefined;
@@ -391,7 +386,7 @@ function createBaseMarket() {
     return {
         id: "",
         marketType: MarketType.MARKET_TYPE_UNSPECIFIED,
-        creator: undefined,
+        creator: "",
         title: "",
         terms: undefined,
         deadline: undefined,
@@ -413,8 +408,8 @@ exports.Market = {
         if (message.marketType !== MarketType.MARKET_TYPE_UNSPECIFIED) {
             writer.uint32(16).int32(marketTypeToNumber(message.marketType));
         }
-        if (message.creator !== undefined) {
-            common_js_1.Address.encode(message.creator, writer.uint32(26).fork()).join();
+        if (message.creator !== "") {
+            writer.uint32(26).string(message.creator);
         }
         if (message.title !== "") {
             writer.uint32(34).string(message.title);
@@ -432,7 +427,7 @@ exports.Market = {
             exports.Commitment.encode(v, writer.uint32(66).fork()).join();
         }
         for (const v of message.oracles) {
-            common_js_1.Address.encode(v, writer.uint32(74).fork()).join();
+            writer.uint32(74).string(v);
         }
         if (message.quorum !== 0) {
             writer.uint32(80).int32(message.quorum);
@@ -476,7 +471,7 @@ exports.Market = {
                     if (tag !== 26) {
                         break;
                     }
-                    message.creator = common_js_1.Address.decode(reader, reader.uint32());
+                    message.creator = reader.string();
                     continue;
                 }
                 case 4: {
@@ -518,7 +513,7 @@ exports.Market = {
                     if (tag !== 74) {
                         break;
                     }
-                    message.oracles.push(common_js_1.Address.decode(reader, reader.uint32()));
+                    message.oracles.push(reader.string());
                     continue;
                 }
                 case 10: {
@@ -572,7 +567,7 @@ exports.Market = {
                 : isSet(object.market_type)
                     ? marketTypeFromJSON(object.market_type)
                     : MarketType.MARKET_TYPE_UNSPECIFIED,
-            creator: isSet(object.creator) ? common_js_1.Address.fromJSON(object.creator) : undefined,
+            creator: isSet(object.creator) ? globalThis.String(object.creator) : "",
             title: isSet(object.title) ? globalThis.String(object.title) : "",
             terms: isObject(object.terms) ? object.terms : undefined,
             deadline: isSet(object.deadline) ? fromJsonTimestamp(object.deadline) : undefined,
@@ -580,7 +575,7 @@ exports.Market = {
             commitments: globalThis.Array.isArray(object?.commitments)
                 ? object.commitments.map((e) => exports.Commitment.fromJSON(e))
                 : [],
-            oracles: globalThis.Array.isArray(object?.oracles) ? object.oracles.map((e) => common_js_1.Address.fromJSON(e)) : [],
+            oracles: globalThis.Array.isArray(object?.oracles) ? object.oracles.map((e) => globalThis.String(e)) : [],
             quorum: isSet(object.quorum) ? globalThis.Number(object.quorum) : 0,
             resolutions: globalThis.Array.isArray(object?.resolutions)
                 ? object.resolutions.map((e) => exports.Resolution.fromJSON(e))
@@ -606,8 +601,8 @@ exports.Market = {
         if (message.marketType !== MarketType.MARKET_TYPE_UNSPECIFIED) {
             obj.marketType = marketTypeToJSON(message.marketType);
         }
-        if (message.creator !== undefined) {
-            obj.creator = common_js_1.Address.toJSON(message.creator);
+        if (message.creator !== "") {
+            obj.creator = message.creator;
         }
         if (message.title !== "") {
             obj.title = message.title;
@@ -625,7 +620,7 @@ exports.Market = {
             obj.commitments = message.commitments.map((e) => exports.Commitment.toJSON(e));
         }
         if (message.oracles?.length) {
-            obj.oracles = message.oracles.map((e) => common_js_1.Address.toJSON(e));
+            obj.oracles = message.oracles;
         }
         if (message.quorum !== 0) {
             obj.quorum = Math.round(message.quorum);
@@ -651,15 +646,13 @@ exports.Market = {
         const message = createBaseMarket();
         message.id = object.id ?? "";
         message.marketType = object.marketType ?? MarketType.MARKET_TYPE_UNSPECIFIED;
-        message.creator = (object.creator !== undefined && object.creator !== null)
-            ? common_js_1.Address.fromPartial(object.creator)
-            : undefined;
+        message.creator = object.creator ?? "";
         message.title = object.title ?? "";
         message.terms = object.terms ?? undefined;
         message.deadline = object.deadline ?? undefined;
         message.threshold = object.threshold ?? 0;
         message.commitments = object.commitments?.map((e) => exports.Commitment.fromPartial(e)) || [];
-        message.oracles = object.oracles?.map((e) => common_js_1.Address.fromPartial(e)) || [];
+        message.oracles = object.oracles?.map((e) => e) || [];
         message.quorum = object.quorum ?? 0;
         message.resolutions = object.resolutions?.map((e) => exports.Resolution.fromPartial(e)) || [];
         message.status = object.status ?? MarketState.MARKET_STATE_UNSPECIFIED;
@@ -671,7 +664,7 @@ exports.Market = {
 function createBaseCreateMarketRequest() {
     return {
         marketType: MarketType.MARKET_TYPE_UNSPECIFIED,
-        creator: undefined,
+        creator: "",
         title: "",
         terms: undefined,
         deadline: undefined,
@@ -685,8 +678,8 @@ exports.CreateMarketRequest = {
         if (message.marketType !== MarketType.MARKET_TYPE_UNSPECIFIED) {
             writer.uint32(8).int32(marketTypeToNumber(message.marketType));
         }
-        if (message.creator !== undefined) {
-            common_js_1.Address.encode(message.creator, writer.uint32(18).fork()).join();
+        if (message.creator !== "") {
+            writer.uint32(18).string(message.creator);
         }
         if (message.title !== "") {
             writer.uint32(26).string(message.title);
@@ -701,7 +694,7 @@ exports.CreateMarketRequest = {
             writer.uint32(48).int64(message.threshold);
         }
         for (const v of message.oracles) {
-            common_js_1.Address.encode(v, writer.uint32(58).fork()).join();
+            writer.uint32(58).string(v);
         }
         if (message.quorum !== 0) {
             writer.uint32(64).int32(message.quorum);
@@ -726,7 +719,7 @@ exports.CreateMarketRequest = {
                     if (tag !== 18) {
                         break;
                     }
-                    message.creator = common_js_1.Address.decode(reader, reader.uint32());
+                    message.creator = reader.string();
                     continue;
                 }
                 case 3: {
@@ -761,7 +754,7 @@ exports.CreateMarketRequest = {
                     if (tag !== 58) {
                         break;
                     }
-                    message.oracles.push(common_js_1.Address.decode(reader, reader.uint32()));
+                    message.oracles.push(reader.string());
                     continue;
                 }
                 case 8: {
@@ -786,12 +779,12 @@ exports.CreateMarketRequest = {
                 : isSet(object.market_type)
                     ? marketTypeFromJSON(object.market_type)
                     : MarketType.MARKET_TYPE_UNSPECIFIED,
-            creator: isSet(object.creator) ? common_js_1.Address.fromJSON(object.creator) : undefined,
+            creator: isSet(object.creator) ? globalThis.String(object.creator) : "",
             title: isSet(object.title) ? globalThis.String(object.title) : "",
             terms: isObject(object.terms) ? object.terms : undefined,
             deadline: isSet(object.deadline) ? fromJsonTimestamp(object.deadline) : undefined,
             threshold: isSet(object.threshold) ? globalThis.Number(object.threshold) : 0,
-            oracles: globalThis.Array.isArray(object?.oracles) ? object.oracles.map((e) => common_js_1.Address.fromJSON(e)) : [],
+            oracles: globalThis.Array.isArray(object?.oracles) ? object.oracles.map((e) => globalThis.String(e)) : [],
             quorum: isSet(object.quorum) ? globalThis.Number(object.quorum) : 0,
         };
     },
@@ -800,8 +793,8 @@ exports.CreateMarketRequest = {
         if (message.marketType !== MarketType.MARKET_TYPE_UNSPECIFIED) {
             obj.marketType = marketTypeToJSON(message.marketType);
         }
-        if (message.creator !== undefined) {
-            obj.creator = common_js_1.Address.toJSON(message.creator);
+        if (message.creator !== "") {
+            obj.creator = message.creator;
         }
         if (message.title !== "") {
             obj.title = message.title;
@@ -816,7 +809,7 @@ exports.CreateMarketRequest = {
             obj.threshold = Math.round(message.threshold);
         }
         if (message.oracles?.length) {
-            obj.oracles = message.oracles.map((e) => common_js_1.Address.toJSON(e));
+            obj.oracles = message.oracles;
         }
         if (message.quorum !== 0) {
             obj.quorum = Math.round(message.quorum);
@@ -829,28 +822,26 @@ exports.CreateMarketRequest = {
     fromPartial(object) {
         const message = createBaseCreateMarketRequest();
         message.marketType = object.marketType ?? MarketType.MARKET_TYPE_UNSPECIFIED;
-        message.creator = (object.creator !== undefined && object.creator !== null)
-            ? common_js_1.Address.fromPartial(object.creator)
-            : undefined;
+        message.creator = object.creator ?? "";
         message.title = object.title ?? "";
         message.terms = object.terms ?? undefined;
         message.deadline = object.deadline ?? undefined;
         message.threshold = object.threshold ?? 0;
-        message.oracles = object.oracles?.map((e) => common_js_1.Address.fromPartial(e)) || [];
+        message.oracles = object.oracles?.map((e) => e) || [];
         message.quorum = object.quorum ?? 0;
         return message;
     },
 };
 function createBaseCommitToMarketRequest() {
-    return { marketId: "", agent: undefined, amount: 0, positionData: undefined };
+    return { marketId: "", agent: "", amount: 0, positionData: undefined };
 }
 exports.CommitToMarketRequest = {
     encode(message, writer = new wire_1.BinaryWriter()) {
         if (message.marketId !== "") {
             writer.uint32(10).string(message.marketId);
         }
-        if (message.agent !== undefined) {
-            common_js_1.Address.encode(message.agent, writer.uint32(18).fork()).join();
+        if (message.agent !== "") {
+            writer.uint32(18).string(message.agent);
         }
         if (message.amount !== 0) {
             writer.uint32(24).int64(message.amount);
@@ -878,7 +869,7 @@ exports.CommitToMarketRequest = {
                     if (tag !== 18) {
                         break;
                     }
-                    message.agent = common_js_1.Address.decode(reader, reader.uint32());
+                    message.agent = reader.string();
                     continue;
                 }
                 case 3: {
@@ -910,7 +901,7 @@ exports.CommitToMarketRequest = {
                 : isSet(object.market_id)
                     ? globalThis.String(object.market_id)
                     : "",
-            agent: isSet(object.agent) ? common_js_1.Address.fromJSON(object.agent) : undefined,
+            agent: isSet(object.agent) ? globalThis.String(object.agent) : "",
             amount: isSet(object.amount) ? globalThis.Number(object.amount) : 0,
             positionData: isObject(object.positionData)
                 ? object.positionData
@@ -924,8 +915,8 @@ exports.CommitToMarketRequest = {
         if (message.marketId !== "") {
             obj.marketId = message.marketId;
         }
-        if (message.agent !== undefined) {
-            obj.agent = common_js_1.Address.toJSON(message.agent);
+        if (message.agent !== "") {
+            obj.agent = message.agent;
         }
         if (message.amount !== 0) {
             obj.amount = Math.round(message.amount);
@@ -941,24 +932,22 @@ exports.CommitToMarketRequest = {
     fromPartial(object) {
         const message = createBaseCommitToMarketRequest();
         message.marketId = object.marketId ?? "";
-        message.agent = (object.agent !== undefined && object.agent !== null)
-            ? common_js_1.Address.fromPartial(object.agent)
-            : undefined;
+        message.agent = object.agent ?? "";
         message.amount = object.amount ?? 0;
         message.positionData = object.positionData ?? undefined;
         return message;
     },
 };
 function createBaseSubmitResolutionRequest() {
-    return { marketId: "", oracle: undefined, outcome: "", proof: "" };
+    return { marketId: "", oracle: "", outcome: "", proof: "" };
 }
 exports.SubmitResolutionRequest = {
     encode(message, writer = new wire_1.BinaryWriter()) {
         if (message.marketId !== "") {
             writer.uint32(10).string(message.marketId);
         }
-        if (message.oracle !== undefined) {
-            common_js_1.Address.encode(message.oracle, writer.uint32(18).fork()).join();
+        if (message.oracle !== "") {
+            writer.uint32(18).string(message.oracle);
         }
         if (message.outcome !== "") {
             writer.uint32(26).string(message.outcome);
@@ -986,7 +975,7 @@ exports.SubmitResolutionRequest = {
                     if (tag !== 18) {
                         break;
                     }
-                    message.oracle = common_js_1.Address.decode(reader, reader.uint32());
+                    message.oracle = reader.string();
                     continue;
                 }
                 case 3: {
@@ -1018,7 +1007,7 @@ exports.SubmitResolutionRequest = {
                 : isSet(object.market_id)
                     ? globalThis.String(object.market_id)
                     : "",
-            oracle: isSet(object.oracle) ? common_js_1.Address.fromJSON(object.oracle) : undefined,
+            oracle: isSet(object.oracle) ? globalThis.String(object.oracle) : "",
             outcome: isSet(object.outcome) ? globalThis.String(object.outcome) : "",
             proof: isSet(object.proof) ? globalThis.String(object.proof) : "",
         };
@@ -1028,8 +1017,8 @@ exports.SubmitResolutionRequest = {
         if (message.marketId !== "") {
             obj.marketId = message.marketId;
         }
-        if (message.oracle !== undefined) {
-            obj.oracle = common_js_1.Address.toJSON(message.oracle);
+        if (message.oracle !== "") {
+            obj.oracle = message.oracle;
         }
         if (message.outcome !== "") {
             obj.outcome = message.outcome;
@@ -1045,24 +1034,22 @@ exports.SubmitResolutionRequest = {
     fromPartial(object) {
         const message = createBaseSubmitResolutionRequest();
         message.marketId = object.marketId ?? "";
-        message.oracle = (object.oracle !== undefined && object.oracle !== null)
-            ? common_js_1.Address.fromPartial(object.oracle)
-            : undefined;
+        message.oracle = object.oracle ?? "";
         message.outcome = object.outcome ?? "";
         message.proof = object.proof ?? "";
         return message;
     },
 };
 function createBaseCancelMarketRequest() {
-    return { marketId: "", creator: undefined, reason: "" };
+    return { marketId: "", creator: "", reason: "" };
 }
 exports.CancelMarketRequest = {
     encode(message, writer = new wire_1.BinaryWriter()) {
         if (message.marketId !== "") {
             writer.uint32(10).string(message.marketId);
         }
-        if (message.creator !== undefined) {
-            common_js_1.Address.encode(message.creator, writer.uint32(18).fork()).join();
+        if (message.creator !== "") {
+            writer.uint32(18).string(message.creator);
         }
         if (message.reason !== "") {
             writer.uint32(26).string(message.reason);
@@ -1087,7 +1074,7 @@ exports.CancelMarketRequest = {
                     if (tag !== 18) {
                         break;
                     }
-                    message.creator = common_js_1.Address.decode(reader, reader.uint32());
+                    message.creator = reader.string();
                     continue;
                 }
                 case 3: {
@@ -1112,7 +1099,7 @@ exports.CancelMarketRequest = {
                 : isSet(object.market_id)
                     ? globalThis.String(object.market_id)
                     : "",
-            creator: isSet(object.creator) ? common_js_1.Address.fromJSON(object.creator) : undefined,
+            creator: isSet(object.creator) ? globalThis.String(object.creator) : "",
             reason: isSet(object.reason) ? globalThis.String(object.reason) : "",
         };
     },
@@ -1121,8 +1108,8 @@ exports.CancelMarketRequest = {
         if (message.marketId !== "") {
             obj.marketId = message.marketId;
         }
-        if (message.creator !== undefined) {
-            obj.creator = common_js_1.Address.toJSON(message.creator);
+        if (message.creator !== "") {
+            obj.creator = message.creator;
         }
         if (message.reason !== "") {
             obj.reason = message.reason;
@@ -1135,9 +1122,7 @@ exports.CancelMarketRequest = {
     fromPartial(object) {
         const message = createBaseCancelMarketRequest();
         message.marketId = object.marketId ?? "";
-        message.creator = (object.creator !== undefined && object.creator !== null)
-            ? common_js_1.Address.fromPartial(object.creator)
-            : undefined;
+        message.creator = object.creator ?? "";
         message.reason = object.reason ?? "";
         return message;
     },

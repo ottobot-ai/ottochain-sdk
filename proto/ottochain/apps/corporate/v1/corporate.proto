@@ -124,7 +124,7 @@ message RegisteredAgent {
 
 message Incorporator {
   string name = 1;
-  ottochain.v1.Address address = 2;
+  string address = 2;
 }
 
 message ShareStructure {
@@ -199,7 +199,7 @@ message Officer {
   string title = 3;
   string email = 4;
   google.protobuf.Timestamp appointed_at = 5;
-  ottochain.v1.Address appointed_by = 6;
+  string appointed_by = 6;
   OfficerStatus status = 7;
 }
 
@@ -207,7 +207,7 @@ message OfficerAction {
   string action_type = 1;
   string officer_id = 2;
   google.protobuf.Timestamp at = 3;
-  ottochain.v1.Address by = 4;
+  string by = 4;
 }
 
 // =============================================================================
@@ -222,7 +222,7 @@ message CorporateShareholders {
 }
 
 message Shareholder {
-  ottochain.v1.Address address = 1;
+  string address = 1;
   string name = 2;
   repeated ShareHolding holdings = 3;
   google.protobuf.Timestamp first_acquired = 4;
@@ -245,14 +245,14 @@ message CorporateResolution {
   string body = 4;
   string resolution_type = 5;  // BOARD, SHAREHOLDER, UNANIMOUS_WRITTEN
   ResolutionStatus status = 6;
-  ottochain.v1.Address proposed_by = 7;
+  string proposed_by = 7;
   google.protobuf.Timestamp proposed_at = 8;
   repeated ResolutionVote votes = 9;
   google.protobuf.Timestamp adopted_at = 10;
 }
 
 message ResolutionVote {
-  ottochain.v1.Address voter = 1;
+  string voter = 1;
   string vote = 2;  // FOR, AGAINST, ABSTAIN
   int64 weight = 3;
   google.protobuf.Timestamp voted_at = 4;
@@ -271,7 +271,7 @@ message CorporateSecurities {
 message SecurityIssuance {
   string issuance_id = 1;
   string class_id = 2;
-  ottochain.v1.Address recipient = 3;
+  string recipient = 3;
   int64 shares = 4;
   int64 price_per_share_cents = 5;
   google.protobuf.Timestamp issued_at = 6;
@@ -281,8 +281,8 @@ message SecurityIssuance {
 message SecurityTransfer {
   string transfer_id = 1;
   string class_id = 2;
-  ottochain.v1.Address from = 3;
-  ottochain.v1.Address to = 4;
+  string from = 3;
+  string to = 4;
   int64 shares = 5;
   google.protobuf.Timestamp transferred_at = 6;
 }
@@ -338,7 +338,7 @@ message AppointDirectorRequest {
 message IssueSharesRequest {
   string entity_id = 1;
   string class_id = 2;
-  ottochain.v1.Address recipient = 3;
+  string recipient = 3;
   int64 shares = 4;
   int64 price_per_share_cents = 5;
   string authorization_resolution_id = 6;
@@ -349,5 +349,5 @@ message ProposeResolutionRequest {
   string title = 2;
   string body = 3;
   string resolution_type = 4;
-  ottochain.v1.Address proposer = 5;
+  string proposer = 5;
 }

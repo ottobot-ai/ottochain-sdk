@@ -7,7 +7,6 @@
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { Value } from "../../google/protobuf/struct.js";
-import { Address, FiberOrdinal, HashValue, SnapshotOrdinal, StateId } from "./common.js";
 import {
   AccessControlPolicy,
   EventReceipt,
@@ -25,15 +24,26 @@ export const protobufPackage = "ottochain.v1";
 /** State machine fiber record - on-chain representation */
 export interface StateMachineFiberRecord {
   fiberId: string;
-  creationOrdinal?: SnapshotOrdinal | undefined;
-  previousUpdateOrdinal?: SnapshotOrdinal | undefined;
-  latestUpdateOrdinal?: SnapshotOrdinal | undefined;
-  definition?: StateMachineDefinition | undefined;
-  currentState?: StateId | undefined;
-  stateData?: any | undefined;
-  stateDataHash?: HashValue | undefined;
-  sequenceNumber?: FiberOrdinal | undefined;
-  owners: Address[];
+  /** Snapshot ordinal */
+  creationOrdinal: number;
+  /** Snapshot ordinal */
+  previousUpdateOrdinal: number;
+  /** Snapshot ordinal */
+  latestUpdateOrdinal: number;
+  definition?:
+    | StateMachineDefinition
+    | undefined;
+  /** State ID */
+  currentState: string;
+  stateData?:
+    | any
+    | undefined;
+  /** Hash value */
+  stateDataHash: string;
+  /** Fiber ordinal */
+  sequenceNumber: number;
+  /** DAG addresses */
+  owners: string[];
   status: FiberStatus;
   lastReceipt?: EventReceipt | undefined;
   parentFiberId?: string | undefined;
@@ -43,23 +53,37 @@ export interface StateMachineFiberRecord {
 /** Script fiber record - on-chain representation */
 export interface ScriptFiberRecord {
   fiberId: string;
-  creationOrdinal?: SnapshotOrdinal | undefined;
-  latestUpdateOrdinal?: SnapshotOrdinal | undefined;
+  /** Snapshot ordinal */
+  creationOrdinal: number;
+  /** Snapshot ordinal */
+  latestUpdateOrdinal: number;
   scriptProgram?: any | undefined;
-  stateData?: any | undefined;
-  stateDataHash?: HashValue | undefined;
-  accessControl?: AccessControlPolicy | undefined;
-  sequenceNumber?: FiberOrdinal | undefined;
-  owners: Address[];
+  stateData?:
+    | any
+    | undefined;
+  /** Hash value */
+  stateDataHash?: string | undefined;
+  accessControl?:
+    | AccessControlPolicy
+    | undefined;
+  /** Fiber ordinal */
+  sequenceNumber: number;
+  /** DAG addresses */
+  owners: string[];
   status: FiberStatus;
   lastInvocation?: ScriptInvocation | undefined;
 }
 
 /** Fiber commit - lightweight proof in on-chain state */
 export interface FiberCommit {
-  recordHash?: HashValue | undefined;
-  stateDataHash?: HashValue | undefined;
-  sequenceNumber?: FiberOrdinal | undefined;
+  /** Hash value */
+  recordHash: string;
+  /** Hash value */
+  stateDataHash?:
+    | string
+    | undefined;
+  /** Fiber ordinal */
+  sequenceNumber: number;
 }
 
 /** On-chain state */
@@ -102,14 +126,14 @@ export interface CalculatedState_ScriptsEntry {
 function createBaseStateMachineFiberRecord(): StateMachineFiberRecord {
   return {
     fiberId: "",
-    creationOrdinal: undefined,
-    previousUpdateOrdinal: undefined,
-    latestUpdateOrdinal: undefined,
+    creationOrdinal: 0,
+    previousUpdateOrdinal: 0,
+    latestUpdateOrdinal: 0,
     definition: undefined,
-    currentState: undefined,
+    currentState: "",
     stateData: undefined,
-    stateDataHash: undefined,
-    sequenceNumber: undefined,
+    stateDataHash: "",
+    sequenceNumber: 0,
     owners: [],
     status: FiberStatus.FIBER_STATUS_UNSPECIFIED,
     lastReceipt: undefined,
@@ -123,32 +147,32 @@ export const StateMachineFiberRecord: MessageFns<StateMachineFiberRecord> = {
     if (message.fiberId !== "") {
       writer.uint32(10).string(message.fiberId);
     }
-    if (message.creationOrdinal !== undefined) {
-      SnapshotOrdinal.encode(message.creationOrdinal, writer.uint32(18).fork()).join();
+    if (message.creationOrdinal !== 0) {
+      writer.uint32(16).int64(message.creationOrdinal);
     }
-    if (message.previousUpdateOrdinal !== undefined) {
-      SnapshotOrdinal.encode(message.previousUpdateOrdinal, writer.uint32(26).fork()).join();
+    if (message.previousUpdateOrdinal !== 0) {
+      writer.uint32(24).int64(message.previousUpdateOrdinal);
     }
-    if (message.latestUpdateOrdinal !== undefined) {
-      SnapshotOrdinal.encode(message.latestUpdateOrdinal, writer.uint32(34).fork()).join();
+    if (message.latestUpdateOrdinal !== 0) {
+      writer.uint32(32).int64(message.latestUpdateOrdinal);
     }
     if (message.definition !== undefined) {
       StateMachineDefinition.encode(message.definition, writer.uint32(42).fork()).join();
     }
-    if (message.currentState !== undefined) {
-      StateId.encode(message.currentState, writer.uint32(50).fork()).join();
+    if (message.currentState !== "") {
+      writer.uint32(50).string(message.currentState);
     }
     if (message.stateData !== undefined) {
       Value.encode(Value.wrap(message.stateData), writer.uint32(58).fork()).join();
     }
-    if (message.stateDataHash !== undefined) {
-      HashValue.encode(message.stateDataHash, writer.uint32(66).fork()).join();
+    if (message.stateDataHash !== "") {
+      writer.uint32(66).string(message.stateDataHash);
     }
-    if (message.sequenceNumber !== undefined) {
-      FiberOrdinal.encode(message.sequenceNumber, writer.uint32(74).fork()).join();
+    if (message.sequenceNumber !== 0) {
+      writer.uint32(72).int64(message.sequenceNumber);
     }
     for (const v of message.owners) {
-      Address.encode(v!, writer.uint32(82).fork()).join();
+      writer.uint32(82).string(v!);
     }
     if (message.status !== FiberStatus.FIBER_STATUS_UNSPECIFIED) {
       writer.uint32(88).int32(fiberStatusToNumber(message.status));
@@ -181,27 +205,27 @@ export const StateMachineFiberRecord: MessageFns<StateMachineFiberRecord> = {
           continue;
         }
         case 2: {
-          if (tag !== 18) {
+          if (tag !== 16) {
             break;
           }
 
-          message.creationOrdinal = SnapshotOrdinal.decode(reader, reader.uint32());
+          message.creationOrdinal = longToNumber(reader.int64());
           continue;
         }
         case 3: {
-          if (tag !== 26) {
+          if (tag !== 24) {
             break;
           }
 
-          message.previousUpdateOrdinal = SnapshotOrdinal.decode(reader, reader.uint32());
+          message.previousUpdateOrdinal = longToNumber(reader.int64());
           continue;
         }
         case 4: {
-          if (tag !== 34) {
+          if (tag !== 32) {
             break;
           }
 
-          message.latestUpdateOrdinal = SnapshotOrdinal.decode(reader, reader.uint32());
+          message.latestUpdateOrdinal = longToNumber(reader.int64());
           continue;
         }
         case 5: {
@@ -217,7 +241,7 @@ export const StateMachineFiberRecord: MessageFns<StateMachineFiberRecord> = {
             break;
           }
 
-          message.currentState = StateId.decode(reader, reader.uint32());
+          message.currentState = reader.string();
           continue;
         }
         case 7: {
@@ -233,15 +257,15 @@ export const StateMachineFiberRecord: MessageFns<StateMachineFiberRecord> = {
             break;
           }
 
-          message.stateDataHash = HashValue.decode(reader, reader.uint32());
+          message.stateDataHash = reader.string();
           continue;
         }
         case 9: {
-          if (tag !== 74) {
+          if (tag !== 72) {
             break;
           }
 
-          message.sequenceNumber = FiberOrdinal.decode(reader, reader.uint32());
+          message.sequenceNumber = longToNumber(reader.int64());
           continue;
         }
         case 10: {
@@ -249,7 +273,7 @@ export const StateMachineFiberRecord: MessageFns<StateMachineFiberRecord> = {
             break;
           }
 
-          message.owners.push(Address.decode(reader, reader.uint32()));
+          message.owners.push(reader.string());
           continue;
         }
         case 11: {
@@ -301,42 +325,42 @@ export const StateMachineFiberRecord: MessageFns<StateMachineFiberRecord> = {
         ? globalThis.String(object.fiber_id)
         : "",
       creationOrdinal: isSet(object.creationOrdinal)
-        ? SnapshotOrdinal.fromJSON(object.creationOrdinal)
+        ? globalThis.Number(object.creationOrdinal)
         : isSet(object.creation_ordinal)
-        ? SnapshotOrdinal.fromJSON(object.creation_ordinal)
-        : undefined,
+        ? globalThis.Number(object.creation_ordinal)
+        : 0,
       previousUpdateOrdinal: isSet(object.previousUpdateOrdinal)
-        ? SnapshotOrdinal.fromJSON(object.previousUpdateOrdinal)
+        ? globalThis.Number(object.previousUpdateOrdinal)
         : isSet(object.previous_update_ordinal)
-        ? SnapshotOrdinal.fromJSON(object.previous_update_ordinal)
-        : undefined,
+        ? globalThis.Number(object.previous_update_ordinal)
+        : 0,
       latestUpdateOrdinal: isSet(object.latestUpdateOrdinal)
-        ? SnapshotOrdinal.fromJSON(object.latestUpdateOrdinal)
+        ? globalThis.Number(object.latestUpdateOrdinal)
         : isSet(object.latest_update_ordinal)
-        ? SnapshotOrdinal.fromJSON(object.latest_update_ordinal)
-        : undefined,
+        ? globalThis.Number(object.latest_update_ordinal)
+        : 0,
       definition: isSet(object.definition) ? StateMachineDefinition.fromJSON(object.definition) : undefined,
       currentState: isSet(object.currentState)
-        ? StateId.fromJSON(object.currentState)
+        ? globalThis.String(object.currentState)
         : isSet(object.current_state)
-        ? StateId.fromJSON(object.current_state)
-        : undefined,
+        ? globalThis.String(object.current_state)
+        : "",
       stateData: isSet(object?.stateData)
         ? object.stateData
         : isSet(object?.state_data)
         ? object.state_data
         : undefined,
       stateDataHash: isSet(object.stateDataHash)
-        ? HashValue.fromJSON(object.stateDataHash)
+        ? globalThis.String(object.stateDataHash)
         : isSet(object.state_data_hash)
-        ? HashValue.fromJSON(object.state_data_hash)
-        : undefined,
+        ? globalThis.String(object.state_data_hash)
+        : "",
       sequenceNumber: isSet(object.sequenceNumber)
-        ? FiberOrdinal.fromJSON(object.sequenceNumber)
+        ? globalThis.Number(object.sequenceNumber)
         : isSet(object.sequence_number)
-        ? FiberOrdinal.fromJSON(object.sequence_number)
-        : undefined,
-      owners: globalThis.Array.isArray(object?.owners) ? object.owners.map((e: any) => Address.fromJSON(e)) : [],
+        ? globalThis.Number(object.sequence_number)
+        : 0,
+      owners: globalThis.Array.isArray(object?.owners) ? object.owners.map((e: any) => globalThis.String(e)) : [],
       status: isSet(object.status) ? fiberStatusFromJSON(object.status) : FiberStatus.FIBER_STATUS_UNSPECIFIED,
       lastReceipt: isSet(object.lastReceipt)
         ? EventReceipt.fromJSON(object.lastReceipt)
@@ -361,32 +385,32 @@ export const StateMachineFiberRecord: MessageFns<StateMachineFiberRecord> = {
     if (message.fiberId !== "") {
       obj.fiberId = message.fiberId;
     }
-    if (message.creationOrdinal !== undefined) {
-      obj.creationOrdinal = SnapshotOrdinal.toJSON(message.creationOrdinal);
+    if (message.creationOrdinal !== 0) {
+      obj.creationOrdinal = Math.round(message.creationOrdinal);
     }
-    if (message.previousUpdateOrdinal !== undefined) {
-      obj.previousUpdateOrdinal = SnapshotOrdinal.toJSON(message.previousUpdateOrdinal);
+    if (message.previousUpdateOrdinal !== 0) {
+      obj.previousUpdateOrdinal = Math.round(message.previousUpdateOrdinal);
     }
-    if (message.latestUpdateOrdinal !== undefined) {
-      obj.latestUpdateOrdinal = SnapshotOrdinal.toJSON(message.latestUpdateOrdinal);
+    if (message.latestUpdateOrdinal !== 0) {
+      obj.latestUpdateOrdinal = Math.round(message.latestUpdateOrdinal);
     }
     if (message.definition !== undefined) {
       obj.definition = StateMachineDefinition.toJSON(message.definition);
     }
-    if (message.currentState !== undefined) {
-      obj.currentState = StateId.toJSON(message.currentState);
+    if (message.currentState !== "") {
+      obj.currentState = message.currentState;
     }
     if (message.stateData !== undefined) {
       obj.stateData = message.stateData;
     }
-    if (message.stateDataHash !== undefined) {
-      obj.stateDataHash = HashValue.toJSON(message.stateDataHash);
+    if (message.stateDataHash !== "") {
+      obj.stateDataHash = message.stateDataHash;
     }
-    if (message.sequenceNumber !== undefined) {
-      obj.sequenceNumber = FiberOrdinal.toJSON(message.sequenceNumber);
+    if (message.sequenceNumber !== 0) {
+      obj.sequenceNumber = Math.round(message.sequenceNumber);
     }
     if (message.owners?.length) {
-      obj.owners = message.owners.map((e) => Address.toJSON(e));
+      obj.owners = message.owners;
     }
     if (message.status !== FiberStatus.FIBER_STATUS_UNSPECIFIED) {
       obj.status = fiberStatusToJSON(message.status);
@@ -409,30 +433,17 @@ export const StateMachineFiberRecord: MessageFns<StateMachineFiberRecord> = {
   fromPartial<I extends Exact<DeepPartial<StateMachineFiberRecord>, I>>(object: I): StateMachineFiberRecord {
     const message = createBaseStateMachineFiberRecord();
     message.fiberId = object.fiberId ?? "";
-    message.creationOrdinal = (object.creationOrdinal !== undefined && object.creationOrdinal !== null)
-      ? SnapshotOrdinal.fromPartial(object.creationOrdinal)
-      : undefined;
-    message.previousUpdateOrdinal =
-      (object.previousUpdateOrdinal !== undefined && object.previousUpdateOrdinal !== null)
-        ? SnapshotOrdinal.fromPartial(object.previousUpdateOrdinal)
-        : undefined;
-    message.latestUpdateOrdinal = (object.latestUpdateOrdinal !== undefined && object.latestUpdateOrdinal !== null)
-      ? SnapshotOrdinal.fromPartial(object.latestUpdateOrdinal)
-      : undefined;
+    message.creationOrdinal = object.creationOrdinal ?? 0;
+    message.previousUpdateOrdinal = object.previousUpdateOrdinal ?? 0;
+    message.latestUpdateOrdinal = object.latestUpdateOrdinal ?? 0;
     message.definition = (object.definition !== undefined && object.definition !== null)
       ? StateMachineDefinition.fromPartial(object.definition)
       : undefined;
-    message.currentState = (object.currentState !== undefined && object.currentState !== null)
-      ? StateId.fromPartial(object.currentState)
-      : undefined;
+    message.currentState = object.currentState ?? "";
     message.stateData = object.stateData ?? undefined;
-    message.stateDataHash = (object.stateDataHash !== undefined && object.stateDataHash !== null)
-      ? HashValue.fromPartial(object.stateDataHash)
-      : undefined;
-    message.sequenceNumber = (object.sequenceNumber !== undefined && object.sequenceNumber !== null)
-      ? FiberOrdinal.fromPartial(object.sequenceNumber)
-      : undefined;
-    message.owners = object.owners?.map((e) => Address.fromPartial(e)) || [];
+    message.stateDataHash = object.stateDataHash ?? "";
+    message.sequenceNumber = object.sequenceNumber ?? 0;
+    message.owners = object.owners?.map((e) => e) || [];
     message.status = object.status ?? FiberStatus.FIBER_STATUS_UNSPECIFIED;
     message.lastReceipt = (object.lastReceipt !== undefined && object.lastReceipt !== null)
       ? EventReceipt.fromPartial(object.lastReceipt)
@@ -446,13 +457,13 @@ export const StateMachineFiberRecord: MessageFns<StateMachineFiberRecord> = {
 function createBaseScriptFiberRecord(): ScriptFiberRecord {
   return {
     fiberId: "",
-    creationOrdinal: undefined,
-    latestUpdateOrdinal: undefined,
+    creationOrdinal: 0,
+    latestUpdateOrdinal: 0,
     scriptProgram: undefined,
     stateData: undefined,
     stateDataHash: undefined,
     accessControl: undefined,
-    sequenceNumber: undefined,
+    sequenceNumber: 0,
     owners: [],
     status: FiberStatus.FIBER_STATUS_UNSPECIFIED,
     lastInvocation: undefined,
@@ -464,11 +475,11 @@ export const ScriptFiberRecord: MessageFns<ScriptFiberRecord> = {
     if (message.fiberId !== "") {
       writer.uint32(10).string(message.fiberId);
     }
-    if (message.creationOrdinal !== undefined) {
-      SnapshotOrdinal.encode(message.creationOrdinal, writer.uint32(18).fork()).join();
+    if (message.creationOrdinal !== 0) {
+      writer.uint32(16).int64(message.creationOrdinal);
     }
-    if (message.latestUpdateOrdinal !== undefined) {
-      SnapshotOrdinal.encode(message.latestUpdateOrdinal, writer.uint32(26).fork()).join();
+    if (message.latestUpdateOrdinal !== 0) {
+      writer.uint32(24).int64(message.latestUpdateOrdinal);
     }
     if (message.scriptProgram !== undefined) {
       Value.encode(Value.wrap(message.scriptProgram), writer.uint32(34).fork()).join();
@@ -477,16 +488,16 @@ export const ScriptFiberRecord: MessageFns<ScriptFiberRecord> = {
       Value.encode(Value.wrap(message.stateData), writer.uint32(42).fork()).join();
     }
     if (message.stateDataHash !== undefined) {
-      HashValue.encode(message.stateDataHash, writer.uint32(50).fork()).join();
+      writer.uint32(50).string(message.stateDataHash);
     }
     if (message.accessControl !== undefined) {
       AccessControlPolicy.encode(message.accessControl, writer.uint32(58).fork()).join();
     }
-    if (message.sequenceNumber !== undefined) {
-      FiberOrdinal.encode(message.sequenceNumber, writer.uint32(66).fork()).join();
+    if (message.sequenceNumber !== 0) {
+      writer.uint32(64).int64(message.sequenceNumber);
     }
     for (const v of message.owners) {
-      Address.encode(v!, writer.uint32(74).fork()).join();
+      writer.uint32(74).string(v!);
     }
     if (message.status !== FiberStatus.FIBER_STATUS_UNSPECIFIED) {
       writer.uint32(80).int32(fiberStatusToNumber(message.status));
@@ -513,19 +524,19 @@ export const ScriptFiberRecord: MessageFns<ScriptFiberRecord> = {
           continue;
         }
         case 2: {
-          if (tag !== 18) {
+          if (tag !== 16) {
             break;
           }
 
-          message.creationOrdinal = SnapshotOrdinal.decode(reader, reader.uint32());
+          message.creationOrdinal = longToNumber(reader.int64());
           continue;
         }
         case 3: {
-          if (tag !== 26) {
+          if (tag !== 24) {
             break;
           }
 
-          message.latestUpdateOrdinal = SnapshotOrdinal.decode(reader, reader.uint32());
+          message.latestUpdateOrdinal = longToNumber(reader.int64());
           continue;
         }
         case 4: {
@@ -549,7 +560,7 @@ export const ScriptFiberRecord: MessageFns<ScriptFiberRecord> = {
             break;
           }
 
-          message.stateDataHash = HashValue.decode(reader, reader.uint32());
+          message.stateDataHash = reader.string();
           continue;
         }
         case 7: {
@@ -561,11 +572,11 @@ export const ScriptFiberRecord: MessageFns<ScriptFiberRecord> = {
           continue;
         }
         case 8: {
-          if (tag !== 66) {
+          if (tag !== 64) {
             break;
           }
 
-          message.sequenceNumber = FiberOrdinal.decode(reader, reader.uint32());
+          message.sequenceNumber = longToNumber(reader.int64());
           continue;
         }
         case 9: {
@@ -573,7 +584,7 @@ export const ScriptFiberRecord: MessageFns<ScriptFiberRecord> = {
             break;
           }
 
-          message.owners.push(Address.decode(reader, reader.uint32()));
+          message.owners.push(reader.string());
           continue;
         }
         case 10: {
@@ -609,15 +620,15 @@ export const ScriptFiberRecord: MessageFns<ScriptFiberRecord> = {
         ? globalThis.String(object.fiber_id)
         : "",
       creationOrdinal: isSet(object.creationOrdinal)
-        ? SnapshotOrdinal.fromJSON(object.creationOrdinal)
+        ? globalThis.Number(object.creationOrdinal)
         : isSet(object.creation_ordinal)
-        ? SnapshotOrdinal.fromJSON(object.creation_ordinal)
-        : undefined,
+        ? globalThis.Number(object.creation_ordinal)
+        : 0,
       latestUpdateOrdinal: isSet(object.latestUpdateOrdinal)
-        ? SnapshotOrdinal.fromJSON(object.latestUpdateOrdinal)
+        ? globalThis.Number(object.latestUpdateOrdinal)
         : isSet(object.latest_update_ordinal)
-        ? SnapshotOrdinal.fromJSON(object.latest_update_ordinal)
-        : undefined,
+        ? globalThis.Number(object.latest_update_ordinal)
+        : 0,
       scriptProgram: isSet(object?.scriptProgram)
         ? object.scriptProgram
         : isSet(object?.script_program)
@@ -629,9 +640,9 @@ export const ScriptFiberRecord: MessageFns<ScriptFiberRecord> = {
         ? object.state_data
         : undefined,
       stateDataHash: isSet(object.stateDataHash)
-        ? HashValue.fromJSON(object.stateDataHash)
+        ? globalThis.String(object.stateDataHash)
         : isSet(object.state_data_hash)
-        ? HashValue.fromJSON(object.state_data_hash)
+        ? globalThis.String(object.state_data_hash)
         : undefined,
       accessControl: isSet(object.accessControl)
         ? AccessControlPolicy.fromJSON(object.accessControl)
@@ -639,11 +650,11 @@ export const ScriptFiberRecord: MessageFns<ScriptFiberRecord> = {
         ? AccessControlPolicy.fromJSON(object.access_control)
         : undefined,
       sequenceNumber: isSet(object.sequenceNumber)
-        ? FiberOrdinal.fromJSON(object.sequenceNumber)
+        ? globalThis.Number(object.sequenceNumber)
         : isSet(object.sequence_number)
-        ? FiberOrdinal.fromJSON(object.sequence_number)
-        : undefined,
-      owners: globalThis.Array.isArray(object?.owners) ? object.owners.map((e: any) => Address.fromJSON(e)) : [],
+        ? globalThis.Number(object.sequence_number)
+        : 0,
+      owners: globalThis.Array.isArray(object?.owners) ? object.owners.map((e: any) => globalThis.String(e)) : [],
       status: isSet(object.status) ? fiberStatusFromJSON(object.status) : FiberStatus.FIBER_STATUS_UNSPECIFIED,
       lastInvocation: isSet(object.lastInvocation)
         ? ScriptInvocation.fromJSON(object.lastInvocation)
@@ -658,11 +669,11 @@ export const ScriptFiberRecord: MessageFns<ScriptFiberRecord> = {
     if (message.fiberId !== "") {
       obj.fiberId = message.fiberId;
     }
-    if (message.creationOrdinal !== undefined) {
-      obj.creationOrdinal = SnapshotOrdinal.toJSON(message.creationOrdinal);
+    if (message.creationOrdinal !== 0) {
+      obj.creationOrdinal = Math.round(message.creationOrdinal);
     }
-    if (message.latestUpdateOrdinal !== undefined) {
-      obj.latestUpdateOrdinal = SnapshotOrdinal.toJSON(message.latestUpdateOrdinal);
+    if (message.latestUpdateOrdinal !== 0) {
+      obj.latestUpdateOrdinal = Math.round(message.latestUpdateOrdinal);
     }
     if (message.scriptProgram !== undefined) {
       obj.scriptProgram = message.scriptProgram;
@@ -671,16 +682,16 @@ export const ScriptFiberRecord: MessageFns<ScriptFiberRecord> = {
       obj.stateData = message.stateData;
     }
     if (message.stateDataHash !== undefined) {
-      obj.stateDataHash = HashValue.toJSON(message.stateDataHash);
+      obj.stateDataHash = message.stateDataHash;
     }
     if (message.accessControl !== undefined) {
       obj.accessControl = AccessControlPolicy.toJSON(message.accessControl);
     }
-    if (message.sequenceNumber !== undefined) {
-      obj.sequenceNumber = FiberOrdinal.toJSON(message.sequenceNumber);
+    if (message.sequenceNumber !== 0) {
+      obj.sequenceNumber = Math.round(message.sequenceNumber);
     }
     if (message.owners?.length) {
-      obj.owners = message.owners.map((e) => Address.toJSON(e));
+      obj.owners = message.owners;
     }
     if (message.status !== FiberStatus.FIBER_STATUS_UNSPECIFIED) {
       obj.status = fiberStatusToJSON(message.status);
@@ -697,24 +708,16 @@ export const ScriptFiberRecord: MessageFns<ScriptFiberRecord> = {
   fromPartial<I extends Exact<DeepPartial<ScriptFiberRecord>, I>>(object: I): ScriptFiberRecord {
     const message = createBaseScriptFiberRecord();
     message.fiberId = object.fiberId ?? "";
-    message.creationOrdinal = (object.creationOrdinal !== undefined && object.creationOrdinal !== null)
-      ? SnapshotOrdinal.fromPartial(object.creationOrdinal)
-      : undefined;
-    message.latestUpdateOrdinal = (object.latestUpdateOrdinal !== undefined && object.latestUpdateOrdinal !== null)
-      ? SnapshotOrdinal.fromPartial(object.latestUpdateOrdinal)
-      : undefined;
+    message.creationOrdinal = object.creationOrdinal ?? 0;
+    message.latestUpdateOrdinal = object.latestUpdateOrdinal ?? 0;
     message.scriptProgram = object.scriptProgram ?? undefined;
     message.stateData = object.stateData ?? undefined;
-    message.stateDataHash = (object.stateDataHash !== undefined && object.stateDataHash !== null)
-      ? HashValue.fromPartial(object.stateDataHash)
-      : undefined;
+    message.stateDataHash = object.stateDataHash ?? undefined;
     message.accessControl = (object.accessControl !== undefined && object.accessControl !== null)
       ? AccessControlPolicy.fromPartial(object.accessControl)
       : undefined;
-    message.sequenceNumber = (object.sequenceNumber !== undefined && object.sequenceNumber !== null)
-      ? FiberOrdinal.fromPartial(object.sequenceNumber)
-      : undefined;
-    message.owners = object.owners?.map((e) => Address.fromPartial(e)) || [];
+    message.sequenceNumber = object.sequenceNumber ?? 0;
+    message.owners = object.owners?.map((e) => e) || [];
     message.status = object.status ?? FiberStatus.FIBER_STATUS_UNSPECIFIED;
     message.lastInvocation = (object.lastInvocation !== undefined && object.lastInvocation !== null)
       ? ScriptInvocation.fromPartial(object.lastInvocation)
@@ -724,19 +727,19 @@ export const ScriptFiberRecord: MessageFns<ScriptFiberRecord> = {
 };
 
 function createBaseFiberCommit(): FiberCommit {
-  return { recordHash: undefined, stateDataHash: undefined, sequenceNumber: undefined };
+  return { recordHash: "", stateDataHash: undefined, sequenceNumber: 0 };
 }
 
 export const FiberCommit: MessageFns<FiberCommit> = {
   encode(message: FiberCommit, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.recordHash !== undefined) {
-      HashValue.encode(message.recordHash, writer.uint32(10).fork()).join();
+    if (message.recordHash !== "") {
+      writer.uint32(10).string(message.recordHash);
     }
     if (message.stateDataHash !== undefined) {
-      HashValue.encode(message.stateDataHash, writer.uint32(18).fork()).join();
+      writer.uint32(18).string(message.stateDataHash);
     }
-    if (message.sequenceNumber !== undefined) {
-      FiberOrdinal.encode(message.sequenceNumber, writer.uint32(26).fork()).join();
+    if (message.sequenceNumber !== 0) {
+      writer.uint32(24).int64(message.sequenceNumber);
     }
     return writer;
   },
@@ -753,7 +756,7 @@ export const FiberCommit: MessageFns<FiberCommit> = {
             break;
           }
 
-          message.recordHash = HashValue.decode(reader, reader.uint32());
+          message.recordHash = reader.string();
           continue;
         }
         case 2: {
@@ -761,15 +764,15 @@ export const FiberCommit: MessageFns<FiberCommit> = {
             break;
           }
 
-          message.stateDataHash = HashValue.decode(reader, reader.uint32());
+          message.stateDataHash = reader.string();
           continue;
         }
         case 3: {
-          if (tag !== 26) {
+          if (tag !== 24) {
             break;
           }
 
-          message.sequenceNumber = FiberOrdinal.decode(reader, reader.uint32());
+          message.sequenceNumber = longToNumber(reader.int64());
           continue;
         }
       }
@@ -784,33 +787,33 @@ export const FiberCommit: MessageFns<FiberCommit> = {
   fromJSON(object: any): FiberCommit {
     return {
       recordHash: isSet(object.recordHash)
-        ? HashValue.fromJSON(object.recordHash)
+        ? globalThis.String(object.recordHash)
         : isSet(object.record_hash)
-        ? HashValue.fromJSON(object.record_hash)
-        : undefined,
+        ? globalThis.String(object.record_hash)
+        : "",
       stateDataHash: isSet(object.stateDataHash)
-        ? HashValue.fromJSON(object.stateDataHash)
+        ? globalThis.String(object.stateDataHash)
         : isSet(object.state_data_hash)
-        ? HashValue.fromJSON(object.state_data_hash)
+        ? globalThis.String(object.state_data_hash)
         : undefined,
       sequenceNumber: isSet(object.sequenceNumber)
-        ? FiberOrdinal.fromJSON(object.sequenceNumber)
+        ? globalThis.Number(object.sequenceNumber)
         : isSet(object.sequence_number)
-        ? FiberOrdinal.fromJSON(object.sequence_number)
-        : undefined,
+        ? globalThis.Number(object.sequence_number)
+        : 0,
     };
   },
 
   toJSON(message: FiberCommit): unknown {
     const obj: any = {};
-    if (message.recordHash !== undefined) {
-      obj.recordHash = HashValue.toJSON(message.recordHash);
+    if (message.recordHash !== "") {
+      obj.recordHash = message.recordHash;
     }
     if (message.stateDataHash !== undefined) {
-      obj.stateDataHash = HashValue.toJSON(message.stateDataHash);
+      obj.stateDataHash = message.stateDataHash;
     }
-    if (message.sequenceNumber !== undefined) {
-      obj.sequenceNumber = FiberOrdinal.toJSON(message.sequenceNumber);
+    if (message.sequenceNumber !== 0) {
+      obj.sequenceNumber = Math.round(message.sequenceNumber);
     }
     return obj;
   },
@@ -820,15 +823,9 @@ export const FiberCommit: MessageFns<FiberCommit> = {
   },
   fromPartial<I extends Exact<DeepPartial<FiberCommit>, I>>(object: I): FiberCommit {
     const message = createBaseFiberCommit();
-    message.recordHash = (object.recordHash !== undefined && object.recordHash !== null)
-      ? HashValue.fromPartial(object.recordHash)
-      : undefined;
-    message.stateDataHash = (object.stateDataHash !== undefined && object.stateDataHash !== null)
-      ? HashValue.fromPartial(object.stateDataHash)
-      : undefined;
-    message.sequenceNumber = (object.sequenceNumber !== undefined && object.sequenceNumber !== null)
-      ? FiberOrdinal.fromPartial(object.sequenceNumber)
-      : undefined;
+    message.recordHash = object.recordHash ?? "";
+    message.stateDataHash = object.stateDataHash ?? undefined;
+    message.sequenceNumber = object.sequenceNumber ?? 0;
     return message;
   },
 };
@@ -1502,6 +1499,17 @@ export type DeepPartial<T> = T extends Builtin ? T
 type KeysOfUnion<T> = T extends T ? keyof T : never;
 export type Exact<P, I extends P> = P extends Builtin ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+
+function longToNumber(int64: { toString(): string }): number {
+  const num = globalThis.Number(int64.toString());
+  if (num > globalThis.Number.MAX_SAFE_INTEGER) {
+    throw new globalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
+  }
+  if (num < globalThis.Number.MIN_SAFE_INTEGER) {
+    throw new globalThis.Error("Value is smaller than Number.MIN_SAFE_INTEGER");
+  }
+  return num;
+}
 
 function isObject(value: any): boolean {
   return typeof value === "object" && value !== null;

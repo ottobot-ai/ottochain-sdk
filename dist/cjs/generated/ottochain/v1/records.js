@@ -9,20 +9,19 @@ exports.CalculatedState_ScriptsEntry = exports.CalculatedState_StateMachinesEntr
 /* eslint-disable */
 const wire_1 = require("@bufbuild/protobuf/wire");
 const struct_js_1 = require("../../google/protobuf/struct.js");
-const common_js_1 = require("./common.js");
 const fiber_js_1 = require("./fiber.js");
 exports.protobufPackage = "ottochain.v1";
 function createBaseStateMachineFiberRecord() {
     return {
         fiberId: "",
-        creationOrdinal: undefined,
-        previousUpdateOrdinal: undefined,
-        latestUpdateOrdinal: undefined,
+        creationOrdinal: 0,
+        previousUpdateOrdinal: 0,
+        latestUpdateOrdinal: 0,
         definition: undefined,
-        currentState: undefined,
+        currentState: "",
         stateData: undefined,
-        stateDataHash: undefined,
-        sequenceNumber: undefined,
+        stateDataHash: "",
+        sequenceNumber: 0,
         owners: [],
         status: fiber_js_1.FiberStatus.FIBER_STATUS_UNSPECIFIED,
         lastReceipt: undefined,
@@ -35,32 +34,32 @@ exports.StateMachineFiberRecord = {
         if (message.fiberId !== "") {
             writer.uint32(10).string(message.fiberId);
         }
-        if (message.creationOrdinal !== undefined) {
-            common_js_1.SnapshotOrdinal.encode(message.creationOrdinal, writer.uint32(18).fork()).join();
+        if (message.creationOrdinal !== 0) {
+            writer.uint32(16).int64(message.creationOrdinal);
         }
-        if (message.previousUpdateOrdinal !== undefined) {
-            common_js_1.SnapshotOrdinal.encode(message.previousUpdateOrdinal, writer.uint32(26).fork()).join();
+        if (message.previousUpdateOrdinal !== 0) {
+            writer.uint32(24).int64(message.previousUpdateOrdinal);
         }
-        if (message.latestUpdateOrdinal !== undefined) {
-            common_js_1.SnapshotOrdinal.encode(message.latestUpdateOrdinal, writer.uint32(34).fork()).join();
+        if (message.latestUpdateOrdinal !== 0) {
+            writer.uint32(32).int64(message.latestUpdateOrdinal);
         }
         if (message.definition !== undefined) {
             fiber_js_1.StateMachineDefinition.encode(message.definition, writer.uint32(42).fork()).join();
         }
-        if (message.currentState !== undefined) {
-            common_js_1.StateId.encode(message.currentState, writer.uint32(50).fork()).join();
+        if (message.currentState !== "") {
+            writer.uint32(50).string(message.currentState);
         }
         if (message.stateData !== undefined) {
             struct_js_1.Value.encode(struct_js_1.Value.wrap(message.stateData), writer.uint32(58).fork()).join();
         }
-        if (message.stateDataHash !== undefined) {
-            common_js_1.HashValue.encode(message.stateDataHash, writer.uint32(66).fork()).join();
+        if (message.stateDataHash !== "") {
+            writer.uint32(66).string(message.stateDataHash);
         }
-        if (message.sequenceNumber !== undefined) {
-            common_js_1.FiberOrdinal.encode(message.sequenceNumber, writer.uint32(74).fork()).join();
+        if (message.sequenceNumber !== 0) {
+            writer.uint32(72).int64(message.sequenceNumber);
         }
         for (const v of message.owners) {
-            common_js_1.Address.encode(v, writer.uint32(82).fork()).join();
+            writer.uint32(82).string(v);
         }
         if (message.status !== fiber_js_1.FiberStatus.FIBER_STATUS_UNSPECIFIED) {
             writer.uint32(88).int32((0, fiber_js_1.fiberStatusToNumber)(message.status));
@@ -91,24 +90,24 @@ exports.StateMachineFiberRecord = {
                     continue;
                 }
                 case 2: {
-                    if (tag !== 18) {
+                    if (tag !== 16) {
                         break;
                     }
-                    message.creationOrdinal = common_js_1.SnapshotOrdinal.decode(reader, reader.uint32());
+                    message.creationOrdinal = longToNumber(reader.int64());
                     continue;
                 }
                 case 3: {
-                    if (tag !== 26) {
+                    if (tag !== 24) {
                         break;
                     }
-                    message.previousUpdateOrdinal = common_js_1.SnapshotOrdinal.decode(reader, reader.uint32());
+                    message.previousUpdateOrdinal = longToNumber(reader.int64());
                     continue;
                 }
                 case 4: {
-                    if (tag !== 34) {
+                    if (tag !== 32) {
                         break;
                     }
-                    message.latestUpdateOrdinal = common_js_1.SnapshotOrdinal.decode(reader, reader.uint32());
+                    message.latestUpdateOrdinal = longToNumber(reader.int64());
                     continue;
                 }
                 case 5: {
@@ -122,7 +121,7 @@ exports.StateMachineFiberRecord = {
                     if (tag !== 50) {
                         break;
                     }
-                    message.currentState = common_js_1.StateId.decode(reader, reader.uint32());
+                    message.currentState = reader.string();
                     continue;
                 }
                 case 7: {
@@ -136,21 +135,21 @@ exports.StateMachineFiberRecord = {
                     if (tag !== 66) {
                         break;
                     }
-                    message.stateDataHash = common_js_1.HashValue.decode(reader, reader.uint32());
+                    message.stateDataHash = reader.string();
                     continue;
                 }
                 case 9: {
-                    if (tag !== 74) {
+                    if (tag !== 72) {
                         break;
                     }
-                    message.sequenceNumber = common_js_1.FiberOrdinal.decode(reader, reader.uint32());
+                    message.sequenceNumber = longToNumber(reader.int64());
                     continue;
                 }
                 case 10: {
                     if (tag !== 82) {
                         break;
                     }
-                    message.owners.push(common_js_1.Address.decode(reader, reader.uint32()));
+                    message.owners.push(reader.string());
                     continue;
                 }
                 case 11: {
@@ -197,42 +196,42 @@ exports.StateMachineFiberRecord = {
                     ? globalThis.String(object.fiber_id)
                     : "",
             creationOrdinal: isSet(object.creationOrdinal)
-                ? common_js_1.SnapshotOrdinal.fromJSON(object.creationOrdinal)
+                ? globalThis.Number(object.creationOrdinal)
                 : isSet(object.creation_ordinal)
-                    ? common_js_1.SnapshotOrdinal.fromJSON(object.creation_ordinal)
-                    : undefined,
+                    ? globalThis.Number(object.creation_ordinal)
+                    : 0,
             previousUpdateOrdinal: isSet(object.previousUpdateOrdinal)
-                ? common_js_1.SnapshotOrdinal.fromJSON(object.previousUpdateOrdinal)
+                ? globalThis.Number(object.previousUpdateOrdinal)
                 : isSet(object.previous_update_ordinal)
-                    ? common_js_1.SnapshotOrdinal.fromJSON(object.previous_update_ordinal)
-                    : undefined,
+                    ? globalThis.Number(object.previous_update_ordinal)
+                    : 0,
             latestUpdateOrdinal: isSet(object.latestUpdateOrdinal)
-                ? common_js_1.SnapshotOrdinal.fromJSON(object.latestUpdateOrdinal)
+                ? globalThis.Number(object.latestUpdateOrdinal)
                 : isSet(object.latest_update_ordinal)
-                    ? common_js_1.SnapshotOrdinal.fromJSON(object.latest_update_ordinal)
-                    : undefined,
+                    ? globalThis.Number(object.latest_update_ordinal)
+                    : 0,
             definition: isSet(object.definition) ? fiber_js_1.StateMachineDefinition.fromJSON(object.definition) : undefined,
             currentState: isSet(object.currentState)
-                ? common_js_1.StateId.fromJSON(object.currentState)
+                ? globalThis.String(object.currentState)
                 : isSet(object.current_state)
-                    ? common_js_1.StateId.fromJSON(object.current_state)
-                    : undefined,
+                    ? globalThis.String(object.current_state)
+                    : "",
             stateData: isSet(object?.stateData)
                 ? object.stateData
                 : isSet(object?.state_data)
                     ? object.state_data
                     : undefined,
             stateDataHash: isSet(object.stateDataHash)
-                ? common_js_1.HashValue.fromJSON(object.stateDataHash)
+                ? globalThis.String(object.stateDataHash)
                 : isSet(object.state_data_hash)
-                    ? common_js_1.HashValue.fromJSON(object.state_data_hash)
-                    : undefined,
+                    ? globalThis.String(object.state_data_hash)
+                    : "",
             sequenceNumber: isSet(object.sequenceNumber)
-                ? common_js_1.FiberOrdinal.fromJSON(object.sequenceNumber)
+                ? globalThis.Number(object.sequenceNumber)
                 : isSet(object.sequence_number)
-                    ? common_js_1.FiberOrdinal.fromJSON(object.sequence_number)
-                    : undefined,
-            owners: globalThis.Array.isArray(object?.owners) ? object.owners.map((e) => common_js_1.Address.fromJSON(e)) : [],
+                    ? globalThis.Number(object.sequence_number)
+                    : 0,
+            owners: globalThis.Array.isArray(object?.owners) ? object.owners.map((e) => globalThis.String(e)) : [],
             status: isSet(object.status) ? (0, fiber_js_1.fiberStatusFromJSON)(object.status) : fiber_js_1.FiberStatus.FIBER_STATUS_UNSPECIFIED,
             lastReceipt: isSet(object.lastReceipt)
                 ? fiber_js_1.EventReceipt.fromJSON(object.lastReceipt)
@@ -256,32 +255,32 @@ exports.StateMachineFiberRecord = {
         if (message.fiberId !== "") {
             obj.fiberId = message.fiberId;
         }
-        if (message.creationOrdinal !== undefined) {
-            obj.creationOrdinal = common_js_1.SnapshotOrdinal.toJSON(message.creationOrdinal);
+        if (message.creationOrdinal !== 0) {
+            obj.creationOrdinal = Math.round(message.creationOrdinal);
         }
-        if (message.previousUpdateOrdinal !== undefined) {
-            obj.previousUpdateOrdinal = common_js_1.SnapshotOrdinal.toJSON(message.previousUpdateOrdinal);
+        if (message.previousUpdateOrdinal !== 0) {
+            obj.previousUpdateOrdinal = Math.round(message.previousUpdateOrdinal);
         }
-        if (message.latestUpdateOrdinal !== undefined) {
-            obj.latestUpdateOrdinal = common_js_1.SnapshotOrdinal.toJSON(message.latestUpdateOrdinal);
+        if (message.latestUpdateOrdinal !== 0) {
+            obj.latestUpdateOrdinal = Math.round(message.latestUpdateOrdinal);
         }
         if (message.definition !== undefined) {
             obj.definition = fiber_js_1.StateMachineDefinition.toJSON(message.definition);
         }
-        if (message.currentState !== undefined) {
-            obj.currentState = common_js_1.StateId.toJSON(message.currentState);
+        if (message.currentState !== "") {
+            obj.currentState = message.currentState;
         }
         if (message.stateData !== undefined) {
             obj.stateData = message.stateData;
         }
-        if (message.stateDataHash !== undefined) {
-            obj.stateDataHash = common_js_1.HashValue.toJSON(message.stateDataHash);
+        if (message.stateDataHash !== "") {
+            obj.stateDataHash = message.stateDataHash;
         }
-        if (message.sequenceNumber !== undefined) {
-            obj.sequenceNumber = common_js_1.FiberOrdinal.toJSON(message.sequenceNumber);
+        if (message.sequenceNumber !== 0) {
+            obj.sequenceNumber = Math.round(message.sequenceNumber);
         }
         if (message.owners?.length) {
-            obj.owners = message.owners.map((e) => common_js_1.Address.toJSON(e));
+            obj.owners = message.owners;
         }
         if (message.status !== fiber_js_1.FiberStatus.FIBER_STATUS_UNSPECIFIED) {
             obj.status = (0, fiber_js_1.fiberStatusToJSON)(message.status);
@@ -303,30 +302,17 @@ exports.StateMachineFiberRecord = {
     fromPartial(object) {
         const message = createBaseStateMachineFiberRecord();
         message.fiberId = object.fiberId ?? "";
-        message.creationOrdinal = (object.creationOrdinal !== undefined && object.creationOrdinal !== null)
-            ? common_js_1.SnapshotOrdinal.fromPartial(object.creationOrdinal)
-            : undefined;
-        message.previousUpdateOrdinal =
-            (object.previousUpdateOrdinal !== undefined && object.previousUpdateOrdinal !== null)
-                ? common_js_1.SnapshotOrdinal.fromPartial(object.previousUpdateOrdinal)
-                : undefined;
-        message.latestUpdateOrdinal = (object.latestUpdateOrdinal !== undefined && object.latestUpdateOrdinal !== null)
-            ? common_js_1.SnapshotOrdinal.fromPartial(object.latestUpdateOrdinal)
-            : undefined;
+        message.creationOrdinal = object.creationOrdinal ?? 0;
+        message.previousUpdateOrdinal = object.previousUpdateOrdinal ?? 0;
+        message.latestUpdateOrdinal = object.latestUpdateOrdinal ?? 0;
         message.definition = (object.definition !== undefined && object.definition !== null)
             ? fiber_js_1.StateMachineDefinition.fromPartial(object.definition)
             : undefined;
-        message.currentState = (object.currentState !== undefined && object.currentState !== null)
-            ? common_js_1.StateId.fromPartial(object.currentState)
-            : undefined;
+        message.currentState = object.currentState ?? "";
         message.stateData = object.stateData ?? undefined;
-        message.stateDataHash = (object.stateDataHash !== undefined && object.stateDataHash !== null)
-            ? common_js_1.HashValue.fromPartial(object.stateDataHash)
-            : undefined;
-        message.sequenceNumber = (object.sequenceNumber !== undefined && object.sequenceNumber !== null)
-            ? common_js_1.FiberOrdinal.fromPartial(object.sequenceNumber)
-            : undefined;
-        message.owners = object.owners?.map((e) => common_js_1.Address.fromPartial(e)) || [];
+        message.stateDataHash = object.stateDataHash ?? "";
+        message.sequenceNumber = object.sequenceNumber ?? 0;
+        message.owners = object.owners?.map((e) => e) || [];
         message.status = object.status ?? fiber_js_1.FiberStatus.FIBER_STATUS_UNSPECIFIED;
         message.lastReceipt = (object.lastReceipt !== undefined && object.lastReceipt !== null)
             ? fiber_js_1.EventReceipt.fromPartial(object.lastReceipt)
@@ -339,13 +325,13 @@ exports.StateMachineFiberRecord = {
 function createBaseScriptFiberRecord() {
     return {
         fiberId: "",
-        creationOrdinal: undefined,
-        latestUpdateOrdinal: undefined,
+        creationOrdinal: 0,
+        latestUpdateOrdinal: 0,
         scriptProgram: undefined,
         stateData: undefined,
         stateDataHash: undefined,
         accessControl: undefined,
-        sequenceNumber: undefined,
+        sequenceNumber: 0,
         owners: [],
         status: fiber_js_1.FiberStatus.FIBER_STATUS_UNSPECIFIED,
         lastInvocation: undefined,
@@ -356,11 +342,11 @@ exports.ScriptFiberRecord = {
         if (message.fiberId !== "") {
             writer.uint32(10).string(message.fiberId);
         }
-        if (message.creationOrdinal !== undefined) {
-            common_js_1.SnapshotOrdinal.encode(message.creationOrdinal, writer.uint32(18).fork()).join();
+        if (message.creationOrdinal !== 0) {
+            writer.uint32(16).int64(message.creationOrdinal);
         }
-        if (message.latestUpdateOrdinal !== undefined) {
-            common_js_1.SnapshotOrdinal.encode(message.latestUpdateOrdinal, writer.uint32(26).fork()).join();
+        if (message.latestUpdateOrdinal !== 0) {
+            writer.uint32(24).int64(message.latestUpdateOrdinal);
         }
         if (message.scriptProgram !== undefined) {
             struct_js_1.Value.encode(struct_js_1.Value.wrap(message.scriptProgram), writer.uint32(34).fork()).join();
@@ -369,16 +355,16 @@ exports.ScriptFiberRecord = {
             struct_js_1.Value.encode(struct_js_1.Value.wrap(message.stateData), writer.uint32(42).fork()).join();
         }
         if (message.stateDataHash !== undefined) {
-            common_js_1.HashValue.encode(message.stateDataHash, writer.uint32(50).fork()).join();
+            writer.uint32(50).string(message.stateDataHash);
         }
         if (message.accessControl !== undefined) {
             fiber_js_1.AccessControlPolicy.encode(message.accessControl, writer.uint32(58).fork()).join();
         }
-        if (message.sequenceNumber !== undefined) {
-            common_js_1.FiberOrdinal.encode(message.sequenceNumber, writer.uint32(66).fork()).join();
+        if (message.sequenceNumber !== 0) {
+            writer.uint32(64).int64(message.sequenceNumber);
         }
         for (const v of message.owners) {
-            common_js_1.Address.encode(v, writer.uint32(74).fork()).join();
+            writer.uint32(74).string(v);
         }
         if (message.status !== fiber_js_1.FiberStatus.FIBER_STATUS_UNSPECIFIED) {
             writer.uint32(80).int32((0, fiber_js_1.fiberStatusToNumber)(message.status));
@@ -403,17 +389,17 @@ exports.ScriptFiberRecord = {
                     continue;
                 }
                 case 2: {
-                    if (tag !== 18) {
+                    if (tag !== 16) {
                         break;
                     }
-                    message.creationOrdinal = common_js_1.SnapshotOrdinal.decode(reader, reader.uint32());
+                    message.creationOrdinal = longToNumber(reader.int64());
                     continue;
                 }
                 case 3: {
-                    if (tag !== 26) {
+                    if (tag !== 24) {
                         break;
                     }
-                    message.latestUpdateOrdinal = common_js_1.SnapshotOrdinal.decode(reader, reader.uint32());
+                    message.latestUpdateOrdinal = longToNumber(reader.int64());
                     continue;
                 }
                 case 4: {
@@ -434,7 +420,7 @@ exports.ScriptFiberRecord = {
                     if (tag !== 50) {
                         break;
                     }
-                    message.stateDataHash = common_js_1.HashValue.decode(reader, reader.uint32());
+                    message.stateDataHash = reader.string();
                     continue;
                 }
                 case 7: {
@@ -445,17 +431,17 @@ exports.ScriptFiberRecord = {
                     continue;
                 }
                 case 8: {
-                    if (tag !== 66) {
+                    if (tag !== 64) {
                         break;
                     }
-                    message.sequenceNumber = common_js_1.FiberOrdinal.decode(reader, reader.uint32());
+                    message.sequenceNumber = longToNumber(reader.int64());
                     continue;
                 }
                 case 9: {
                     if (tag !== 74) {
                         break;
                     }
-                    message.owners.push(common_js_1.Address.decode(reader, reader.uint32()));
+                    message.owners.push(reader.string());
                     continue;
                 }
                 case 10: {
@@ -488,15 +474,15 @@ exports.ScriptFiberRecord = {
                     ? globalThis.String(object.fiber_id)
                     : "",
             creationOrdinal: isSet(object.creationOrdinal)
-                ? common_js_1.SnapshotOrdinal.fromJSON(object.creationOrdinal)
+                ? globalThis.Number(object.creationOrdinal)
                 : isSet(object.creation_ordinal)
-                    ? common_js_1.SnapshotOrdinal.fromJSON(object.creation_ordinal)
-                    : undefined,
+                    ? globalThis.Number(object.creation_ordinal)
+                    : 0,
             latestUpdateOrdinal: isSet(object.latestUpdateOrdinal)
-                ? common_js_1.SnapshotOrdinal.fromJSON(object.latestUpdateOrdinal)
+                ? globalThis.Number(object.latestUpdateOrdinal)
                 : isSet(object.latest_update_ordinal)
-                    ? common_js_1.SnapshotOrdinal.fromJSON(object.latest_update_ordinal)
-                    : undefined,
+                    ? globalThis.Number(object.latest_update_ordinal)
+                    : 0,
             scriptProgram: isSet(object?.scriptProgram)
                 ? object.scriptProgram
                 : isSet(object?.script_program)
@@ -508,9 +494,9 @@ exports.ScriptFiberRecord = {
                     ? object.state_data
                     : undefined,
             stateDataHash: isSet(object.stateDataHash)
-                ? common_js_1.HashValue.fromJSON(object.stateDataHash)
+                ? globalThis.String(object.stateDataHash)
                 : isSet(object.state_data_hash)
-                    ? common_js_1.HashValue.fromJSON(object.state_data_hash)
+                    ? globalThis.String(object.state_data_hash)
                     : undefined,
             accessControl: isSet(object.accessControl)
                 ? fiber_js_1.AccessControlPolicy.fromJSON(object.accessControl)
@@ -518,11 +504,11 @@ exports.ScriptFiberRecord = {
                     ? fiber_js_1.AccessControlPolicy.fromJSON(object.access_control)
                     : undefined,
             sequenceNumber: isSet(object.sequenceNumber)
-                ? common_js_1.FiberOrdinal.fromJSON(object.sequenceNumber)
+                ? globalThis.Number(object.sequenceNumber)
                 : isSet(object.sequence_number)
-                    ? common_js_1.FiberOrdinal.fromJSON(object.sequence_number)
-                    : undefined,
-            owners: globalThis.Array.isArray(object?.owners) ? object.owners.map((e) => common_js_1.Address.fromJSON(e)) : [],
+                    ? globalThis.Number(object.sequence_number)
+                    : 0,
+            owners: globalThis.Array.isArray(object?.owners) ? object.owners.map((e) => globalThis.String(e)) : [],
             status: isSet(object.status) ? (0, fiber_js_1.fiberStatusFromJSON)(object.status) : fiber_js_1.FiberStatus.FIBER_STATUS_UNSPECIFIED,
             lastInvocation: isSet(object.lastInvocation)
                 ? fiber_js_1.ScriptInvocation.fromJSON(object.lastInvocation)
@@ -536,11 +522,11 @@ exports.ScriptFiberRecord = {
         if (message.fiberId !== "") {
             obj.fiberId = message.fiberId;
         }
-        if (message.creationOrdinal !== undefined) {
-            obj.creationOrdinal = common_js_1.SnapshotOrdinal.toJSON(message.creationOrdinal);
+        if (message.creationOrdinal !== 0) {
+            obj.creationOrdinal = Math.round(message.creationOrdinal);
         }
-        if (message.latestUpdateOrdinal !== undefined) {
-            obj.latestUpdateOrdinal = common_js_1.SnapshotOrdinal.toJSON(message.latestUpdateOrdinal);
+        if (message.latestUpdateOrdinal !== 0) {
+            obj.latestUpdateOrdinal = Math.round(message.latestUpdateOrdinal);
         }
         if (message.scriptProgram !== undefined) {
             obj.scriptProgram = message.scriptProgram;
@@ -549,16 +535,16 @@ exports.ScriptFiberRecord = {
             obj.stateData = message.stateData;
         }
         if (message.stateDataHash !== undefined) {
-            obj.stateDataHash = common_js_1.HashValue.toJSON(message.stateDataHash);
+            obj.stateDataHash = message.stateDataHash;
         }
         if (message.accessControl !== undefined) {
             obj.accessControl = fiber_js_1.AccessControlPolicy.toJSON(message.accessControl);
         }
-        if (message.sequenceNumber !== undefined) {
-            obj.sequenceNumber = common_js_1.FiberOrdinal.toJSON(message.sequenceNumber);
+        if (message.sequenceNumber !== 0) {
+            obj.sequenceNumber = Math.round(message.sequenceNumber);
         }
         if (message.owners?.length) {
-            obj.owners = message.owners.map((e) => common_js_1.Address.toJSON(e));
+            obj.owners = message.owners;
         }
         if (message.status !== fiber_js_1.FiberStatus.FIBER_STATUS_UNSPECIFIED) {
             obj.status = (0, fiber_js_1.fiberStatusToJSON)(message.status);
@@ -574,24 +560,16 @@ exports.ScriptFiberRecord = {
     fromPartial(object) {
         const message = createBaseScriptFiberRecord();
         message.fiberId = object.fiberId ?? "";
-        message.creationOrdinal = (object.creationOrdinal !== undefined && object.creationOrdinal !== null)
-            ? common_js_1.SnapshotOrdinal.fromPartial(object.creationOrdinal)
-            : undefined;
-        message.latestUpdateOrdinal = (object.latestUpdateOrdinal !== undefined && object.latestUpdateOrdinal !== null)
-            ? common_js_1.SnapshotOrdinal.fromPartial(object.latestUpdateOrdinal)
-            : undefined;
+        message.creationOrdinal = object.creationOrdinal ?? 0;
+        message.latestUpdateOrdinal = object.latestUpdateOrdinal ?? 0;
         message.scriptProgram = object.scriptProgram ?? undefined;
         message.stateData = object.stateData ?? undefined;
-        message.stateDataHash = (object.stateDataHash !== undefined && object.stateDataHash !== null)
-            ? common_js_1.HashValue.fromPartial(object.stateDataHash)
-            : undefined;
+        message.stateDataHash = object.stateDataHash ?? undefined;
         message.accessControl = (object.accessControl !== undefined && object.accessControl !== null)
             ? fiber_js_1.AccessControlPolicy.fromPartial(object.accessControl)
             : undefined;
-        message.sequenceNumber = (object.sequenceNumber !== undefined && object.sequenceNumber !== null)
-            ? common_js_1.FiberOrdinal.fromPartial(object.sequenceNumber)
-            : undefined;
-        message.owners = object.owners?.map((e) => common_js_1.Address.fromPartial(e)) || [];
+        message.sequenceNumber = object.sequenceNumber ?? 0;
+        message.owners = object.owners?.map((e) => e) || [];
         message.status = object.status ?? fiber_js_1.FiberStatus.FIBER_STATUS_UNSPECIFIED;
         message.lastInvocation = (object.lastInvocation !== undefined && object.lastInvocation !== null)
             ? fiber_js_1.ScriptInvocation.fromPartial(object.lastInvocation)
@@ -600,18 +578,18 @@ exports.ScriptFiberRecord = {
     },
 };
 function createBaseFiberCommit() {
-    return { recordHash: undefined, stateDataHash: undefined, sequenceNumber: undefined };
+    return { recordHash: "", stateDataHash: undefined, sequenceNumber: 0 };
 }
 exports.FiberCommit = {
     encode(message, writer = new wire_1.BinaryWriter()) {
-        if (message.recordHash !== undefined) {
-            common_js_1.HashValue.encode(message.recordHash, writer.uint32(10).fork()).join();
+        if (message.recordHash !== "") {
+            writer.uint32(10).string(message.recordHash);
         }
         if (message.stateDataHash !== undefined) {
-            common_js_1.HashValue.encode(message.stateDataHash, writer.uint32(18).fork()).join();
+            writer.uint32(18).string(message.stateDataHash);
         }
-        if (message.sequenceNumber !== undefined) {
-            common_js_1.FiberOrdinal.encode(message.sequenceNumber, writer.uint32(26).fork()).join();
+        if (message.sequenceNumber !== 0) {
+            writer.uint32(24).int64(message.sequenceNumber);
         }
         return writer;
     },
@@ -626,21 +604,21 @@ exports.FiberCommit = {
                     if (tag !== 10) {
                         break;
                     }
-                    message.recordHash = common_js_1.HashValue.decode(reader, reader.uint32());
+                    message.recordHash = reader.string();
                     continue;
                 }
                 case 2: {
                     if (tag !== 18) {
                         break;
                     }
-                    message.stateDataHash = common_js_1.HashValue.decode(reader, reader.uint32());
+                    message.stateDataHash = reader.string();
                     continue;
                 }
                 case 3: {
-                    if (tag !== 26) {
+                    if (tag !== 24) {
                         break;
                     }
-                    message.sequenceNumber = common_js_1.FiberOrdinal.decode(reader, reader.uint32());
+                    message.sequenceNumber = longToNumber(reader.int64());
                     continue;
                 }
             }
@@ -654,32 +632,32 @@ exports.FiberCommit = {
     fromJSON(object) {
         return {
             recordHash: isSet(object.recordHash)
-                ? common_js_1.HashValue.fromJSON(object.recordHash)
+                ? globalThis.String(object.recordHash)
                 : isSet(object.record_hash)
-                    ? common_js_1.HashValue.fromJSON(object.record_hash)
-                    : undefined,
+                    ? globalThis.String(object.record_hash)
+                    : "",
             stateDataHash: isSet(object.stateDataHash)
-                ? common_js_1.HashValue.fromJSON(object.stateDataHash)
+                ? globalThis.String(object.stateDataHash)
                 : isSet(object.state_data_hash)
-                    ? common_js_1.HashValue.fromJSON(object.state_data_hash)
+                    ? globalThis.String(object.state_data_hash)
                     : undefined,
             sequenceNumber: isSet(object.sequenceNumber)
-                ? common_js_1.FiberOrdinal.fromJSON(object.sequenceNumber)
+                ? globalThis.Number(object.sequenceNumber)
                 : isSet(object.sequence_number)
-                    ? common_js_1.FiberOrdinal.fromJSON(object.sequence_number)
-                    : undefined,
+                    ? globalThis.Number(object.sequence_number)
+                    : 0,
         };
     },
     toJSON(message) {
         const obj = {};
-        if (message.recordHash !== undefined) {
-            obj.recordHash = common_js_1.HashValue.toJSON(message.recordHash);
+        if (message.recordHash !== "") {
+            obj.recordHash = message.recordHash;
         }
         if (message.stateDataHash !== undefined) {
-            obj.stateDataHash = common_js_1.HashValue.toJSON(message.stateDataHash);
+            obj.stateDataHash = message.stateDataHash;
         }
-        if (message.sequenceNumber !== undefined) {
-            obj.sequenceNumber = common_js_1.FiberOrdinal.toJSON(message.sequenceNumber);
+        if (message.sequenceNumber !== 0) {
+            obj.sequenceNumber = Math.round(message.sequenceNumber);
         }
         return obj;
     },
@@ -688,15 +666,9 @@ exports.FiberCommit = {
     },
     fromPartial(object) {
         const message = createBaseFiberCommit();
-        message.recordHash = (object.recordHash !== undefined && object.recordHash !== null)
-            ? common_js_1.HashValue.fromPartial(object.recordHash)
-            : undefined;
-        message.stateDataHash = (object.stateDataHash !== undefined && object.stateDataHash !== null)
-            ? common_js_1.HashValue.fromPartial(object.stateDataHash)
-            : undefined;
-        message.sequenceNumber = (object.sequenceNumber !== undefined && object.sequenceNumber !== null)
-            ? common_js_1.FiberOrdinal.fromPartial(object.sequenceNumber)
-            : undefined;
+        message.recordHash = object.recordHash ?? "";
+        message.stateDataHash = object.stateDataHash ?? undefined;
+        message.sequenceNumber = object.sequenceNumber ?? 0;
         return message;
     },
 };
@@ -1263,6 +1235,16 @@ exports.CalculatedState_ScriptsEntry = {
         return message;
     },
 };
+function longToNumber(int64) {
+    const num = globalThis.Number(int64.toString());
+    if (num > globalThis.Number.MAX_SAFE_INTEGER) {
+        throw new globalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
+    }
+    if (num < globalThis.Number.MIN_SAFE_INTEGER) {
+        throw new globalThis.Error("Value is smaller than Number.MIN_SAFE_INTEGER");
+    }
+    return num;
+}
 function isObject(value) {
     return typeof value === "object" && value !== null;
 }

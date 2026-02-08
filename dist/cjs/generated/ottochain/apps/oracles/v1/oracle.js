@@ -9,7 +9,6 @@ exports.OracleDefinition = exports.WithdrawOracleRequest = exports.SlashOracleRe
 /* eslint-disable */
 const wire_1 = require("@bufbuild/protobuf/wire");
 const timestamp_js_1 = require("../../../../google/protobuf/timestamp.js");
-const common_js_1 = require("../../../v1/common.js");
 exports.protobufPackage = "ottochain.apps.oracles.v1";
 /** Oracle lifecycle states */
 var OracleState;
@@ -313,7 +312,7 @@ exports.SlashingEvent = {
 function createBaseOracle() {
     return {
         id: "",
-        address: undefined,
+        address: "",
         stake: 0,
         reputation: undefined,
         accuracy: 0,
@@ -331,8 +330,8 @@ exports.Oracle = {
         if (message.id !== "") {
             writer.uint32(10).string(message.id);
         }
-        if (message.address !== undefined) {
-            common_js_1.Address.encode(message.address, writer.uint32(18).fork()).join();
+        if (message.address !== "") {
+            writer.uint32(18).string(message.address);
         }
         if (message.stake !== 0) {
             writer.uint32(24).int64(message.stake);
@@ -384,7 +383,7 @@ exports.Oracle = {
                     if (tag !== 18) {
                         break;
                     }
-                    message.address = common_js_1.Address.decode(reader, reader.uint32());
+                    message.address = reader.string();
                     continue;
                 }
                 case 3: {
@@ -468,7 +467,7 @@ exports.Oracle = {
     fromJSON(object) {
         return {
             id: isSet(object.id) ? globalThis.String(object.id) : "",
-            address: isSet(object.address) ? common_js_1.Address.fromJSON(object.address) : undefined,
+            address: isSet(object.address) ? globalThis.String(object.address) : "",
             stake: isSet(object.stake) ? globalThis.Number(object.stake) : 0,
             reputation: isSet(object.reputation) ? exports.OracleReputation.fromJSON(object.reputation) : undefined,
             accuracy: isSet(object.accuracy) ? globalThis.Number(object.accuracy) : 0,
@@ -506,8 +505,8 @@ exports.Oracle = {
         if (message.id !== "") {
             obj.id = message.id;
         }
-        if (message.address !== undefined) {
-            obj.address = common_js_1.Address.toJSON(message.address);
+        if (message.address !== "") {
+            obj.address = message.address;
         }
         if (message.stake !== 0) {
             obj.stake = Math.round(message.stake);
@@ -547,9 +546,7 @@ exports.Oracle = {
     fromPartial(object) {
         const message = createBaseOracle();
         message.id = object.id ?? "";
-        message.address = (object.address !== undefined && object.address !== null)
-            ? common_js_1.Address.fromPartial(object.address)
-            : undefined;
+        message.address = object.address ?? "";
         message.stake = object.stake ?? 0;
         message.reputation = (object.reputation !== undefined && object.reputation !== null)
             ? exports.OracleReputation.fromPartial(object.reputation)
@@ -566,12 +563,12 @@ exports.Oracle = {
     },
 };
 function createBaseRegisterOracleRequest() {
-    return { address: undefined, initialStake: 0, domains: [] };
+    return { address: "", initialStake: 0, domains: [] };
 }
 exports.RegisterOracleRequest = {
     encode(message, writer = new wire_1.BinaryWriter()) {
-        if (message.address !== undefined) {
-            common_js_1.Address.encode(message.address, writer.uint32(10).fork()).join();
+        if (message.address !== "") {
+            writer.uint32(10).string(message.address);
         }
         if (message.initialStake !== 0) {
             writer.uint32(16).int64(message.initialStake);
@@ -592,7 +589,7 @@ exports.RegisterOracleRequest = {
                     if (tag !== 10) {
                         break;
                     }
-                    message.address = common_js_1.Address.decode(reader, reader.uint32());
+                    message.address = reader.string();
                     continue;
                 }
                 case 2: {
@@ -619,7 +616,7 @@ exports.RegisterOracleRequest = {
     },
     fromJSON(object) {
         return {
-            address: isSet(object.address) ? common_js_1.Address.fromJSON(object.address) : undefined,
+            address: isSet(object.address) ? globalThis.String(object.address) : "",
             initialStake: isSet(object.initialStake)
                 ? globalThis.Number(object.initialStake)
                 : isSet(object.initial_stake)
@@ -630,8 +627,8 @@ exports.RegisterOracleRequest = {
     },
     toJSON(message) {
         const obj = {};
-        if (message.address !== undefined) {
-            obj.address = common_js_1.Address.toJSON(message.address);
+        if (message.address !== "") {
+            obj.address = message.address;
         }
         if (message.initialStake !== 0) {
             obj.initialStake = Math.round(message.initialStake);
@@ -646,24 +643,22 @@ exports.RegisterOracleRequest = {
     },
     fromPartial(object) {
         const message = createBaseRegisterOracleRequest();
-        message.address = (object.address !== undefined && object.address !== null)
-            ? common_js_1.Address.fromPartial(object.address)
-            : undefined;
+        message.address = object.address ?? "";
         message.initialStake = object.initialStake ?? 0;
         message.domains = object.domains?.map((e) => e) || [];
         return message;
     },
 };
 function createBaseActivateOracleRequest() {
-    return { oracleId: "", address: undefined };
+    return { oracleId: "", address: "" };
 }
 exports.ActivateOracleRequest = {
     encode(message, writer = new wire_1.BinaryWriter()) {
         if (message.oracleId !== "") {
             writer.uint32(10).string(message.oracleId);
         }
-        if (message.address !== undefined) {
-            common_js_1.Address.encode(message.address, writer.uint32(18).fork()).join();
+        if (message.address !== "") {
+            writer.uint32(18).string(message.address);
         }
         return writer;
     },
@@ -685,7 +680,7 @@ exports.ActivateOracleRequest = {
                     if (tag !== 18) {
                         break;
                     }
-                    message.address = common_js_1.Address.decode(reader, reader.uint32());
+                    message.address = reader.string();
                     continue;
                 }
             }
@@ -703,7 +698,7 @@ exports.ActivateOracleRequest = {
                 : isSet(object.oracle_id)
                     ? globalThis.String(object.oracle_id)
                     : "",
-            address: isSet(object.address) ? common_js_1.Address.fromJSON(object.address) : undefined,
+            address: isSet(object.address) ? globalThis.String(object.address) : "",
         };
     },
     toJSON(message) {
@@ -711,8 +706,8 @@ exports.ActivateOracleRequest = {
         if (message.oracleId !== "") {
             obj.oracleId = message.oracleId;
         }
-        if (message.address !== undefined) {
-            obj.address = common_js_1.Address.toJSON(message.address);
+        if (message.address !== "") {
+            obj.address = message.address;
         }
         return obj;
     },
@@ -722,22 +717,20 @@ exports.ActivateOracleRequest = {
     fromPartial(object) {
         const message = createBaseActivateOracleRequest();
         message.oracleId = object.oracleId ?? "";
-        message.address = (object.address !== undefined && object.address !== null)
-            ? common_js_1.Address.fromPartial(object.address)
-            : undefined;
+        message.address = object.address ?? "";
         return message;
     },
 };
 function createBaseAddStakeRequest() {
-    return { oracleId: "", address: undefined, amount: 0 };
+    return { oracleId: "", address: "", amount: 0 };
 }
 exports.AddStakeRequest = {
     encode(message, writer = new wire_1.BinaryWriter()) {
         if (message.oracleId !== "") {
             writer.uint32(10).string(message.oracleId);
         }
-        if (message.address !== undefined) {
-            common_js_1.Address.encode(message.address, writer.uint32(18).fork()).join();
+        if (message.address !== "") {
+            writer.uint32(18).string(message.address);
         }
         if (message.amount !== 0) {
             writer.uint32(24).int64(message.amount);
@@ -762,7 +755,7 @@ exports.AddStakeRequest = {
                     if (tag !== 18) {
                         break;
                     }
-                    message.address = common_js_1.Address.decode(reader, reader.uint32());
+                    message.address = reader.string();
                     continue;
                 }
                 case 3: {
@@ -787,7 +780,7 @@ exports.AddStakeRequest = {
                 : isSet(object.oracle_id)
                     ? globalThis.String(object.oracle_id)
                     : "",
-            address: isSet(object.address) ? common_js_1.Address.fromJSON(object.address) : undefined,
+            address: isSet(object.address) ? globalThis.String(object.address) : "",
             amount: isSet(object.amount) ? globalThis.Number(object.amount) : 0,
         };
     },
@@ -796,8 +789,8 @@ exports.AddStakeRequest = {
         if (message.oracleId !== "") {
             obj.oracleId = message.oracleId;
         }
-        if (message.address !== undefined) {
-            obj.address = common_js_1.Address.toJSON(message.address);
+        if (message.address !== "") {
+            obj.address = message.address;
         }
         if (message.amount !== 0) {
             obj.amount = Math.round(message.amount);
@@ -810,23 +803,21 @@ exports.AddStakeRequest = {
     fromPartial(object) {
         const message = createBaseAddStakeRequest();
         message.oracleId = object.oracleId ?? "";
-        message.address = (object.address !== undefined && object.address !== null)
-            ? common_js_1.Address.fromPartial(object.address)
-            : undefined;
+        message.address = object.address ?? "";
         message.amount = object.amount ?? 0;
         return message;
     },
 };
 function createBaseWithdrawStakeRequest() {
-    return { oracleId: "", address: undefined, amount: 0 };
+    return { oracleId: "", address: "", amount: 0 };
 }
 exports.WithdrawStakeRequest = {
     encode(message, writer = new wire_1.BinaryWriter()) {
         if (message.oracleId !== "") {
             writer.uint32(10).string(message.oracleId);
         }
-        if (message.address !== undefined) {
-            common_js_1.Address.encode(message.address, writer.uint32(18).fork()).join();
+        if (message.address !== "") {
+            writer.uint32(18).string(message.address);
         }
         if (message.amount !== 0) {
             writer.uint32(24).int64(message.amount);
@@ -851,7 +842,7 @@ exports.WithdrawStakeRequest = {
                     if (tag !== 18) {
                         break;
                     }
-                    message.address = common_js_1.Address.decode(reader, reader.uint32());
+                    message.address = reader.string();
                     continue;
                 }
                 case 3: {
@@ -876,7 +867,7 @@ exports.WithdrawStakeRequest = {
                 : isSet(object.oracle_id)
                     ? globalThis.String(object.oracle_id)
                     : "",
-            address: isSet(object.address) ? common_js_1.Address.fromJSON(object.address) : undefined,
+            address: isSet(object.address) ? globalThis.String(object.address) : "",
             amount: isSet(object.amount) ? globalThis.Number(object.amount) : 0,
         };
     },
@@ -885,8 +876,8 @@ exports.WithdrawStakeRequest = {
         if (message.oracleId !== "") {
             obj.oracleId = message.oracleId;
         }
-        if (message.address !== undefined) {
-            obj.address = common_js_1.Address.toJSON(message.address);
+        if (message.address !== "") {
+            obj.address = message.address;
         }
         if (message.amount !== 0) {
             obj.amount = Math.round(message.amount);
@@ -899,9 +890,7 @@ exports.WithdrawStakeRequest = {
     fromPartial(object) {
         const message = createBaseWithdrawStakeRequest();
         message.oracleId = object.oracleId ?? "";
-        message.address = (object.address !== undefined && object.address !== null)
-            ? common_js_1.Address.fromPartial(object.address)
-            : undefined;
+        message.address = object.address ?? "";
         message.amount = object.amount ?? 0;
         return message;
     },
@@ -1013,15 +1002,15 @@ exports.SlashOracleRequest = {
     },
 };
 function createBaseWithdrawOracleRequest() {
-    return { oracleId: "", address: undefined };
+    return { oracleId: "", address: "" };
 }
 exports.WithdrawOracleRequest = {
     encode(message, writer = new wire_1.BinaryWriter()) {
         if (message.oracleId !== "") {
             writer.uint32(10).string(message.oracleId);
         }
-        if (message.address !== undefined) {
-            common_js_1.Address.encode(message.address, writer.uint32(18).fork()).join();
+        if (message.address !== "") {
+            writer.uint32(18).string(message.address);
         }
         return writer;
     },
@@ -1043,7 +1032,7 @@ exports.WithdrawOracleRequest = {
                     if (tag !== 18) {
                         break;
                     }
-                    message.address = common_js_1.Address.decode(reader, reader.uint32());
+                    message.address = reader.string();
                     continue;
                 }
             }
@@ -1061,7 +1050,7 @@ exports.WithdrawOracleRequest = {
                 : isSet(object.oracle_id)
                     ? globalThis.String(object.oracle_id)
                     : "",
-            address: isSet(object.address) ? common_js_1.Address.fromJSON(object.address) : undefined,
+            address: isSet(object.address) ? globalThis.String(object.address) : "",
         };
     },
     toJSON(message) {
@@ -1069,8 +1058,8 @@ exports.WithdrawOracleRequest = {
         if (message.oracleId !== "") {
             obj.oracleId = message.oracleId;
         }
-        if (message.address !== undefined) {
-            obj.address = common_js_1.Address.toJSON(message.address);
+        if (message.address !== "") {
+            obj.address = message.address;
         }
         return obj;
     },
@@ -1080,9 +1069,7 @@ exports.WithdrawOracleRequest = {
     fromPartial(object) {
         const message = createBaseWithdrawOracleRequest();
         message.oracleId = object.oracleId ?? "";
-        message.address = (object.address !== undefined && object.address !== null)
-            ? common_js_1.Address.fromPartial(object.address)
-            : undefined;
+        message.address = object.address ?? "";
         return message;
     },
 };

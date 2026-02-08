@@ -13,6 +13,8 @@
  *
  * @packageDocumentation
  */
+// Type aliases for semantic clarity (matches wire format)
+export * from './types.js';
 // Metakit utilities (signing, hashing, HTTP client)
 export * from './metakit/index.js';
 // Generated protobuf types (canonical definitions)

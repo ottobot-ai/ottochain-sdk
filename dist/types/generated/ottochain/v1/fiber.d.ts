@@ -1,5 +1,4 @@
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
-import { Address, FiberOrdinal, SnapshotOrdinal, StateId } from "./common.js";
 export declare const protobufPackage = "ottochain.v1";
 /** Fiber lifecycle status */
 export declare enum FiberStatus {
@@ -28,7 +27,8 @@ export interface AccessControlPolicy {
 export interface PublicAccess {
 }
 export interface WhitelistAccess {
-    addresses: Address[];
+    /** DAG addresses */
+    addresses: string[];
 }
 export interface FiberOwnedAccess {
     fiberId: string;
@@ -38,7 +38,8 @@ export interface StateMachineDefinition {
     states?: {
         [key: string]: any;
     } | undefined;
-    initialState?: StateId | undefined;
+    /** State ID */
+    initialState: string;
     transitions: {
         [key: string]: any;
     }[];
@@ -55,11 +56,15 @@ export interface EmittedEvent {
 /** Event receipt - log entry for state machine transition */
 export interface EventReceipt {
     fiberId: string;
-    sequenceNumber?: FiberOrdinal | undefined;
+    /** Fiber ordinal */
+    sequenceNumber: number;
     eventName: string;
-    ordinal?: SnapshotOrdinal | undefined;
-    fromState?: StateId | undefined;
-    toState?: StateId | undefined;
+    /** Snapshot ordinal */
+    ordinal: number;
+    /** State ID */
+    fromState: string;
+    /** State ID */
+    toState: string;
     success: boolean;
     gasUsed: number;
     triggersFired: number;
@@ -74,8 +79,10 @@ export interface ScriptInvocation {
     args?: any | undefined;
     result?: any | undefined;
     gasUsed: number;
-    invokedAt?: SnapshotOrdinal | undefined;
-    invokedBy?: Address | undefined;
+    /** Snapshot ordinal */
+    invokedAt: number;
+    /** DAG address */
+    invokedBy: string;
 }
 /** Fiber log entry - union of event receipt or script invocation */
 export interface FiberLogEntry {

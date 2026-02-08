@@ -2,22 +2,21 @@ syntax = "proto3";
 
 package ottochain.v1;
 
-import "ottochain/v1/common.proto";
 import "ottochain/v1/fiber.proto";
 import "google/protobuf/struct.proto";
 
 // State machine fiber record - on-chain representation
 message StateMachineFiberRecord {
   string fiber_id = 1;
-  SnapshotOrdinal creation_ordinal = 2;
-  SnapshotOrdinal previous_update_ordinal = 3;
-  SnapshotOrdinal latest_update_ordinal = 4;
+  int64 creation_ordinal = 2;  // Snapshot ordinal
+  int64 previous_update_ordinal = 3;  // Snapshot ordinal
+  int64 latest_update_ordinal = 4;  // Snapshot ordinal
   StateMachineDefinition definition = 5;
-  StateId current_state = 6;
+  string current_state = 6;  // State ID
   google.protobuf.Value state_data = 7;
-  HashValue state_data_hash = 8;
-  FiberOrdinal sequence_number = 9;
-  repeated Address owners = 10;
+  string state_data_hash = 8;  // Hash value
+  int64 sequence_number = 9;  // Fiber ordinal
+  repeated string owners = 10;  // DAG addresses
   FiberStatus status = 11;
   optional EventReceipt last_receipt = 12;
   optional string parent_fiber_id = 13;
@@ -27,23 +26,23 @@ message StateMachineFiberRecord {
 // Script fiber record - on-chain representation
 message ScriptFiberRecord {
   string fiber_id = 1;
-  SnapshotOrdinal creation_ordinal = 2;
-  SnapshotOrdinal latest_update_ordinal = 3;
+  int64 creation_ordinal = 2;  // Snapshot ordinal
+  int64 latest_update_ordinal = 3;  // Snapshot ordinal
   google.protobuf.Value script_program = 4;
   optional google.protobuf.Value state_data = 5;
-  optional HashValue state_data_hash = 6;
+  optional string state_data_hash = 6;  // Hash value
   AccessControlPolicy access_control = 7;
-  FiberOrdinal sequence_number = 8;
-  repeated Address owners = 9;
+  int64 sequence_number = 8;  // Fiber ordinal
+  repeated string owners = 9;  // DAG addresses
   FiberStatus status = 10;
   optional ScriptInvocation last_invocation = 11;
 }
 
 // Fiber commit - lightweight proof in on-chain state
 message FiberCommit {
-  HashValue record_hash = 1;
-  optional HashValue state_data_hash = 2;
-  FiberOrdinal sequence_number = 3;
+  string record_hash = 1;  // Hash value
+  optional string state_data_hash = 2;  // Hash value
+  int64 sequence_number = 3;  // Fiber ordinal
 }
 
 // On-chain state

@@ -6,7 +6,6 @@
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { Struct, Value } from "../../google/protobuf/struct.js";
-import { Address, FiberOrdinal, SnapshotOrdinal, StateId } from "./common.js";
 export const protobufPackage = "ottochain.v1";
 /** Fiber lifecycle status */
 export var FiberStatus;
@@ -218,7 +217,7 @@ function createBaseWhitelistAccess() {
 export const WhitelistAccess = {
     encode(message, writer = new BinaryWriter()) {
         for (const v of message.addresses) {
-            Address.encode(v, writer.uint32(10).fork()).join();
+            writer.uint32(10).string(v);
         }
         return writer;
     },
@@ -233,7 +232,7 @@ export const WhitelistAccess = {
                     if (tag !== 10) {
                         break;
                     }
-                    message.addresses.push(Address.decode(reader, reader.uint32()));
+                    message.addresses.push(reader.string());
                     continue;
                 }
             }
@@ -247,14 +246,14 @@ export const WhitelistAccess = {
     fromJSON(object) {
         return {
             addresses: globalThis.Array.isArray(object?.addresses)
-                ? object.addresses.map((e) => Address.fromJSON(e))
+                ? object.addresses.map((e) => globalThis.String(e))
                 : [],
         };
     },
     toJSON(message) {
         const obj = {};
         if (message.addresses?.length) {
-            obj.addresses = message.addresses.map((e) => Address.toJSON(e));
+            obj.addresses = message.addresses;
         }
         return obj;
     },
@@ -263,7 +262,7 @@ export const WhitelistAccess = {
     },
     fromPartial(object) {
         const message = createBaseWhitelistAccess();
-        message.addresses = object.addresses?.map((e) => Address.fromPartial(e)) || [];
+        message.addresses = object.addresses?.map((e) => e) || [];
         return message;
     },
 };
@@ -325,15 +324,15 @@ export const FiberOwnedAccess = {
     },
 };
 function createBaseStateMachineDefinition() {
-    return { states: undefined, initialState: undefined, transitions: [], metadata: undefined };
+    return { states: undefined, initialState: "", transitions: [], metadata: undefined };
 }
 export const StateMachineDefinition = {
     encode(message, writer = new BinaryWriter()) {
         if (message.states !== undefined) {
             Struct.encode(Struct.wrap(message.states), writer.uint32(10).fork()).join();
         }
-        if (message.initialState !== undefined) {
-            StateId.encode(message.initialState, writer.uint32(18).fork()).join();
+        if (message.initialState !== "") {
+            writer.uint32(18).string(message.initialState);
         }
         for (const v of message.transitions) {
             Struct.encode(Struct.wrap(v), writer.uint32(26).fork()).join();
@@ -361,7 +360,7 @@ export const StateMachineDefinition = {
                     if (tag !== 18) {
                         break;
                     }
-                    message.initialState = StateId.decode(reader, reader.uint32());
+                    message.initialState = reader.string();
                     continue;
                 }
                 case 3: {
@@ -390,10 +389,10 @@ export const StateMachineDefinition = {
         return {
             states: isObject(object.states) ? object.states : undefined,
             initialState: isSet(object.initialState)
-                ? StateId.fromJSON(object.initialState)
+                ? globalThis.String(object.initialState)
                 : isSet(object.initial_state)
-                    ? StateId.fromJSON(object.initial_state)
-                    : undefined,
+                    ? globalThis.String(object.initial_state)
+                    : "",
             transitions: globalThis.Array.isArray(object?.transitions) ? [...object.transitions] : [],
             metadata: isObject(object.metadata) ? object.metadata : undefined,
         };
@@ -403,8 +402,8 @@ export const StateMachineDefinition = {
         if (message.states !== undefined) {
             obj.states = message.states;
         }
-        if (message.initialState !== undefined) {
-            obj.initialState = StateId.toJSON(message.initialState);
+        if (message.initialState !== "") {
+            obj.initialState = message.initialState;
         }
         if (message.transitions?.length) {
             obj.transitions = message.transitions;
@@ -420,9 +419,7 @@ export const StateMachineDefinition = {
     fromPartial(object) {
         const message = createBaseStateMachineDefinition();
         message.states = object.states ?? undefined;
-        message.initialState = (object.initialState !== undefined && object.initialState !== null)
-            ? StateId.fromPartial(object.initialState)
-            : undefined;
+        message.initialState = object.initialState ?? "";
         message.transitions = object.transitions?.map((e) => e) || [];
         message.metadata = object.metadata ?? undefined;
         return message;
@@ -514,11 +511,11 @@ export const EmittedEvent = {
 function createBaseEventReceipt() {
     return {
         fiberId: "",
-        sequenceNumber: undefined,
+        sequenceNumber: 0,
         eventName: "",
-        ordinal: undefined,
-        fromState: undefined,
-        toState: undefined,
+        ordinal: 0,
+        fromState: "",
+        toState: "",
         success: false,
         gasUsed: 0,
         triggersFired: 0,
@@ -532,20 +529,20 @@ export const EventReceipt = {
         if (message.fiberId !== "") {
             writer.uint32(10).string(message.fiberId);
         }
-        if (message.sequenceNumber !== undefined) {
-            FiberOrdinal.encode(message.sequenceNumber, writer.uint32(18).fork()).join();
+        if (message.sequenceNumber !== 0) {
+            writer.uint32(16).int64(message.sequenceNumber);
         }
         if (message.eventName !== "") {
             writer.uint32(26).string(message.eventName);
         }
-        if (message.ordinal !== undefined) {
-            SnapshotOrdinal.encode(message.ordinal, writer.uint32(34).fork()).join();
+        if (message.ordinal !== 0) {
+            writer.uint32(32).int64(message.ordinal);
         }
-        if (message.fromState !== undefined) {
-            StateId.encode(message.fromState, writer.uint32(42).fork()).join();
+        if (message.fromState !== "") {
+            writer.uint32(42).string(message.fromState);
         }
-        if (message.toState !== undefined) {
-            StateId.encode(message.toState, writer.uint32(50).fork()).join();
+        if (message.toState !== "") {
+            writer.uint32(50).string(message.toState);
         }
         if (message.success !== false) {
             writer.uint32(56).bool(message.success);
@@ -582,10 +579,10 @@ export const EventReceipt = {
                     continue;
                 }
                 case 2: {
-                    if (tag !== 18) {
+                    if (tag !== 16) {
                         break;
                     }
-                    message.sequenceNumber = FiberOrdinal.decode(reader, reader.uint32());
+                    message.sequenceNumber = longToNumber(reader.int64());
                     continue;
                 }
                 case 3: {
@@ -596,24 +593,24 @@ export const EventReceipt = {
                     continue;
                 }
                 case 4: {
-                    if (tag !== 34) {
+                    if (tag !== 32) {
                         break;
                     }
-                    message.ordinal = SnapshotOrdinal.decode(reader, reader.uint32());
+                    message.ordinal = longToNumber(reader.int64());
                     continue;
                 }
                 case 5: {
                     if (tag !== 42) {
                         break;
                     }
-                    message.fromState = StateId.decode(reader, reader.uint32());
+                    message.fromState = reader.string();
                     continue;
                 }
                 case 6: {
                     if (tag !== 50) {
                         break;
                     }
-                    message.toState = StateId.decode(reader, reader.uint32());
+                    message.toState = reader.string();
                     continue;
                 }
                 case 7: {
@@ -674,26 +671,26 @@ export const EventReceipt = {
                     ? globalThis.String(object.fiber_id)
                     : "",
             sequenceNumber: isSet(object.sequenceNumber)
-                ? FiberOrdinal.fromJSON(object.sequenceNumber)
+                ? globalThis.Number(object.sequenceNumber)
                 : isSet(object.sequence_number)
-                    ? FiberOrdinal.fromJSON(object.sequence_number)
-                    : undefined,
+                    ? globalThis.Number(object.sequence_number)
+                    : 0,
             eventName: isSet(object.eventName)
                 ? globalThis.String(object.eventName)
                 : isSet(object.event_name)
                     ? globalThis.String(object.event_name)
                     : "",
-            ordinal: isSet(object.ordinal) ? SnapshotOrdinal.fromJSON(object.ordinal) : undefined,
+            ordinal: isSet(object.ordinal) ? globalThis.Number(object.ordinal) : 0,
             fromState: isSet(object.fromState)
-                ? StateId.fromJSON(object.fromState)
+                ? globalThis.String(object.fromState)
                 : isSet(object.from_state)
-                    ? StateId.fromJSON(object.from_state)
-                    : undefined,
+                    ? globalThis.String(object.from_state)
+                    : "",
             toState: isSet(object.toState)
-                ? StateId.fromJSON(object.toState)
+                ? globalThis.String(object.toState)
                 : isSet(object.to_state)
-                    ? StateId.fromJSON(object.to_state)
-                    : undefined,
+                    ? globalThis.String(object.to_state)
+                    : "",
             success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
             gasUsed: isSet(object.gasUsed)
                 ? globalThis.Number(object.gasUsed)
@@ -727,20 +724,20 @@ export const EventReceipt = {
         if (message.fiberId !== "") {
             obj.fiberId = message.fiberId;
         }
-        if (message.sequenceNumber !== undefined) {
-            obj.sequenceNumber = FiberOrdinal.toJSON(message.sequenceNumber);
+        if (message.sequenceNumber !== 0) {
+            obj.sequenceNumber = Math.round(message.sequenceNumber);
         }
         if (message.eventName !== "") {
             obj.eventName = message.eventName;
         }
-        if (message.ordinal !== undefined) {
-            obj.ordinal = SnapshotOrdinal.toJSON(message.ordinal);
+        if (message.ordinal !== 0) {
+            obj.ordinal = Math.round(message.ordinal);
         }
-        if (message.fromState !== undefined) {
-            obj.fromState = StateId.toJSON(message.fromState);
+        if (message.fromState !== "") {
+            obj.fromState = message.fromState;
         }
-        if (message.toState !== undefined) {
-            obj.toState = StateId.toJSON(message.toState);
+        if (message.toState !== "") {
+            obj.toState = message.toState;
         }
         if (message.success !== false) {
             obj.success = message.success;
@@ -768,19 +765,11 @@ export const EventReceipt = {
     fromPartial(object) {
         const message = createBaseEventReceipt();
         message.fiberId = object.fiberId ?? "";
-        message.sequenceNumber = (object.sequenceNumber !== undefined && object.sequenceNumber !== null)
-            ? FiberOrdinal.fromPartial(object.sequenceNumber)
-            : undefined;
+        message.sequenceNumber = object.sequenceNumber ?? 0;
         message.eventName = object.eventName ?? "";
-        message.ordinal = (object.ordinal !== undefined && object.ordinal !== null)
-            ? SnapshotOrdinal.fromPartial(object.ordinal)
-            : undefined;
-        message.fromState = (object.fromState !== undefined && object.fromState !== null)
-            ? StateId.fromPartial(object.fromState)
-            : undefined;
-        message.toState = (object.toState !== undefined && object.toState !== null)
-            ? StateId.fromPartial(object.toState)
-            : undefined;
+        message.ordinal = object.ordinal ?? 0;
+        message.fromState = object.fromState ?? "";
+        message.toState = object.toState ?? "";
         message.success = object.success ?? false;
         message.gasUsed = object.gasUsed ?? 0;
         message.triggersFired = object.triggersFired ?? 0;
@@ -791,15 +780,7 @@ export const EventReceipt = {
     },
 };
 function createBaseScriptInvocation() {
-    return {
-        fiberId: "",
-        method: "",
-        args: undefined,
-        result: undefined,
-        gasUsed: 0,
-        invokedAt: undefined,
-        invokedBy: undefined,
-    };
+    return { fiberId: "", method: "", args: undefined, result: undefined, gasUsed: 0, invokedAt: 0, invokedBy: "" };
 }
 export const ScriptInvocation = {
     encode(message, writer = new BinaryWriter()) {
@@ -818,11 +799,11 @@ export const ScriptInvocation = {
         if (message.gasUsed !== 0) {
             writer.uint32(40).int64(message.gasUsed);
         }
-        if (message.invokedAt !== undefined) {
-            SnapshotOrdinal.encode(message.invokedAt, writer.uint32(50).fork()).join();
+        if (message.invokedAt !== 0) {
+            writer.uint32(48).int64(message.invokedAt);
         }
-        if (message.invokedBy !== undefined) {
-            Address.encode(message.invokedBy, writer.uint32(58).fork()).join();
+        if (message.invokedBy !== "") {
+            writer.uint32(58).string(message.invokedBy);
         }
         return writer;
     },
@@ -869,17 +850,17 @@ export const ScriptInvocation = {
                     continue;
                 }
                 case 6: {
-                    if (tag !== 50) {
+                    if (tag !== 48) {
                         break;
                     }
-                    message.invokedAt = SnapshotOrdinal.decode(reader, reader.uint32());
+                    message.invokedAt = longToNumber(reader.int64());
                     continue;
                 }
                 case 7: {
                     if (tag !== 58) {
                         break;
                     }
-                    message.invokedBy = Address.decode(reader, reader.uint32());
+                    message.invokedBy = reader.string();
                     continue;
                 }
             }
@@ -906,15 +887,15 @@ export const ScriptInvocation = {
                     ? globalThis.Number(object.gas_used)
                     : 0,
             invokedAt: isSet(object.invokedAt)
-                ? SnapshotOrdinal.fromJSON(object.invokedAt)
+                ? globalThis.Number(object.invokedAt)
                 : isSet(object.invoked_at)
-                    ? SnapshotOrdinal.fromJSON(object.invoked_at)
-                    : undefined,
+                    ? globalThis.Number(object.invoked_at)
+                    : 0,
             invokedBy: isSet(object.invokedBy)
-                ? Address.fromJSON(object.invokedBy)
+                ? globalThis.String(object.invokedBy)
                 : isSet(object.invoked_by)
-                    ? Address.fromJSON(object.invoked_by)
-                    : undefined,
+                    ? globalThis.String(object.invoked_by)
+                    : "",
         };
     },
     toJSON(message) {
@@ -934,11 +915,11 @@ export const ScriptInvocation = {
         if (message.gasUsed !== 0) {
             obj.gasUsed = Math.round(message.gasUsed);
         }
-        if (message.invokedAt !== undefined) {
-            obj.invokedAt = SnapshotOrdinal.toJSON(message.invokedAt);
+        if (message.invokedAt !== 0) {
+            obj.invokedAt = Math.round(message.invokedAt);
         }
-        if (message.invokedBy !== undefined) {
-            obj.invokedBy = Address.toJSON(message.invokedBy);
+        if (message.invokedBy !== "") {
+            obj.invokedBy = message.invokedBy;
         }
         return obj;
     },
@@ -952,12 +933,8 @@ export const ScriptInvocation = {
         message.args = object.args ?? undefined;
         message.result = object.result ?? undefined;
         message.gasUsed = object.gasUsed ?? 0;
-        message.invokedAt = (object.invokedAt !== undefined && object.invokedAt !== null)
-            ? SnapshotOrdinal.fromPartial(object.invokedAt)
-            : undefined;
-        message.invokedBy = (object.invokedBy !== undefined && object.invokedBy !== null)
-            ? Address.fromPartial(object.invokedBy)
-            : undefined;
+        message.invokedAt = object.invokedAt ?? 0;
+        message.invokedBy = object.invokedBy ?? "";
         return message;
     },
 };

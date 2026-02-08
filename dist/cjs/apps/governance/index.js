@@ -120,7 +120,7 @@ exports.signaturesNeeded = signaturesNeeded;
  * Check if agent is a signer
  */
 function isSigner(state, agent) {
-    return state.signers.some(s => s.value === agent);
+    return state.signers.includes(agent);
 }
 exports.isSigner = isSigner;
 /**
@@ -188,7 +188,7 @@ exports.meetsThreshold = meetsThreshold;
  * Check if agent is a member
  */
 function isMember(state, agent) {
-    return state.members.some(m => m.value === agent);
+    return state.members.includes(agent);
 }
 exports.isMember = isMember;
 /**

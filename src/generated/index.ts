@@ -7,14 +7,8 @@
  * @packageDocumentation
  */
 
-// Core types
-export {
-  FiberOrdinal,
-  SnapshotOrdinal,
-  StateId,
-  HashValue,
-  Address,
-} from './ottochain/v1/common.js';
+// Core types (primitives - no wrapper messages)
+// Type aliases are in src/types.ts
 
 export {
   FiberStatus,
