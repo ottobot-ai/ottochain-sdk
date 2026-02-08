@@ -2,249 +2,124 @@
     "metadata": {
         "name": "Market",
         "description": "Universal market state machine: predictions, auctions, crowdfunding, group buys",
-        "version": "1.0.0"
+        "version": "1.1.0"
     },
     "states": {
         "PROPOSED": {
-            "id": {
-                "value": "PROPOSED"
-            },
+            "id": { "value": "PROPOSED" },
             "isFinal": false,
             "metadata": null
         },
         "OPEN": {
-            "id": {
-                "value": "OPEN"
-            },
+            "id": { "value": "OPEN" },
             "isFinal": false,
             "metadata": null
         },
         "CLOSED": {
-            "id": {
-                "value": "CLOSED"
-            },
+            "id": { "value": "CLOSED" },
             "isFinal": false,
             "metadata": null
         },
         "RESOLVING": {
-            "id": {
-                "value": "RESOLVING"
-            },
+            "id": { "value": "RESOLVING" },
             "isFinal": false,
             "metadata": null
         },
         "SETTLED": {
-            "id": {
-                "value": "SETTLED"
-            },
+            "id": { "value": "SETTLED" },
             "isFinal": true,
             "metadata": null
         },
         "REFUNDED": {
-            "id": {
-                "value": "REFUNDED"
-            },
+            "id": { "value": "REFUNDED" },
             "isFinal": true,
             "metadata": null
         },
         "CANCELLED": {
-            "id": {
-                "value": "CANCELLED"
-            },
+            "id": { "value": "CANCELLED" },
             "isFinal": true,
             "metadata": null
         }
     },
-    "initialState": {
-        "value": "PROPOSED"
-    },
+    "initialState": { "value": "PROPOSED" },
     "transitions": [
         {
-            "from": {
-                "value": "PROPOSED"
-            },
-            "to": {
-                "value": "OPEN"
-            },
+            "from": { "value": "PROPOSED" },
+            "to": { "value": "OPEN" },
             "eventName": "open",
             "guard": {
                 "===": [
-                    {
-                        "var": "event.agent"
-                    },
-                    {
-                        "var": "state.creator"
-                    }
+                    { "var": "event.agent" },
+                    { "var": "state.creator" }
                 ]
             },
             "effect": {
                 "merge": [
-                    {
-                        "var": "state"
-                    },
+                    { "var": "state" },
                     {
                         "status": "OPEN",
-                        "openedAt": {
-                            "var": "$timestamp"
-                        }
+                        "openedAt": { "var": "$timestamp" }
                     }
                 ]
             },
             "dependencies": []
         },
         {
-            "from": {
-                "value": "PROPOSED"
-            },
-            "to": {
-                "value": "CANCELLED"
-            },
+            "from": { "value": "PROPOSED" },
+            "to": { "value": "CANCELLED" },
             "eventName": "cancel",
             "guard": {
                 "===": [
-                    {
-                        "var": "event.agent"
-                    },
-                    {
-                        "var": "state.creator"
-                    }
+                    { "var": "event.agent" },
+                    { "var": "state.creator" }
                 ]
             },
             "effect": {
                 "merge": [
-                    {
-                        "var": "state"
-                    },
+                    { "var": "state" },
                     {
                         "status": "CANCELLED",
-                        "cancelledAt": {
-                            "var": "$timestamp"
-                        },
-                        "reason": {
-                            "var": "event.reason"
-                        }
+                        "cancelledAt": { "var": "$timestamp" },
+                        "reason": { "var": "event.reason" }
                     }
                 ]
             },
             "dependencies": []
         },
         {
-            "from": {
-                "value": "OPEN"
-            },
-            "to": {
-                "value": "OPEN"
-            },
+            "from": { "value": "OPEN" },
+            "to": { "value": "OPEN" },
             "eventName": "commit",
             "guard": {
                 "and": [
-                    {
-                        ">": [
-                            {
-                                "var": "event.amount"
-                            },
-                            0
-                        ]
-                    },
+                    { ">": [{ "var": "event.amount" }, 0] },
                     {
                         "or": [
-                            {
-                                "!": [
-                                    {
-                                        "var": "state.deadline"
-                                    }
-                                ]
-                            },
-                            {
-                                "<=": [
-                                    {
-                                        "var": "$timestamp"
-                                    },
-                                    {
-                                        "var": "state.deadline"
-                                    }
-                                ]
-                            }
+                            { "!": [{ "var": "state.deadline" }] },
+                            { "<=": [{ "var": "$timestamp" }, { "var": "state.deadline" }] }
                         ]
                     }
                 ]
             },
             "effect": {
                 "merge": [
-                    {
-                        "var": "state"
-                    },
+                    { "var": "state" },
                     {
                         "commitments": {
-                            "setKey": [
-                                {
-                                    "var": "state.commitments"
-                                },
-                                {
-                                    "var": "event.agent"
-                                },
-                                {
-                                    "merge": [
-                                        {
-                                            "getKey": [
-                                                {
-                                                    "var": "state.commitments"
-                                                },
-                                                {
-                                                    "var": "event.agent"
-                                                },
-                                                {
-                                                    "amount": 0,
-                                                    "data": {}
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            "amount": {
-                                                "+": [
-                                                    {
-                                                        "getKey": [
-                                                            {
-                                                                "getKey": [
-                                                                    {
-                                                                        "var": "state.commitments"
-                                                                    },
-                                                                    {
-                                                                        "var": "event.agent"
-                                                                    },
-                                                                    {
-                                                                        "amount": 0
-                                                                    }
-                                                                ]
-                                                            },
-                                                            "amount",
-                                                            0
-                                                        ]
-                                                    },
-                                                    {
-                                                        "var": "event.amount"
-                                                    }
-                                                ]
-                                            },
-                                            "data": {
-                                                "var": "event.data"
-                                            },
-                                            "lastCommitAt": {
-                                                "var": "$timestamp"
-                                            }
-                                        }
-                                    ]
-                                }
+                            "cat": [
+                                { "var": "state.commitments" },
+                                [{
+                                        "agent": { "var": "event.agent" },
+                                        "amount": { "var": "event.amount" },
+                                        "data": { "var": "event.data" },
+                                        "committedAt": { "var": "$timestamp" }
+                                    }]
                             ]
                         },
                         "totalCommitted": {
                             "+": [
-                                {
-                                    "var": "state.totalCommitted"
-                                },
-                                {
-                                    "var": "event.amount"
-                                }
+                                { "var": "state.totalCommitted" },
+                                { "var": "event.amount" }
                             ]
                         }
                     }
@@ -253,119 +128,55 @@
             "dependencies": []
         },
         {
-            "from": {
-                "value": "OPEN"
-            },
-            "to": {
-                "value": "CLOSED"
-            },
+            "from": { "value": "OPEN" },
+            "to": { "value": "CLOSED" },
             "eventName": "close",
             "guard": {
                 "or": [
-                    {
-                        "===": [
-                            {
-                                "var": "event.agent"
-                            },
-                            {
-                                "var": "state.creator"
-                            }
-                        ]
-                    },
+                    { "===": [{ "var": "event.agent" }, { "var": "state.creator" }] },
                     {
                         "and": [
-                            {
-                                "var": "state.deadline"
-                            },
-                            {
-                                ">=": [
-                                    {
-                                        "var": "$timestamp"
-                                    },
-                                    {
-                                        "var": "state.deadline"
-                                    }
-                                ]
-                            }
+                            { "var": "state.deadline" },
+                            { ">=": [{ "var": "$timestamp" }, { "var": "state.deadline" }] }
                         ]
                     }
                 ]
             },
             "effect": {
                 "merge": [
-                    {
-                        "var": "state"
-                    },
+                    { "var": "state" },
                     {
                         "status": "CLOSED",
-                        "closedAt": {
-                            "var": "$timestamp"
-                        }
+                        "closedAt": { "var": "$timestamp" }
                     }
                 ]
             },
             "dependencies": []
         },
         {
-            "from": {
-                "value": "CLOSED"
-            },
-            "to": {
-                "value": "RESOLVING"
-            },
+            "from": { "value": "CLOSED" },
+            "to": { "value": "RESOLVING" },
             "eventName": "submit_resolution",
             "guard": {
                 "or": [
-                    {
-                        "in": [
-                            {
-                                "var": "event.agent"
-                            },
-                            {
-                                "var": "state.oracles"
-                            }
-                        ]
-                    },
-                    {
-                        "===": [
-                            {
-                                "var": "event.agent"
-                            },
-                            {
-                                "var": "state.creator"
-                            }
-                        ]
-                    }
+                    { "in": [{ "var": "event.agent" }, { "var": "state.oracles" }] },
+                    { "===": [{ "var": "event.agent" }, { "var": "state.creator" }] }
                 ]
             },
             "effect": {
                 "merge": [
-                    {
-                        "var": "state"
-                    },
+                    { "var": "state" },
                     {
                         "status": "RESOLVING",
                         "resolutions": {
                             "cat": [
-                                {
-                                    "var": "state.resolutions"
-                                },
-                                [
-                                    {
-                                        "oracle": {
-                                            "var": "event.agent"
-                                        },
-                                        "outcome": {
-                                            "var": "event.outcome"
-                                        },
-                                        "proof": {
-                                            "var": "event.proof"
-                                        },
-                                        "submittedAt": {
-                                            "var": "$timestamp"
-                                        }
-                                    }
-                                ]
+                                { "var": "state.resolutions" },
+                                [{
+                                        "oracle": { "var": "event.agent" },
+                                        "outcome": { "var": "event.outcome" },
+                                        "proof": { "var": "event.proof" },
+                                        "submittedAt": { "var": "$timestamp" }
+                                    }]
                             ]
                         }
                     }
@@ -374,75 +185,35 @@
             "dependencies": []
         },
         {
-            "from": {
-                "value": "RESOLVING"
-            },
-            "to": {
-                "value": "RESOLVING"
-            },
+            "from": { "value": "RESOLVING" },
+            "to": { "value": "RESOLVING" },
             "eventName": "submit_resolution",
             "guard": {
                 "and": [
+                    { "in": [{ "var": "event.agent" }, { "var": "state.oracles" }] },
                     {
-                        "in": [
-                            {
-                                "var": "event.agent"
-                            },
-                            {
-                                "var": "state.oracles"
-                            }
-                        ]
-                    },
-                    {
-                        "!": [
-                            {
+                        "!": [{
                                 "in": [
-                                    {
-                                        "var": "event.agent"
-                                    },
-                                    {
-                                        "map": [
-                                            {
-                                                "var": "state.resolutions"
-                                            },
-                                            {
-                                                "var": "oracle"
-                                            }
-                                        ]
-                                    }
+                                    { "var": "event.agent" },
+                                    { "map": [{ "var": "state.resolutions" }, { "var": "oracle" }] }
                                 ]
-                            }
-                        ]
+                            }]
                     }
                 ]
             },
             "effect": {
                 "merge": [
-                    {
-                        "var": "state"
-                    },
+                    { "var": "state" },
                     {
                         "resolutions": {
                             "cat": [
-                                {
-                                    "var": "state.resolutions"
-                                },
-                                [
-                                    {
-                                        "oracle": {
-                                            "var": "event.agent"
-                                        },
-                                        "outcome": {
-                                            "var": "event.outcome"
-                                        },
-                                        "proof": {
-                                            "var": "event.proof"
-                                        },
-                                        "submittedAt": {
-                                            "var": "$timestamp"
-                                        }
-                                    }
-                                ]
+                                { "var": "state.resolutions" },
+                                [{
+                                        "oracle": { "var": "event.agent" },
+                                        "outcome": { "var": "event.outcome" },
+                                        "proof": { "var": "event.proof" },
+                                        "submittedAt": { "var": "$timestamp" }
+                                    }]
                             ]
                         }
                     }
@@ -451,109 +222,46 @@
             "dependencies": []
         },
         {
-            "from": {
-                "value": "RESOLVING"
-            },
-            "to": {
-                "value": "SETTLED"
-            },
+            "from": { "value": "RESOLVING" },
+            "to": { "value": "SETTLED" },
             "eventName": "finalize",
             "guard": {
                 "or": [
-                    {
-                        ">=": [
-                            {
-                                "size": {
-                                    "var": "state.resolutions"
-                                }
-                            },
-                            {
-                                "var": "state.quorum"
-                            }
-                        ]
-                    },
-                    {
-                        "===": [
-                            {
-                                "var": "state.marketType"
-                            },
-                            "crowdfund"
-                        ]
-                    },
-                    {
-                        "===": [
-                            {
-                                "var": "state.marketType"
-                            },
-                            "group_buy"
-                        ]
-                    },
-                    {
-                        "===": [
-                            {
-                                "var": "state.marketType"
-                            },
-                            "auction"
-                        ]
-                    }
+                    { ">=": [{ "size": { "var": "state.resolutions" } }, { "var": "state.quorum" }] },
+                    { "===": [{ "var": "state.marketType" }, "crowdfund"] },
+                    { "===": [{ "var": "state.marketType" }, "group_buy"] },
+                    { "===": [{ "var": "state.marketType" }, "auction"] }
                 ]
             },
             "effect": {
                 "merge": [
-                    {
-                        "var": "state"
-                    },
+                    { "var": "state" },
                     {
                         "status": "SETTLED",
-                        "settledAt": {
-                            "var": "$timestamp"
-                        },
-                        "finalOutcome": {
-                            "var": "event.outcome"
-                        },
-                        "settlement": {
-                            "var": "event.settlement"
-                        }
+                        "settledAt": { "var": "$timestamp" },
+                        "finalOutcome": { "var": "event.outcome" },
+                        "settlement": { "var": "event.settlement" }
                     }
                 ]
             },
             "dependencies": []
         },
         {
-            "from": {
-                "value": "CLOSED"
-            },
-            "to": {
-                "value": "REFUNDED"
-            },
+            "from": { "value": "CLOSED" },
+            "to": { "value": "REFUNDED" },
             "eventName": "refund",
             "guard": {
                 "and": [
-                    {
-                        "var": "state.threshold"
-                    },
-                    {
-                        "<": [
-                            {
-                                "var": "state.totalCommitted"
-                            },
-                            {
-                                "var": "state.threshold"
-                            }
-                        ]
-                    }
+                    { "var": "state.threshold" },
+                    { "<": [{ "var": "state.totalCommitted" }, { "var": "state.threshold" }] }
                 ]
             },
             "effect": {
                 "merge": [
-                    {
-                        "var": "state"
-                    },
+                    { "var": "state" },
                     {
                         "status": "REFUNDED",
-                        "refundedAt": {
-                            "var": "$timestamp"
-                        },
+                        "refundedAt": { "var": "$timestamp" },
                         "reason": "threshold_not_met"
                     }
                 ]
@@ -561,127 +269,80 @@
             "dependencies": []
         },
         {
-            "from": {
-                "value": "RESOLVING"
-            },
-            "to": {
-                "value": "REFUNDED"
-            },
+            "from": { "value": "RESOLVING" },
+            "to": { "value": "REFUNDED" },
             "eventName": "refund",
             "guard": {
                 "or": [
-                    {
-                        "===": [
-                            {
-                                "var": "event.agent"
-                            },
-                            {
-                                "var": "state.creator"
-                            }
-                        ]
-                    },
+                    { "===": [{ "var": "event.agent" }, { "var": "state.creator" }] },
                     {
                         ">=": [
                             {
                                 "size": {
                                     "filter": [
-                                        {
-                                            "var": "state.resolutions"
-                                        },
-                                        {
-                                            "===": [
-                                                {
-                                                    "var": "outcome"
-                                                },
-                                                "INVALID"
-                                            ]
-                                        }
+                                        { "var": "state.resolutions" },
+                                        { "===": [{ "var": "outcome" }, "INVALID"] }
                                     ]
                                 }
                             },
-                            {
-                                "var": "state.quorum"
-                            }
+                            { "var": "state.quorum" }
                         ]
                     }
                 ]
             },
             "effect": {
                 "merge": [
-                    {
-                        "var": "state"
-                    },
+                    { "var": "state" },
                     {
                         "status": "REFUNDED",
-                        "refundedAt": {
-                            "var": "$timestamp"
-                        },
-                        "reason": {
-                            "var": "event.reason"
-                        }
+                        "refundedAt": { "var": "$timestamp" },
+                        "reason": { "var": "event.reason" }
                     }
                 ]
             },
             "dependencies": []
         },
         {
-            "from": {
-                "value": "SETTLED"
-            },
-            "to": {
-                "value": "SETTLED"
-            },
+            "from": { "value": "SETTLED" },
+            "to": { "value": "SETTLED" },
             "eventName": "claim",
             "guard": {
                 "and": [
                     {
-                        "getKey": [
+                        ">": [
                             {
-                                "var": "state.commitments"
+                                "size": {
+                                    "filter": [
+                                        { "var": "state.commitments" },
+                                        { "===": [{ "var": "agent" }, { "var": "event.agent" }] }
+                                    ]
+                                }
                             },
-                            {
-                                "var": "event.agent"
-                            }
+                            0
                         ]
                     },
                     {
-                        "!": [
-                            {
-                                "getKey": [
-                                    {
-                                        "var": "state.claims"
-                                    },
-                                    {
-                                        "var": "event.agent"
-                                    }
+                        "!": [{
+                                "in": [
+                                    { "var": "event.agent" },
+                                    { "map": [{ "var": "state.claims" }, { "var": "agent" }] }
                                 ]
-                            }
-                        ]
+                            }]
                     }
                 ]
             },
             "effect": {
                 "merge": [
-                    {
-                        "var": "state"
-                    },
+                    { "var": "state" },
                     {
                         "claims": {
-                            "setKey": [
-                                {
-                                    "var": "state.claims"
-                                },
-                                {
-                                    "var": "event.agent"
-                                },
-                                {
-                                    "claimedAt": {
-                                        "var": "$timestamp"
-                                    },
-                                    "amount": {
-                                        "var": "event.amount"
-                                    }
-                                }
+                            "cat": [
+                                { "var": "state.claims" },
+                                [{
+                                        "agent": { "var": "event.agent" },
+                                        "amount": { "var": "event.amount" },
+                                        "claimedAt": { "var": "$timestamp" }
+                                    }]
                             ]
                         }
                     }
