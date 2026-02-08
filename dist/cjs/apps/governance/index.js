@@ -1,61 +1,60 @@
 "use strict";
 /**
- * Governance & DAO Module
+ * Governance & DAO Application
  *
- * Types and utilities for DAO governance state machines.
+ * Types and utilities for DAO governance on OttoChain.
  *
  * @example
  * ```typescript
- * import { DAOType, DAOStatus, getDAODefinition } from '@ottochain/sdk/apps/governance';
+ * import {
+ *   DAOType,
+ *   DAOStatus,
+ *   MultisigDAO,
+ *   getDAODefinition
+ * } from '@ottochain/sdk/apps/governance';
  *
  * const multisigDef = getDAODefinition('Multisig');
  * ```
  *
- * @example
- * ```typescript
- * import { governance } from '@ottochain/sdk/apps';
- *
- * // Create initial state for a 2-of-3 multisig
- * const state = governance.createMultisigState({
- *   name: 'Team Treasury',
- *   signers: ['DAG...', 'DAG...', 'DAG...'],
- *   threshold: 2
- * });
- *
- * // Check if threshold met
- * if (governance.isThresholdMet(state)) {
- *   console.log('Ready to execute!');
- * }
- * ```
- *
  * @packageDocumentation
  */
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __exportStar = (this && this.__exportStar) || function(m, exports) {
-    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.thresholdHasQuorum = exports.isMember = exports.meetsThreshold = exports.canPropose = exports.isPassing = exports.hasQuorum = exports.getVotingPower = exports.hasSigned = exports.isSigner = exports.signaturesNeeded = exports.isThresholdMet = exports.createThresholdState = exports.createTokenState = exports.createMultisigState = exports.createSingleOwnerState = exports.getGovernanceDefinition = exports.getDAODefinition = exports.GOVERNANCE_DEFINITIONS = exports.DAO_DEFINITIONS = exports.VoteChoiceProto = exports.ProposalStatusProto = exports.DAOStatusProto = exports.DAOTypeProto = void 0;
-__exportStar(require("./types.js"), exports);
-// Proto-generated types (prefixed to avoid conflicts with TS types)
-var governance_pb_js_1 = require("../../generated/ottochain/apps/governance/v1/governance_pb.js");
-Object.defineProperty(exports, "DAOTypeProto", { enumerable: true, get: function () { return governance_pb_js_1.DAOType; } });
-Object.defineProperty(exports, "DAOStatusProto", { enumerable: true, get: function () { return governance_pb_js_1.DAOStatus; } });
-Object.defineProperty(exports, "ProposalStatusProto", { enumerable: true, get: function () { return governance_pb_js_1.ProposalStatus; } });
-Object.defineProperty(exports, "VoteChoiceProto", { enumerable: true, get: function () { return governance_pb_js_1.VoteChoice; } });
+exports.thresholdHasQuorum = exports.isMember = exports.meetsThreshold = exports.canPropose = exports.isPassing = exports.hasQuorum = exports.getVotingPower = exports.hasSigned = exports.isSigner = exports.signaturesNeeded = exports.isThresholdMet = exports.getGovernanceDefinition = exports.getDAODefinition = exports.GOVERNANCE_DEFINITIONS = exports.DAO_DEFINITIONS = exports.voteChoiceToJSON = exports.voteChoiceFromJSON = exports.proposalStatusToJSON = exports.proposalStatusFromJSON = exports.dAOStatusToJSON = exports.dAOStatusFromJSON = exports.dAOTypeToJSON = exports.dAOTypeFromJSON = exports.ExecuteRequest = exports.VoteRequest = exports.ProposeRequest = exports.CreateDAORequest = exports.ThresholdHistoryEntry = exports.ThresholdVotes = exports.ThresholdDAO = exports.TokenProposalResult = exports.TokenDAO = exports.MultisigAction = exports.MultisigDAO = exports.OwnershipTransfer = exports.SingleOwnerAction = exports.SingleOwnerDAO = exports.VoteTally = exports.Vote = exports.Proposal = exports.DAOMetadata = exports.VoteChoice = exports.ProposalStatus = exports.DAOStatus = exports.DAOType = void 0;
+// Re-export generated protobuf types (source of truth)
+var governance_js_1 = require("../../generated/ottochain/apps/governance/v1/governance.js");
+Object.defineProperty(exports, "DAOType", { enumerable: true, get: function () { return governance_js_1.DAOType; } });
+Object.defineProperty(exports, "DAOStatus", { enumerable: true, get: function () { return governance_js_1.DAOStatus; } });
+Object.defineProperty(exports, "ProposalStatus", { enumerable: true, get: function () { return governance_js_1.ProposalStatus; } });
+Object.defineProperty(exports, "VoteChoice", { enumerable: true, get: function () { return governance_js_1.VoteChoice; } });
+Object.defineProperty(exports, "DAOMetadata", { enumerable: true, get: function () { return governance_js_1.DAOMetadata; } });
+Object.defineProperty(exports, "Proposal", { enumerable: true, get: function () { return governance_js_1.Proposal; } });
+Object.defineProperty(exports, "Vote", { enumerable: true, get: function () { return governance_js_1.Vote; } });
+Object.defineProperty(exports, "VoteTally", { enumerable: true, get: function () { return governance_js_1.VoteTally; } });
+Object.defineProperty(exports, "SingleOwnerDAO", { enumerable: true, get: function () { return governance_js_1.SingleOwnerDAO; } });
+Object.defineProperty(exports, "SingleOwnerAction", { enumerable: true, get: function () { return governance_js_1.SingleOwnerAction; } });
+Object.defineProperty(exports, "OwnershipTransfer", { enumerable: true, get: function () { return governance_js_1.OwnershipTransfer; } });
+Object.defineProperty(exports, "MultisigDAO", { enumerable: true, get: function () { return governance_js_1.MultisigDAO; } });
+Object.defineProperty(exports, "MultisigAction", { enumerable: true, get: function () { return governance_js_1.MultisigAction; } });
+Object.defineProperty(exports, "TokenDAO", { enumerable: true, get: function () { return governance_js_1.TokenDAO; } });
+Object.defineProperty(exports, "TokenProposalResult", { enumerable: true, get: function () { return governance_js_1.TokenProposalResult; } });
+Object.defineProperty(exports, "ThresholdDAO", { enumerable: true, get: function () { return governance_js_1.ThresholdDAO; } });
+Object.defineProperty(exports, "ThresholdVotes", { enumerable: true, get: function () { return governance_js_1.ThresholdVotes; } });
+Object.defineProperty(exports, "ThresholdHistoryEntry", { enumerable: true, get: function () { return governance_js_1.ThresholdHistoryEntry; } });
+Object.defineProperty(exports, "CreateDAORequest", { enumerable: true, get: function () { return governance_js_1.CreateDAORequest; } });
+Object.defineProperty(exports, "ProposeRequest", { enumerable: true, get: function () { return governance_js_1.ProposeRequest; } });
+Object.defineProperty(exports, "VoteRequest", { enumerable: true, get: function () { return governance_js_1.VoteRequest; } });
+Object.defineProperty(exports, "ExecuteRequest", { enumerable: true, get: function () { return governance_js_1.ExecuteRequest; } });
+Object.defineProperty(exports, "dAOTypeFromJSON", { enumerable: true, get: function () { return governance_js_1.dAOTypeFromJSON; } });
+Object.defineProperty(exports, "dAOTypeToJSON", { enumerable: true, get: function () { return governance_js_1.dAOTypeToJSON; } });
+Object.defineProperty(exports, "dAOStatusFromJSON", { enumerable: true, get: function () { return governance_js_1.dAOStatusFromJSON; } });
+Object.defineProperty(exports, "dAOStatusToJSON", { enumerable: true, get: function () { return governance_js_1.dAOStatusToJSON; } });
+Object.defineProperty(exports, "proposalStatusFromJSON", { enumerable: true, get: function () { return governance_js_1.proposalStatusFromJSON; } });
+Object.defineProperty(exports, "proposalStatusToJSON", { enumerable: true, get: function () { return governance_js_1.proposalStatusToJSON; } });
+Object.defineProperty(exports, "voteChoiceFromJSON", { enumerable: true, get: function () { return governance_js_1.voteChoiceFromJSON; } });
+Object.defineProperty(exports, "voteChoiceToJSON", { enumerable: true, get: function () { return governance_js_1.voteChoiceToJSON; } });
 // ---------------------------------------------------------------------------
 // State Machine JSON Definitions
 // ---------------------------------------------------------------------------
@@ -63,23 +62,17 @@ const dao_multisig_json_1 = __importDefault(require("./state-machines/dao-multis
 const dao_single_json_1 = __importDefault(require("./state-machines/dao-single.json"));
 const dao_threshold_json_1 = __importDefault(require("./state-machines/dao-threshold.json"));
 const dao_token_json_1 = __importDefault(require("./state-machines/dao-token.json"));
-const governance_constitution_json_1 = __importDefault(require("./state-machines/governance-constitution.json"));
+const governance_legislature_json_1 = __importDefault(require("./state-machines/governance-legislature.json"));
 const governance_executive_json_1 = __importDefault(require("./state-machines/governance-executive.json"));
 const governance_judiciary_json_1 = __importDefault(require("./state-machines/governance-judiciary.json"));
-const governance_legislature_json_1 = __importDefault(require("./state-machines/governance-legislature.json"));
+const governance_constitution_json_1 = __importDefault(require("./state-machines/governance-constitution.json"));
 const governance_simple_json_1 = __importDefault(require("./state-machines/governance-simple.json"));
-/**
- * DAO state machine definitions mapped by type.
- */
 exports.DAO_DEFINITIONS = {
     Single: dao_single_json_1.default,
     Multisig: dao_multisig_json_1.default,
     Threshold: dao_threshold_json_1.default,
     Token: dao_token_json_1.default,
 };
-/**
- * Governance state machine definitions mapped by type.
- */
 exports.GOVERNANCE_DEFINITIONS = {
     Legislature: governance_legislature_json_1.default,
     Executive: governance_executive_json_1.default,
@@ -109,103 +102,6 @@ function getGovernanceDefinition(governanceType) {
     return def;
 }
 exports.getGovernanceDefinition = getGovernanceDefinition;
-// =============================================================================
-// State Factories
-// =============================================================================
-/**
- * Create initial state for a SingleOwnerDAO
- */
-function createSingleOwnerState(params) {
-    return {
-        schema: 'SingleOwnerDAO',
-        name: params.name,
-        owner: params.owner,
-        pendingOwner: null,
-        transferInitiatedAt: null,
-        actions: [],
-        ownershipHistory: [],
-        metadata: params.metadata ?? {},
-        status: 'ACTIVE',
-    };
-}
-exports.createSingleOwnerState = createSingleOwnerState;
-/**
- * Create initial state for a MultisigDAO
- */
-function createMultisigState(params) {
-    if (params.threshold < 1) {
-        throw new Error('Threshold must be at least 1');
-    }
-    if (params.threshold > params.signers.length) {
-        throw new Error('Threshold cannot exceed number of signers');
-    }
-    if (new Set(params.signers).size !== params.signers.length) {
-        throw new Error('Duplicate signers not allowed');
-    }
-    return {
-        schema: 'MultisigDAO',
-        name: params.name,
-        signers: params.signers,
-        threshold: params.threshold,
-        proposalTTLMs: params.proposalTTLMs ?? 7 * 24 * 60 * 60 * 1000, // 7 days
-        proposal: null,
-        signatures: {},
-        actions: [],
-        cancelledProposals: [],
-        metadata: params.metadata ?? {},
-        status: 'ACTIVE',
-    };
-}
-exports.createMultisigState = createMultisigState;
-/**
- * Create initial state for a TokenDAO
- */
-function createTokenState(params) {
-    return {
-        schema: 'TokenDAO',
-        name: params.name,
-        tokenId: params.tokenId,
-        balances: params.initialBalances ?? {},
-        delegations: {},
-        proposalThreshold: params.proposalThreshold ?? 1000,
-        votingPeriodMs: params.votingPeriodMs ?? 3 * 24 * 60 * 60 * 1000, // 3 days
-        timelockMs: params.timelockMs ?? 24 * 60 * 60 * 1000, // 1 day
-        quorum: params.quorum ?? 10000,
-        proposal: null,
-        votes: null,
-        executedProposals: [],
-        rejectedProposals: [],
-        cancelledProposals: [],
-        metadata: params.metadata ?? {},
-        status: 'ACTIVE',
-    };
-}
-exports.createTokenState = createTokenState;
-/**
- * Create initial state for a ThresholdDAO
- */
-function createThresholdState(params) {
-    return {
-        schema: 'ThresholdDAO',
-        name: params.name,
-        members: [],
-        memberJoinedAt: {},
-        memberThreshold: params.memberThreshold ?? 20,
-        voteThreshold: params.voteThreshold ?? 30,
-        proposeThreshold: params.proposeThreshold ?? 50,
-        quorum: params.quorum ?? 3,
-        votingPeriodMs: params.votingPeriodMs ?? 7 * 24 * 60 * 60 * 1000, // 7 days
-        proposal: null,
-        votes: null,
-        history: [],
-        metadata: params.metadata ?? {},
-        status: 'ACTIVE',
-    };
-}
-exports.createThresholdState = createThresholdState;
-// =============================================================================
-// Multisig Helpers
-// =============================================================================
 /**
  * Check if multisig has enough signatures to execute
  */
@@ -224,7 +120,7 @@ exports.signaturesNeeded = signaturesNeeded;
  * Check if agent is a signer
  */
 function isSigner(state, agent) {
-    return state.signers.includes(agent);
+    return state.signers.some(s => s.value === agent);
 }
 exports.isSigner = isSigner;
 /**
@@ -234,9 +130,6 @@ function hasSigned(state, agent) {
     return agent in state.signatures;
 }
 exports.hasSigned = hasSigned;
-// =============================================================================
-// Token DAO Helpers
-// =============================================================================
 /**
  * Get effective voting power (includes delegation)
  */
@@ -257,7 +150,7 @@ exports.getVotingPower = getVotingPower;
 function hasQuorum(state) {
     if (!state.votes)
         return false;
-    const totalVoted = state.votes.for + state.votes.against + state.votes.abstain;
+    const totalVoted = state.votes.votesFor + state.votes.votesAgainst + state.votes.votesAbstain;
     return totalVoted >= state.quorum;
 }
 exports.hasQuorum = hasQuorum;
@@ -267,7 +160,7 @@ exports.hasQuorum = hasQuorum;
 function isPassing(state) {
     if (!state.votes)
         return false;
-    return state.votes.for > state.votes.against && hasQuorum(state);
+    return state.votes.votesFor > state.votes.votesAgainst && hasQuorum(state);
 }
 exports.isPassing = isPassing;
 /**
@@ -277,9 +170,6 @@ function canPropose(state, agent) {
     return (state.balances[agent] ?? 0) >= state.proposalThreshold;
 }
 exports.canPropose = canPropose;
-// =============================================================================
-// Threshold DAO Helpers
-// =============================================================================
 /**
  * Check if agent meets threshold for action
  */
@@ -298,7 +188,7 @@ exports.meetsThreshold = meetsThreshold;
  * Check if agent is a member
  */
 function isMember(state, agent) {
-    return state.members.includes(agent);
+    return state.members.some(m => m.value === agent);
 }
 exports.isMember = isMember;
 /**
@@ -307,7 +197,7 @@ exports.isMember = isMember;
 function thresholdHasQuorum(state) {
     if (!state.votes)
         return false;
-    const totalVoted = state.votes.for.length + state.votes.against.length;
+    const totalVoted = state.votes.votesFor.length + state.votes.votesAgainst.length;
     return totalVoted >= state.quorum;
 }
 exports.thresholdHasQuorum = thresholdHasQuorum;

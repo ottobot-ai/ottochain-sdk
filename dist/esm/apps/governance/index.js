@@ -1,37 +1,24 @@
 /**
- * Governance & DAO Module
+ * Governance & DAO Application
  *
- * Types and utilities for DAO governance state machines.
+ * Types and utilities for DAO governance on OttoChain.
  *
  * @example
  * ```typescript
- * import { DAOType, DAOStatus, getDAODefinition } from '@ottochain/sdk/apps/governance';
+ * import {
+ *   DAOType,
+ *   DAOStatus,
+ *   MultisigDAO,
+ *   getDAODefinition
+ * } from '@ottochain/sdk/apps/governance';
  *
  * const multisigDef = getDAODefinition('Multisig');
  * ```
  *
- * @example
- * ```typescript
- * import { governance } from '@ottochain/sdk/apps';
- *
- * // Create initial state for a 2-of-3 multisig
- * const state = governance.createMultisigState({
- *   name: 'Team Treasury',
- *   signers: ['DAG...', 'DAG...', 'DAG...'],
- *   threshold: 2
- * });
- *
- * // Check if threshold met
- * if (governance.isThresholdMet(state)) {
- *   console.log('Ready to execute!');
- * }
- * ```
- *
  * @packageDocumentation
  */
-export * from './types.js';
-// Proto-generated types (prefixed to avoid conflicts with TS types)
-export { DAOType as DAOTypeProto, DAOStatus as DAOStatusProto, ProposalStatus as ProposalStatusProto, VoteChoice as VoteChoiceProto, } from '../../generated/ottochain/apps/governance/v1/governance_pb.js';
+// Re-export generated protobuf types (source of truth)
+export { DAOType, DAOStatus, ProposalStatus, VoteChoice, DAOMetadata, Proposal, Vote, VoteTally, SingleOwnerDAO, SingleOwnerAction, OwnershipTransfer, MultisigDAO, MultisigAction, TokenDAO, TokenProposalResult, ThresholdDAO, ThresholdVotes, ThresholdHistoryEntry, CreateDAORequest, ProposeRequest, VoteRequest, ExecuteRequest, dAOTypeFromJSON, dAOTypeToJSON, dAOStatusFromJSON, dAOStatusToJSON, proposalStatusFromJSON, proposalStatusToJSON, voteChoiceFromJSON, voteChoiceToJSON, } from '../../generated/ottochain/apps/governance/v1/governance.js';
 // ---------------------------------------------------------------------------
 // State Machine JSON Definitions
 // ---------------------------------------------------------------------------
@@ -39,23 +26,17 @@ import daoMultisigDef from './state-machines/dao-multisig.json';
 import daoSingleDef from './state-machines/dao-single.json';
 import daoThresholdDef from './state-machines/dao-threshold.json';
 import daoTokenDef from './state-machines/dao-token.json';
-import govConstitutionDef from './state-machines/governance-constitution.json';
+import govLegislatureDef from './state-machines/governance-legislature.json';
 import govExecutiveDef from './state-machines/governance-executive.json';
 import govJudiciaryDef from './state-machines/governance-judiciary.json';
-import govLegislatureDef from './state-machines/governance-legislature.json';
+import govConstitutionDef from './state-machines/governance-constitution.json';
 import govSimpleDef from './state-machines/governance-simple.json';
-/**
- * DAO state machine definitions mapped by type.
- */
 export const DAO_DEFINITIONS = {
     Single: daoSingleDef,
     Multisig: daoMultisigDef,
     Threshold: daoThresholdDef,
     Token: daoTokenDef,
 };
-/**
- * Governance state machine definitions mapped by type.
- */
 export const GOVERNANCE_DEFINITIONS = {
     Legislature: govLegislatureDef,
     Executive: govExecutiveDef,
@@ -83,99 +64,6 @@ export function getGovernanceDefinition(governanceType) {
     }
     return def;
 }
-// =============================================================================
-// State Factories
-// =============================================================================
-/**
- * Create initial state for a SingleOwnerDAO
- */
-export function createSingleOwnerState(params) {
-    return {
-        schema: 'SingleOwnerDAO',
-        name: params.name,
-        owner: params.owner,
-        pendingOwner: null,
-        transferInitiatedAt: null,
-        actions: [],
-        ownershipHistory: [],
-        metadata: params.metadata ?? {},
-        status: 'ACTIVE',
-    };
-}
-/**
- * Create initial state for a MultisigDAO
- */
-export function createMultisigState(params) {
-    if (params.threshold < 1) {
-        throw new Error('Threshold must be at least 1');
-    }
-    if (params.threshold > params.signers.length) {
-        throw new Error('Threshold cannot exceed number of signers');
-    }
-    if (new Set(params.signers).size !== params.signers.length) {
-        throw new Error('Duplicate signers not allowed');
-    }
-    return {
-        schema: 'MultisigDAO',
-        name: params.name,
-        signers: params.signers,
-        threshold: params.threshold,
-        proposalTTLMs: params.proposalTTLMs ?? 7 * 24 * 60 * 60 * 1000, // 7 days
-        proposal: null,
-        signatures: {},
-        actions: [],
-        cancelledProposals: [],
-        metadata: params.metadata ?? {},
-        status: 'ACTIVE',
-    };
-}
-/**
- * Create initial state for a TokenDAO
- */
-export function createTokenState(params) {
-    return {
-        schema: 'TokenDAO',
-        name: params.name,
-        tokenId: params.tokenId,
-        balances: params.initialBalances ?? {},
-        delegations: {},
-        proposalThreshold: params.proposalThreshold ?? 1000,
-        votingPeriodMs: params.votingPeriodMs ?? 3 * 24 * 60 * 60 * 1000, // 3 days
-        timelockMs: params.timelockMs ?? 24 * 60 * 60 * 1000, // 1 day
-        quorum: params.quorum ?? 10000,
-        proposal: null,
-        votes: null,
-        executedProposals: [],
-        rejectedProposals: [],
-        cancelledProposals: [],
-        metadata: params.metadata ?? {},
-        status: 'ACTIVE',
-    };
-}
-/**
- * Create initial state for a ThresholdDAO
- */
-export function createThresholdState(params) {
-    return {
-        schema: 'ThresholdDAO',
-        name: params.name,
-        members: [],
-        memberJoinedAt: {},
-        memberThreshold: params.memberThreshold ?? 20,
-        voteThreshold: params.voteThreshold ?? 30,
-        proposeThreshold: params.proposeThreshold ?? 50,
-        quorum: params.quorum ?? 3,
-        votingPeriodMs: params.votingPeriodMs ?? 7 * 24 * 60 * 60 * 1000, // 7 days
-        proposal: null,
-        votes: null,
-        history: [],
-        metadata: params.metadata ?? {},
-        status: 'ACTIVE',
-    };
-}
-// =============================================================================
-// Multisig Helpers
-// =============================================================================
 /**
  * Check if multisig has enough signatures to execute
  */
@@ -192,7 +80,7 @@ export function signaturesNeeded(state) {
  * Check if agent is a signer
  */
 export function isSigner(state, agent) {
-    return state.signers.includes(agent);
+    return state.signers.some(s => s.value === agent);
 }
 /**
  * Check if agent has signed current proposal
@@ -200,9 +88,6 @@ export function isSigner(state, agent) {
 export function hasSigned(state, agent) {
     return agent in state.signatures;
 }
-// =============================================================================
-// Token DAO Helpers
-// =============================================================================
 /**
  * Get effective voting power (includes delegation)
  */
@@ -222,7 +107,7 @@ export function getVotingPower(state, agent) {
 export function hasQuorum(state) {
     if (!state.votes)
         return false;
-    const totalVoted = state.votes.for + state.votes.against + state.votes.abstain;
+    const totalVoted = state.votes.votesFor + state.votes.votesAgainst + state.votes.votesAbstain;
     return totalVoted >= state.quorum;
 }
 /**
@@ -231,7 +116,7 @@ export function hasQuorum(state) {
 export function isPassing(state) {
     if (!state.votes)
         return false;
-    return state.votes.for > state.votes.against && hasQuorum(state);
+    return state.votes.votesFor > state.votes.votesAgainst && hasQuorum(state);
 }
 /**
  * Check if agent can propose
@@ -239,9 +124,6 @@ export function isPassing(state) {
 export function canPropose(state, agent) {
     return (state.balances[agent] ?? 0) >= state.proposalThreshold;
 }
-// =============================================================================
-// Threshold DAO Helpers
-// =============================================================================
 /**
  * Check if agent meets threshold for action
  */
@@ -259,7 +141,7 @@ export function meetsThreshold(state, reputation, action) {
  * Check if agent is a member
  */
 export function isMember(state, agent) {
-    return state.members.includes(agent);
+    return state.members.some(m => m.value === agent);
 }
 /**
  * Check if threshold proposal has quorum
@@ -267,6 +149,6 @@ export function isMember(state, agent) {
 export function thresholdHasQuorum(state) {
     if (!state.votes)
         return false;
-    const totalVoted = state.votes.for.length + state.votes.against.length;
+    const totalVoted = state.votes.votesFor.length + state.votes.votesAgainst.length;
     return totalVoted >= state.quorum;
 }

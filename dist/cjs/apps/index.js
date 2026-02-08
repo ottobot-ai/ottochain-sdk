@@ -9,13 +9,10 @@
  * import { identity, contracts, markets, oracles, governance } from '@ottochain/sdk/apps';
  *
  * // Use identity types
- * const { AgentState, AGENT_TRANSITIONS } = identity;
- *
- * // Use market calculations
- * const payout = markets.calculatePayout(shares);
+ * const { AgentState } = identity;
  *
  * // Check oracle reputation
- * const newRep = oracles.calculateReputation(current, delta);
+ * const state = oracles.OracleState.ACTIVE;
  *
  * // Create a multisig DAO
  * const dao = governance.createMultisigState({
@@ -50,9 +47,6 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-var __exportStar = (this && this.__exportStar) || function(m, exports) {
-    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.corporate = exports.governance = exports.oracles = exports.markets = exports.contracts = exports.identity = void 0;
 // Re-export as namespaces for organized access
@@ -62,10 +56,3 @@ exports.markets = __importStar(require("./markets/index.js"));
 exports.oracles = __importStar(require("./oracles/index.js"));
 exports.governance = __importStar(require("./governance/index.js"));
 exports.corporate = __importStar(require("./corporate/index.js"));
-// Also allow direct imports
-__exportStar(require("./identity/index.js"), exports);
-__exportStar(require("./contracts/index.js"), exports);
-__exportStar(require("./markets/index.js"), exports);
-__exportStar(require("./oracles/index.js"), exports);
-__exportStar(require("./governance/index.js"), exports);
-__exportStar(require("./corporate/index.js"), exports);

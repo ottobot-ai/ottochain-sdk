@@ -7,29 +7,33 @@
  * ```typescript
  * import {
  *   AgentState,
- *   AttestationType,
- *   AgentIdentitySchema,
+ *   AgentIdentity,
  *   getIdentityDefinition
  * } from '@ottochain/sdk/apps/identity';
- * import { create } from '@bufbuild/protobuf';
  *
- * // Get the agent identity state machine definition
  * const identityDef = getIdentityDefinition();
- *
- * const agent = create(AgentIdentitySchema, {
- *   publicKey: '...',
- *   reputation: 10,
- *   state: AgentState.REGISTERED,
- * });
  * ```
  *
  * @packageDocumentation
  */
-// Re-export generated protobuf types
-export * from '../../generated/ottochain/apps/identity/v1/agent_pb.js';
-export * from '../../generated/ottochain/apps/identity/v1/attestation_pb.js';
-// Re-export convenience types and constants
-export * from './types.js';
+// Re-export generated protobuf types (source of truth)
+export { AgentState, Platform, PlatformLink, AgentIdentity, AgentIdentityDefinition, agentStateFromJSON, agentStateToJSON, platformFromJSON, platformToJSON, } from '../../generated/ottochain/apps/identity/v1/agent.js';
+export { AttestationType, ReputationDelta, Attestation, VouchRequest, ChallengeRequest, ReputationConfig, attestationTypeFromJSON, attestationTypeToJSON, } from '../../generated/ottochain/apps/identity/v1/attestation.js';
+// ---------------------------------------------------------------------------
+// Configuration Defaults
+// ---------------------------------------------------------------------------
+/**
+ * Default reputation configuration for agent identity
+ */
+export const DEFAULT_REPUTATION_CONFIG = {
+    baseReputation: 10,
+    completionDelta: 5,
+    vouchDelta: 2,
+    violationDelta: -10,
+    behavioralDelta: 3,
+    minReputation: 0,
+    challengeThreshold: 5,
+};
 // ---------------------------------------------------------------------------
 // State Machine JSON Definition
 // ---------------------------------------------------------------------------
