@@ -1,0 +1,353 @@
+syntax = "proto3";
+
+package ottochain.apps.corporate.v1;
+
+import "ottochain/v1/common.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+// =============================================================================
+// Entity Enums
+// =============================================================================
+
+// Type of corporate entity
+enum EntityType {
+  ENTITY_TYPE_UNSPECIFIED = 0;
+  ENTITY_TYPE_C_CORP = 1;       // C Corporation
+  ENTITY_TYPE_S_CORP = 2;       // S Corporation
+  ENTITY_TYPE_B_CORP = 3;       // Benefit Corporation
+  ENTITY_TYPE_LLC = 4;          // Limited Liability Company
+  ENTITY_TYPE_LP = 5;           // Limited Partnership
+  ENTITY_TYPE_LLP = 6;          // Limited Liability Partnership
+}
+
+// Entity lifecycle state
+enum EntityState {
+  ENTITY_STATE_UNSPECIFIED = 0;
+  ENTITY_STATE_INCORPORATING = 1;  // Formation in progress
+  ENTITY_STATE_ACTIVE = 2;         // Good standing
+  ENTITY_STATE_SUSPENDED = 3;      // Administrative suspension
+  ENTITY_STATE_DISSOLVED = 4;      // Terminated
+}
+
+// Director status
+enum DirectorStatus {
+  DIRECTOR_STATUS_UNSPECIFIED = 0;
+  DIRECTOR_STATUS_ACTIVE = 1;
+  DIRECTOR_STATUS_RESIGNED = 2;
+  DIRECTOR_STATUS_REMOVED = 3;
+  DIRECTOR_STATUS_TERM_EXPIRED = 4;
+}
+
+// Officer status
+enum OfficerStatus {
+  OFFICER_STATUS_UNSPECIFIED = 0;
+  OFFICER_STATUS_ACTIVE = 1;
+  OFFICER_STATUS_RESIGNED = 2;
+  OFFICER_STATUS_REMOVED = 3;
+}
+
+// Board meeting type
+enum BoardMeetingType {
+  BOARD_MEETING_TYPE_UNSPECIFIED = 0;
+  BOARD_MEETING_TYPE_REGULAR = 1;
+  BOARD_MEETING_TYPE_SPECIAL = 2;
+  BOARD_MEETING_TYPE_ANNUAL = 3;
+  BOARD_MEETING_TYPE_ORGANIZATIONAL = 4;
+}
+
+// Resolution status
+enum ResolutionStatus {
+  RESOLUTION_STATUS_UNSPECIFIED = 0;
+  RESOLUTION_STATUS_DRAFT = 1;
+  RESOLUTION_STATUS_PROPOSED = 2;
+  RESOLUTION_STATUS_VOTING = 3;
+  RESOLUTION_STATUS_ADOPTED = 4;
+  RESOLUTION_STATUS_REJECTED = 5;
+  RESOLUTION_STATUS_WITHDRAWN = 6;
+}
+
+// =============================================================================
+// Common Messages
+// =============================================================================
+
+// Jurisdiction information
+message Jurisdiction {
+  string state = 1;     // State/province of incorporation
+  string country = 2;   // Country code (ISO 3166-1)
+}
+
+// Physical or mailing address
+message Address {
+  string street1 = 1;
+  string street2 = 2;
+  string city = 3;
+  string state = 4;
+  string postal_code = 5;
+  string country = 6;
+}
+
+// Share class definition
+message ShareClass {
+  string class_id = 1;
+  string class_name = 2;
+  int64 authorized = 3;
+  int64 issued = 4;
+  int64 outstanding = 5;
+  int64 par_value_cents = 6;
+  bool voting_rights = 7;
+  int32 votes_per_share = 8;
+  int32 liquidation_preference = 9;  // Multiple, e.g., 1 = 1x
+}
+
+// =============================================================================
+// Entity
+// =============================================================================
+
+message CorporateEntity {
+  string entity_id = 1;
+  string legal_name = 2;
+  EntityType entity_type = 3;
+  Jurisdiction jurisdiction = 4;
+  google.protobuf.Timestamp formation_date = 5;
+  RegisteredAgent registered_agent = 6;
+  repeated Incorporator incorporators = 7;
+  ShareStructure share_structure = 8;
+  EntityState status = 9;
+  google.protobuf.Timestamp created_at = 10;
+}
+
+message RegisteredAgent {
+  string name = 1;
+  Address address = 2;
+}
+
+message Incorporator {
+  string name = 1;
+  ottochain.v1.Address address = 2;
+}
+
+message ShareStructure {
+  repeated ShareClass classes = 1;
+  int64 total_authorized = 2;
+  int64 total_issued = 3;
+  int64 total_outstanding = 4;
+}
+
+// =============================================================================
+// Board
+// =============================================================================
+
+message CorporateBoard {
+  string board_id = 1;
+  string entity_id = 2;
+  repeated Director directors = 3;
+  SeatInfo seats = 4;
+  QuorumRules quorum_rules = 5;
+  BoardMeeting current_meeting = 6;
+  repeated BoardMeeting meeting_history = 7;
+}
+
+message Director {
+  string director_id = 1;
+  string name = 2;
+  string email = 3;
+  google.protobuf.Timestamp term_start = 4;
+  google.protobuf.Timestamp term_end = 5;
+  DirectorStatus status = 6;
+  bool is_independent = 7;
+  bool is_chair = 8;
+}
+
+message SeatInfo {
+  int32 authorized = 1;
+  int32 filled = 2;
+  int32 vacant = 3;
+}
+
+message QuorumRules {
+  string type = 1;  // MAJORITY, SUPERMAJORITY, FIXED_NUMBER
+  int32 threshold = 2;
+}
+
+message BoardMeeting {
+  string meeting_id = 1;
+  BoardMeetingType type = 2;
+  google.protobuf.Timestamp scheduled_date = 3;
+  repeated MeetingAttendee attendees = 4;
+  bool quorum_present = 5;
+}
+
+message MeetingAttendee {
+  string director_id = 1;
+  bool present = 2;
+}
+
+// =============================================================================
+// Officers
+// =============================================================================
+
+message CorporateOfficers {
+  string entity_id = 1;
+  repeated Officer officers = 2;
+  repeated OfficerAction action_history = 3;
+}
+
+message Officer {
+  string officer_id = 1;
+  string name = 2;
+  string title = 3;
+  string email = 4;
+  google.protobuf.Timestamp appointed_at = 5;
+  ottochain.v1.Address appointed_by = 6;
+  OfficerStatus status = 7;
+}
+
+message OfficerAction {
+  string action_type = 1;
+  string officer_id = 2;
+  google.protobuf.Timestamp at = 3;
+  ottochain.v1.Address by = 4;
+}
+
+// =============================================================================
+// Shareholders
+// =============================================================================
+
+message CorporateShareholders {
+  string entity_id = 1;
+  repeated Shareholder shareholders = 2;
+  map<string, int64> voting_power = 3;  // address -> total votes
+  int64 total_voting_power = 4;
+}
+
+message Shareholder {
+  ottochain.v1.Address address = 1;
+  string name = 2;
+  repeated ShareHolding holdings = 3;
+  google.protobuf.Timestamp first_acquired = 4;
+}
+
+message ShareHolding {
+  string class_id = 1;
+  int64 shares = 2;
+  google.protobuf.Timestamp acquired_at = 3;
+}
+
+// =============================================================================
+// Resolution
+// =============================================================================
+
+message CorporateResolution {
+  string resolution_id = 1;
+  string entity_id = 2;
+  string title = 3;
+  string body = 4;
+  string resolution_type = 5;  // BOARD, SHAREHOLDER, UNANIMOUS_WRITTEN
+  ResolutionStatus status = 6;
+  ottochain.v1.Address proposed_by = 7;
+  google.protobuf.Timestamp proposed_at = 8;
+  repeated ResolutionVote votes = 9;
+  google.protobuf.Timestamp adopted_at = 10;
+}
+
+message ResolutionVote {
+  ottochain.v1.Address voter = 1;
+  string vote = 2;  // FOR, AGAINST, ABSTAIN
+  int64 weight = 3;
+  google.protobuf.Timestamp voted_at = 4;
+}
+
+// =============================================================================
+// Securities
+// =============================================================================
+
+message CorporateSecurities {
+  string entity_id = 1;
+  repeated SecurityIssuance issuances = 2;
+  repeated SecurityTransfer transfers = 3;
+}
+
+message SecurityIssuance {
+  string issuance_id = 1;
+  string class_id = 2;
+  ottochain.v1.Address recipient = 3;
+  int64 shares = 4;
+  int64 price_per_share_cents = 5;
+  google.protobuf.Timestamp issued_at = 6;
+  string authorization_resolution_id = 7;
+}
+
+message SecurityTransfer {
+  string transfer_id = 1;
+  string class_id = 2;
+  ottochain.v1.Address from = 3;
+  ottochain.v1.Address to = 4;
+  int64 shares = 5;
+  google.protobuf.Timestamp transferred_at = 6;
+}
+
+// =============================================================================
+// Compliance
+// =============================================================================
+
+message CorporateCompliance {
+  string entity_id = 1;
+  repeated FilingRecord filings = 2;
+  repeated ComplianceRequirement requirements = 3;
+  bool in_good_standing = 4;
+}
+
+message FilingRecord {
+  string filing_id = 1;
+  string filing_type = 2;
+  google.protobuf.Timestamp filed_at = 3;
+  google.protobuf.Timestamp due_date = 4;
+  string status = 5;
+}
+
+message ComplianceRequirement {
+  string requirement_id = 1;
+  string description = 2;
+  string frequency = 3;  // ANNUAL, QUARTERLY, etc.
+  google.protobuf.Timestamp next_due = 4;
+}
+
+// =============================================================================
+// Requests
+// =============================================================================
+
+message CreateEntityRequest {
+  string legal_name = 1;
+  EntityType entity_type = 2;
+  Jurisdiction jurisdiction = 3;
+  RegisteredAgent registered_agent = 4;
+  repeated Incorporator incorporators = 5;
+  repeated ShareClass share_classes = 6;
+}
+
+message AppointDirectorRequest {
+  string entity_id = 1;
+  string name = 2;
+  string email = 3;
+  google.protobuf.Timestamp term_start = 4;
+  google.protobuf.Timestamp term_end = 5;
+  bool is_independent = 6;
+}
+
+message IssueSharesRequest {
+  string entity_id = 1;
+  string class_id = 2;
+  ottochain.v1.Address recipient = 3;
+  int64 shares = 4;
+  int64 price_per_share_cents = 5;
+  string authorization_resolution_id = 6;
+}
+
+message ProposeResolutionRequest {
+  string entity_id = 1;
+  string title = 2;
+  string body = 3;
+  string resolution_type = 4;
+  ottochain.v1.Address proposer = 5;
+}

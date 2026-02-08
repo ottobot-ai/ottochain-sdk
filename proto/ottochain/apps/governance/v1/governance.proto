@@ -1,0 +1,246 @@
+syntax = "proto3";
+
+package ottochain.apps.governance.v1;
+
+import "ottochain/v1/common.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+// =============================================================================
+// Enums
+// =============================================================================
+
+// Type of DAO governance model
+enum DAOType {
+  DAO_TYPE_UNSPECIFIED = 0;
+  DAO_TYPE_SINGLE = 1;      // Single owner controls all actions
+  DAO_TYPE_MULTISIG = 2;    // N-of-M signatures required
+  DAO_TYPE_TOKEN = 3;       // Token-weighted voting
+  DAO_TYPE_THRESHOLD = 4;   // Reputation threshold for participation
+}
+
+// DAO lifecycle status
+enum DAOStatus {
+  DAO_STATUS_UNSPECIFIED = 0;
+  DAO_STATUS_ACTIVE = 1;
+  DAO_STATUS_DISSOLVED = 2;
+}
+
+// Proposal status for voting DAOs
+enum ProposalStatus {
+  PROPOSAL_STATUS_UNSPECIFIED = 0;
+  PROPOSAL_STATUS_PENDING = 1;
+  PROPOSAL_STATUS_VOTING = 2;
+  PROPOSAL_STATUS_QUEUED = 3;
+  PROPOSAL_STATUS_EXECUTED = 4;
+  PROPOSAL_STATUS_REJECTED = 5;
+  PROPOSAL_STATUS_CANCELLED = 6;
+}
+
+// Vote choice
+enum VoteChoice {
+  VOTE_CHOICE_UNSPECIFIED = 0;
+  VOTE_CHOICE_FOR = 1;
+  VOTE_CHOICE_AGAINST = 2;
+  VOTE_CHOICE_ABSTAIN = 3;
+}
+
+// =============================================================================
+// Common Messages
+// =============================================================================
+
+// DAO metadata
+message DAOMetadata {
+  string description = 1;
+  string website = 2;
+  string logo = 3;
+  google.protobuf.Struct extra = 4;
+}
+
+// Proposal for any DAO type
+message Proposal {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+  string action_type = 4;
+  google.protobuf.Struct payload = 5;
+  ottochain.v1.Address proposer = 6;
+  google.protobuf.Timestamp proposed_at = 7;
+  google.protobuf.Timestamp deadline = 8;
+  google.protobuf.Timestamp queued_at = 9;
+  google.protobuf.Timestamp executable_at = 10;
+}
+
+// Vote record
+message Vote {
+  ottochain.v1.Address voter = 1;
+  VoteChoice choice = 2;
+  int64 weight = 3;
+  google.protobuf.Timestamp voted_at = 4;
+}
+
+// Vote tally
+message VoteTally {
+  int64 votes_for = 1;
+  int64 votes_against = 2;
+  int64 votes_abstain = 3;
+  repeated Vote votes = 4;
+}
+
+// =============================================================================
+// Single Owner DAO
+// =============================================================================
+
+message SingleOwnerDAO {
+  string name = 1;
+  ottochain.v1.Address owner = 2;
+  ottochain.v1.Address pending_owner = 3;
+  google.protobuf.Timestamp transfer_initiated_at = 4;
+  repeated SingleOwnerAction actions = 5;
+  repeated OwnershipTransfer ownership_history = 6;
+  DAOMetadata metadata = 7;
+  DAOStatus status = 8;
+}
+
+message SingleOwnerAction {
+  string id = 1;
+  string action_type = 2;
+  google.protobuf.Struct payload = 3;
+  google.protobuf.Timestamp executed_at = 4;
+}
+
+message OwnershipTransfer {
+  ottochain.v1.Address from = 1;
+  ottochain.v1.Address to = 2;
+  google.protobuf.Timestamp at = 3;
+}
+
+// =============================================================================
+// Multisig DAO
+// =============================================================================
+
+message MultisigDAO {
+  string name = 1;
+  repeated ottochain.v1.Address signers = 2;
+  int32 threshold = 3;
+  int64 proposal_ttl_ms = 4;
+  Proposal proposal = 5;
+  map<string, int64> signatures = 6;  // signer address -> timestamp
+  repeated MultisigAction actions = 7;
+  repeated Proposal cancelled_proposals = 8;
+  DAOMetadata metadata = 9;
+  DAOStatus status = 10;
+}
+
+message MultisigAction {
+  Proposal proposal = 1;
+  map<string, int64> signatures = 2;
+  google.protobuf.Timestamp executed_at = 3;
+}
+
+// =============================================================================
+// Token DAO
+// =============================================================================
+
+message TokenDAO {
+  string name = 1;
+  string token_id = 2;
+  map<string, int64> balances = 3;       // address -> balance
+  map<string, string> delegations = 4;   // delegator -> delegatee
+
+  // Governance parameters
+  int64 proposal_threshold = 5;
+  int64 voting_period_ms = 6;
+  int64 timelock_ms = 7;
+  int64 quorum = 8;
+
+  // Current state
+  Proposal proposal = 9;
+  VoteTally votes = 10;
+
+  // History
+  repeated TokenProposalResult executed_proposals = 11;
+  repeated TokenProposalResult rejected_proposals = 12;
+  repeated Proposal cancelled_proposals = 13;
+
+  DAOMetadata metadata = 14;
+  DAOStatus status = 15;
+}
+
+message TokenProposalResult {
+  Proposal proposal = 1;
+  VoteTally votes = 2;
+  google.protobuf.Timestamp finalized_at = 3;
+}
+
+// =============================================================================
+// Threshold DAO
+// =============================================================================
+
+message ThresholdDAO {
+  string name = 1;
+  repeated ottochain.v1.Address members = 2;
+  map<string, int64> member_joined_at = 3;
+
+  // Thresholds
+  int64 member_threshold = 4;
+  int64 vote_threshold = 5;
+  int64 propose_threshold = 6;
+  int64 quorum = 7;
+  int64 voting_period_ms = 8;
+
+  // Current state
+  Proposal proposal = 9;
+  ThresholdVotes votes = 10;
+
+  // History
+  repeated ThresholdHistoryEntry history = 11;
+
+  DAOMetadata metadata = 12;
+  DAOStatus status = 13;
+}
+
+message ThresholdVotes {
+  repeated ottochain.v1.Address votes_for = 1;
+  repeated ottochain.v1.Address votes_against = 2;
+  repeated ottochain.v1.Address votes_abstain = 3;
+}
+
+message ThresholdHistoryEntry {
+  string result_type = 1;  // "executed" | "rejected"
+  Proposal proposal = 2;
+  ThresholdVotes votes = 3;
+  google.protobuf.Timestamp at = 4;
+}
+
+// =============================================================================
+// Requests
+// =============================================================================
+
+message CreateDAORequest {
+  DAOType dao_type = 1;
+  string name = 2;
+  ottochain.v1.Address creator = 3;
+  DAOMetadata metadata = 4;
+  google.protobuf.Struct config = 5;  // Type-specific config (signers, thresholds, etc.)
+}
+
+message ProposeRequest {
+  string dao_id = 1;
+  ottochain.v1.Address proposer = 2;
+  string title = 3;
+  string description = 4;
+  string action_type = 5;
+  google.protobuf.Struct payload = 6;
+}
+
+message VoteRequest {
+  string dao_id = 1;
+  ottochain.v1.Address voter = 2;
+  VoteChoice choice = 3;
+}
+
+message ExecuteRequest {
+  string dao_id = 1;
+  ottochain.v1.Address executor = 2;
+}

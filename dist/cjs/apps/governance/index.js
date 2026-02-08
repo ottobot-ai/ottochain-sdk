@@ -6,6 +6,13 @@
  *
  * @example
  * ```typescript
+ * import { DAOType, DAOStatus, getDAODefinition } from '@ottochain/sdk/apps/governance';
+ *
+ * const multisigDef = getDAODefinition('Multisig');
+ * ```
+ *
+ * @example
+ * ```typescript
  * import { governance } from '@ottochain/sdk/apps';
  *
  * // Create initial state for a 2-of-3 multisig
@@ -41,8 +48,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.thresholdHasQuorum = exports.isMember = exports.meetsThreshold = exports.canPropose = exports.isPassing = exports.hasQuorum = exports.getVotingPower = exports.hasSigned = exports.isSigner = exports.signaturesNeeded = exports.isThresholdMet = exports.createThresholdState = exports.createTokenState = exports.createMultisigState = exports.createSingleOwnerState = exports.getGovernanceDefinition = exports.getDAODefinition = exports.GOVERNANCE_DEFINITIONS = exports.DAO_DEFINITIONS = void 0;
+exports.thresholdHasQuorum = exports.isMember = exports.meetsThreshold = exports.canPropose = exports.isPassing = exports.hasQuorum = exports.getVotingPower = exports.hasSigned = exports.isSigner = exports.signaturesNeeded = exports.isThresholdMet = exports.createThresholdState = exports.createTokenState = exports.createMultisigState = exports.createSingleOwnerState = exports.getGovernanceDefinition = exports.getDAODefinition = exports.GOVERNANCE_DEFINITIONS = exports.DAO_DEFINITIONS = exports.VoteChoiceProto = exports.ProposalStatusProto = exports.DAOStatusProto = exports.DAOTypeProto = void 0;
 __exportStar(require("./types.js"), exports);
+// Proto-generated types (prefixed to avoid conflicts with TS types)
+var governance_pb_js_1 = require("../../generated/ottochain/apps/governance/v1/governance_pb.js");
+Object.defineProperty(exports, "DAOTypeProto", { enumerable: true, get: function () { return governance_pb_js_1.DAOType; } });
+Object.defineProperty(exports, "DAOStatusProto", { enumerable: true, get: function () { return governance_pb_js_1.DAOStatus; } });
+Object.defineProperty(exports, "ProposalStatusProto", { enumerable: true, get: function () { return governance_pb_js_1.ProposalStatus; } });
+Object.defineProperty(exports, "VoteChoiceProto", { enumerable: true, get: function () { return governance_pb_js_1.VoteChoice; } });
 // ---------------------------------------------------------------------------
 // State Machine JSON Definitions
 // ---------------------------------------------------------------------------
