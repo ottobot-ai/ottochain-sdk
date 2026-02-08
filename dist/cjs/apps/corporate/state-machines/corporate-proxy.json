@@ -5,44 +5,94 @@
     "category": "corporate-governance",
     "description": "Proxy state machine managing the grant, use, and revocation of shareholder voting proxies. Supports meeting-specific and general proxies with revocability controls.",
     "context": {
-        "proxyId": { "type": "string", "description": "Unique identifier for this proxy" },
-        "entityId": { "type": "string", "description": "Reference to parent corporate-entity" },
-        "grantorId": { "type": "string", "description": "Shareholder granting the proxy" },
-        "grantorName": { "type": "string" },
+        "proxyId": {
+            "type": "string",
+            "description": "Unique identifier for this proxy"
+        },
+        "entityId": {
+            "type": "string",
+            "description": "Reference to parent corporate-entity"
+        },
+        "grantorId": {
+            "type": "string",
+            "description": "Shareholder granting the proxy"
+        },
+        "grantorName": {
+            "type": "string"
+        },
         "grantorShares": {
             "type": "array",
             "description": "Shares covered by this proxy",
             "items": {
                 "type": "object",
                 "properties": {
-                    "shareClass": { "type": "string" },
-                    "shares": { "type": "integer" },
-                    "votes": { "type": "integer" },
-                    "certificateNumbers": { "type": "array", "items": { "type": "string" }, "nullable": true }
+                    "shareClass": {
+                        "type": "string"
+                    },
+                    "shares": {
+                        "type": "integer"
+                    },
+                    "votes": {
+                        "type": "integer"
+                    },
+                    "certificateNumbers": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "nullable": true
+                    }
                 }
             }
         },
-        "totalVotes": { "type": "integer", "description": "Total votes represented by this proxy" },
-        "holderId": { "type": "string", "description": "Person/entity receiving proxy authority" },
-        "holderName": { "type": "string" },
+        "totalVotes": {
+            "type": "integer",
+            "description": "Total votes represented by this proxy"
+        },
+        "holderId": {
+            "type": "string",
+            "description": "Person/entity receiving proxy authority"
+        },
+        "holderName": {
+            "type": "string"
+        },
         "holderType": {
             "type": "string",
-            "enum": ["INDIVIDUAL", "MANAGEMENT", "INSTITUTIONAL", "PROXY_SOLICITOR"],
+            "enum": [
+                "INDIVIDUAL",
+                "MANAGEMENT",
+                "INSTITUTIONAL",
+                "PROXY_SOLICITOR"
+            ],
             "description": "Type of proxy holder"
         },
         "proxyType": {
             "type": "string",
-            "enum": ["SPECIFIC_MEETING", "GENERAL", "LIMITED"],
+            "enum": [
+                "SPECIFIC_MEETING",
+                "GENERAL",
+                "LIMITED"
+            ],
             "description": "Scope of proxy authority"
         },
         "scope": {
             "type": "object",
             "properties": {
-                "meetingId": { "type": "string", "nullable": true, "description": "For meeting-specific proxies" },
-                "meetingDate": { "type": "string", "format": "date", "nullable": true },
+                "meetingId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "For meeting-specific proxies"
+                },
+                "meetingDate": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true
+                },
                 "agendaItems": {
                     "type": "array",
-                    "items": { "type": "string" },
+                    "items": {
+                        "type": "string"
+                    },
                     "nullable": true,
                     "description": "Specific agenda items proxy covers (null = all)"
                 },
@@ -51,22 +101,44 @@
                     "items": {
                         "type": "object",
                         "properties": {
-                            "agendaItemId": { "type": "string" },
-                            "instruction": { "type": "string", "enum": ["FOR", "AGAINST", "ABSTAIN", "DISCRETIONARY"] },
+                            "agendaItemId": {
+                                "type": "string"
+                            },
+                            "instruction": {
+                                "type": "string",
+                                "enum": [
+                                    "FOR",
+                                    "AGAINST",
+                                    "ABSTAIN",
+                                    "DISCRETIONARY"
+                                ]
+                            },
                             "cumulativeAllocation": {
                                 "type": "object",
-                                "additionalProperties": { "type": "integer" },
+                                "additionalProperties": {
+                                    "type": "integer"
+                                },
                                 "nullable": true,
                                 "description": "For director elections with cumulative voting"
                             }
                         }
                     }
                 },
-                "discretionaryAuthority": { "type": "boolean", "default": false, "description": "Can vote on matters not specified" }
+                "discretionaryAuthority": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Can vote on matters not specified"
+                }
             }
         },
-        "grantDate": { "type": "string", "format": "date" },
-        "effectiveDate": { "type": "string", "format": "date" },
+        "grantDate": {
+            "type": "string",
+            "format": "date"
+        },
+        "effectiveDate": {
+            "type": "string",
+            "format": "date"
+        },
         "expirationDate": {
             "type": "string",
             "format": "date",
@@ -75,26 +147,57 @@
         "revocability": {
             "type": "object",
             "properties": {
-                "isRevocable": { "type": "boolean", "default": true },
+                "isRevocable": {
+                    "type": "boolean",
+                    "default": true
+                },
                 "irrevocableReason": {
                     "type": "string",
-                    "enum": ["COUPLED_WITH_INTEREST", "VOTING_AGREEMENT", "PLEDGE"],
+                    "enum": [
+                        "COUPLED_WITH_INTEREST",
+                        "VOTING_AGREEMENT",
+                        "PLEDGE"
+                    ],
                     "nullable": true,
                     "description": "Reason for irrevocability if applicable"
                 },
-                "irrevocableUntil": { "type": "string", "format": "date", "nullable": true }
+                "irrevocableUntil": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true
+                }
             }
         },
         "proxyCard": {
             "type": "object",
             "description": "Physical or electronic proxy card details",
             "properties": {
-                "cardId": { "type": "string" },
-                "format": { "type": "string", "enum": ["PAPER", "ELECTRONIC", "TELEPHONE"] },
-                "signedDate": { "type": "string", "format": "date" },
-                "signatureVerified": { "type": "boolean", "default": false },
-                "documentRef": { "type": "string" },
-                "controlNumber": { "type": "string", "description": "Unique control number for voting" }
+                "cardId": {
+                    "type": "string"
+                },
+                "format": {
+                    "type": "string",
+                    "enum": [
+                        "PAPER",
+                        "ELECTRONIC",
+                        "TELEPHONE"
+                    ]
+                },
+                "signedDate": {
+                    "type": "string",
+                    "format": "date"
+                },
+                "signatureVerified": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "documentRef": {
+                    "type": "string"
+                },
+                "controlNumber": {
+                    "type": "string",
+                    "description": "Unique control number for voting"
+                }
             }
         },
         "votesExercised": {
@@ -103,12 +206,31 @@
             "items": {
                 "type": "object",
                 "properties": {
-                    "meetingId": { "type": "string" },
-                    "agendaItemId": { "type": "string" },
-                    "voteCast": { "type": "string", "enum": ["FOR", "AGAINST", "ABSTAIN", "WITHHOLD"] },
-                    "voteCount": { "type": "integer" },
-                    "votedAt": { "type": "string", "format": "date-time" },
-                    "votedBy": { "type": "string" }
+                    "meetingId": {
+                        "type": "string"
+                    },
+                    "agendaItemId": {
+                        "type": "string"
+                    },
+                    "voteCast": {
+                        "type": "string",
+                        "enum": [
+                            "FOR",
+                            "AGAINST",
+                            "ABSTAIN",
+                            "WITHHOLD"
+                        ]
+                    },
+                    "voteCount": {
+                        "type": "integer"
+                    },
+                    "votedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "votedBy": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -116,18 +238,37 @@
             "type": "object",
             "nullable": true,
             "properties": {
-                "revokedAt": { "type": "string", "format": "date-time" },
-                "revokedBy": { "type": "string" },
+                "revokedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "revokedBy": {
+                    "type": "string"
+                },
                 "revocationMethod": {
                     "type": "string",
-                    "enum": ["WRITTEN_REVOCATION", "LATER_PROXY", "ATTENDANCE_IN_PERSON", "DEATH_INCAPACITY"],
+                    "enum": [
+                        "WRITTEN_REVOCATION",
+                        "LATER_PROXY",
+                        "ATTENDANCE_IN_PERSON",
+                        "DEATH_INCAPACITY"
+                    ],
                     "description": "How the proxy was revoked"
                 },
-                "supersedingProxyId": { "type": "string", "nullable": true }
+                "supersedingProxyId": {
+                    "type": "string",
+                    "nullable": true
+                }
             }
         },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "updatedAt": { "type": "string", "format": "date-time" }
+        "createdAt": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+        }
     },
     "states": {
         "GRANTED": {
@@ -178,20 +319,62 @@
             "event": {
                 "name": "grant_proxy",
                 "payload": {
-                    "proxyId": { "type": "string", "required": true },
-                    "entityId": { "type": "string", "required": true },
-                    "grantorId": { "type": "string", "required": true },
-                    "grantorName": { "type": "string", "required": true },
-                    "grantorShares": { "type": "array", "required": true },
-                    "holderId": { "type": "string", "required": true },
-                    "holderName": { "type": "string", "required": true },
-                    "holderType": { "type": "string", "default": "INDIVIDUAL" },
-                    "proxyType": { "type": "string", "required": true },
-                    "scope": { "type": "object", "required": true },
-                    "effectiveDate": { "type": "string", "format": "date", "required": true },
-                    "expirationDate": { "type": "string", "format": "date", "required": true },
-                    "revocability": { "type": "object" },
-                    "proxyCard": { "type": "object" }
+                    "proxyId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "entityId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "grantorId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "grantorName": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "grantorShares": {
+                        "type": "array",
+                        "required": true
+                    },
+                    "holderId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "holderName": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "holderType": {
+                        "type": "string",
+                        "default": "INDIVIDUAL"
+                    },
+                    "proxyType": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "scope": {
+                        "type": "object",
+                        "required": true
+                    },
+                    "effectiveDate": {
+                        "type": "string",
+                        "format": "date",
+                        "required": true
+                    },
+                    "expirationDate": {
+                        "type": "string",
+                        "format": "date",
+                        "required": true
+                    },
+                    "revocability": {
+                        "type": "object"
+                    },
+                    "proxyCard": {
+                        "type": "object"
+                    }
                 }
             },
             "guards": [
@@ -311,7 +494,11 @@
             "event": {
                 "name": "activate",
                 "payload": {
-                    "activatedAt": { "type": "string", "format": "date-time", "required": true }
+                    "activatedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "required": true
+                    }
                 }
             },
             "guards": [
@@ -342,10 +529,29 @@
             "event": {
                 "name": "vote_proxy",
                 "payload": {
-                    "meetingId": { "type": "string", "required": true },
-                    "agendaItemId": { "type": "string", "required": true },
-                    "voteCast": { "type": "string", "enum": ["FOR", "AGAINST", "ABSTAIN", "WITHHOLD"], "required": true },
-                    "votedBy": { "type": "string", "required": true, "description": "Proxy holder exercising vote" }
+                    "meetingId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "agendaItemId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "voteCast": {
+                        "type": "string",
+                        "enum": [
+                            "FOR",
+                            "AGAINST",
+                            "ABSTAIN",
+                            "WITHHOLD"
+                        ],
+                        "required": true
+                    },
+                    "votedBy": {
+                        "type": "string",
+                        "required": true,
+                        "description": "Proxy holder exercising vote"
+                    }
                 }
             },
             "guards": [
@@ -402,8 +608,15 @@
             "event": {
                 "name": "complete_voting",
                 "payload": {
-                    "completedAt": { "type": "string", "format": "date-time", "required": true },
-                    "meetingId": { "type": "string", "required": true }
+                    "completedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "required": true
+                    },
+                    "meetingId": {
+                        "type": "string",
+                        "required": true
+                    }
                 }
             },
             "effects": [
@@ -420,15 +633,26 @@
             ]
         },
         "revoke_proxy": {
-            "from": ["GRANTED", "ACTIVE"],
+            "from": [
+                "GRANTED",
+                "ACTIVE"
+            ],
             "to": "REVOKED",
             "description": "Revoke the proxy",
             "event": {
                 "name": "revoke_proxy",
                 "payload": {
-                    "revokedBy": { "type": "string", "required": true },
-                    "revocationMethod": { "type": "string", "required": true },
-                    "supersedingProxyId": { "type": "string" }
+                    "revokedBy": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "revocationMethod": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "supersedingProxyId": {
+                        "type": "string"
+                    }
                 }
             },
             "guards": [
@@ -466,13 +690,20 @@
             ]
         },
         "expire": {
-            "from": ["GRANTED", "ACTIVE"],
+            "from": [
+                "GRANTED",
+                "ACTIVE"
+            ],
             "to": "EXPIRED",
             "description": "Proxy expires",
             "event": {
                 "name": "expire",
                 "payload": {
-                    "expiredAt": { "type": "string", "format": "date-time", "required": true }
+                    "expiredAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "required": true
+                    }
                 }
             },
             "guards": [
@@ -493,14 +724,24 @@
             ]
         },
         "supersede": {
-            "from": ["GRANTED", "ACTIVE"],
+            "from": [
+                "GRANTED",
+                "ACTIVE"
+            ],
             "to": "REVOKED",
             "description": "Proxy superseded by a later proxy from the same grantor",
             "event": {
                 "name": "supersede",
                 "payload": {
-                    "supersedingProxyId": { "type": "string", "required": true },
-                    "supersededAt": { "type": "string", "format": "date-time", "required": true }
+                    "supersedingProxyId": {
+                        "type": "string",
+                        "required": true
+                    },
+                    "supersededAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "required": true
+                    }
                 }
             },
             "effects": [
@@ -545,7 +786,13 @@
     "metadata": {
         "author": "OttoChain",
         "license": "MIT",
-        "tags": ["corporate", "governance", "proxy", "voting", "shareholders"],
+        "tags": [
+            "corporate",
+            "governance",
+            "proxy",
+            "voting",
+            "shareholders"
+        ],
         "documentation": "https://ottochain.dev/docs/corporate/proxy"
     }
 }

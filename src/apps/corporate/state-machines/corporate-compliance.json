@@ -4,24 +4,49 @@
   "version": "1.0.0",
   "category": "corporate-governance",
   "description": "Regulatory compliance state machine tracking filing obligations, deadlines, deficiencies, and remediation for corporate entities. Manages annual reports, franchise taxes, registered agent status, and other state/federal requirements.",
-
   "context": {
-    "complianceId": { "type": "string", "description": "Unique identifier for this compliance record" },
-    "entityId": { "type": "string", "description": "Reference to parent corporate-entity" },
+    "complianceId": {
+      "type": "string",
+      "description": "Unique identifier for this compliance record"
+    },
+    "entityId": {
+      "type": "string",
+      "description": "Reference to parent corporate-entity"
+    },
     "jurisdiction": {
       "type": "object",
       "properties": {
-        "state": { "type": "string", "description": "Primary jurisdiction" },
-        "country": { "type": "string", "default": "USA" },
+        "state": {
+          "type": "string",
+          "description": "Primary jurisdiction"
+        },
+        "country": {
+          "type": "string",
+          "default": "USA"
+        },
         "foreignQualifications": {
           "type": "array",
           "items": {
             "type": "object",
             "properties": {
-              "state": { "type": "string" },
-              "qualificationDate": { "type": "string", "format": "date" },
-              "foreignEntityNumber": { "type": "string" },
-              "status": { "type": "string", "enum": ["ACTIVE", "WITHDRAWN", "REVOKED"] }
+              "state": {
+                "type": "string"
+              },
+              "qualificationDate": {
+                "type": "string",
+                "format": "date"
+              },
+              "foreignEntityNumber": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "ACTIVE",
+                  "WITHDRAWN",
+                  "REVOKED"
+                ]
+              }
             }
           }
         }
@@ -33,20 +58,70 @@
       "items": {
         "type": "object",
         "properties": {
-          "filingId": { "type": "string" },
+          "filingId": {
+            "type": "string"
+          },
           "filingType": {
             "type": "string",
-            "enum": ["ANNUAL_REPORT", "BIENNIAL_REPORT", "FRANCHISE_TAX", "STATEMENT_OF_INFORMATION", "REGISTERED_AGENT_UPDATE", "FOREIGN_QUALIFICATION_ANNUAL", "BENEFICIAL_OWNERSHIP", "FEDERAL_TAX_RETURN", "STATE_TAX_RETURN", "SEC_FILING", "OTHER"]
+            "enum": [
+              "ANNUAL_REPORT",
+              "BIENNIAL_REPORT",
+              "FRANCHISE_TAX",
+              "STATEMENT_OF_INFORMATION",
+              "REGISTERED_AGENT_UPDATE",
+              "FOREIGN_QUALIFICATION_ANNUAL",
+              "BENEFICIAL_OWNERSHIP",
+              "FEDERAL_TAX_RETURN",
+              "STATE_TAX_RETURN",
+              "SEC_FILING",
+              "OTHER"
+            ]
           },
-          "jurisdiction": { "type": "string" },
-          "frequency": { "type": "string", "enum": ["ANNUAL", "BIENNIAL", "QUARTERLY", "ONE_TIME"] },
-          "dueDate": { "type": "string", "format": "date" },
-          "gracePeriodDays": { "type": "integer", "default": 0 },
-          "estimatedFee": { "type": "number" },
-          "status": { "type": "string", "enum": ["PENDING", "FILED", "OVERDUE", "WAIVED"] },
-          "lastFiledDate": { "type": "string", "format": "date", "nullable": true },
-          "confirmationNumber": { "type": "string", "nullable": true },
-          "notes": { "type": "string", "nullable": true }
+          "jurisdiction": {
+            "type": "string"
+          },
+          "frequency": {
+            "type": "string",
+            "enum": [
+              "ANNUAL",
+              "BIENNIAL",
+              "QUARTERLY",
+              "ONE_TIME"
+            ]
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "gracePeriodDays": {
+            "type": "integer",
+            "default": 0
+          },
+          "estimatedFee": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "FILED",
+              "OVERDUE",
+              "WAIVED"
+            ]
+          },
+          "lastFiledDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "confirmationNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          }
         }
       }
     },
@@ -56,15 +131,37 @@
       "items": {
         "type": "object",
         "properties": {
-          "jurisdiction": { "type": "string" },
-          "agentName": { "type": "string" },
-          "agentAddress": { "type": "object" },
-          "agentPhone": { "type": "string" },
-          "agentEmail": { "type": "string" },
-          "effectiveDate": { "type": "string", "format": "date" },
-          "isThirdParty": { "type": "boolean" },
-          "serviceAgreementRef": { "type": "string", "nullable": true },
-          "renewalDate": { "type": "string", "format": "date", "nullable": true }
+          "jurisdiction": {
+            "type": "string"
+          },
+          "agentName": {
+            "type": "string"
+          },
+          "agentAddress": {
+            "type": "object"
+          },
+          "agentPhone": {
+            "type": "string"
+          },
+          "agentEmail": {
+            "type": "string"
+          },
+          "effectiveDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "isThirdParty": {
+            "type": "boolean"
+          },
+          "serviceAgreementRef": {
+            "type": "string",
+            "nullable": true
+          },
+          "renewalDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          }
         }
       }
     },
@@ -73,20 +170,61 @@
       "items": {
         "type": "object",
         "properties": {
-          "deficiencyId": { "type": "string" },
-          "jurisdiction": { "type": "string" },
+          "deficiencyId": {
+            "type": "string"
+          },
+          "jurisdiction": {
+            "type": "string"
+          },
           "type": {
             "type": "string",
-            "enum": ["ANNUAL_REPORT_MISSING", "FRANCHISE_TAX_DELINQUENT", "REGISTERED_AGENT_LAPSE", "BENEFICIAL_OWNERSHIP_MISSING", "OTHER"]
+            "enum": [
+              "ANNUAL_REPORT_MISSING",
+              "FRANCHISE_TAX_DELINQUENT",
+              "REGISTERED_AGENT_LAPSE",
+              "BENEFICIAL_OWNERSHIP_MISSING",
+              "OTHER"
+            ]
           },
-          "description": { "type": "string" },
-          "noticeDate": { "type": "string", "format": "date" },
-          "noticeRef": { "type": "string" },
-          "cureDeadline": { "type": "string", "format": "date" },
-          "penaltyAmount": { "type": "number", "nullable": true },
-          "status": { "type": "string", "enum": ["OPEN", "IN_PROGRESS", "CURED", "PENALTY_ASSESSED", "ADMINISTRATIVE_ACTION"] },
-          "curedDate": { "type": "string", "format": "date", "nullable": true },
-          "curativeActions": { "type": "array", "items": { "type": "string" } }
+          "description": {
+            "type": "string"
+          },
+          "noticeDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "noticeRef": {
+            "type": "string"
+          },
+          "cureDeadline": {
+            "type": "string",
+            "format": "date"
+          },
+          "penaltyAmount": {
+            "type": "number",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "IN_PROGRESS",
+              "CURED",
+              "PENALTY_ASSESSED",
+              "ADMINISTRATIVE_ACTION"
+            ]
+          },
+          "curedDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "curativeActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
         }
       }
     },
@@ -95,15 +233,34 @@
       "items": {
         "type": "object",
         "properties": {
-          "filingId": { "type": "string" },
-          "filingType": { "type": "string" },
-          "jurisdiction": { "type": "string" },
-          "filedDate": { "type": "string", "format": "date" },
-          "periodCovered": { "type": "string" },
-          "confirmationNumber": { "type": "string" },
-          "feePaid": { "type": "number" },
-          "filedBy": { "type": "string" },
-          "documentRef": { "type": "string" }
+          "filingId": {
+            "type": "string"
+          },
+          "filingType": {
+            "type": "string"
+          },
+          "jurisdiction": {
+            "type": "string"
+          },
+          "filedDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "periodCovered": {
+            "type": "string"
+          },
+          "confirmationNumber": {
+            "type": "string"
+          },
+          "feePaid": {
+            "type": "number"
+          },
+          "filedBy": {
+            "type": "string"
+          },
+          "documentRef": {
+            "type": "string"
+          }
         }
       }
     },
@@ -112,29 +269,65 @@
       "items": {
         "type": "object",
         "properties": {
-          "certificateId": { "type": "string" },
-          "jurisdiction": { "type": "string" },
-          "issuedDate": { "type": "string", "format": "date" },
-          "validThrough": { "type": "string", "format": "date", "nullable": true },
-          "documentRef": { "type": "string" },
-          "purpose": { "type": "string" }
+          "certificateId": {
+            "type": "string"
+          },
+          "jurisdiction": {
+            "type": "string"
+          },
+          "issuedDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "validThrough": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "documentRef": {
+            "type": "string"
+          },
+          "purpose": {
+            "type": "string"
+          }
         }
       }
     },
     "complianceScore": {
       "type": "object",
       "properties": {
-        "overallStatus": { "type": "string", "enum": ["GREEN", "YELLOW", "RED"] },
-        "openDeficiencies": { "type": "integer" },
-        "overdueFilings": { "type": "integer" },
-        "upcomingDeadlines30Days": { "type": "integer" },
-        "lastAssessedDate": { "type": "string", "format": "date" }
+        "overallStatus": {
+          "type": "string",
+          "enum": [
+            "GREEN",
+            "YELLOW",
+            "RED"
+          ]
+        },
+        "openDeficiencies": {
+          "type": "integer"
+        },
+        "overdueFilings": {
+          "type": "integer"
+        },
+        "upcomingDeadlines30Days": {
+          "type": "integer"
+        },
+        "lastAssessedDate": {
+          "type": "string",
+          "format": "date"
+        }
       }
     },
-    "createdAt": { "type": "string", "format": "date-time" },
-    "updatedAt": { "type": "string", "format": "date-time" }
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
   },
-
   "states": {
     "COMPLIANT": {
       "description": "Entity is in good standing in all jurisdictions with no open deficiencies",
@@ -165,9 +358,7 @@
       }
     }
   },
-
   "initialState": "COMPLIANT",
-
   "transitions": {
     "initialize_compliance": {
       "from": null,
@@ -176,11 +367,25 @@
       "event": {
         "name": "initialize_compliance",
         "payload": {
-          "complianceId": { "type": "string", "required": true },
-          "entityId": { "type": "string", "required": true },
-          "jurisdiction": { "type": "object", "required": true },
-          "registeredAgents": { "type": "array", "required": true },
-          "filingCalendar": { "type": "array" }
+          "complianceId": {
+            "type": "string",
+            "required": true
+          },
+          "entityId": {
+            "type": "string",
+            "required": true
+          },
+          "jurisdiction": {
+            "type": "object",
+            "required": true
+          },
+          "registeredAgents": {
+            "type": "array",
+            "required": true
+          },
+          "filingCalendar": {
+            "type": "array"
+          }
         }
       },
       "effects": [
@@ -237,21 +442,46 @@
         }
       ]
     },
-
     "add_filing_requirement": {
-      "from": ["COMPLIANT", "REVIEW_PENDING", "DEFICIENT", "REMEDIATED"],
+      "from": [
+        "COMPLIANT",
+        "REVIEW_PENDING",
+        "DEFICIENT",
+        "REMEDIATED"
+      ],
       "to": null,
       "description": "Add a new filing requirement to the calendar",
       "event": {
         "name": "add_filing_requirement",
         "payload": {
-          "filingId": { "type": "string", "required": true },
-          "filingType": { "type": "string", "required": true },
-          "jurisdiction": { "type": "string", "required": true },
-          "frequency": { "type": "string", "required": true },
-          "dueDate": { "type": "string", "format": "date", "required": true },
-          "gracePeriodDays": { "type": "integer", "default": 0 },
-          "estimatedFee": { "type": "number" }
+          "filingId": {
+            "type": "string",
+            "required": true
+          },
+          "filingType": {
+            "type": "string",
+            "required": true
+          },
+          "jurisdiction": {
+            "type": "string",
+            "required": true
+          },
+          "frequency": {
+            "type": "string",
+            "required": true
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date",
+            "required": true
+          },
+          "gracePeriodDays": {
+            "type": "integer",
+            "default": 0
+          },
+          "estimatedFee": {
+            "type": "number"
+          }
         }
       },
       "effects": [
@@ -271,23 +501,54 @@
         }
       ]
     },
-
     "file_annual_report": {
-      "from": ["COMPLIANT", "REVIEW_PENDING", "DEFICIENT", "REMEDIATED"],
+      "from": [
+        "COMPLIANT",
+        "REVIEW_PENDING",
+        "DEFICIENT",
+        "REMEDIATED"
+      ],
       "to": null,
       "description": "Record filing of annual report",
       "event": {
         "name": "file_annual_report",
         "payload": {
-          "filingId": { "type": "string", "required": true },
-          "jurisdiction": { "type": "string", "required": true },
-          "filedDate": { "type": "string", "format": "date", "required": true },
-          "periodCovered": { "type": "string", "required": true },
-          "confirmationNumber": { "type": "string", "required": true },
-          "feePaid": { "type": "number", "required": true },
-          "filedBy": { "type": "string", "required": true },
-          "documentRef": { "type": "string" },
-          "nextDueDate": { "type": "string", "format": "date" }
+          "filingId": {
+            "type": "string",
+            "required": true
+          },
+          "jurisdiction": {
+            "type": "string",
+            "required": true
+          },
+          "filedDate": {
+            "type": "string",
+            "format": "date",
+            "required": true
+          },
+          "periodCovered": {
+            "type": "string",
+            "required": true
+          },
+          "confirmationNumber": {
+            "type": "string",
+            "required": true
+          },
+          "feePaid": {
+            "type": "number",
+            "required": true
+          },
+          "filedBy": {
+            "type": "string",
+            "required": true
+          },
+          "documentRef": {
+            "type": "string"
+          },
+          "nextDueDate": {
+            "type": "string",
+            "format": "date"
+          }
         }
       },
       "effects": [
@@ -330,21 +591,47 @@
         }
       ]
     },
-
     "pay_franchise_tax": {
-      "from": ["COMPLIANT", "REVIEW_PENDING", "DEFICIENT", "REMEDIATED"],
+      "from": [
+        "COMPLIANT",
+        "REVIEW_PENDING",
+        "DEFICIENT",
+        "REMEDIATED"
+      ],
       "to": null,
       "description": "Record payment of franchise tax",
       "event": {
         "name": "pay_franchise_tax",
         "payload": {
-          "filingId": { "type": "string", "required": true },
-          "jurisdiction": { "type": "string", "required": true },
-          "paidDate": { "type": "string", "format": "date", "required": true },
-          "taxYear": { "type": "integer", "required": true },
-          "amountPaid": { "type": "number", "required": true },
-          "confirmationNumber": { "type": "string", "required": true },
-          "nextDueDate": { "type": "string", "format": "date" }
+          "filingId": {
+            "type": "string",
+            "required": true
+          },
+          "jurisdiction": {
+            "type": "string",
+            "required": true
+          },
+          "paidDate": {
+            "type": "string",
+            "format": "date",
+            "required": true
+          },
+          "taxYear": {
+            "type": "integer",
+            "required": true
+          },
+          "amountPaid": {
+            "type": "number",
+            "required": true
+          },
+          "confirmationNumber": {
+            "type": "string",
+            "required": true
+          },
+          "nextDueDate": {
+            "type": "string",
+            "format": "date"
+          }
         }
       },
       "effects": [
@@ -385,23 +672,51 @@
         }
       ]
     },
-
     "update_registered_agent": {
-      "from": ["COMPLIANT", "REVIEW_PENDING", "DEFICIENT", "REMEDIATED"],
+      "from": [
+        "COMPLIANT",
+        "REVIEW_PENDING",
+        "DEFICIENT",
+        "REMEDIATED"
+      ],
       "to": null,
       "description": "Update registered agent for a jurisdiction",
       "event": {
         "name": "update_registered_agent",
         "payload": {
-          "jurisdiction": { "type": "string", "required": true },
-          "agentName": { "type": "string", "required": true },
-          "agentAddress": { "type": "object", "required": true },
-          "agentPhone": { "type": "string" },
-          "agentEmail": { "type": "string" },
-          "effectiveDate": { "type": "string", "format": "date", "required": true },
-          "isThirdParty": { "type": "boolean", "default": false },
-          "serviceAgreementRef": { "type": "string" },
-          "filingConfirmation": { "type": "string" }
+          "jurisdiction": {
+            "type": "string",
+            "required": true
+          },
+          "agentName": {
+            "type": "string",
+            "required": true
+          },
+          "agentAddress": {
+            "type": "object",
+            "required": true
+          },
+          "agentPhone": {
+            "type": "string"
+          },
+          "agentEmail": {
+            "type": "string"
+          },
+          "effectiveDate": {
+            "type": "string",
+            "format": "date",
+            "required": true
+          },
+          "isThirdParty": {
+            "type": "boolean",
+            "default": false
+          },
+          "serviceAgreementRef": {
+            "type": "string"
+          },
+          "filingConfirmation": {
+            "type": "string"
+          }
         }
       },
       "effects": [
@@ -433,7 +748,6 @@
         }
       ]
     },
-
     "flag_review": {
       "from": "COMPLIANT",
       "to": "REVIEW_PENDING",
@@ -441,9 +755,17 @@
       "event": {
         "name": "flag_review",
         "payload": {
-          "reason": { "type": "string", "required": true },
-          "filingId": { "type": "string" },
-          "dueDate": { "type": "string", "format": "date" }
+          "reason": {
+            "type": "string",
+            "required": true
+          },
+          "filingId": {
+            "type": "string"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date"
+          }
         }
       },
       "effects": [
@@ -463,22 +785,49 @@
         }
       ]
     },
-
     "note_deficiency": {
-      "from": ["COMPLIANT", "REVIEW_PENDING", "REMEDIATED"],
+      "from": [
+        "COMPLIANT",
+        "REVIEW_PENDING",
+        "REMEDIATED"
+      ],
       "to": "DEFICIENT",
       "description": "Record a compliance deficiency",
       "event": {
         "name": "note_deficiency",
         "payload": {
-          "deficiencyId": { "type": "string", "required": true },
-          "jurisdiction": { "type": "string", "required": true },
-          "type": { "type": "string", "required": true },
-          "description": { "type": "string", "required": true },
-          "noticeDate": { "type": "string", "format": "date", "required": true },
-          "noticeRef": { "type": "string" },
-          "cureDeadline": { "type": "string", "format": "date", "required": true },
-          "penaltyAmount": { "type": "number" }
+          "deficiencyId": {
+            "type": "string",
+            "required": true
+          },
+          "jurisdiction": {
+            "type": "string",
+            "required": true
+          },
+          "type": {
+            "type": "string",
+            "required": true
+          },
+          "description": {
+            "type": "string",
+            "required": true
+          },
+          "noticeDate": {
+            "type": "string",
+            "format": "date",
+            "required": true
+          },
+          "noticeRef": {
+            "type": "string"
+          },
+          "cureDeadline": {
+            "type": "string",
+            "format": "date",
+            "required": true
+          },
+          "penaltyAmount": {
+            "type": "number"
+          }
         }
       },
       "effects": [
@@ -521,7 +870,6 @@
         }
       ]
     },
-
     "record_curative_action": {
       "from": "DEFICIENT",
       "to": "DEFICIENT",
@@ -529,10 +877,22 @@
       "event": {
         "name": "record_curative_action",
         "payload": {
-          "deficiencyId": { "type": "string", "required": true },
-          "action": { "type": "string", "required": true },
-          "actionDate": { "type": "string", "format": "date", "required": true },
-          "documentRef": { "type": "string" }
+          "deficiencyId": {
+            "type": "string",
+            "required": true
+          },
+          "action": {
+            "type": "string",
+            "required": true
+          },
+          "actionDate": {
+            "type": "string",
+            "format": "date",
+            "required": true
+          },
+          "documentRef": {
+            "type": "string"
+          }
         }
       },
       "effects": [
@@ -550,11 +910,12 @@
           "path": "deficiencies",
           "matchKey": "deficiencyId",
           "matchValue": "{{ event.deficiencyId }}",
-          "updates": { "status": "IN_PROGRESS" }
+          "updates": {
+            "status": "IN_PROGRESS"
+          }
         }
       ]
     },
-
     "cure_deficiency": {
       "from": "DEFICIENT",
       "to": "REMEDIATED",
@@ -562,10 +923,21 @@
       "event": {
         "name": "cure_deficiency",
         "payload": {
-          "deficiencyId": { "type": "string", "required": true },
-          "curedDate": { "type": "string", "format": "date", "required": true },
-          "confirmationNumber": { "type": "string" },
-          "penaltyPaid": { "type": "number" }
+          "deficiencyId": {
+            "type": "string",
+            "required": true
+          },
+          "curedDate": {
+            "type": "string",
+            "format": "date",
+            "required": true
+          },
+          "confirmationNumber": {
+            "type": "string"
+          },
+          "penaltyPaid": {
+            "type": "number"
+          }
         }
       },
       "guards": [
@@ -607,7 +979,6 @@
         }
       ]
     },
-
     "cure_deficiency_remaining": {
       "from": "DEFICIENT",
       "to": "DEFICIENT",
@@ -615,9 +986,18 @@
       "event": {
         "name": "cure_deficiency_remaining",
         "payload": {
-          "deficiencyId": { "type": "string", "required": true },
-          "curedDate": { "type": "string", "format": "date", "required": true },
-          "confirmationNumber": { "type": "string" }
+          "deficiencyId": {
+            "type": "string",
+            "required": true
+          },
+          "curedDate": {
+            "type": "string",
+            "format": "date",
+            "required": true
+          },
+          "confirmationNumber": {
+            "type": "string"
+          }
         }
       },
       "guards": [
@@ -644,7 +1024,6 @@
         }
       ]
     },
-
     "confirm_good_standing": {
       "from": "REMEDIATED",
       "to": "COMPLIANT",
@@ -652,10 +1031,22 @@
       "event": {
         "name": "confirm_good_standing",
         "payload": {
-          "confirmationDate": { "type": "string", "format": "date", "required": true },
-          "jurisdiction": { "type": "string", "required": true },
-          "certificateRef": { "type": "string" },
-          "validThrough": { "type": "string", "format": "date" }
+          "confirmationDate": {
+            "type": "string",
+            "format": "date",
+            "required": true
+          },
+          "jurisdiction": {
+            "type": "string",
+            "required": true
+          },
+          "certificateRef": {
+            "type": "string"
+          },
+          "validThrough": {
+            "type": "string",
+            "format": "date"
+          }
         }
       },
       "effects": [
@@ -696,7 +1087,6 @@
         }
       ]
     },
-
     "clear_review": {
       "from": "REVIEW_PENDING",
       "to": "COMPLIANT",
@@ -704,9 +1094,18 @@
       "event": {
         "name": "clear_review",
         "payload": {
-          "clearedDate": { "type": "string", "format": "date", "required": true },
-          "reviewedBy": { "type": "string", "required": true },
-          "notes": { "type": "string" }
+          "clearedDate": {
+            "type": "string",
+            "format": "date",
+            "required": true
+          },
+          "reviewedBy": {
+            "type": "string",
+            "required": true
+          },
+          "notes": {
+            "type": "string"
+          }
         }
       },
       "effects": [
@@ -722,20 +1121,39 @@
         }
       ]
     },
-
     "request_good_standing_certificate": {
-      "from": ["COMPLIANT"],
+      "from": [
+        "COMPLIANT"
+      ],
       "to": "COMPLIANT",
       "description": "Request and record receipt of good standing certificate",
       "event": {
         "name": "request_good_standing_certificate",
         "payload": {
-          "certificateId": { "type": "string", "required": true },
-          "jurisdiction": { "type": "string", "required": true },
-          "issuedDate": { "type": "string", "format": "date", "required": true },
-          "validThrough": { "type": "string", "format": "date" },
-          "documentRef": { "type": "string", "required": true },
-          "purpose": { "type": "string" }
+          "certificateId": {
+            "type": "string",
+            "required": true
+          },
+          "jurisdiction": {
+            "type": "string",
+            "required": true
+          },
+          "issuedDate": {
+            "type": "string",
+            "format": "date",
+            "required": true
+          },
+          "validThrough": {
+            "type": "string",
+            "format": "date"
+          },
+          "documentRef": {
+            "type": "string",
+            "required": true
+          },
+          "purpose": {
+            "type": "string"
+          }
         }
       },
       "effects": [
@@ -753,18 +1171,33 @@
         }
       ]
     },
-
     "add_foreign_qualification": {
-      "from": ["COMPLIANT", "REVIEW_PENDING"],
+      "from": [
+        "COMPLIANT",
+        "REVIEW_PENDING"
+      ],
       "to": null,
       "description": "Record foreign qualification in a new state",
       "event": {
         "name": "add_foreign_qualification",
         "payload": {
-          "state": { "type": "string", "required": true },
-          "qualificationDate": { "type": "string", "format": "date", "required": true },
-          "foreignEntityNumber": { "type": "string", "required": true },
-          "registeredAgent": { "type": "object", "required": true }
+          "state": {
+            "type": "string",
+            "required": true
+          },
+          "qualificationDate": {
+            "type": "string",
+            "format": "date",
+            "required": true
+          },
+          "foreignEntityNumber": {
+            "type": "string",
+            "required": true
+          },
+          "registeredAgent": {
+            "type": "object",
+            "required": true
+          }
         }
       },
       "effects": [
@@ -794,16 +1227,27 @@
         }
       ]
     },
-
     "assess_compliance": {
-      "from": ["COMPLIANT", "REVIEW_PENDING", "DEFICIENT", "REMEDIATED"],
+      "from": [
+        "COMPLIANT",
+        "REVIEW_PENDING",
+        "DEFICIENT",
+        "REMEDIATED"
+      ],
       "to": null,
       "description": "Perform compliance assessment and update score",
       "event": {
         "name": "assess_compliance",
         "payload": {
-          "assessmentDate": { "type": "string", "format": "date", "required": true },
-          "assessedBy": { "type": "string", "required": true }
+          "assessmentDate": {
+            "type": "string",
+            "format": "date",
+            "required": true
+          },
+          "assessedBy": {
+            "type": "string",
+            "required": true
+          }
         }
       },
       "effects": [
@@ -835,7 +1279,6 @@
       ]
     }
   },
-
   "crossMachineRefs": {
     "entity": {
       "machine": "corporate-entity",
@@ -847,11 +1290,16 @@
       }
     }
   },
-
   "metadata": {
     "author": "OttoChain",
     "license": "MIT",
-    "tags": ["corporate", "governance", "compliance", "regulatory", "filings"],
+    "tags": [
+      "corporate",
+      "governance",
+      "compliance",
+      "regulatory",
+      "filings"
+    ],
     "documentation": "https://ottochain.dev/docs/corporate/compliance"
   }
 }

@@ -443,21 +443,5 @@
       },
       "dependencies": []
     }
-  ],
-  "initialDataTemplate": {
-    "_comment": "Template for creating new oracle registrations",
-    "schema": "Oracle",
-    "address": "<address>",
-    "stake": 0,
-    "minStake": 100,
-    "reputation": {
-      "accuracy": 100,
-      "totalResolutions": 0,
-      "disputesWon": 0,
-      "disputesLost": 0
-    },
-    "domains": [],
-    "slashingHistory": [],
-    "status": "UNREGISTERED"
-  }
+  ]
 }

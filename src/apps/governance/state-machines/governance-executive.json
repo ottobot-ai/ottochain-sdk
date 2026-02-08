@@ -427,30 +427,5 @@
       },
       "dependencies": []
     }
-  ],
-  "initialDataTemplate": {
-    "schema": "Executive",
-    "mandateId": "",
-    "mandateFrom": "",
-    "mandate": {
-      "title": "",
-      "description": "",
-      "actions": [],
-      "deadline": null,
-      "budget": null
-    },
-    "constitutionId": "",
-    "executiveHead": null,
-    "executors": [],
-    "config": {
-      "executiveVeto": false,
-      "requirePlan": true,
-      "progressReportingInterval": null
-    },
-    "plan": null,
-    "milestones": [],
-    "outcome": null,
-    "finalReport": null,
-    "status": "RECEIVED"
-  }
+  ]
 }

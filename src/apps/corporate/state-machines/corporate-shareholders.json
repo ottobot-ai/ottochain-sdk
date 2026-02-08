@@ -4,50 +4,113 @@
   "version": "1.0.0",
   "category": "corporate-governance",
   "description": "Shareholder meeting state machine managing annual/special meetings, record dates, proxy periods, voting, and certification of results. Supports multiple share classes and cumulative voting.",
-
   "context": {
-    "meetingId": { "type": "string", "description": "Unique identifier for this shareholder meeting" },
-    "entityId": { "type": "string", "description": "Reference to parent corporate-entity" },
-    "meetingType": { 
-      "type": "string", 
-      "enum": ["ANNUAL", "SPECIAL"],
+    "meetingId": {
+      "type": "string",
+      "description": "Unique identifier for this shareholder meeting"
+    },
+    "entityId": {
+      "type": "string",
+      "description": "Reference to parent corporate-entity"
+    },
+    "meetingType": {
+      "type": "string",
+      "enum": [
+        "ANNUAL",
+        "SPECIAL"
+      ],
       "description": "Annual meetings are required; special meetings called for specific purposes"
     },
-    "fiscalYear": { "type": "integer", "description": "Fiscal year for annual meetings" },
-    "scheduledDate": { "type": "string", "format": "date-time" },
-    "location": { 
+    "fiscalYear": {
+      "type": "integer",
+      "description": "Fiscal year for annual meetings"
+    },
+    "scheduledDate": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "location": {
       "type": "object",
       "properties": {
-        "physical": { "type": "string", "nullable": true },
-        "virtualUrl": { "type": "string", "nullable": true },
-        "isHybrid": { "type": "boolean", "default": false }
+        "physical": {
+          "type": "string",
+          "nullable": true
+        },
+        "virtualUrl": {
+          "type": "string",
+          "nullable": true
+        },
+        "isHybrid": {
+          "type": "boolean",
+          "default": false
+        }
       }
     },
-    "calledBy": { 
+    "calledBy": {
       "type": "object",
       "properties": {
-        "type": { "type": "string", "enum": ["BOARD", "SHAREHOLDERS", "COURT"] },
-        "resolutionRef": { "type": "string", "nullable": true },
-        "shareholderPetitionRef": { "type": "string", "nullable": true },
-        "courtOrderRef": { "type": "string", "nullable": true }
+        "type": {
+          "type": "string",
+          "enum": [
+            "BOARD",
+            "SHAREHOLDERS",
+            "COURT"
+          ]
+        },
+        "resolutionRef": {
+          "type": "string",
+          "nullable": true
+        },
+        "shareholderPetitionRef": {
+          "type": "string",
+          "nullable": true
+        },
+        "courtOrderRef": {
+          "type": "string",
+          "nullable": true
+        }
       }
     },
     "noticeInfo": {
       "type": "object",
       "properties": {
-        "noticeSentDate": { "type": "string", "format": "date" },
-        "noticeMethod": { "type": "string", "enum": ["MAIL", "EMAIL", "ELECTRONIC_ACCESS"] },
-        "minimumNoticeDays": { "type": "integer", "default": 10 },
-        "maximumNoticeDays": { "type": "integer", "default": 60 }
+        "noticeSentDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "noticeMethod": {
+          "type": "string",
+          "enum": [
+            "MAIL",
+            "EMAIL",
+            "ELECTRONIC_ACCESS"
+          ]
+        },
+        "minimumNoticeDays": {
+          "type": "integer",
+          "default": 10
+        },
+        "maximumNoticeDays": {
+          "type": "integer",
+          "default": 60
+        }
       }
     },
     "recordDate": {
       "type": "object",
       "nullable": true,
       "properties": {
-        "date": { "type": "string", "format": "date" },
-        "setByBoardOn": { "type": "string", "format": "date" },
-        "resolutionRef": { "type": "string" }
+        "date": {
+          "type": "string",
+          "format": "date"
+        },
+        "setByBoardOn": {
+          "type": "string",
+          "format": "date"
+        },
+        "resolutionRef": {
+          "type": "string"
+        }
       }
     },
     "eligibleVoters": {
@@ -56,33 +119,71 @@
       "items": {
         "type": "object",
         "properties": {
-          "shareholderId": { "type": "string" },
-          "name": { "type": "string" },
+          "shareholderId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
           "shareholdings": {
             "type": "array",
             "items": {
               "type": "object",
               "properties": {
-                "shareClass": { "type": "string" },
-                "shares": { "type": "integer" },
-                "votes": { "type": "integer", "description": "Votes this holding represents" }
+                "shareClass": {
+                  "type": "string"
+                },
+                "shares": {
+                  "type": "integer"
+                },
+                "votes": {
+                  "type": "integer",
+                  "description": "Votes this holding represents"
+                }
               }
             }
           },
-          "totalVotes": { "type": "integer" },
-          "proxyGrantedTo": { "type": "string", "nullable": true, "description": "Proxy holder ID if proxied" },
-          "hasVoted": { "type": "boolean", "default": false }
+          "totalVotes": {
+            "type": "integer"
+          },
+          "proxyGrantedTo": {
+            "type": "string",
+            "nullable": true,
+            "description": "Proxy holder ID if proxied"
+          },
+          "hasVoted": {
+            "type": "boolean",
+            "default": false
+          }
         }
       }
     },
     "quorumRequirements": {
       "type": "object",
       "properties": {
-        "type": { "type": "string", "enum": ["SHARES_REPRESENTED", "SHARES_OUTSTANDING"] },
-        "threshold": { "type": "number", "default": 0.5, "description": "Fraction required for quorum" },
-        "sharesRequired": { "type": "integer" },
-        "sharesRepresented": { "type": "integer", "default": 0 },
-        "quorumMet": { "type": "boolean", "default": false }
+        "type": {
+          "type": "string",
+          "enum": [
+            "SHARES_REPRESENTED",
+            "SHARES_OUTSTANDING"
+          ]
+        },
+        "threshold": {
+          "type": "number",
+          "default": 0.5,
+          "description": "Fraction required for quorum"
+        },
+        "sharesRequired": {
+          "type": "integer"
+        },
+        "sharesRepresented": {
+          "type": "integer",
+          "default": 0
+        },
+        "quorumMet": {
+          "type": "boolean",
+          "default": false
+        }
       }
     },
     "agenda": {
@@ -90,23 +191,68 @@
       "items": {
         "type": "object",
         "properties": {
-          "itemId": { "type": "string" },
-          "itemNumber": { "type": "integer" },
-          "title": { "type": "string" },
-          "description": { "type": "string" },
-          "type": { 
-            "type": "string", 
-            "enum": ["DIRECTOR_ELECTION", "AUDITOR_RATIFICATION", "SAY_ON_PAY", "CHARTER_AMENDMENT", "MERGER", "STOCK_PLAN", "SHAREHOLDER_PROPOSAL", "OTHER"] 
+          "itemId": {
+            "type": "string"
           },
-          "voteRequired": { 
-            "type": "string", 
-            "enum": ["PLURALITY", "MAJORITY_CAST", "MAJORITY_OUTSTANDING", "SUPERMAJORITY", "UNANIMOUS"],
+          "itemNumber": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "DIRECTOR_ELECTION",
+              "AUDITOR_RATIFICATION",
+              "SAY_ON_PAY",
+              "CHARTER_AMENDMENT",
+              "MERGER",
+              "STOCK_PLAN",
+              "SHAREHOLDER_PROPOSAL",
+              "OTHER"
+            ]
+          },
+          "voteRequired": {
+            "type": "string",
+            "enum": [
+              "PLURALITY",
+              "MAJORITY_CAST",
+              "MAJORITY_OUTSTANDING",
+              "SUPERMAJORITY",
+              "UNANIMOUS"
+            ],
             "description": "Vote threshold for approval"
           },
-          "supermajorityThreshold": { "type": "number", "nullable": true },
-          "eligibleClasses": { "type": "array", "items": { "type": "string" }, "description": "Share classes that can vote on this item" },
-          "allowCumulativeVoting": { "type": "boolean", "default": false, "description": "For director elections" },
-          "status": { "type": "string", "enum": ["PENDING", "VOTING", "CLOSED", "APPROVED", "REJECTED"] }
+          "supermajorityThreshold": {
+            "type": "number",
+            "nullable": true
+          },
+          "eligibleClasses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Share classes that can vote on this item"
+          },
+          "allowCumulativeVoting": {
+            "type": "boolean",
+            "default": false,
+            "description": "For director elections"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "VOTING",
+              "CLOSED",
+              "APPROVED",
+              "REJECTED"
+            ]
+          }
         }
       }
     },
@@ -114,14 +260,28 @@
       "type": "object",
       "nullable": true,
       "properties": {
-        "startDate": { "type": "string", "format": "date" },
-        "endDate": { "type": "string", "format": "date-time", "description": "Usually meeting start time" },
+        "startDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "endDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Usually meeting start time"
+        },
         "proxyMaterials": {
           "type": "object",
           "properties": {
-            "proxyStatementRef": { "type": "string" },
-            "formOfProxyRef": { "type": "string" },
-            "annualReportRef": { "type": "string", "nullable": true }
+            "proxyStatementRef": {
+              "type": "string"
+            },
+            "formOfProxyRef": {
+              "type": "string"
+            },
+            "annualReportRef": {
+              "type": "string",
+              "nullable": true
+            }
           }
         }
       }
@@ -131,23 +291,56 @@
       "items": {
         "type": "object",
         "properties": {
-          "voteId": { "type": "string" },
-          "agendaItemId": { "type": "string" },
-          "voterId": { "type": "string", "description": "Shareholder or proxy holder ID" },
-          "shareholderId": { "type": "string", "description": "Beneficial owner" },
-          "shareClass": { "type": "string" },
-          "votesFor": { "type": "integer", "default": 0 },
-          "votesAgainst": { "type": "integer", "default": 0 },
-          "votesAbstain": { "type": "integer", "default": 0 },
-          "votesWithhold": { "type": "integer", "default": 0, "description": "For director elections" },
-          "cumulativeVoteAllocation": { 
-            "type": "object", 
-            "additionalProperties": { "type": "integer" },
+          "voteId": {
+            "type": "string"
+          },
+          "agendaItemId": {
+            "type": "string"
+          },
+          "voterId": {
+            "type": "string",
+            "description": "Shareholder or proxy holder ID"
+          },
+          "shareholderId": {
+            "type": "string",
+            "description": "Beneficial owner"
+          },
+          "shareClass": {
+            "type": "string"
+          },
+          "votesFor": {
+            "type": "integer",
+            "default": 0
+          },
+          "votesAgainst": {
+            "type": "integer",
+            "default": 0
+          },
+          "votesAbstain": {
+            "type": "integer",
+            "default": 0
+          },
+          "votesWithhold": {
+            "type": "integer",
+            "default": 0,
+            "description": "For director elections"
+          },
+          "cumulativeVoteAllocation": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer"
+            },
             "nullable": true,
             "description": "For cumulative voting: candidate ID -> votes allocated"
           },
-          "viaProxy": { "type": "boolean", "default": false },
-          "timestamp": { "type": "string", "format": "date-time" }
+          "viaProxy": {
+            "type": "boolean",
+            "default": false
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       }
     },
@@ -156,20 +349,49 @@
       "items": {
         "type": "object",
         "properties": {
-          "agendaItemId": { "type": "string" },
-          "forVotes": { "type": "integer", "default": 0 },
-          "againstVotes": { "type": "integer", "default": 0 },
-          "abstainVotes": { "type": "integer", "default": 0 },
-          "withholdVotes": { "type": "integer", "default": 0 },
-          "brokerNonVotes": { "type": "integer", "default": 0 },
-          "candidateVotes": { 
-            "type": "object", 
-            "additionalProperties": { "type": "integer" },
+          "agendaItemId": {
+            "type": "string"
+          },
+          "forVotes": {
+            "type": "integer",
+            "default": 0
+          },
+          "againstVotes": {
+            "type": "integer",
+            "default": 0
+          },
+          "abstainVotes": {
+            "type": "integer",
+            "default": 0
+          },
+          "withholdVotes": {
+            "type": "integer",
+            "default": 0
+          },
+          "brokerNonVotes": {
+            "type": "integer",
+            "default": 0
+          },
+          "candidateVotes": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer"
+            },
             "nullable": true,
             "description": "For director elections: candidate ID -> total votes"
           },
-          "result": { "type": "string", "enum": ["APPROVED", "REJECTED", "PENDING"] },
-          "certified": { "type": "boolean", "default": false }
+          "result": {
+            "type": "string",
+            "enum": [
+              "APPROVED",
+              "REJECTED",
+              "PENDING"
+            ]
+          },
+          "certified": {
+            "type": "boolean",
+            "default": false
+          }
         }
       }
     },
@@ -177,38 +399,82 @@
       "type": "object",
       "nullable": true,
       "properties": {
-        "name": { "type": "string" },
-        "company": { "type": "string", "nullable": true },
-        "appointedBy": { "type": "string" },
-        "appointmentDate": { "type": "string", "format": "date" }
+        "name": {
+          "type": "string"
+        },
+        "company": {
+          "type": "string",
+          "nullable": true
+        },
+        "appointedBy": {
+          "type": "string"
+        },
+        "appointmentDate": {
+          "type": "string",
+          "format": "date"
+        }
       }
     },
     "sessionInfo": {
       "type": "object",
       "nullable": true,
       "properties": {
-        "openedAt": { "type": "string", "format": "date-time" },
-        "chairPerson": { "type": "string" },
-        "secretaryPresent": { "type": "string" },
-        "pollsOpenedAt": { "type": "string", "format": "date-time", "nullable": true },
-        "pollsClosedAt": { "type": "string", "format": "date-time", "nullable": true },
-        "adjournedAt": { "type": "string", "format": "date-time", "nullable": true },
-        "minutesRef": { "type": "string", "nullable": true }
+        "openedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "chairPerson": {
+          "type": "string"
+        },
+        "secretaryPresent": {
+          "type": "string"
+        },
+        "pollsOpenedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true
+        },
+        "pollsClosedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true
+        },
+        "adjournedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true
+        },
+        "minutesRef": {
+          "type": "string",
+          "nullable": true
+        }
       }
     },
     "certification": {
       "type": "object",
       "nullable": true,
       "properties": {
-        "certifiedAt": { "type": "string", "format": "date-time" },
-        "certifiedBy": { "type": "string" },
-        "certificateRef": { "type": "string" }
+        "certifiedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "certifiedBy": {
+          "type": "string"
+        },
+        "certificateRef": {
+          "type": "string"
+        }
       }
     },
-    "createdAt": { "type": "string", "format": "date-time" },
-    "updatedAt": { "type": "string", "format": "date-time" }
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
   },
-
   "states": {
     "SCHEDULED": {
       "description": "Meeting has been scheduled but record date not yet set",
@@ -254,9 +520,7 @@
       "terminal": true
     }
   },
-
   "initialState": "SCHEDULED",
-
   "transitions": {
     "schedule_annual": {
       "from": null,
@@ -265,12 +529,30 @@
       "event": {
         "name": "schedule_annual",
         "payload": {
-          "meetingId": { "type": "string", "required": true },
-          "entityId": { "type": "string", "required": true },
-          "fiscalYear": { "type": "integer", "required": true },
-          "scheduledDate": { "type": "string", "format": "date-time", "required": true },
-          "location": { "type": "object" },
-          "boardResolutionRef": { "type": "string", "required": true }
+          "meetingId": {
+            "type": "string",
+            "required": true
+          },
+          "entityId": {
+            "type": "string",
+            "required": true
+          },
+          "fiscalYear": {
+            "type": "integer",
+            "required": true
+          },
+          "scheduledDate": {
+            "type": "string",
+            "format": "date-time",
+            "required": true
+          },
+          "location": {
+            "type": "object"
+          },
+          "boardResolutionRef": {
+            "type": "string",
+            "required": true
+          }
         }
       },
       "guards": [
@@ -333,7 +615,6 @@
         }
       ]
     },
-
     "schedule_special": {
       "from": null,
       "to": "SCHEDULED",
@@ -341,14 +622,42 @@
       "event": {
         "name": "schedule_special",
         "payload": {
-          "meetingId": { "type": "string", "required": true },
-          "entityId": { "type": "string", "required": true },
-          "scheduledDate": { "type": "string", "format": "date-time", "required": true },
-          "location": { "type": "object" },
-          "purpose": { "type": "string", "required": true, "description": "Specific purpose for special meeting" },
-          "calledByType": { "type": "string", "enum": ["BOARD", "SHAREHOLDERS", "COURT"], "required": true },
-          "resolutionRef": { "type": "string" },
-          "petitionRef": { "type": "string" }
+          "meetingId": {
+            "type": "string",
+            "required": true
+          },
+          "entityId": {
+            "type": "string",
+            "required": true
+          },
+          "scheduledDate": {
+            "type": "string",
+            "format": "date-time",
+            "required": true
+          },
+          "location": {
+            "type": "object"
+          },
+          "purpose": {
+            "type": "string",
+            "required": true,
+            "description": "Specific purpose for special meeting"
+          },
+          "calledByType": {
+            "type": "string",
+            "enum": [
+              "BOARD",
+              "SHAREHOLDERS",
+              "COURT"
+            ],
+            "required": true
+          },
+          "resolutionRef": {
+            "type": "string"
+          },
+          "petitionRef": {
+            "type": "string"
+          }
         }
       },
       "effects": [
@@ -387,7 +696,6 @@
         }
       ]
     },
-
     "set_record_date": {
       "from": "SCHEDULED",
       "to": "RECORD_DATE_SET",
@@ -395,8 +703,15 @@
       "event": {
         "name": "set_record_date",
         "payload": {
-          "recordDate": { "type": "string", "format": "date", "required": true },
-          "resolutionRef": { "type": "string", "required": true }
+          "recordDate": {
+            "type": "string",
+            "format": "date",
+            "required": true
+          },
+          "resolutionRef": {
+            "type": "string",
+            "required": true
+          }
         }
       },
       "guards": [
@@ -426,7 +741,6 @@
         }
       ]
     },
-
     "register_eligible_shareholders": {
       "from": "RECORD_DATE_SET",
       "to": "RECORD_DATE_SET",
@@ -434,19 +748,28 @@
       "event": {
         "name": "register_eligible_shareholders",
         "payload": {
-          "shareholders": { 
-            "type": "array", 
+          "shareholders": {
+            "type": "array",
             "required": true,
             "items": {
               "type": "object",
               "properties": {
-                "shareholderId": { "type": "string" },
-                "name": { "type": "string" },
-                "shareholdings": { "type": "array" }
+                "shareholderId": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "shareholdings": {
+                  "type": "array"
+                }
               }
             }
           },
-          "totalSharesOutstanding": { "type": "integer", "required": true }
+          "totalSharesOutstanding": {
+            "type": "integer",
+            "required": true
+          }
         }
       },
       "effects": [
@@ -462,7 +785,6 @@
         }
       ]
     },
-
     "open_proxy_period": {
       "from": "RECORD_DATE_SET",
       "to": "PROXY_PERIOD",
@@ -470,11 +792,26 @@
       "event": {
         "name": "open_proxy_period",
         "payload": {
-          "startDate": { "type": "string", "format": "date", "required": true },
-          "proxyStatementRef": { "type": "string", "required": true },
-          "formOfProxyRef": { "type": "string", "required": true },
-          "annualReportRef": { "type": "string" },
-          "agenda": { "type": "array", "required": true }
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "required": true
+          },
+          "proxyStatementRef": {
+            "type": "string",
+            "required": true
+          },
+          "formOfProxyRef": {
+            "type": "string",
+            "required": true
+          },
+          "annualReportRef": {
+            "type": "string"
+          },
+          "agenda": {
+            "type": "array",
+            "required": true
+          }
         }
       },
       "effects": [
@@ -511,21 +848,46 @@
         }
       ]
     },
-
     "add_agenda_item": {
-      "from": ["SCHEDULED", "RECORD_DATE_SET", "PROXY_PERIOD"],
+      "from": [
+        "SCHEDULED",
+        "RECORD_DATE_SET",
+        "PROXY_PERIOD"
+      ],
       "to": null,
       "description": "Add an item to the meeting agenda (e.g., shareholder proposal)",
       "event": {
         "name": "add_agenda_item",
         "payload": {
-          "itemId": { "type": "string", "required": true },
-          "title": { "type": "string", "required": true },
-          "description": { "type": "string" },
-          "type": { "type": "string", "required": true },
-          "voteRequired": { "type": "string", "required": true },
-          "eligibleClasses": { "type": "array", "items": { "type": "string" } },
-          "allowCumulativeVoting": { "type": "boolean", "default": false }
+          "itemId": {
+            "type": "string",
+            "required": true
+          },
+          "title": {
+            "type": "string",
+            "required": true
+          },
+          "description": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "required": true
+          },
+          "voteRequired": {
+            "type": "string",
+            "required": true
+          },
+          "eligibleClasses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowCumulativeVoting": {
+            "type": "boolean",
+            "default": false
+          }
         }
       },
       "effects": [
@@ -546,7 +908,6 @@
         }
       ]
     },
-
     "open_meeting": {
       "from": "PROXY_PERIOD",
       "to": "IN_SESSION",
@@ -554,11 +915,26 @@
       "event": {
         "name": "open_meeting",
         "payload": {
-          "openedAt": { "type": "string", "format": "date-time", "required": true },
-          "chairPerson": { "type": "string", "required": true },
-          "secretaryPresent": { "type": "string", "required": true },
-          "inspectorOfElections": { "type": "object" },
-          "initialQuorumCount": { "type": "integer", "required": true }
+          "openedAt": {
+            "type": "string",
+            "format": "date-time",
+            "required": true
+          },
+          "chairPerson": {
+            "type": "string",
+            "required": true
+          },
+          "secretaryPresent": {
+            "type": "string",
+            "required": true
+          },
+          "inspectorOfElections": {
+            "type": "object"
+          },
+          "initialQuorumCount": {
+            "type": "integer",
+            "required": true
+          }
         }
       },
       "guards": [
@@ -603,7 +979,6 @@
         }
       ]
     },
-
     "open_polls": {
       "from": "IN_SESSION",
       "to": "VOTING",
@@ -611,7 +986,11 @@
       "event": {
         "name": "open_polls",
         "payload": {
-          "pollsOpenedAt": { "type": "string", "format": "date-time", "required": true }
+          "pollsOpenedAt": {
+            "type": "string",
+            "format": "date-time",
+            "required": true
+          }
         }
       },
       "effects": [
@@ -623,11 +1002,12 @@
         {
           "type": "UPDATE_ARRAY_ALL",
           "path": "agenda",
-          "updates": { "status": "VOTING" }
+          "updates": {
+            "status": "VOTING"
+          }
         }
       ]
     },
-
     "cast_vote": {
       "from": "VOTING",
       "to": "VOTING",
@@ -635,17 +1015,50 @@
       "event": {
         "name": "cast_vote",
         "payload": {
-          "voteId": { "type": "string", "required": true },
-          "agendaItemId": { "type": "string", "required": true },
-          "voterId": { "type": "string", "required": true },
-          "shareholderId": { "type": "string", "required": true },
-          "shareClass": { "type": "string", "required": true },
-          "votesFor": { "type": "integer", "default": 0 },
-          "votesAgainst": { "type": "integer", "default": 0 },
-          "votesAbstain": { "type": "integer", "default": 0 },
-          "votesWithhold": { "type": "integer", "default": 0 },
-          "cumulativeVoteAllocation": { "type": "object", "nullable": true },
-          "viaProxy": { "type": "boolean", "default": false }
+          "voteId": {
+            "type": "string",
+            "required": true
+          },
+          "agendaItemId": {
+            "type": "string",
+            "required": true
+          },
+          "voterId": {
+            "type": "string",
+            "required": true
+          },
+          "shareholderId": {
+            "type": "string",
+            "required": true
+          },
+          "shareClass": {
+            "type": "string",
+            "required": true
+          },
+          "votesFor": {
+            "type": "integer",
+            "default": 0
+          },
+          "votesAgainst": {
+            "type": "integer",
+            "default": 0
+          },
+          "votesAbstain": {
+            "type": "integer",
+            "default": 0
+          },
+          "votesWithhold": {
+            "type": "integer",
+            "default": 0
+          },
+          "cumulativeVoteAllocation": {
+            "type": "object",
+            "nullable": true
+          },
+          "viaProxy": {
+            "type": "boolean",
+            "default": false
+          }
         }
       },
       "guards": [
@@ -694,11 +1107,12 @@
           "path": "eligibleVoters",
           "matchKey": "shareholderId",
           "matchValue": "{{ event.shareholderId }}",
-          "updates": { "hasVoted": true }
+          "updates": {
+            "hasVoted": true
+          }
         }
       ]
     },
-
     "close_polls": {
       "from": "VOTING",
       "to": "IN_SESSION",
@@ -706,7 +1120,11 @@
       "event": {
         "name": "close_polls",
         "payload": {
-          "pollsClosedAt": { "type": "string", "format": "date-time", "required": true }
+          "pollsClosedAt": {
+            "type": "string",
+            "format": "date-time",
+            "required": true
+          }
         }
       },
       "effects": [
@@ -718,7 +1136,9 @@
         {
           "type": "UPDATE_ARRAY_ALL",
           "path": "agenda",
-          "updates": { "status": "CLOSED" }
+          "updates": {
+            "status": "CLOSED"
+          }
         },
         {
           "type": "COMPUTE_TALLIES",
@@ -727,7 +1147,6 @@
         }
       ]
     },
-
     "certify_results": {
       "from": "IN_SESSION",
       "to": "CLOSED",
@@ -735,20 +1154,40 @@
       "event": {
         "name": "certify_results",
         "payload": {
-          "certifiedAt": { "type": "string", "format": "date-time", "required": true },
-          "certifiedBy": { "type": "string", "required": true },
-          "certificateRef": { "type": "string", "required": true },
-          "results": { 
+          "certifiedAt": {
+            "type": "string",
+            "format": "date-time",
+            "required": true
+          },
+          "certifiedBy": {
+            "type": "string",
+            "required": true
+          },
+          "certificateRef": {
+            "type": "string",
+            "required": true
+          },
+          "results": {
             "type": "array",
             "items": {
               "type": "object",
               "properties": {
-                "agendaItemId": { "type": "string" },
-                "result": { "type": "string", "enum": ["APPROVED", "REJECTED"] }
+                "agendaItemId": {
+                  "type": "string"
+                },
+                "result": {
+                  "type": "string",
+                  "enum": [
+                    "APPROVED",
+                    "REJECTED"
+                  ]
+                }
               }
             }
           },
-          "minutesRef": { "type": "string" }
+          "minutesRef": {
+            "type": "string"
+          }
         }
       },
       "effects": [
@@ -779,7 +1218,7 @@
             "path": "voteTallies",
             "matchKey": "agendaItemId",
             "matchValue": "{{ item.agendaItemId }}",
-            "updates": { 
+            "updates": {
               "result": "{{ item.result }}",
               "certified": true
             }
@@ -795,17 +1234,30 @@
         }
       ]
     },
-
     "adjourn_without_action": {
-      "from": ["IN_SESSION", "VOTING"],
+      "from": [
+        "IN_SESSION",
+        "VOTING"
+      ],
       "to": "CLOSED",
       "description": "Adjourn meeting without completing agenda (e.g., quorum lost)",
       "event": {
         "name": "adjourn_without_action",
         "payload": {
-          "adjournedAt": { "type": "string", "format": "date-time", "required": true },
-          "reason": { "type": "string", "required": true },
-          "adjournedTo": { "type": "string", "format": "date-time", "nullable": true }
+          "adjournedAt": {
+            "type": "string",
+            "format": "date-time",
+            "required": true
+          },
+          "reason": {
+            "type": "string",
+            "required": true
+          },
+          "adjournedTo": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
         }
       },
       "effects": [
@@ -826,7 +1278,6 @@
       ]
     }
   },
-
   "crossMachineRefs": {
     "entity": {
       "machine": "corporate-entity",
@@ -849,11 +1300,17 @@
       "foreignKey": "entityId"
     }
   },
-
   "metadata": {
     "author": "OttoChain",
     "license": "MIT",
-    "tags": ["corporate", "governance", "shareholders", "voting", "meetings", "proxy"],
+    "tags": [
+      "corporate",
+      "governance",
+      "shareholders",
+      "voting",
+      "meetings",
+      "proxy"
+    ],
     "documentation": "https://ottochain.dev/docs/corporate/shareholders"
   }
 }

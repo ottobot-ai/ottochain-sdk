@@ -609,35 +609,5 @@
       },
       "dependencies": []
     }
-  ],
-  "initialDataTemplate": {
-    "schema": "Judiciary",
-    "caseType": "dispute | challenge | interpretation | review",
-    "caseNumber": "",
-    "plaintiff": null,
-    "defendant": null,
-    "interestedParties": [],
-    "claim": {
-      "summary": "",
-      "facts": [],
-      "legalBasis": [],
-      "reliefSought": []
-    },
-    "targetFiberId": null,
-    "constitutionId": null,
-    "judges": [],
-    "assignedJudges": [],
-    "quorum": 1,
-    "config": {
-      "allowAppeals": true,
-      "appealWindowMs": 604800000,
-      "expedited": false
-    },
-    "emergencyStay": null,
-    "submissions": [],
-    "votes": {},
-    "ruling": null,
-    "appeal": null,
-    "status": "FILED"
-  }
+  ]
 }

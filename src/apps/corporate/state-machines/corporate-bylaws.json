@@ -4,31 +4,68 @@
   "version": "1.0.0",
   "category": "corporate-governance",
   "description": "Bylaws state machine tracking the adoption, amendment, and restatement of corporate bylaws. Maintains version history and amendment requirements.",
-
   "context": {
-    "bylawsId": { "type": "string", "description": "Unique identifier for this bylaws instance" },
-    "entityId": { "type": "string", "description": "Reference to parent corporate-entity" },
-    "currentVersion": { "type": "string", "description": "Current version number (semantic versioning)" },
-    "originalAdoptionDate": { "type": "string", "format": "date" },
-    "lastAmendedDate": { "type": "string", "format": "date", "nullable": true },
-    "documentRef": { "type": "string", "description": "Reference to current bylaws document" },
+    "bylawsId": {
+      "type": "string",
+      "description": "Unique identifier for this bylaws instance"
+    },
+    "entityId": {
+      "type": "string",
+      "description": "Reference to parent corporate-entity"
+    },
+    "currentVersion": {
+      "type": "string",
+      "description": "Current version number (semantic versioning)"
+    },
+    "originalAdoptionDate": {
+      "type": "string",
+      "format": "date"
+    },
+    "lastAmendedDate": {
+      "type": "string",
+      "format": "date",
+      "nullable": true
+    },
+    "documentRef": {
+      "type": "string",
+      "description": "Reference to current bylaws document"
+    },
     "sections": {
       "type": "array",
       "description": "Bylaws organized by section",
       "items": {
         "type": "object",
         "properties": {
-          "sectionId": { "type": "string" },
-          "sectionNumber": { "type": "string", "description": "e.g., 'Article III, Section 2'" },
-          "title": { "type": "string" },
-          "content": { "type": "string" },
+          "sectionId": {
+            "type": "string"
+          },
+          "sectionNumber": {
+            "type": "string",
+            "description": "e.g., 'Article III, Section 2'"
+          },
+          "title": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
           "amendmentRequirement": {
             "type": "string",
-            "enum": ["BOARD_ONLY", "BOARD_OR_SHAREHOLDERS", "SHAREHOLDERS_ONLY", "SUPERMAJORITY_SHAREHOLDERS"],
+            "enum": [
+              "BOARD_ONLY",
+              "BOARD_OR_SHAREHOLDERS",
+              "SHAREHOLDERS_ONLY",
+              "SUPERMAJORITY_SHAREHOLDERS"
+            ],
             "description": "Who can amend this section"
           },
-          "supermajorityThreshold": { "type": "number", "nullable": true },
-          "lastModifiedVersion": { "type": "string" }
+          "supermajorityThreshold": {
+            "type": "number",
+            "nullable": true
+          },
+          "lastModifiedVersion": {
+            "type": "string"
+          }
         }
       }
     },
@@ -39,44 +76,82 @@
         "boardSize": {
           "type": "object",
           "properties": {
-            "minimum": { "type": "integer" },
-            "maximum": { "type": "integer" },
-            "sectionRef": { "type": "string" }
+            "minimum": {
+              "type": "integer"
+            },
+            "maximum": {
+              "type": "integer"
+            },
+            "sectionRef": {
+              "type": "string"
+            }
           }
         },
         "quorumRequirements": {
           "type": "object",
           "properties": {
-            "boardQuorum": { "type": "number" },
-            "shareholderQuorum": { "type": "number" },
-            "sectionRef": { "type": "string" }
+            "boardQuorum": {
+              "type": "number"
+            },
+            "shareholderQuorum": {
+              "type": "number"
+            },
+            "sectionRef": {
+              "type": "string"
+            }
           }
         },
         "meetingNotice": {
           "type": "object",
           "properties": {
-            "annualMeetingNotice": { "type": "integer", "description": "Days of notice required" },
-            "specialMeetingNotice": { "type": "integer" },
-            "boardMeetingNotice": { "type": "integer" },
-            "sectionRef": { "type": "string" }
+            "annualMeetingNotice": {
+              "type": "integer",
+              "description": "Days of notice required"
+            },
+            "specialMeetingNotice": {
+              "type": "integer"
+            },
+            "boardMeetingNotice": {
+              "type": "integer"
+            },
+            "sectionRef": {
+              "type": "string"
+            }
           }
         },
         "indemnification": {
           "type": "object",
           "properties": {
-            "directorsIndemnified": { "type": "boolean" },
-            "officersIndemnified": { "type": "boolean" },
-            "mandatory": { "type": "boolean" },
-            "advancementOfExpenses": { "type": "boolean" },
-            "sectionRef": { "type": "string" }
+            "directorsIndemnified": {
+              "type": "boolean"
+            },
+            "officersIndemnified": {
+              "type": "boolean"
+            },
+            "mandatory": {
+              "type": "boolean"
+            },
+            "advancementOfExpenses": {
+              "type": "boolean"
+            },
+            "sectionRef": {
+              "type": "string"
+            }
           }
         },
         "specialMeetingThreshold": {
           "type": "object",
           "properties": {
-            "boardCanCall": { "type": "boolean" },
-            "shareholderThreshold": { "type": "number", "description": "% of shares to call special meeting" },
-            "sectionRef": { "type": "string" }
+            "boardCanCall": {
+              "type": "boolean"
+            },
+            "shareholderThreshold": {
+              "type": "number",
+              "description": "% of shares to call special meeting"
+            },
+            "sectionRef": {
+              "type": "string"
+            }
           }
         }
       }
@@ -85,16 +160,51 @@
       "type": "object",
       "nullable": true,
       "properties": {
-        "amendmentId": { "type": "string" },
-        "description": { "type": "string" },
-        "proposedBy": { "type": "string" },
-        "proposedDate": { "type": "string", "format": "date" },
-        "sectionsAffected": { "type": "array", "items": { "type": "string" } },
-        "proposedChanges": { "type": "array", "items": { "type": "object" } },
-        "approvalRequired": { "type": "string" },
-        "boardApprovalRef": { "type": "string", "nullable": true },
-        "shareholderApprovalRef": { "type": "string", "nullable": true },
-        "status": { "type": "string", "enum": ["PROPOSED", "BOARD_APPROVED", "SHAREHOLDER_APPROVED", "REJECTED"] }
+        "amendmentId": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "proposedBy": {
+          "type": "string"
+        },
+        "proposedDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "sectionsAffected": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "proposedChanges": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "approvalRequired": {
+          "type": "string"
+        },
+        "boardApprovalRef": {
+          "type": "string",
+          "nullable": true
+        },
+        "shareholderApprovalRef": {
+          "type": "string",
+          "nullable": true
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "PROPOSED",
+            "BOARD_APPROVED",
+            "SHAREHOLDER_APPROVED",
+            "REJECTED"
+          ]
+        }
       }
     },
     "amendmentHistory": {
@@ -102,22 +212,56 @@
       "items": {
         "type": "object",
         "properties": {
-          "amendmentId": { "type": "string" },
-          "version": { "type": "string" },
-          "description": { "type": "string" },
-          "sectionsAffected": { "type": "array", "items": { "type": "string" } },
-          "effectiveDate": { "type": "string", "format": "date" },
-          "approvedBy": { "type": "string", "enum": ["BOARD", "SHAREHOLDERS", "BOTH"] },
-          "boardResolutionRef": { "type": "string", "nullable": true },
-          "shareholderResolutionRef": { "type": "string", "nullable": true },
-          "documentRef": { "type": "string" }
+          "amendmentId": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "sectionsAffected": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "effectiveDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "approvedBy": {
+            "type": "string",
+            "enum": [
+              "BOARD",
+              "SHAREHOLDERS",
+              "BOTH"
+            ]
+          },
+          "boardResolutionRef": {
+            "type": "string",
+            "nullable": true
+          },
+          "shareholderResolutionRef": {
+            "type": "string",
+            "nullable": true
+          },
+          "documentRef": {
+            "type": "string"
+          }
         }
       }
     },
-    "createdAt": { "type": "string", "format": "date-time" },
-    "updatedAt": { "type": "string", "format": "date-time" }
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
   },
-
   "states": {
     "DRAFT": {
       "description": "Initial bylaws being drafted prior to incorporation or adoption",
@@ -141,9 +285,7 @@
       }
     }
   },
-
   "initialState": "DRAFT",
-
   "transitions": {
     "adopt": {
       "from": "DRAFT",
@@ -152,12 +294,34 @@
       "event": {
         "name": "adopt",
         "payload": {
-          "adoptionDate": { "type": "string", "format": "date", "required": true },
-          "adoptedBy": { "type": "string", "enum": ["INCORPORATORS", "INITIAL_BOARD"], "required": true },
-          "resolutionRef": { "type": "string", "required": true },
-          "documentRef": { "type": "string", "required": true },
-          "sections": { "type": "array", "required": true },
-          "keyProvisions": { "type": "object" }
+          "adoptionDate": {
+            "type": "string",
+            "format": "date",
+            "required": true
+          },
+          "adoptedBy": {
+            "type": "string",
+            "enum": [
+              "INCORPORATORS",
+              "INITIAL_BOARD"
+            ],
+            "required": true
+          },
+          "resolutionRef": {
+            "type": "string",
+            "required": true
+          },
+          "documentRef": {
+            "type": "string",
+            "required": true
+          },
+          "sections": {
+            "type": "array",
+            "required": true
+          },
+          "keyProvisions": {
+            "type": "object"
+          }
         }
       },
       "effects": [
@@ -197,7 +361,6 @@
         }
       ]
     },
-
     "propose_amendment": {
       "from": "ADOPTED",
       "to": "AMENDING",
@@ -205,20 +368,49 @@
       "event": {
         "name": "propose_amendment",
         "payload": {
-          "amendmentId": { "type": "string", "required": true },
-          "description": { "type": "string", "required": true },
-          "proposedBy": { "type": "string", "required": true, "description": "Director ID, officer ID, or SHAREHOLDER_PROPOSAL" },
-          "sectionsAffected": { "type": "array", "items": { "type": "string" }, "required": true },
-          "proposedChanges": { 
-            "type": "array", 
+          "amendmentId": {
+            "type": "string",
+            "required": true
+          },
+          "description": {
+            "type": "string",
+            "required": true
+          },
+          "proposedBy": {
+            "type": "string",
+            "required": true,
+            "description": "Director ID, officer ID, or SHAREHOLDER_PROPOSAL"
+          },
+          "sectionsAffected": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "required": true
+          },
+          "proposedChanges": {
+            "type": "array",
             "required": true,
             "items": {
               "type": "object",
               "properties": {
-                "sectionId": { "type": "string" },
-                "changeType": { "type": "string", "enum": ["MODIFY", "ADD", "DELETE"] },
-                "currentContent": { "type": "string" },
-                "proposedContent": { "type": "string" }
+                "sectionId": {
+                  "type": "string"
+                },
+                "changeType": {
+                  "type": "string",
+                  "enum": [
+                    "MODIFY",
+                    "ADD",
+                    "DELETE"
+                  ]
+                },
+                "currentContent": {
+                  "type": "string"
+                },
+                "proposedContent": {
+                  "type": "string"
+                }
               }
             }
           }
@@ -261,7 +453,6 @@
         }
       ]
     },
-
     "board_approve_amendment": {
       "from": "AMENDING",
       "to": "AMENDING",
@@ -269,8 +460,15 @@
       "event": {
         "name": "board_approve_amendment",
         "payload": {
-          "resolutionRef": { "type": "string", "required": true },
-          "approvalDate": { "type": "string", "format": "date", "required": true }
+          "resolutionRef": {
+            "type": "string",
+            "required": true
+          },
+          "approvalDate": {
+            "type": "string",
+            "format": "date",
+            "required": true
+          }
         }
       },
       "guards": [
@@ -300,7 +498,6 @@
         }
       ]
     },
-
     "approve_amendment": {
       "from": "AMENDING",
       "to": "ADOPTED",
@@ -308,9 +505,19 @@
       "event": {
         "name": "approve_amendment",
         "payload": {
-          "effectiveDate": { "type": "string", "format": "date", "required": true },
-          "shareholderResolutionRef": { "type": "string", "description": "Required if shareholders must approve" },
-          "newDocumentRef": { "type": "string", "required": true }
+          "effectiveDate": {
+            "type": "string",
+            "format": "date",
+            "required": true
+          },
+          "shareholderResolutionRef": {
+            "type": "string",
+            "description": "Required if shareholders must approve"
+          },
+          "newDocumentRef": {
+            "type": "string",
+            "required": true
+          }
         }
       },
       "guards": [
@@ -387,7 +594,6 @@
         }
       ]
     },
-
     "reject_amendment": {
       "from": "AMENDING",
       "to": "ADOPTED",
@@ -395,8 +601,17 @@
       "event": {
         "name": "reject_amendment",
         "payload": {
-          "rejectedBy": { "type": "string", "enum": ["BOARD", "SHAREHOLDERS"], "required": true },
-          "reason": { "type": "string" }
+          "rejectedBy": {
+            "type": "string",
+            "enum": [
+              "BOARD",
+              "SHAREHOLDERS"
+            ],
+            "required": true
+          },
+          "reason": {
+            "type": "string"
+          }
         }
       },
       "effects": [
@@ -421,7 +636,6 @@
         }
       ]
     },
-
     "restate": {
       "from": "ADOPTED",
       "to": "ADOPTED",
@@ -429,11 +643,26 @@
       "event": {
         "name": "restate",
         "payload": {
-          "restatedDate": { "type": "string", "format": "date", "required": true },
-          "boardResolutionRef": { "type": "string", "required": true },
-          "newDocumentRef": { "type": "string", "required": true },
-          "sections": { "type": "array", "required": true },
-          "keyProvisions": { "type": "object" }
+          "restatedDate": {
+            "type": "string",
+            "format": "date",
+            "required": true
+          },
+          "boardResolutionRef": {
+            "type": "string",
+            "required": true
+          },
+          "newDocumentRef": {
+            "type": "string",
+            "required": true
+          },
+          "sections": {
+            "type": "array",
+            "required": true
+          },
+          "keyProvisions": {
+            "type": "object"
+          }
         }
       },
       "guards": [
@@ -479,7 +708,9 @@
             "amendmentId": "RESTATEMENT-{{ event.restatedDate }}",
             "version": "{{ context.currentVersion }}",
             "description": "Complete Restatement of Bylaws",
-            "sectionsAffected": ["ALL"],
+            "sectionsAffected": [
+              "ALL"
+            ],
             "effectiveDate": "{{ event.restatedDate }}",
             "approvedBy": "BOARD",
             "boardResolutionRef": "{{ event.boardResolutionRef }}",
@@ -498,7 +729,6 @@
       ]
     }
   },
-
   "crossMachineRefs": {
     "entity": {
       "machine": "corporate-entity",
@@ -516,11 +746,15 @@
       "foreignKey": "entityId"
     }
   },
-
   "metadata": {
     "author": "OttoChain",
     "license": "MIT",
-    "tags": ["corporate", "governance", "bylaws", "amendments"],
+    "tags": [
+      "corporate",
+      "governance",
+      "bylaws",
+      "amendments"
+    ],
     "documentation": "https://ottochain.dev/docs/corporate/bylaws"
   }
 }
