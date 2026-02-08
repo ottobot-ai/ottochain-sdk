@@ -1,0 +1,212 @@
+{
+    "metadata": {
+        "name": "AgentIdentity",
+        "description": "Decentralized agent identity with reputation tracking and lifecycle management",
+        "version": "1.0.0"
+    },
+    "states": {
+        "REGISTERED": { "id": { "value": "REGISTERED" }, "isFinal": false },
+        "ACTIVE": { "id": { "value": "ACTIVE" }, "isFinal": false },
+        "CHALLENGED": { "id": { "value": "CHALLENGED" }, "isFinal": false },
+        "SUSPENDED": { "id": { "value": "SUSPENDED" }, "isFinal": false },
+        "PROBATION": { "id": { "value": "PROBATION" }, "isFinal": false },
+        "WITHDRAWN": { "id": { "value": "WITHDRAWN" }, "isFinal": true }
+    },
+    "initialState": { "value": "REGISTERED" },
+    "transitions": [
+        {
+            "_comment": "Owner activates their identity after registration",
+            "from": { "value": "REGISTERED" },
+            "to": { "value": "ACTIVE" },
+            "eventName": "activate",
+            "guard": { "===": [{ "var": "event.agent" }, { "var": "state.owner" }] },
+            "effect": {
+                "merge": [
+                    { "var": "state" },
+                    { "status": "ACTIVE", "activatedAt": { "var": "$timestamp" } }
+                ]
+            }
+        },
+        {
+            "_comment": "Receive a vouch from another agent (+2 reputation)",
+            "from": { "value": "ACTIVE" },
+            "to": { "value": "ACTIVE" },
+            "eventName": "receive_vouch",
+            "guard": {
+                "and": [
+                    { "!!": { "var": "event.from" } },
+                    { "!==": [{ "var": "event.from" }, { "var": "state.owner" }] },
+                    { "!": { "in": [{ "var": "event.from" }, { "var": "state.vouches" }] } }
+                ]
+            },
+            "effect": {
+                "merge": [
+                    { "var": "state" },
+                    {
+                        "reputation": { "+": [{ "var": "state.reputation" }, 2] },
+                        "vouches": {
+                            "cat": [
+                                { "var": "state.vouches" },
+                                [{
+                                        "from": { "var": "event.from" },
+                                        "reason": { "var": "event.reason" },
+                                        "at": { "var": "$timestamp" }
+                                    }]
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "_comment": "Receive contract completion credit (+5 reputation)",
+            "from": { "value": "ACTIVE" },
+            "to": { "value": "ACTIVE" },
+            "eventName": "receive_completion",
+            "guard": { "!!": { "var": "event.contractId" } },
+            "effect": {
+                "merge": [
+                    { "var": "state" },
+                    {
+                        "reputation": { "+": [{ "var": "state.reputation" }, 5] },
+                        "completedContracts": { "+": [{ "var": "state.completedContracts" }, 1] }
+                    }
+                ]
+            }
+        },
+        {
+            "_comment": "Record a violation (-10 reputation)",
+            "from": { "value": "ACTIVE" },
+            "to": { "value": "ACTIVE" },
+            "eventName": "receive_violation",
+            "guard": { "!!": { "var": "event.reason" } },
+            "effect": {
+                "merge": [
+                    { "var": "state" },
+                    {
+                        "reputation": { "max": [0, { "-": [{ "var": "state.reputation" }, 10] }] },
+                        "violations": { "+": [{ "var": "state.violations" }, 1] }
+                    }
+                ]
+            }
+        },
+        {
+            "_comment": "Another agent challenges this identity",
+            "from": { "value": "ACTIVE" },
+            "to": { "value": "CHALLENGED" },
+            "eventName": "challenge",
+            "guard": {
+                "and": [
+                    { "!!": { "var": "event.challenger" } },
+                    { "!==": [{ "var": "event.challenger" }, { "var": "state.owner" }] }
+                ]
+            },
+            "effect": {
+                "merge": [
+                    { "var": "state" },
+                    {
+                        "status": "CHALLENGED",
+                        "challengedBy": { "var": "event.challenger" },
+                        "challengeReason": { "var": "event.reason" },
+                        "challengedAt": { "var": "$timestamp" }
+                    }
+                ]
+            }
+        },
+        {
+            "_comment": "Challenge dismissed - return to active",
+            "from": { "value": "CHALLENGED" },
+            "to": { "value": "ACTIVE" },
+            "eventName": "dismiss_challenge",
+            "guard": { "==": [1, 1] },
+            "effect": {
+                "merge": [
+                    { "var": "state" },
+                    {
+                        "status": "ACTIVE",
+                        "challengedBy": null,
+                        "challengeReason": null,
+                        "challengedAt": null
+                    }
+                ]
+            }
+        },
+        {
+            "_comment": "Challenge upheld - suspend the agent",
+            "from": { "value": "CHALLENGED" },
+            "to": { "value": "SUSPENDED" },
+            "eventName": "uphold_challenge",
+            "guard": { "==": [1, 1] },
+            "effect": {
+                "merge": [
+                    { "var": "state" },
+                    {
+                        "status": "SUSPENDED",
+                        "suspendedAt": { "var": "$timestamp" },
+                        "reputation": { "max": [0, { "-": [{ "var": "state.reputation" }, 20] }] }
+                    }
+                ]
+            }
+        },
+        {
+            "_comment": "Begin probation period after suspension",
+            "from": { "value": "SUSPENDED" },
+            "to": { "value": "PROBATION" },
+            "eventName": "begin_probation",
+            "guard": { "==": [1, 1] },
+            "effect": {
+                "merge": [
+                    { "var": "state" },
+                    {
+                        "status": "PROBATION",
+                        "probationStartedAt": { "var": "$timestamp" }
+                    }
+                ]
+            }
+        },
+        {
+            "_comment": "Complete probation - return to active",
+            "from": { "value": "PROBATION" },
+            "to": { "value": "ACTIVE" },
+            "eventName": "complete_probation",
+            "guard": { "==": [1, 1] },
+            "effect": {
+                "merge": [
+                    { "var": "state" },
+                    {
+                        "status": "ACTIVE",
+                        "probationStartedAt": null,
+                        "suspendedAt": null,
+                        "challengedBy": null
+                    }
+                ]
+            }
+        },
+        {
+            "_comment": "Owner withdraws their identity (final)",
+            "from": { "value": "ACTIVE" },
+            "to": { "value": "WITHDRAWN" },
+            "eventName": "withdraw",
+            "guard": { "===": [{ "var": "event.agent" }, { "var": "state.owner" }] },
+            "effect": {
+                "merge": [
+                    { "var": "state" },
+                    { "status": "WITHDRAWN", "withdrawnAt": { "var": "$timestamp" } }
+                ]
+            }
+        }
+    ],
+    "initialDataTemplate": {
+        "_comment": "Template for creating new agent identities",
+        "schema": "AgentIdentity",
+        "owner": "<address>",
+        "displayName": "",
+        "platform": null,
+        "platformUserId": null,
+        "reputation": 10,
+        "vouches": [],
+        "completedContracts": 0,
+        "violations": 0,
+        "status": "REGISTERED"
+    }
+}
