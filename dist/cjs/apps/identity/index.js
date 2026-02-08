@@ -6,8 +6,16 @@
  *
  * @example
  * ```typescript
- * import { AgentState, AttestationType, AgentIdentitySchema } from '@ottochain/sdk/apps/identity';
+ * import {
+ *   AgentState,
+ *   AttestationType,
+ *   AgentIdentitySchema,
+ *   getIdentityDefinition
+ * } from '@ottochain/sdk/apps/identity';
  * import { create } from '@bufbuild/protobuf';
+ *
+ * // Get the agent identity state machine definition
+ * const identityDef = getIdentityDefinition();
  *
  * const agent = create(AgentIdentitySchema, {
  *   publicKey: '...',
@@ -32,9 +40,26 @@ var __createBinding = (this && this.__createBinding) || (Object.create ? (functi
 var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getIdentityDefinition = void 0;
 // Re-export generated protobuf types
 __exportStar(require("../../generated/ottochain/apps/identity/v1/agent_pb.js"), exports);
 __exportStar(require("../../generated/ottochain/apps/identity/v1/attestation_pb.js"), exports);
 // Re-export convenience types and constants
 __exportStar(require("./types.js"), exports);
+// ---------------------------------------------------------------------------
+// State Machine JSON Definition
+// ---------------------------------------------------------------------------
+const agent_identity_json_1 = __importDefault(require("./state-machines/agent-identity.json"));
+/**
+ * Get the agent identity state machine definition.
+ *
+ * @returns The state machine definition JSON for AgentIdentity
+ */
+function getIdentityDefinition() {
+    return agent_identity_json_1.default;
+}
+exports.getIdentityDefinition = getIdentityDefinition;
