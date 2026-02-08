@@ -8,48 +8,40 @@
  * ```typescript
  * import {
  *   AgentState,
- *   AttestationType,
- *   AgentIdentitySchema,
+ *   AgentIdentity,
  *   getIdentityDefinition
  * } from '@ottochain/sdk/apps/identity';
- * import { create } from '@bufbuild/protobuf';
  *
- * // Get the agent identity state machine definition
  * const identityDef = getIdentityDefinition();
- *
- * const agent = create(AgentIdentitySchema, {
- *   publicKey: '...',
- *   reputation: 10,
- *   state: AgentState.REGISTERED,
- * });
  * ```
  *
  * @packageDocumentation
  */
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __exportStar = (this && this.__exportStar) || function(m, exports) {
-    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getIdentityDefinition = void 0;
-// Re-export generated protobuf types
-__exportStar(require("../../generated/ottochain/apps/identity/v1/agent_pb.js"), exports);
-__exportStar(require("../../generated/ottochain/apps/identity/v1/attestation_pb.js"), exports);
-// Re-export convenience types and constants
-__exportStar(require("./types.js"), exports);
+exports.getIdentityDefinition = exports.attestationTypeToJSON = exports.attestationTypeFromJSON = exports.ReputationConfig = exports.ChallengeRequest = exports.VouchRequest = exports.Attestation = exports.ReputationDelta = exports.AttestationType = exports.platformToJSON = exports.platformFromJSON = exports.agentStateToJSON = exports.agentStateFromJSON = exports.AgentIdentityDefinition = exports.AgentIdentity = exports.PlatformLink = exports.Platform = exports.AgentState = void 0;
+// Re-export generated protobuf types (source of truth)
+var agent_js_1 = require("../../generated/ottochain/apps/identity/v1/agent.js");
+Object.defineProperty(exports, "AgentState", { enumerable: true, get: function () { return agent_js_1.AgentState; } });
+Object.defineProperty(exports, "Platform", { enumerable: true, get: function () { return agent_js_1.Platform; } });
+Object.defineProperty(exports, "PlatformLink", { enumerable: true, get: function () { return agent_js_1.PlatformLink; } });
+Object.defineProperty(exports, "AgentIdentity", { enumerable: true, get: function () { return agent_js_1.AgentIdentity; } });
+Object.defineProperty(exports, "AgentIdentityDefinition", { enumerable: true, get: function () { return agent_js_1.AgentIdentityDefinition; } });
+Object.defineProperty(exports, "agentStateFromJSON", { enumerable: true, get: function () { return agent_js_1.agentStateFromJSON; } });
+Object.defineProperty(exports, "agentStateToJSON", { enumerable: true, get: function () { return agent_js_1.agentStateToJSON; } });
+Object.defineProperty(exports, "platformFromJSON", { enumerable: true, get: function () { return agent_js_1.platformFromJSON; } });
+Object.defineProperty(exports, "platformToJSON", { enumerable: true, get: function () { return agent_js_1.platformToJSON; } });
+var attestation_js_1 = require("../../generated/ottochain/apps/identity/v1/attestation.js");
+Object.defineProperty(exports, "AttestationType", { enumerable: true, get: function () { return attestation_js_1.AttestationType; } });
+Object.defineProperty(exports, "ReputationDelta", { enumerable: true, get: function () { return attestation_js_1.ReputationDelta; } });
+Object.defineProperty(exports, "Attestation", { enumerable: true, get: function () { return attestation_js_1.Attestation; } });
+Object.defineProperty(exports, "VouchRequest", { enumerable: true, get: function () { return attestation_js_1.VouchRequest; } });
+Object.defineProperty(exports, "ChallengeRequest", { enumerable: true, get: function () { return attestation_js_1.ChallengeRequest; } });
+Object.defineProperty(exports, "ReputationConfig", { enumerable: true, get: function () { return attestation_js_1.ReputationConfig; } });
+Object.defineProperty(exports, "attestationTypeFromJSON", { enumerable: true, get: function () { return attestation_js_1.attestationTypeFromJSON; } });
+Object.defineProperty(exports, "attestationTypeToJSON", { enumerable: true, get: function () { return attestation_js_1.attestationTypeToJSON; } });
 // ---------------------------------------------------------------------------
 // State Machine JSON Definition
 // ---------------------------------------------------------------------------

@@ -1,145 +1,77 @@
 /**
- * Governance & DAO Module
+ * Governance & DAO Application
  *
- * Types and utilities for DAO governance state machines.
+ * Types and utilities for DAO governance on OttoChain.
  *
  * @example
  * ```typescript
- * import { DAOType, DAOStatus, getDAODefinition } from '@ottochain/sdk/apps/governance';
+ * import {
+ *   DAOType,
+ *   DAOStatus,
+ *   MultisigDAO,
+ *   getDAODefinition
+ * } from '@ottochain/sdk/apps/governance';
  *
  * const multisigDef = getDAODefinition('Multisig');
  * ```
  *
- * @example
- * ```typescript
- * import { governance } from '@ottochain/sdk/apps';
- *
- * // Create initial state for a 2-of-3 multisig
- * const state = governance.createMultisigState({
- *   name: 'Team Treasury',
- *   signers: ['DAG...', 'DAG...', 'DAG...'],
- *   threshold: 2
- * });
- *
- * // Check if threshold met
- * if (governance.isThresholdMet(state)) {
- *   console.log('Ready to execute!');
- * }
- * ```
- *
  * @packageDocumentation
  */
-export * from './types.js';
-export { DAOType as DAOTypeProto, DAOStatus as DAOStatusProto, ProposalStatus as ProposalStatusProto, VoteChoice as VoteChoiceProto, DAOMetadata as DAOMetadataProto, Proposal, Vote, VoteTally, SingleOwnerDAO, SingleOwnerAction as SingleOwnerActionProto, OwnershipTransfer as OwnershipTransferProto, MultisigDAO, MultisigAction as MultisigActionProto, TokenDAO, TokenProposalResult as TokenProposalResultProto, ThresholdDAO, ThresholdVotes as ThresholdVotesProto, ThresholdHistoryEntry as ThresholdHistoryEntryProto, CreateDAORequest, ProposeRequest, VoteRequest, ExecuteRequest, } from '../../generated/ottochain/apps/governance/v1/governance_pb.js';
-/**
- * DAO type for selecting state machine definition.
- */
-export type DAOType = 'Single' | 'Multisig' | 'Threshold' | 'Token';
-/**
- * Governance type for selecting state machine definition.
- */
-export type GovernanceType = 'Legislature' | 'Executive' | 'Judiciary' | 'Constitution' | 'Simple';
-/**
- * DAO state machine definitions mapped by type.
- */
-export declare const DAO_DEFINITIONS: Record<DAOType, unknown>;
-/**
- * Governance state machine definitions mapped by type.
- */
-export declare const GOVERNANCE_DEFINITIONS: Record<GovernanceType, unknown>;
+export { DAOType, DAOStatus, ProposalStatus, VoteChoice, DAOMetadata, Proposal, Vote, VoteTally, SingleOwnerDAO, SingleOwnerAction, OwnershipTransfer, MultisigDAO, MultisigAction, TokenDAO, TokenProposalResult, ThresholdDAO, ThresholdVotes, ThresholdHistoryEntry, CreateDAORequest, ProposeRequest, VoteRequest, ExecuteRequest, dAOTypeFromJSON, dAOTypeToJSON, dAOStatusFromJSON, dAOStatusToJSON, proposalStatusFromJSON, proposalStatusToJSON, voteChoiceFromJSON, voteChoiceToJSON, } from '../../generated/ottochain/apps/governance/v1/governance.js';
+export type DAODefinitionType = 'Single' | 'Multisig' | 'Threshold' | 'Token';
+export type GovernanceDefinitionType = 'Legislature' | 'Executive' | 'Judiciary' | 'Constitution' | 'Simple';
+export declare const DAO_DEFINITIONS: Record<DAODefinitionType, unknown>;
+export declare const GOVERNANCE_DEFINITIONS: Record<GovernanceDefinitionType, unknown>;
 /**
  * Get the state machine definition for a DAO type.
  */
-export declare function getDAODefinition(daoType: DAOType): unknown;
+export declare function getDAODefinition(daoType: DAODefinitionType): unknown;
 /**
  * Get the state machine definition for a governance type.
  */
-export declare function getGovernanceDefinition(governanceType: GovernanceType): unknown;
-import type { SingleOwnerDAOState, MultisigDAOState, TokenDAOState, ThresholdDAOState, DAOMetadata } from './types.js';
-/**
- * Create initial state for a SingleOwnerDAO
- */
-export declare function createSingleOwnerState(params: {
-    name: string;
-    owner: string;
-    metadata?: DAOMetadata;
-}): SingleOwnerDAOState;
-/**
- * Create initial state for a MultisigDAO
- */
-export declare function createMultisigState(params: {
-    name: string;
-    signers: string[];
-    threshold: number;
-    proposalTTLMs?: number;
-    metadata?: DAOMetadata;
-}): MultisigDAOState;
-/**
- * Create initial state for a TokenDAO
- */
-export declare function createTokenState(params: {
-    name: string;
-    tokenId: string;
-    initialBalances?: Record<string, number>;
-    proposalThreshold?: number;
-    votingPeriodMs?: number;
-    timelockMs?: number;
-    quorum?: number;
-    metadata?: DAOMetadata;
-}): TokenDAOState;
-/**
- * Create initial state for a ThresholdDAO
- */
-export declare function createThresholdState(params: {
-    name: string;
-    memberThreshold?: number;
-    voteThreshold?: number;
-    proposeThreshold?: number;
-    quorum?: number;
-    votingPeriodMs?: number;
-    metadata?: DAOMetadata;
-}): ThresholdDAOState;
+export declare function getGovernanceDefinition(governanceType: GovernanceDefinitionType): unknown;
+import type { MultisigDAO, TokenDAO, ThresholdDAO } from '../../generated/ottochain/apps/governance/v1/governance.js';
 /**
  * Check if multisig has enough signatures to execute
  */
-export declare function isThresholdMet(state: MultisigDAOState): boolean;
+export declare function isThresholdMet(state: MultisigDAO): boolean;
 /**
  * Get remaining signatures needed
  */
-export declare function signaturesNeeded(state: MultisigDAOState): number;
+export declare function signaturesNeeded(state: MultisigDAO): number;
 /**
  * Check if agent is a signer
  */
-export declare function isSigner(state: MultisigDAOState, agent: string): boolean;
+export declare function isSigner(state: MultisigDAO, agent: string): boolean;
 /**
  * Check if agent has signed current proposal
  */
-export declare function hasSigned(state: MultisigDAOState, agent: string): boolean;
+export declare function hasSigned(state: MultisigDAO, agent: string): boolean;
 /**
  * Get effective voting power (includes delegation)
  */
-export declare function getVotingPower(state: TokenDAOState, agent: string): number;
+export declare function getVotingPower(state: TokenDAO, agent: string): number;
 /**
  * Check if proposal has quorum
  */
-export declare function hasQuorum(state: TokenDAOState): boolean;
+export declare function hasQuorum(state: TokenDAO): boolean;
 /**
  * Check if proposal is passing
  */
-export declare function isPassing(state: TokenDAOState): boolean;
+export declare function isPassing(state: TokenDAO): boolean;
 /**
  * Check if agent can propose
  */
-export declare function canPropose(state: TokenDAOState, agent: string): boolean;
+export declare function canPropose(state: TokenDAO, agent: string): boolean;
 /**
  * Check if agent meets threshold for action
  */
-export declare function meetsThreshold(state: ThresholdDAOState, reputation: number, action: 'member' | 'vote' | 'propose'): boolean;
+export declare function meetsThreshold(state: ThresholdDAO, reputation: number, action: 'member' | 'vote' | 'propose'): boolean;
 /**
  * Check if agent is a member
  */
-export declare function isMember(state: ThresholdDAOState, agent: string): boolean;
+export declare function isMember(state: ThresholdDAO, agent: string): boolean;
 /**
  * Check if threshold proposal has quorum
  */
-export declare function thresholdHasQuorum(state: ThresholdDAOState): boolean;
+export declare function thresholdHasQuorum(state: ThresholdDAO): boolean;

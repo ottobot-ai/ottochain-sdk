@@ -7,27 +7,17 @@
  * ```typescript
  * import {
  *   AgentState,
- *   AttestationType,
- *   AgentIdentitySchema,
+ *   AgentIdentity,
  *   getIdentityDefinition
  * } from '@ottochain/sdk/apps/identity';
- * import { create } from '@bufbuild/protobuf';
  *
- * // Get the agent identity state machine definition
  * const identityDef = getIdentityDefinition();
- *
- * const agent = create(AgentIdentitySchema, {
- *   publicKey: '...',
- *   reputation: 10,
- *   state: AgentState.REGISTERED,
- * });
  * ```
  *
  * @packageDocumentation
  */
-export * from '../../generated/ottochain/apps/identity/v1/agent_pb.js';
-export * from '../../generated/ottochain/apps/identity/v1/attestation_pb.js';
-export * from './types.js';
+export { AgentState, Platform, PlatformLink, AgentIdentity, AgentIdentityDefinition, agentStateFromJSON, agentStateToJSON, platformFromJSON, platformToJSON, } from '../../generated/ottochain/apps/identity/v1/agent.js';
+export { AttestationType, ReputationDelta, Attestation, VouchRequest, ChallengeRequest, ReputationConfig, attestationTypeFromJSON, attestationTypeToJSON, } from '../../generated/ottochain/apps/identity/v1/attestation.js';
 /**
  * Get the agent identity state machine definition.
  *

@@ -30,13 +30,13 @@ export declare const KeyPairSchema: z.ZodObject<{
     /** DAG address derived from the public key */
     address: z.ZodString;
 }, "strip", z.ZodTypeAny, {
-    privateKey: string;
-    publicKey: string;
     address: string;
+    publicKey: string;
+    privateKey: string;
 }, {
-    privateKey: string;
-    publicKey: string;
     address: string;
+    publicKey: string;
+    privateKey: string;
 }>;
 /**
  * Type for a validated KeyPair
@@ -157,14 +157,14 @@ export declare const CurrencyTransactionValueSchema: z.ZodObject<{
     amount: z.ZodNumber;
     fee: z.ZodDefault<z.ZodNumber>;
 }, "strip", z.ZodTypeAny, {
-    source: string;
     destination: string;
     amount: number;
+    source: string;
     fee: number;
 }, {
-    source: string;
     destination: string;
     amount: number;
+    source: string;
     fee?: number | undefined;
 }>;
 /**
@@ -177,14 +177,14 @@ export declare const CurrencyTransactionSchema: z.ZodObject<{
         amount: z.ZodNumber;
         fee: z.ZodDefault<z.ZodNumber>;
     }, "strip", z.ZodTypeAny, {
-        source: string;
         destination: string;
         amount: number;
+        source: string;
         fee: number;
     }, {
-        source: string;
         destination: string;
         amount: number;
+        source: string;
         fee?: number | undefined;
     }>;
     parent: z.ZodObject<{
@@ -199,9 +199,9 @@ export declare const CurrencyTransactionSchema: z.ZodObject<{
     }>;
 }, "strip", z.ZodTypeAny, {
     value: {
-        source: string;
         destination: string;
         amount: number;
+        source: string;
         fee: number;
     };
     parent: {
@@ -210,9 +210,9 @@ export declare const CurrencyTransactionSchema: z.ZodObject<{
     };
 }, {
     value: {
-        source: string;
         destination: string;
         amount: number;
+        source: string;
         fee?: number | undefined;
     };
     parent: {
@@ -234,9 +234,9 @@ export declare const TransferParamsSchema: z.ZodObject<{
     fee: z.ZodDefault<z.ZodOptional<z.ZodNumber>>;
 }, "strip", z.ZodTypeAny, {
     amount: number;
-    fee: number;
     from: string;
     to: string;
+    fee: number;
 }, {
     amount: number;
     from: string;
