@@ -31,7 +31,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MetagraphClient = exports.extractOnChainState = exports.getScriptInvocations = exports.getEventReceipts = exports.getLogsForFiber = exports.getLatestOnChainState = exports.getSnapshotOnChainState = exports.decodeOnChainState = exports.proto = void 0;
-// Re-export generated protobuf types
+// Re-export generated protobuf types (for binary encoding)
 exports.proto = __importStar(require("../generated/index.js"));
 var snapshot_js_1 = require("./snapshot.js");
 Object.defineProperty(exports, "decodeOnChainState", { enumerable: true, get: function () { return snapshot_js_1.decodeOnChainState; } });

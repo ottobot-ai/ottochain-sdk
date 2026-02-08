@@ -6,17 +6,20 @@
  * @packageDocumentation
  */
 
-// Re-export generated protobuf types
+// Re-export generated protobuf types (for binary encoding)
 export * as proto from '../generated/index.js';
 
-// Legacy manual types (deprecated - use proto.* instead)
+// Core types matching metagraph wire format
 export type {
-  // Primitive / value types
+  // Primitive types (re-exported from src/types.ts)
+  Address,
+  FiberId,
+  StateId,
+  HashValue,
   FiberOrdinal,
   SnapshotOrdinal,
-  StateId,
-  Address,
-  HashValue,
+
+  // JSON Logic
   JsonLogicValue,
   JsonLogicExpression,
 

@@ -5,7 +5,7 @@
  *
  * @packageDocumentation
  */
-// Re-export generated protobuf types
+// Re-export generated protobuf types (for binary encoding)
 export * as proto from '../generated/index.js';
 export { decodeOnChainState, getSnapshotOnChainState, getLatestOnChainState, getLogsForFiber, getEventReceipts, getScriptInvocations, extractOnChainState, } from './snapshot.js';
 export { MetagraphClient } from './metagraph-client.js';
