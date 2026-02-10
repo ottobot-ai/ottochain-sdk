@@ -1,0 +1,189 @@
+syntax = "proto3";
+
+package ottochain.apps.delegation.v1;
+
+import "google/protobuf/timestamp.proto";
+import "ottochain/v1/common.proto";
+
+option java_package = "xyz.kd5ujc.shared_data.apps.delegation.v1";
+option java_outer_classname = "DelegationProto";
+
+// Delegation authority allowing a relayer to submit transactions on behalf of a user
+message Delegation {
+  // Unique identifier for this delegation
+  string delegation_id = 1;
+
+  // User who grants the delegation (primary key holder)
+  string delegator_address = 2;
+
+  // Relayer who can submit transactions (session key holder)
+  string relayer_public_key = 3;
+
+  // Delegation scope limiting what the relayer can do
+  DelegationScope scope = 4;
+
+  // When this delegation expires
+  google.protobuf.Timestamp expires_at = 5;
+
+  // When this delegation was created
+  google.protobuf.Timestamp created_at = 6;
+
+  // Signature by delegator authorizing this delegation
+  string delegator_signature = 7;
+
+  // Optional nonce to prevent replay attacks
+  uint64 nonce = 8;
+
+  // Current status of the delegation
+  DelegationStatus status = 9;
+}
+
+// Defines what operations a delegation permits
+message DelegationScope {
+  // Time window when delegation is active
+  TimeWindow time_window = 1;
+
+  // Allowed transaction types (empty means all types allowed)
+  repeated string allowed_transaction_types = 2;
+
+  // Spending limits for financial transactions
+  repeated SpendingLimit spending_limits = 3;
+
+  // Specific fiber IDs that can be operated on (empty means all fibers)
+  repeated string allowed_fiber_ids = 4;
+
+  // Maximum number of transactions allowed
+  optional uint32 max_transaction_count = 5;
+}
+
+// Time window for delegation validity
+message TimeWindow {
+  google.protobuf.Timestamp start_time = 1;
+  google.protobuf.Timestamp end_time = 2;
+}
+
+// Spending limit for a specific token or asset
+message SpendingLimit {
+  string asset_type = 1;      // Token symbol or asset identifier
+  string max_amount = 2;      // Maximum amount (as string to handle big numbers)
+  string current_used = 3;    // Amount used so far
+}
+
+// Current status of a delegation
+enum DelegationStatus {
+  DELEGATION_STATUS_UNSPECIFIED = 0;
+  DELEGATION_STATUS_ACTIVE = 1;
+  DELEGATION_STATUS_REVOKED = 2;
+  DELEGATION_STATUS_EXPIRED = 3;
+  DELEGATION_STATUS_EXHAUSTED = 4;  // Reached spending/transaction limits
+}
+
+// Request to create a new delegation
+message CreateDelegationRequest {
+  Delegation delegation = 1;
+}
+
+// Response when delegation is created
+message CreateDelegationResponse {
+  string delegation_id = 1;
+  bool success = 2;
+  string error_message = 3;
+}
+
+// Request to revoke an active delegation
+message RevokeDelegationRequest {
+  string delegation_id = 1;
+  string delegator_address = 2;
+  string revocation_signature = 3;  // Signature by delegator
+  uint64 nonce = 4;
+}
+
+// Response when delegation is revoked
+message RevokeDelegationResponse {
+  bool success = 1;
+  string error_message = 2;
+}
+
+// Delegated transaction wrapper
+message DelegatedTransaction {
+  // The actual transaction to be submitted
+  ottochain.v1.Any transaction_payload = 1;
+
+  // Reference to the delegation authorizing this transaction
+  string delegation_id = 2;
+
+  // Signature by the relayer (session key)
+  string relayer_signature = 3;
+
+  // Nonce to prevent replay
+  uint64 nonce = 4;
+
+  // Timestamp when transaction was created
+  google.protobuf.Timestamp created_at = 5;
+}
+
+// Request to submit a delegated transaction
+message SubmitDelegatedTransactionRequest {
+  DelegatedTransaction delegated_transaction = 1;
+}
+
+// Response for delegated transaction submission
+message SubmitDelegatedTransactionResponse {
+  bool success = 1;
+  string transaction_hash = 2;
+  string error_message = 3;
+  DelegationValidationError validation_error = 4;
+}
+
+// Detailed validation error for delegation failures
+message DelegationValidationError {
+  DelegationValidationErrorType error_type = 1;
+  string error_message = 2;
+  string field_path = 3;  // Which field caused the error
+}
+
+enum DelegationValidationErrorType {
+  VALIDATION_ERROR_UNSPECIFIED = 0;
+  VALIDATION_ERROR_DELEGATION_NOT_FOUND = 1;
+  VALIDATION_ERROR_DELEGATION_EXPIRED = 2;
+  VALIDATION_ERROR_DELEGATION_REVOKED = 3;
+  VALIDATION_ERROR_INVALID_SIGNATURE = 4;
+  VALIDATION_ERROR_SCOPE_VIOLATION = 5;
+  VALIDATION_ERROR_SPENDING_LIMIT_EXCEEDED = 6;
+  VALIDATION_ERROR_TRANSACTION_COUNT_EXCEEDED = 7;
+  VALIDATION_ERROR_TRANSACTION_TYPE_NOT_ALLOWED = 8;
+  VALIDATION_ERROR_FIBER_NOT_ALLOWED = 9;
+  VALIDATION_ERROR_TIME_WINDOW_VIOLATION = 10;
+  VALIDATION_ERROR_INVALID_NONCE = 11;
+}
+
+// Query for active delegations
+message GetDelegationsRequest {
+  optional string delegator_address = 1;
+  optional string relayer_public_key = 2;
+  optional DelegationStatus status_filter = 3;
+  uint32 limit = 4;
+  uint32 offset = 5;
+}
+
+// Response with list of delegations
+message GetDelegationsResponse {
+  repeated Delegation delegations = 1;
+  uint32 total_count = 2;
+  bool has_more = 3;
+}
+
+// Service definition for delegation management
+service DelegationService {
+  // Create a new delegation
+  rpc CreateDelegation(CreateDelegationRequest) returns (CreateDelegationResponse);
+
+  // Revoke an existing delegation
+  rpc RevokeDelegation(RevokeDelegationRequest) returns (RevokeDelegationResponse);
+
+  // Submit a transaction via delegation
+  rpc SubmitDelegatedTransaction(SubmitDelegatedTransactionRequest) returns (SubmitDelegatedTransactionResponse);
+
+  // Query delegations
+  rpc GetDelegations(GetDelegationsRequest) returns (GetDelegationsResponse);
+}
