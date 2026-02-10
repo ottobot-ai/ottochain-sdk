@@ -106,7 +106,7 @@
                     { "var": "state" },
                     {
                         "commitments": {
-                            "cat": [
+                            "merge": [
                                 { "var": "state.commitments" },
                                 [{
                                         "agent": { "var": "event.agent" },
@@ -169,7 +169,7 @@
                     {
                         "status": "RESOLVING",
                         "resolutions": {
-                            "cat": [
+                            "merge": [
                                 { "var": "state.resolutions" },
                                 [{
                                         "oracle": { "var": "event.agent" },
@@ -206,7 +206,7 @@
                     { "var": "state" },
                     {
                         "resolutions": {
-                            "cat": [
+                            "merge": [
                                 { "var": "state.resolutions" },
                                 [{
                                         "oracle": { "var": "event.agent" },
@@ -336,7 +336,7 @@
                     { "var": "state" },
                     {
                         "claims": {
-                            "cat": [
+                            "merge": [
                                 { "var": "state.claims" },
                                 [{
                                         "agent": { "var": "event.agent" },
