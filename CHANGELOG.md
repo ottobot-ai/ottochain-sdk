@@ -1,0 +1,50 @@
+# Changelog
+
+## 1.0.0 (2026-02-10)
+
+
+### ⚠ BREAKING CHANGES
+
+* Remove wrapper message types (Address, FiberOrdinal, etc.)
+* Remove hand-written types.ts files
+* NetworkError.response renamed to NetworkError.responseBody
+
+### Features
+
+* add application-specific types (identity, contracts) ([6b0ffa5](https://github.com/ottobot-ai/ottochain-sdk/commit/6b0ffa59e194474db40a1d9695a2c5563404d481))
+* add error classes, validation schemas, and examples ([c56d624](https://github.com/ottobot-ai/ottochain-sdk/commit/c56d6247f5b33631e36ec090b15e6d2fb4ff9752))
+* add governance and corporate proto definitions ([#15](https://github.com/ottobot-ai/ottochain-sdk/issues/15)) ([2d5bfb5](https://github.com/ottobot-ai/ottochain-sdk/commit/2d5bfb52357803d85ddfe886e2c70f8b8eba38a9))
+* add npm auto-publish to release workflow ([#29](https://github.com/ottobot-ai/ottochain-sdk/issues/29)) ([e771417](https://github.com/ottobot-ai/ottochain-sdk/commit/e771417969e05c0ada3c6840701976bb24b35100))
+* add release workflow for GitHub Packages publishing ([#26](https://github.com/ottobot-ai/ottochain-sdk/issues/26)) ([6a8f13e](https://github.com/ottobot-ai/ottochain-sdk/commit/6a8f13e57742ff521d0681e742739d3f77e33b2d))
+* add typedoc, examples, custom errors, and zod validation ([#1](https://github.com/ottobot-ai/ottochain-sdk/issues/1)) ([17c113c](https://github.com/ottobot-ai/ottochain-sdk/commit/17c113c4e74e1727f1f98672bced1ce154df53f1))
+* **apps:** add governance module with DAO types ([#4](https://github.com/ottobot-ai/ottochain-sdk/issues/4)) ([37c5fb4](https://github.com/ottobot-ai/ottochain-sdk/commit/37c5fb4eab3d6bde8876abe1f6d2729c0e1b9e3f))
+* **apps:** add Markets and Oracles apps ([#3](https://github.com/ottobot-ai/ottochain-sdk/issues/3)) ([3c1e1df](https://github.com/ottobot-ai/ottochain-sdk/commit/3c1e1df07316f630d2e641751adbe66e529243c3))
+* **ci:** add release-please for automated npm releases ([#30](https://github.com/ottobot-ai/ottochain-sdk/issues/30)) ([56ad1aa](https://github.com/ottobot-ai/ottochain-sdk/commit/56ad1aa6bda69b42038c87c84afc08915f67ce2f))
+* **corporate:** add corporate governance types and state machines ([#6](https://github.com/ottobot-ai/ottochain-sdk/issues/6)) ([5174a3d](https://github.com/ottobot-ai/ottochain-sdk/commit/5174a3de63804b6a66eed168c0117ed7cdfaef0b))
+* **governance:** add governance types and DAO state machine definitions ([#5](https://github.com/ottobot-ai/ottochain-sdk/issues/5)) ([90935aa](https://github.com/ottobot-ai/ottochain-sdk/commit/90935aab7737e6dbac2353c858fe1d1b92318ec7))
+* **identity:** add agent identity state machine definition ([#11](https://github.com/ottobot-ai/ottochain-sdk/issues/11)) ([3aba893](https://github.com/ottobot-ai/ottochain-sdk/commit/3aba8938ef8f2f1b2830802a353c6aba81413422))
+* initial SDK extraction from ottochain repo ([4a313ed](https://github.com/ottobot-ai/ottochain-sdk/commit/4a313ed3c99879487536a73a3765e89d1e7c9592))
+* protobuf as single source of truth for all types ([deecb11](https://github.com/ottobot-ai/ottochain-sdk/commit/deecb11c140571365e571a999c894f062e66dca7))
+* symmetric app exports for markets and oracles ([#9](https://github.com/ottobot-ai/ottochain-sdk/issues/9)) ([ee0c8a0](https://github.com/ottobot-ai/ottochain-sdk/commit/ee0c8a063f73b5614deaa1a96d86f53d2bea19d7))
+
+
+### Bug Fixes
+
+* add dependencies field to all state machine transitions ([#12](https://github.com/ottobot-ai/ottochain-sdk/issues/12)) ([b71bce2](https://github.com/ottobot-ai/ottochain-sdk/commit/b71bce2a0e968a9588d8f58c8853149d330d1fc6))
+* add missing ESLint config and tests ([1796c3b](https://github.com/ottobot-ai/ottochain-sdk/commit/1796c3b90519008872698bbfc533ed985488ed4f))
+* add subpath exports for all apps ([#10](https://github.com/ottobot-ai/ottochain-sdk/issues/10)) ([b706a33](https://github.com/ottobot-ai/ottochain-sdk/commit/b706a33b9eb3f70c6a7b816d600a29cce86604ea))
+* align legacy types with wire format ([#23](https://github.com/ottobot-ai/ottochain-sdk/issues/23)) ([8281058](https://github.com/ottobot-ai/ottochain-sdk/commit/8281058b842961c4b81910beadb06408330cc1ec))
+* export markets and oracles proto types ([#8](https://github.com/ottobot-ai/ottochain-sdk/issues/8)) ([d9676e3](https://github.com/ottobot-ai/ottochain-sdk/commit/d9676e34b4cc3cd7a3783646c138e394a37368bf))
+* move @bufbuild/protobuf to runtime dependencies ([268fb07](https://github.com/ottobot-ai/ottochain-sdk/commit/268fb078cb850140ccd86a661d1d142acc290867))
+* remove initialDataTemplate field from state machines ([#14](https://github.com/ottobot-ai/ottochain-sdk/issues/14)) ([61f6e51](https://github.com/ottobot-ai/ottochain-sdk/commit/61f6e511768ba3b04d2475adaf972ea44f81c8ac))
+* restore AGENT_TRANSITIONS and ATTESTATION_DELTAS constants ([#21](https://github.com/ottobot-ai/ottochain-sdk/issues/21)) ([ff7bdd1](https://github.com/ottobot-ai/ottochain-sdk/commit/ff7bdd14c3c6cb2bcc9f43017f6323b39050062b)), closes [#19](https://github.com/ottobot-ai/ottochain-sdk/issues/19)
+* switch from GitHub Packages to npmjs.com registry ([#27](https://github.com/ottobot-ai/ottochain-sdk/issues/27)) ([09b9090](https://github.com/ottobot-ai/ottochain-sdk/commit/09b909087fe8b184d596d2e2463ebc34bbcf55a8))
+* use array syntax for JSON Logic guards in identity state machine ([#17](https://github.com/ottobot-ai/ottochain-sdk/issues/17)) ([79c5a3b](https://github.com/ottobot-ai/ottochain-sdk/commit/79c5a3b6dca6a8f4d3aef3faa4280cb466e991a4))
+* use array-based commitments and claims in market definition ([#25](https://github.com/ottobot-ai/ottochain-sdk/issues/25)) ([d9d122d](https://github.com/ottobot-ai/ottochain-sdk/commit/d9d122da450bf5cc5ad74dc56eb1b81e76478ec8))
+* use merge instead of cat for array concatenation in market SM ([#28](https://github.com/ottobot-ai/ottochain-sdk/issues/28)) ([f24377a](https://github.com/ottobot-ai/ottochain-sdk/commit/f24377aa69814fedb1aa2850ef6e4010bc21eec6))
+* use plain string types for wire format compatibility ([#22](https://github.com/ottobot-ai/ottochain-sdk/issues/22)) ([df39dc3](https://github.com/ottobot-ai/ottochain-sdk/commit/df39dc39ee2463c02d149d15e9af430ffcfb06d7)), closes [#20](https://github.com/ottobot-ai/ottochain-sdk/issues/20)
+
+
+### Code Refactoring
+
+* use ts-proto as single source of truth ([#16](https://github.com/ottobot-ai/ottochain-sdk/issues/16)) ([02bdb59](https://github.com/ottobot-ai/ottochain-sdk/commit/02bdb59fc1fa91a525c1ba2f0b180ceb396cb0c3))
