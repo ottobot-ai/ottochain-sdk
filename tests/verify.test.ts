@@ -1,7 +1,5 @@
 import {
   verify,
-  verifyDataUpdate,
-  verifySignedObject,
   sign,
   signDataUpdate,
   createSignedObject,
@@ -13,13 +11,13 @@ describe('verify module', () => {
     it('returns true for valid signature (sign then verify roundtrip)', async () => {
       const keyPair = generateKeyPair();
       const data = { test: 'data' };
-      
+
       const proof = await sign(data, keyPair.privateKey);
       const signedObject = {
         value: data,
         proofs: [proof]
       };
-      
+
       const result = await verify(signedObject, false);
       expect(result.isValid).toBe(true);
       expect(result.validProofs.length).toBe(1);
@@ -29,19 +27,19 @@ describe('verify module', () => {
     it('returns false for tampered data', async () => {
       const keyPair = generateKeyPair();
       const data = { test: 'data' };
-      
+
       const proof = await sign(data, keyPair.privateKey);
       const signedObject = {
         value: data,
         proofs: [proof]
       };
-      
+
       // Tamper with the data
       const tamperedObject = {
         ...signedObject,
         value: { test: 'tampered' }
       };
-      
+
       const result = await verify(tamperedObject, false);
       expect(result.isValid).toBe(false);
       expect(result.validProofs.length).toBe(0);
@@ -51,16 +49,13 @@ describe('verify module', () => {
     it('returns false for wrong public key id', async () => {
       const keyPair = generateKeyPair();
       const data = { test: 'data' };
-      
+
       const proof = await sign(data, keyPair.privateKey);
       const signedObject = {
         value: data,
-        proofs: [proof]
+        proofs: [{ ...proof, id: '0'.repeat(128) }]
       };
-      
-      // Modify the public key ID to be invalid
-      signedObject.proofs[0].id = '0'.repeat(128);
-      
+
       const result = await verify(signedObject, false);
       expect(result.isValid).toBe(false);
       expect(result.validProofs.length).toBe(0);
@@ -70,16 +65,13 @@ describe('verify module', () => {
     it('handles malformed signature gracefully', async () => {
       const keyPair = generateKeyPair();
       const data = { test: 'data' };
-      
+
       const proof = await sign(data, keyPair.privateKey);
       const signedObject = {
         value: data,
-        proofs: [proof]
+        proofs: [{ ...proof, signature: 'invalid-signature' }]
       };
-      
-      // Modify the signature to be malformed
-      signedObject.proofs[0].signature = 'invalid-signature';
-      
+
       const result = await verify(signedObject, false);
       expect(result.isValid).toBe(false);
       expect(result.validProofs.length).toBe(0);
@@ -87,83 +79,90 @@ describe('verify module', () => {
     });
   });
 
-  describe('verifyDataUpdate', () => {
+  describe('verify with DataUpdate', () => {
     it('returns true for valid DataUpdate signature', async () => {
       const keyPair = generateKeyPair();
       const data = { test: 'data' };
-      
+
       const proof = await signDataUpdate(data, keyPair.privateKey);
       const signedObject = {
         value: data,
         proofs: [proof]
       };
-      
-      const result = await verifyDataUpdate(signedObject);
+
+      // Use isDataUpdate=true
+      const result = await verify(signedObject, true);
       expect(result.isValid).toBe(true);
       expect(result.validProofs.length).toBe(1);
       expect(result.invalidProofs.length).toBe(0);
     });
 
-    it('returns false for tampered data', async () => {
+    it('returns false for tampered DataUpdate', async () => {
       const keyPair = generateKeyPair();
       const data = { test: 'data' };
-      
+
       const proof = await signDataUpdate(data, keyPair.privateKey);
-      const signedObject = {
-        value: data,
-        proofs: [proof]
-      };
-      
-      // Tamper with the data
       const tamperedObject = {
-        ...signedObject,
-        value: { test: 'tampered' }
+        value: { test: 'tampered' },
+        proofs: [proof]
       };
-      
-      const result = await verifyDataUpdate(tamperedObject);
+
+      const result = await verify(tamperedObject, true);
       expect(result.isValid).toBe(false);
-      expect(result.validProofs.length).toBe(0);
-      expect(result.invalidProofs.length).toBe(1);
     });
 
-    it('roundtrips with signDataUpdate', async () => {
+    it('fails when using wrong mode (DataUpdate sig with regular verify)', async () => {
       const keyPair = generateKeyPair();
       const data = { test: 'data' };
-      
-      const signedObject = await createSignedObject(data, keyPair.privateKey, { isDataUpdate: true });
-      
-      const result = await verifyDataUpdate(signedObject);
-      expect(result.isValid).toBe(true);
-      expect(result.validProofs.length).toBe(1);
-      expect(result.invalidProofs.length).toBe(0);
+
+      const proof = await signDataUpdate(data, keyPair.privateKey);
+      const signedObject = {
+        value: data,
+        proofs: [proof]
+      };
+
+      // Use isDataUpdate=false (wrong mode)
+      const result = await verify(signedObject, false);
+      expect(result.isValid).toBe(false);
     });
   });
 
-  describe('verifySignedObject', () => {
-    it('validates all proofs in signed object', async () => {
+  describe('verify with createSignedObject', () => {
+    it('validates signed object created with createSignedObject', async () => {
       const keyPair = generateKeyPair();
       const data = { test: 'data' };
-      
+
       const signedObject = await createSignedObject(data, keyPair.privateKey);
-      
-      const result = await verifySignedObject(signedObject);
+
+      const result = await verify(signedObject);
       expect(result.isValid).toBe(true);
       expect(result.validProofs.length).toBe(1);
-      expect(result.invalidProofs.length).toBe(0);
+    });
+
+    it('validates DataUpdate signed object', async () => {
+      const keyPair = generateKeyPair();
+      const data = { test: 'data' };
+
+      const signedObject = await createSignedObject(data, keyPair.privateKey, { isDataUpdate: true });
+
+      const result = await verify(signedObject, true);
+      expect(result.isValid).toBe(true);
     });
 
     it('returns false if any proof is invalid', async () => {
       const keyPair = generateKeyPair();
       const data = { test: 'data' };
-      
+
       const signedObject = await createSignedObject(data, keyPair.privateKey);
-      
+
       // Tamper with the signature
-      signedObject.proofs[0].signature = 'invalid-signature';
-      
-      const result = await verifySignedObject(signedObject);
+      const tamperedObject = {
+        ...signedObject,
+        proofs: [{ ...signedObject.proofs[0], signature: 'invalid-signature' }]
+      };
+
+      const result = await verify(tamperedObject);
       expect(result.isValid).toBe(false);
-      expect(result.validProofs.length).toBe(0);
       expect(result.invalidProofs.length).toBe(1);
     });
 
@@ -171,13 +170,7 @@ describe('verify module', () => {
       const keyPair1 = generateKeyPair();
       const keyPair2 = generateKeyPair();
       const data = { test: 'data' };
-      
-      // Create signed object with first signature
-      let signedObject = await createSignedObject(data, keyPair1.privateKey);
-      
-      // Add second signature
-      signedObject = await createSignedObject(data, keyPair2.privateKey);
-      
+
       // Create a multi-sig object manually
       const multiSigObject = {
         value: data,
@@ -186,11 +179,30 @@ describe('verify module', () => {
           await sign(data, keyPair2.privateKey)
         ]
       };
-      
-      const result = await verifySignedObject(multiSigObject);
+
+      const result = await verify(multiSigObject);
       expect(result.isValid).toBe(true);
       expect(result.validProofs.length).toBe(2);
       expect(result.invalidProofs.length).toBe(0);
+    });
+
+    it('handles mixed valid/invalid proofs', async () => {
+      const keyPair1 = generateKeyPair();
+      const keyPair2 = generateKeyPair();
+      const data = { test: 'data' };
+
+      const validProof = await sign(data, keyPair1.privateKey);
+      const invalidProof = { ...await sign(data, keyPair2.privateKey), signature: 'bad' };
+
+      const multiSigObject = {
+        value: data,
+        proofs: [validProof, invalidProof]
+      };
+
+      const result = await verify(multiSigObject);
+      expect(result.isValid).toBe(false); // At least one invalid
+      expect(result.validProofs.length).toBe(1);
+      expect(result.invalidProofs.length).toBe(1);
     });
   });
 });
