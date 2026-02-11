@@ -3,6 +3,7 @@ syntax = "proto3";
 package ottochain.v1;
 
 import "ottochain/v1/fiber.proto";
+import "ottochain/v1/delegation.proto";
 import "google/protobuf/struct.proto";
 
 // Create a new state machine fiber
@@ -51,5 +52,10 @@ message OttochainMessage {
     ArchiveStateMachine archive_state_machine = 3;
     CreateScript create_script = 4;
     InvokeScript invoke_script = 5;
+    CreateDelegation create_delegation = 6;
+    RegisterSessionKey register_session_key = 7;
+    SubmitSignedIntent submit_signed_intent = 8;
+    RevokeDelegation revoke_delegation = 9;
+    SubmitRelayedTransaction submit_relayed_transaction = 10;
   }
 }

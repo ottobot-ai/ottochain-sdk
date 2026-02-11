@@ -6,6 +6,7 @@
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { Value } from "../../google/protobuf/struct.js";
+import { CreateDelegation, RegisterSessionKey, RevokeDelegation, SubmitRelayedTransaction, SubmitSignedIntent, } from "./delegation.js";
 import { AccessControlPolicy, StateMachineDefinition } from "./fiber.js";
 export const protobufPackage = "ottochain.v1";
 function createBaseCreateStateMachine() {
@@ -549,6 +550,21 @@ export const OttochainMessage = {
             case "invokeScript":
                 InvokeScript.encode(message.message.invokeScript, writer.uint32(42).fork()).join();
                 break;
+            case "createDelegation":
+                CreateDelegation.encode(message.message.createDelegation, writer.uint32(50).fork()).join();
+                break;
+            case "registerSessionKey":
+                RegisterSessionKey.encode(message.message.registerSessionKey, writer.uint32(58).fork()).join();
+                break;
+            case "submitSignedIntent":
+                SubmitSignedIntent.encode(message.message.submitSignedIntent, writer.uint32(66).fork()).join();
+                break;
+            case "revokeDelegation":
+                RevokeDelegation.encode(message.message.revokeDelegation, writer.uint32(74).fork()).join();
+                break;
+            case "submitRelayedTransaction":
+                SubmitRelayedTransaction.encode(message.message.submitRelayedTransaction, writer.uint32(82).fork()).join();
+                break;
         }
         return writer;
     },
@@ -603,6 +619,56 @@ export const OttochainMessage = {
                     message.message = { $case: "invokeScript", invokeScript: InvokeScript.decode(reader, reader.uint32()) };
                     continue;
                 }
+                case 6: {
+                    if (tag !== 50) {
+                        break;
+                    }
+                    message.message = {
+                        $case: "createDelegation",
+                        createDelegation: CreateDelegation.decode(reader, reader.uint32()),
+                    };
+                    continue;
+                }
+                case 7: {
+                    if (tag !== 58) {
+                        break;
+                    }
+                    message.message = {
+                        $case: "registerSessionKey",
+                        registerSessionKey: RegisterSessionKey.decode(reader, reader.uint32()),
+                    };
+                    continue;
+                }
+                case 8: {
+                    if (tag !== 66) {
+                        break;
+                    }
+                    message.message = {
+                        $case: "submitSignedIntent",
+                        submitSignedIntent: SubmitSignedIntent.decode(reader, reader.uint32()),
+                    };
+                    continue;
+                }
+                case 9: {
+                    if (tag !== 74) {
+                        break;
+                    }
+                    message.message = {
+                        $case: "revokeDelegation",
+                        revokeDelegation: RevokeDelegation.decode(reader, reader.uint32()),
+                    };
+                    continue;
+                }
+                case 10: {
+                    if (tag !== 82) {
+                        break;
+                    }
+                    message.message = {
+                        $case: "submitRelayedTransaction",
+                        submitRelayedTransaction: SubmitRelayedTransaction.decode(reader, reader.uint32()),
+                    };
+                    continue;
+                }
             }
             if ((tag & 7) === 4 || tag === 0) {
                 break;
@@ -645,7 +711,33 @@ export const OttochainMessage = {
                                                 ? { $case: "invokeScript", invokeScript: InvokeScript.fromJSON(object.invokeScript) }
                                                 : isSet(object.invoke_script)
                                                     ? { $case: "invokeScript", invokeScript: InvokeScript.fromJSON(object.invoke_script) }
-                                                    : undefined,
+                                                    : isSet(object.createDelegation)
+                                                        ? { $case: "createDelegation", createDelegation: CreateDelegation.fromJSON(object.createDelegation) }
+                                                        : isSet(object.create_delegation)
+                                                            ? { $case: "createDelegation", createDelegation: CreateDelegation.fromJSON(object.create_delegation) }
+                                                            : isSet(object.registerSessionKey)
+                                                                ? { $case: "registerSessionKey", registerSessionKey: RegisterSessionKey.fromJSON(object.registerSessionKey) }
+                                                                : isSet(object.register_session_key)
+                                                                    ? { $case: "registerSessionKey", registerSessionKey: RegisterSessionKey.fromJSON(object.register_session_key) }
+                                                                    : isSet(object.submitSignedIntent)
+                                                                        ? { $case: "submitSignedIntent", submitSignedIntent: SubmitSignedIntent.fromJSON(object.submitSignedIntent) }
+                                                                        : isSet(object.submit_signed_intent)
+                                                                            ? { $case: "submitSignedIntent", submitSignedIntent: SubmitSignedIntent.fromJSON(object.submit_signed_intent) }
+                                                                            : isSet(object.revokeDelegation)
+                                                                                ? { $case: "revokeDelegation", revokeDelegation: RevokeDelegation.fromJSON(object.revokeDelegation) }
+                                                                                : isSet(object.revoke_delegation)
+                                                                                    ? { $case: "revokeDelegation", revokeDelegation: RevokeDelegation.fromJSON(object.revoke_delegation) }
+                                                                                    : isSet(object.submitRelayedTransaction)
+                                                                                        ? {
+                                                                                            $case: "submitRelayedTransaction",
+                                                                                            submitRelayedTransaction: SubmitRelayedTransaction.fromJSON(object.submitRelayedTransaction),
+                                                                                        }
+                                                                                        : isSet(object.submit_relayed_transaction)
+                                                                                            ? {
+                                                                                                $case: "submitRelayedTransaction",
+                                                                                                submitRelayedTransaction: SubmitRelayedTransaction.fromJSON(object.submit_relayed_transaction),
+                                                                                            }
+                                                                                            : undefined,
         };
     },
     toJSON(message) {
@@ -664,6 +756,21 @@ export const OttochainMessage = {
         }
         else if (message.message?.$case === "invokeScript") {
             obj.invokeScript = InvokeScript.toJSON(message.message.invokeScript);
+        }
+        else if (message.message?.$case === "createDelegation") {
+            obj.createDelegation = CreateDelegation.toJSON(message.message.createDelegation);
+        }
+        else if (message.message?.$case === "registerSessionKey") {
+            obj.registerSessionKey = RegisterSessionKey.toJSON(message.message.registerSessionKey);
+        }
+        else if (message.message?.$case === "submitSignedIntent") {
+            obj.submitSignedIntent = SubmitSignedIntent.toJSON(message.message.submitSignedIntent);
+        }
+        else if (message.message?.$case === "revokeDelegation") {
+            obj.revokeDelegation = RevokeDelegation.toJSON(message.message.revokeDelegation);
+        }
+        else if (message.message?.$case === "submitRelayedTransaction") {
+            obj.submitRelayedTransaction = SubmitRelayedTransaction.toJSON(message.message.submitRelayedTransaction);
         }
         return obj;
     },
@@ -714,6 +821,51 @@ export const OttochainMessage = {
                     message.message = {
                         $case: "invokeScript",
                         invokeScript: InvokeScript.fromPartial(object.message.invokeScript),
+                    };
+                }
+                break;
+            }
+            case "createDelegation": {
+                if (object.message?.createDelegation !== undefined && object.message?.createDelegation !== null) {
+                    message.message = {
+                        $case: "createDelegation",
+                        createDelegation: CreateDelegation.fromPartial(object.message.createDelegation),
+                    };
+                }
+                break;
+            }
+            case "registerSessionKey": {
+                if (object.message?.registerSessionKey !== undefined && object.message?.registerSessionKey !== null) {
+                    message.message = {
+                        $case: "registerSessionKey",
+                        registerSessionKey: RegisterSessionKey.fromPartial(object.message.registerSessionKey),
+                    };
+                }
+                break;
+            }
+            case "submitSignedIntent": {
+                if (object.message?.submitSignedIntent !== undefined && object.message?.submitSignedIntent !== null) {
+                    message.message = {
+                        $case: "submitSignedIntent",
+                        submitSignedIntent: SubmitSignedIntent.fromPartial(object.message.submitSignedIntent),
+                    };
+                }
+                break;
+            }
+            case "revokeDelegation": {
+                if (object.message?.revokeDelegation !== undefined && object.message?.revokeDelegation !== null) {
+                    message.message = {
+                        $case: "revokeDelegation",
+                        revokeDelegation: RevokeDelegation.fromPartial(object.message.revokeDelegation),
+                    };
+                }
+                break;
+            }
+            case "submitRelayedTransaction": {
+                if (object.message?.submitRelayedTransaction !== undefined && object.message?.submitRelayedTransaction !== null) {
+                    message.message = {
+                        $case: "submitRelayedTransaction",
+                        submitRelayedTransaction: SubmitRelayedTransaction.fromPartial(object.message.submitRelayedTransaction),
                     };
                 }
                 break;

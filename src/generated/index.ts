@@ -164,3 +164,23 @@ export {
   IssueSharesRequest,
   ProposeResolutionRequest,
 } from './ottochain/apps/corporate/v1/corporate.js';
+
+// Delegation Support
+export {
+  DelegationApproach,
+  FeePaymentMethod,
+  DelegationScope,
+  DelegationAuthority,
+  SessionKey,
+  SignedIntent,
+  DelegationRevocation,
+  RelayedTransaction,
+  SessionKeyProof,
+  SignedIntentProof,
+  GasConfig,
+  CreateDelegation,
+  RegisterSessionKey,
+  SubmitSignedIntent,
+  RevokeDelegation,
+  SubmitRelayedTransaction,
+} from './ottochain/v1/delegation.js';

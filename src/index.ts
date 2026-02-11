@@ -79,3 +79,6 @@ export * from './errors.js';
 
 // Validation schemas and helpers
 export * from './validation.js';
+
+// Delegation utilities and convenience methods
+export * from './delegation.js';

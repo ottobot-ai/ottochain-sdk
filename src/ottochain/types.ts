@@ -256,6 +256,142 @@ export interface InvokeScript {
   targetSequenceNumber: number;
 }
 
+// ---------------------------------------------------------------------------
+// Delegation message types
+// ---------------------------------------------------------------------------
+
+/**
+ * Delegation approach selector.
+ */
+export type DelegationApproach = 'SessionKey' | 'SignedIntent';
+
+/**
+ * Scope of delegation authority.
+ */
+export interface DelegationScope {
+  fiberIds?: string[];
+  allowedOperations?: string[];
+  maxGasPerTx?: number;
+  maxTotalGas?: number;
+  policyRules?: JsonLogicExpression;
+}
+
+/**
+ * Core delegation authority structure.
+ */
+export interface DelegationAuthority {
+  delegationId: string;
+  principalAddress: string;
+  delegateAddress: string;
+  scope: DelegationScope;
+  approach: DelegationApproach;
+  expiresAt: string; // ISO timestamp
+  nonce: number;
+  principalSignature: string;
+  metadata?: JsonLogicValue;
+}
+
+/**
+ * Session key delegation (temporary signing authority).
+ */
+export interface SessionKey {
+  delegationId: string;
+  sessionPublicKey: string;
+  sessionExpiresAt: string; // ISO timestamp
+  sessionScope?: DelegationScope;
+  authorizationSignature: string;
+}
+
+/**
+ * Signed intent for pre-authorized transactions.
+ */
+export interface SignedIntent {
+  delegationId: string;
+  transaction: JsonLogicValue; // Serialized OttochainMessage
+  intentNonce: number;
+  intentExpiresAt: string; // ISO timestamp
+  executionConditions?: JsonLogicExpression;
+  intentSignature: string;
+}
+
+/**
+ * Delegation revocation message.
+ */
+export interface DelegationRevocation {
+  delegationId: string;
+  reason?: string;
+  nonce: number;
+  revocationSignature: string;
+  revokedAt: string; // ISO timestamp
+}
+
+/**
+ * Fee payment method for relayed transactions.
+ */
+export type FeePaymentMethod = 'RelayerPays' | 'PrincipalPays' | 'SponsorPays';
+
+/**
+ * Gas and fee configuration.
+ */
+export interface GasConfig {
+  gasLimit: number;
+  gasPrice?: number;
+  paymentMethod: FeePaymentMethod;
+}
+
+/**
+ * Relayed transaction envelope.
+ */
+export interface RelayedTransaction {
+  transaction: JsonLogicValue; // Serialized OttochainMessage
+  sessionKeyProof?: {
+    sessionKey: SessionKey;
+    transactionSignature: string;
+  };
+  signedIntentProof?: {
+    signedIntent: SignedIntent;
+    conditionProof?: JsonLogicValue;
+  };
+  gasConfig: GasConfig;
+  relayerAddress: string;
+  relayerSignature: string;
+}
+
+/**
+ * Create a new delegation authority.
+ */
+export interface CreateDelegation {
+  delegation: DelegationAuthority;
+}
+
+/**
+ * Register a session key for delegation.
+ */
+export interface RegisterSessionKey {
+  sessionKey: SessionKey;
+}
+
+/**
+ * Submit a pre-signed intent.
+ */
+export interface SubmitSignedIntent {
+  signedIntent: SignedIntent;
+}
+
+/**
+ * Revoke an existing delegation.
+ */
+export interface RevokeDelegation {
+  revocation: DelegationRevocation;
+}
+
+/**
+ * Submit a relayed transaction.
+ */
+export interface SubmitRelayedTransaction {
+  relayedTx: RelayedTransaction;
+}
+
 /**
  * Union type for all ottochain messages.
  * JSON is wrapped as `{ MessageName: { ...fields } }`.
@@ -265,4 +401,9 @@ export type OttochainMessage =
   | { TransitionStateMachine: TransitionStateMachine }
   | { ArchiveStateMachine: ArchiveStateMachine }
   | { CreateScript: CreateScript }
-  | { InvokeScript: InvokeScript };
+  | { InvokeScript: InvokeScript }
+  | { CreateDelegation: CreateDelegation }
+  | { RegisterSessionKey: RegisterSessionKey }
+  | { SubmitSignedIntent: SubmitSignedIntent }
+  | { RevokeDelegation: RevokeDelegation }
+  | { SubmitRelayedTransaction: SubmitRelayedTransaction };

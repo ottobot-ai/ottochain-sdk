@@ -77,3 +77,5 @@ Object.defineProperty(exports, "assert", { enumerable: true, get: function () { 
 __exportStar(require("./errors.js"), exports);
 // Validation schemas and helpers
 __exportStar(require("./validation.js"), exports);
+// Delegation utilities and convenience methods
+__exportStar(require("./delegation.js"), exports);

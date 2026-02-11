@@ -1,4 +1,5 @@
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
+import { CreateDelegation, RegisterSessionKey, RevokeDelegation, SubmitRelayedTransaction, SubmitSignedIntent } from "./delegation.js";
 import { AccessControlPolicy, StateMachineDefinition } from "./fiber.js";
 export declare const protobufPackage = "ottochain.v1";
 /** Create a new state machine fiber */
@@ -54,6 +55,21 @@ export interface OttochainMessage {
     } | {
         $case: "invokeScript";
         invokeScript: InvokeScript;
+    } | {
+        $case: "createDelegation";
+        createDelegation: CreateDelegation;
+    } | {
+        $case: "registerSessionKey";
+        registerSessionKey: RegisterSessionKey;
+    } | {
+        $case: "submitSignedIntent";
+        submitSignedIntent: SubmitSignedIntent;
+    } | {
+        $case: "revokeDelegation";
+        revokeDelegation: RevokeDelegation;
+    } | {
+        $case: "submitRelayedTransaction";
+        submitRelayedTransaction: SubmitRelayedTransaction;
     } | undefined;
 }
 export declare const CreateStateMachine: MessageFns<CreateStateMachine>;

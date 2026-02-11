@@ -1,0 +1,221 @@
+syntax = "proto3";
+
+package ottochain.v1;
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+// =============================================================================
+// OttoChain Delegation Types
+// =============================================================================
+//
+// This file defines the delegation framework for relayed transactions,
+// enabling gasless and automated transaction execution on behalf of users.
+//
+// The delegation system supports two primary patterns:
+// 1. Session Key Pattern: Temporary signing keys with limited scope
+// 2. Signed Intent Pattern: Pre-signed transaction intents with replay protection
+// =============================================================================
+
+// Delegation approach selector
+enum DelegationApproach {
+  DELEGATION_APPROACH_UNSPECIFIED = 0;
+  DELEGATION_APPROACH_SESSION_KEY = 1;    // Temporary signing authority
+  DELEGATION_APPROACH_SIGNED_INTENT = 2;  // Pre-signed transaction intents
+}
+
+// Scope of delegation authority
+message DelegationScope {
+  // Specific fiber IDs this delegation can operate on
+  repeated string fiber_ids = 1;
+  
+  // Allowed transaction types (message names from OttochainMessage)
+  repeated string allowed_operations = 2;
+  
+  // Maximum gas/fee limit per transaction
+  optional int64 max_gas_per_tx = 3;
+  
+  // Maximum total gas/fee for entire delegation
+  optional int64 max_total_gas = 4;
+  
+  // Custom JSON Logic policy for advanced validation
+  optional google.protobuf.Value policy_rules = 5;
+}
+
+// Core delegation authority structure
+message DelegationAuthority {
+  // Unique delegation identifier
+  string delegation_id = 1;
+  
+  // Principal (user) granting the delegation
+  string principal_address = 2;  // DAG address
+  
+  // Delegate (relayer) receiving the authority
+  string delegate_address = 3;  // DAG address
+  
+  // Delegation scope and permissions
+  DelegationScope scope = 4;
+  
+  // Delegation approach being used
+  DelegationApproach approach = 5;
+  
+  // Expiry timestamp for the delegation
+  google.protobuf.Timestamp expires_at = 6;
+  
+  // Nonce for replay protection
+  int64 nonce = 7;
+  
+  // Principal's signature over the delegation
+  string principal_signature = 8;
+  
+  // Optional metadata
+  optional google.protobuf.Struct metadata = 9;
+}
+
+// Session key delegation (temporary signing authority)
+message SessionKey {
+  // Reference to the parent delegation authority
+  string delegation_id = 1;
+  
+  // Temporary public key for signing
+  string session_public_key = 2;
+  
+  // Session key expiry (must be <= delegation expiry)
+  google.protobuf.Timestamp session_expires_at = 3;
+  
+  // Session-specific scope restrictions
+  optional DelegationScope session_scope = 4;
+  
+  // Principal's signature authorizing this session key
+  string authorization_signature = 5;
+}
+
+// Signed intent for pre-authorized transactions
+message SignedIntent {
+  // Reference to the parent delegation authority
+  string delegation_id = 1;
+  
+  // The specific transaction being pre-authorized (serialized)
+  google.protobuf.Struct transaction = 2;
+  
+  // Intent nonce for replay protection
+  int64 intent_nonce = 3;
+  
+  // Intent expiry timestamp
+  google.protobuf.Timestamp intent_expires_at = 4;
+  
+  // Conditions that must be met for execution
+  optional google.protobuf.Value execution_conditions = 5;
+  
+  // Principal's signature over the intent
+  string intent_signature = 6;
+}
+
+// Delegation revocation message
+message DelegationRevocation {
+  // Delegation being revoked
+  string delegation_id = 1;
+  
+  // Reason for revocation (optional)
+  optional string reason = 2;
+  
+  // Revocation nonce
+  int64 nonce = 3;
+  
+  // Principal's signature authorizing revocation
+  string revocation_signature = 4;
+  
+  // Revocation timestamp
+  google.protobuf.Timestamp revoked_at = 5;
+}
+
+// Relayed transaction envelope
+message RelayedTransaction {
+  // Original transaction to be executed (serialized)
+  google.protobuf.Struct transaction = 1;
+  
+  // Delegation authority proof
+  oneof delegation_proof {
+    // Session key approach: signed by session key
+    SessionKeyProof session_key_proof = 2;
+    
+    // Signed intent approach: pre-signed intent
+    SignedIntentProof signed_intent_proof = 3;
+  }
+  
+  // Gas/fee information
+  GasConfig gas_config = 4;
+  
+  // Relayer information
+  string relayer_address = 5;  // DAG address
+  
+  // Relayer signature (for accountability)
+  string relayer_signature = 6;
+}
+
+// Proof for session key delegation
+message SessionKeyProof {
+  // Session key used to sign the transaction
+  SessionKey session_key = 1;
+  
+  // Transaction signature by the session key
+  string transaction_signature = 2;
+}
+
+// Proof for signed intent delegation
+message SignedIntentProof {
+  // Pre-signed intent being executed
+  SignedIntent signed_intent = 1;
+  
+  // Proof that execution conditions are met (if any)
+  optional google.protobuf.Value condition_proof = 2;
+}
+
+// Gas and fee configuration for relayed transactions
+message GasConfig {
+  // Gas limit for the transaction
+  int64 gas_limit = 1;
+  
+  // Gas price (if applicable)
+  optional int64 gas_price = 2;
+  
+  // Fee payment method
+  FeePaymentMethod payment_method = 3;
+}
+
+// How fees are handled for relayed transactions
+enum FeePaymentMethod {
+  FEE_PAYMENT_METHOD_UNSPECIFIED = 0;
+  FEE_PAYMENT_METHOD_RELAYER_PAYS = 1;     // Relayer covers all fees
+  FEE_PAYMENT_METHOD_PRINCIPAL_PAYS = 2;   // Deducted from principal's account
+  FEE_PAYMENT_METHOD_SPONSOR_PAYS = 3;     // Third-party sponsor covers fees
+}
+
+// =============================================================================
+// Delegation Management Messages
+// =============================================================================
+
+// Create a new delegation authority
+message CreateDelegation {
+  DelegationAuthority delegation = 1;
+}
+
+// Register a session key for delegation
+message RegisterSessionKey {
+  SessionKey session_key = 1;
+}
+
+// Submit a pre-signed intent
+message SubmitSignedIntent {
+  SignedIntent signed_intent = 1;
+}
+
+// Revoke an existing delegation
+message RevokeDelegation {
+  DelegationRevocation revocation = 1;
+}
+
+// Submit a relayed transaction
+message SubmitRelayedTransaction {
+  RelayedTransaction relayed_tx = 1;
+}

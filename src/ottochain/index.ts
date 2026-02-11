@@ -57,6 +57,22 @@ export type {
   CreateScript,
   InvokeScript,
   OttochainMessage,
+
+  // Delegation types
+  DelegationApproach,
+  DelegationScope,
+  DelegationAuthority,
+  SessionKey,
+  SignedIntent,
+  DelegationRevocation,
+  FeePaymentMethod,
+  GasConfig,
+  RelayedTransaction,
+  CreateDelegation,
+  RegisterSessionKey,
+  SubmitSignedIntent,
+  RevokeDelegation,
+  SubmitRelayedTransaction,
 } from './types.js';
 
 // Snapshot decoder
