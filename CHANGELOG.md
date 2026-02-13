@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.1](https://github.com/ottobot-ai/ottochain-sdk/compare/v1.0.0...v1.0.1) (2026-02-13)
+
+
+### Bug Fixes
+
+* use $epochProgress instead of $timestamp in market guards ([#35](https://github.com/ottobot-ai/ottochain-sdk/issues/35)) ([a1e56b8](https://github.com/ottobot-ai/ottochain-sdk/commit/a1e56b81a6f72c3fd8819d5570c3e31322300e86))
+* use RELEASE_TOKEN for release-please to trigger CI ([#33](https://github.com/ottobot-ai/ottochain-sdk/issues/33)) ([86fd438](https://github.com/ottobot-ai/ottochain-sdk/commit/86fd43873a488bceae0ddc9a615b5a15ad95e0d5))
+
 ## 1.0.0 (2026-02-10)
 
 
