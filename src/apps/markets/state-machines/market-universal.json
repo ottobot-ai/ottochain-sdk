@@ -58,7 +58,7 @@
           { "var": "state" },
           {
             "status": "OPEN",
-            "openedAt": { "var": "$timestamp" }
+            "openedAt": { "var": "$epochProgress" }
           }
         ]
       },
@@ -79,7 +79,7 @@
           { "var": "state" },
           {
             "status": "CANCELLED",
-            "cancelledAt": { "var": "$timestamp" },
+            "cancelledAt": { "var": "$epochProgress" },
             "reason": { "var": "event.reason" }
           }
         ]
@@ -96,7 +96,7 @@
           {
             "or": [
               { "!": [{ "var": "state.deadline" }] },
-              { "<=": [{ "var": "$timestamp" }, { "var": "state.deadline" }] }
+              { "<=": [{ "var": "$epochProgress" }, { "var": "state.deadline" }] }
             ]
           }
         ]
@@ -112,7 +112,7 @@
                   "agent": { "var": "event.agent" },
                   "amount": { "var": "event.amount" },
                   "data": { "var": "event.data" },
-                  "committedAt": { "var": "$timestamp" }
+                  "committedAt": { "var": "$epochProgress" }
                 }]
               ]
             },
@@ -137,7 +137,7 @@
           {
             "and": [
               { "var": "state.deadline" },
-              { ">=": [{ "var": "$timestamp" }, { "var": "state.deadline" }] }
+              { ">=": [{ "var": "$epochProgress" }, { "var": "state.deadline" }] }
             ]
           }
         ]
@@ -147,7 +147,7 @@
           { "var": "state" },
           {
             "status": "CLOSED",
-            "closedAt": { "var": "$timestamp" }
+            "closedAt": { "var": "$epochProgress" }
           }
         ]
       },
@@ -175,7 +175,7 @@
                   "oracle": { "var": "event.agent" },
                   "outcome": { "var": "event.outcome" },
                   "proof": { "var": "event.proof" },
-                  "submittedAt": { "var": "$timestamp" }
+                  "submittedAt": { "var": "$epochProgress" }
                 }]
               ]
             }
@@ -212,7 +212,7 @@
                   "oracle": { "var": "event.agent" },
                   "outcome": { "var": "event.outcome" },
                   "proof": { "var": "event.proof" },
-                  "submittedAt": { "var": "$timestamp" }
+                  "submittedAt": { "var": "$epochProgress" }
                 }]
               ]
             }
@@ -238,7 +238,7 @@
           { "var": "state" },
           {
             "status": "SETTLED",
-            "settledAt": { "var": "$timestamp" },
+            "settledAt": { "var": "$epochProgress" },
             "finalOutcome": { "var": "event.outcome" },
             "settlement": { "var": "event.settlement" }
           }
@@ -261,7 +261,7 @@
           { "var": "state" },
           {
             "status": "REFUNDED",
-            "refundedAt": { "var": "$timestamp" },
+            "refundedAt": { "var": "$epochProgress" },
             "reason": "threshold_not_met"
           }
         ]
@@ -295,7 +295,7 @@
           { "var": "state" },
           {
             "status": "REFUNDED",
-            "refundedAt": { "var": "$timestamp" },
+            "refundedAt": { "var": "$epochProgress" },
             "reason": { "var": "event.reason" }
           }
         ]
@@ -341,7 +341,7 @@
                 [{
                   "agent": { "var": "event.agent" },
                   "amount": { "var": "event.amount" },
-                  "claimedAt": { "var": "$timestamp" }
+                  "claimedAt": { "var": "$epochProgress" }
                 }]
               ]
             }
