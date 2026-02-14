@@ -78,5 +78,11 @@ export * from './producer-validator.js';
 // Validation workflow primitives
 export * from './workflows.js';
 
+// DFA State Machine + JSON Logic Integration
+export * from './state-machines.js';
+
+// 16-Type Token Behavior Matrix
+export * from './token-types.js';
+
 // Integration patterns  
 export * from './integration.js';
