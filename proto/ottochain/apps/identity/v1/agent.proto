@@ -35,6 +35,37 @@ message PlatformLink {
   bool verified = 5;
 }
 
+// Delegation authorization level based on reputation
+enum DelegationLevel {
+  DELEGATION_LEVEL_UNSPECIFIED = 0;
+  DELEGATION_LEVEL_NONE = 1;        // No delegation privileges
+  DELEGATION_LEVEL_BASIC = 2;       // Limited operations, low stakes
+  DELEGATION_LEVEL_ADVANCED = 3;    // Broader operations, medium stakes
+  DELEGATION_LEVEL_EXPERT = 4;      // Full operations, high stakes
+}
+
+// Delegation capability configuration
+message DelegationCapability {
+  DelegationLevel level = 1;
+  int64 max_stake_amount = 2;        // Maximum stake for this level
+  int32 min_reputation_required = 3;  // Minimum reputation needed
+  repeated string allowed_operations = 4; // Allowed operation types
+  int64 session_duration_max = 5;     // Max session key duration (seconds)
+}
+
+// Active delegation records for an agent
+message ActiveDelegation {
+  string delegation_id = 1;
+  string delegator_address = 2;       // User who delegated
+  string session_key = 3;            // Session key for signing
+  repeated string scoped_operations = 4; // Operations allowed
+  int64 stake_amount = 5;            // Amount staked for this delegation
+  int64 max_spend_limit = 6;         // Spending limit
+  google.protobuf.Timestamp expires_at = 7;
+  google.protobuf.Timestamp created_at = 8;
+  bool is_revoked = 9;
+}
+
 // Agent identity on-chain state
 message AgentIdentity {
   string address = 1;
@@ -45,6 +76,15 @@ message AgentIdentity {
   repeated PlatformLink platform_links = 6;
   google.protobuf.Timestamp created_at = 7;
   google.protobuf.Timestamp updated_at = 8;
+  
+  // Delegation-related fields
+  int64 total_stake_bonded = 9;      // Total stake bonded by agent
+  DelegationLevel delegation_level = 10; // Current delegation privilege level
+  repeated ActiveDelegation active_delegations = 11; // Current delegations
+  int32 successful_delegations = 12;  // Count of successful delegations
+  int32 failed_delegations = 13;     // Count of failed/revoked delegations
+  int32 slashing_events = 14;        // Count of times agent was slashed
+  google.protobuf.Timestamp last_delegation_at = 15;
 }
 
 // State machine definition for AgentIdentity workflow

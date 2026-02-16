@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package ottochain.apps.identity.v1;
+
+import "ottochain/v1/common.proto";
+import "ottochain/apps/identity/v1/agent.proto";
+import "google/protobuf/timestamp.proto";
+
+// Delegation request from user to agent
+message DelegationRequest {
+  string agent_address = 1;
+  string user_address = 2;
+  repeated string allowed_operations = 3;  // Scoped operations
+  int64 stake_amount = 4;                 // Amount to stake
+  int64 max_spend_limit = 5;              // Maximum spending allowed
+  int64 duration_seconds = 6;             // Session duration (max 86400 = 24h)
+  google.protobuf.Timestamp requested_at = 7;
+  string user_signature = 8;              // User's signature on delegation
+}
+
+// Delegation authority (signed by user)
+message DelegationAuthority {
+  string delegation_id = 1;
+  string agent_address = 2;
+  string user_address = 3;
+  string session_public_key = 4;         // Agent's session public key
+  repeated string scoped_operations = 5;  // Operations this delegation allows
+  int64 stake_amount = 6;
+  int64 max_spend_limit = 7;
+  google.protobuf.Timestamp expires_at = 8;
+  google.protobuf.Timestamp created_at = 9;
+  string user_signature = 10;            // User's signature authorizing delegation
+}
+
+// Delegation revocation request
+message DelegationRevocation {
+  string delegation_id = 1;
+  string revoked_by = 2;                 // User or agent who revoked
+  string reason = 3;                     // Reason for revocation
+  google.protobuf.Timestamp revoked_at = 4;
+  string signature = 5;                  // Signature of revoker
+}
+
+// Reputation stake bond for agent delegation privileges
+message StakeBond {
+  string agent_address = 1;
+  int64 bonded_amount = 2;               // Amount bonded for delegation privileges
+  DelegationLevel required_level = 3;    // Level this bond supports
+  google.protobuf.Timestamp bonded_at = 4;
+  google.protobuf.Timestamp unlock_at = 5; // When bond can be withdrawn
+  int64 slashed_amount = 6;              // Amount slashed for misbehavior
+}
+
+// Delegation performance metrics
+message DelegationMetrics {
+  string agent_address = 1;
+  int32 total_delegations = 2;
+  int32 successful_delegations = 3;
+  int32 revoked_delegations = 4;
+  int32 expired_delegations = 5;
+  double success_rate = 6;               // successful / total
+  double average_delegation_duration = 7; // Average duration in seconds
+  int64 total_stake_managed = 8;         // Total stake across all delegations
+  google.protobuf.Timestamp last_updated = 9;
+}
+
+// Sybil resistance requirements
+message SybilResistance {
+  string agent_address = 1;
+  int32 min_reputation_threshold = 2;    // Minimum reputation to receive delegations
+  int32 min_attestations_required = 3;   // Minimum attestations from verified platforms
+  int32 min_platform_links = 4;         // Minimum verified platform links required
+  int64 min_stake_bond = 5;              // Minimum stake bond required
+  int32 max_delegations_per_period = 6;  // Rate limiting
+  google.protobuf.Timestamp verification_expires = 7; // When verification needs renewal
+}
+
+// Delegation system configuration
+message DelegationConfig {
+  repeated DelegationCapability levels = 1; // Configuration for each delegation level
+  int64 max_session_duration = 2;          // Maximum allowed session duration
+  int64 min_stake_amount = 3;               // Minimum stake for any delegation
+  int32 revocation_propagation_time = 4;    // Max time for revocation to propagate
+  double slashing_penalty_rate = 5;        // Percentage of stake slashed for misbehavior
+  SybilResistance sybil_requirements = 6;  // Anti-Sybil requirements
+}
