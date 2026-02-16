@@ -10,6 +10,7 @@
  * - `generated` — Protobuf-generated types (source of truth)
  * - `apps/identity` — Agent Identity application types
  * - `apps/contracts` — Contract application types
+ * - `delegation` — Session key delegation, intent signing, and validation
  * - `errors` — Custom error classes for structured error handling
  * - `validation` — Input validation with Zod schemas
  *
@@ -121,3 +122,6 @@ export type {
   FiberStateCallback,
   Unsubscribe,
 } from './ottochain/metagraph-client.js';
+
+// ─── Delegation management ────────────────────────────────────────────────────
+export * from './delegation/index.js';

@@ -1,0 +1,251 @@
+syntax = "proto3";
+
+package ottochain.apps.delegation.v1;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/any.proto";
+import "ottochain/v1/common.proto";
+import "ottochain/apps/delegation/v1/delegation.proto";
+
+option java_package = "xyz.kd5ujc.shared_data.apps.delegation.v1";
+option java_outer_classname = "IntentsProto";
+
+// Intent represents a high-level user intention that requires semantic validation
+// beyond simple delegation scope checking
+message Intent {
+  // Unique identifier for this intent
+  string intent_id = 1;
+
+  // The delegation that grants authority for this intent
+  string delegation_id = 2;
+
+  // User who created this intent (must match delegation delegator)
+  string user_address = 3;
+
+  // High-level description of what the user intends to accomplish
+  string description = 4;
+
+  // JSON Logic expression defining the validation rules for this intent
+  // This will be evaluated against transaction context to determine validity
+  google.protobuf.Any validation_rules = 5;
+
+  // Conditions under which this intent should be executed
+  // e.g., market conditions, time constraints, dependency completion
+  repeated ExecutionCondition execution_conditions = 6;
+
+  // Maximum value threshold - intents above this require explicit user signatures
+  // Below this threshold, session key signatures are sufficient
+  optional string max_value_threshold = 7;
+
+  // When this intent was created
+  google.protobuf.Timestamp created_at = 8;
+
+  // When this intent expires (cannot exceed delegation expiry)
+  google.protobuf.Timestamp expires_at = 9;
+
+  // Nonce for replay protection (separate from delegation nonce)
+  uint64 intent_nonce = 10;
+
+  // Signature by user authorizing this intent
+  string user_signature = 11;
+
+  // Current status of the intent
+  IntentStatus status = 12;
+}
+
+// Execution condition that must be met before intent can be executed
+message ExecutionCondition {
+  // Type of condition (market_price, time_condition, dependency, etc.)
+  string condition_type = 1;
+
+  // JSON Logic expression defining the condition
+  // Will be evaluated against current state to check if condition is met
+  google.protobuf.Any condition_logic = 2;
+
+  // Human-readable description of the condition
+  string description = 3;
+
+  // Whether this condition has been met
+  bool is_met = 4;
+
+  // When this condition was last evaluated
+  google.protobuf.Timestamp last_evaluated = 5;
+}
+
+// Status of an intent
+enum IntentStatus {
+  INTENT_STATUS_UNSPECIFIED = 0;
+  INTENT_STATUS_PENDING = 1;        // Created but conditions not yet met
+  INTENT_STATUS_READY = 2;          // All conditions met, ready for execution
+  INTENT_STATUS_EXECUTING = 3;      // Currently being executed
+  INTENT_STATUS_COMPLETED = 4;      // Successfully completed
+  INTENT_STATUS_FAILED = 5;         // Failed during execution
+  INTENT_STATUS_CANCELLED = 6;      // Cancelled by user
+  INTENT_STATUS_EXPIRED = 7;        // Expired before execution
+}
+
+// Transaction executed via intent system
+message IntentTransaction {
+  // Reference to the intent authorizing this transaction
+  string intent_id = 1;
+
+  // The actual transaction payload
+  google.protobuf.Any transaction_payload = 2;
+
+  // Context information used for JSON Logic validation
+  TransactionContext validation_context = 3;
+
+  // Signature by relayer/session key (for low-value transactions)
+  optional string relayer_signature = 4;
+
+  // Fallback signature by user (required for high-value transactions)
+  optional string user_signature = 5;
+
+  // Nonce for transaction replay protection
+  uint64 transaction_nonce = 6;
+
+  // When transaction was created
+  google.protobuf.Timestamp created_at = 7;
+}
+
+// Context information available during JSON Logic validation
+message TransactionContext {
+  // Current market conditions (prices, liquidity, etc.)
+  map<string, string> market_data = 1;
+
+  // User's current balances and holdings
+  map<string, string> user_balances = 2;
+
+  // Current time and date information
+  google.protobuf.Timestamp current_time = 3;
+
+  // Transaction amount and asset type
+  optional string transaction_amount = 4;
+  optional string asset_type = 5;
+
+  // Target address or fiber ID
+  optional string target = 6;
+
+  // Additional custom context fields
+  map<string, string> custom_context = 7;
+}
+
+// Request to create a new intent
+message CreateIntentRequest {
+  Intent intent = 1;
+}
+
+// Response when intent is created
+message CreateIntentResponse {
+  string intent_id = 1;
+  bool success = 2;
+  string error_message = 3;
+  repeated IntentValidationError validation_errors = 4;
+}
+
+// Request to cancel an intent
+message CancelIntentRequest {
+  string intent_id = 1;
+  string user_address = 2;
+  string cancellation_signature = 3;
+  uint64 nonce = 4;
+}
+
+// Response when intent is cancelled
+message CancelIntentResponse {
+  bool success = 1;
+  string error_message = 2;
+}
+
+// Request to submit a transaction via intent
+message SubmitIntentTransactionRequest {
+  IntentTransaction intent_transaction = 1;
+}
+
+// Response for intent transaction submission
+message SubmitIntentTransactionResponse {
+  bool success = 1;
+  string transaction_hash = 2;
+  string error_message = 3;
+  repeated IntentValidationError validation_errors = 4;
+}
+
+// Detailed validation error for intent failures
+message IntentValidationError {
+  IntentValidationErrorType error_type = 1;
+  string error_message = 2;
+  string field_path = 3;
+  string json_logic_error = 4;  // Specific JSON Logic evaluation error
+}
+
+enum IntentValidationErrorType {
+  INTENT_VALIDATION_ERROR_UNSPECIFIED = 0;
+  INTENT_VALIDATION_ERROR_INTENT_NOT_FOUND = 1;
+  INTENT_VALIDATION_ERROR_INTENT_EXPIRED = 2;
+  INTENT_VALIDATION_ERROR_INTENT_CANCELLED = 3;
+  INTENT_VALIDATION_ERROR_DELEGATION_INVALID = 4;
+  INTENT_VALIDATION_ERROR_VALIDATION_RULES_FAILED = 5;
+  INTENT_VALIDATION_ERROR_EXECUTION_CONDITIONS_NOT_MET = 6;
+  INTENT_VALIDATION_ERROR_VALUE_THRESHOLD_EXCEEDED = 7;
+  INTENT_VALIDATION_ERROR_INVALID_USER_SIGNATURE = 8;
+  INTENT_VALIDATION_ERROR_INVALID_RELAYER_SIGNATURE = 9;
+  INTENT_VALIDATION_ERROR_JSON_LOGIC_PARSE_ERROR = 10;
+  INTENT_VALIDATION_ERROR_JSON_LOGIC_EVALUATION_ERROR = 11;
+  INTENT_VALIDATION_ERROR_CONTEXT_INSUFFICIENT = 12;
+  INTENT_VALIDATION_ERROR_INVALID_NONCE = 13;
+}
+
+// Query for intents
+message GetIntentsRequest {
+  optional string user_address = 1;
+  optional string delegation_id = 2;
+  optional IntentStatus status_filter = 3;
+  uint32 limit = 4;
+  uint32 offset = 5;
+}
+
+// Response with list of intents
+message GetIntentsResponse {
+  repeated Intent intents = 1;
+  uint32 total_count = 2;
+  bool has_more = 3;
+}
+
+// Request to evaluate intent conditions
+message EvaluateIntentConditionsRequest {
+  string intent_id = 1;
+  TransactionContext current_context = 2;
+}
+
+// Response with condition evaluation results
+message EvaluateIntentConditionsResponse {
+  bool all_conditions_met = 1;
+  repeated ConditionEvaluationResult condition_results = 2;
+  string error_message = 3;
+}
+
+// Result of evaluating a single condition
+message ConditionEvaluationResult {
+  string condition_type = 1;
+  bool is_met = 2;
+  string evaluation_result = 3;  // JSON representation of evaluation
+  string error_message = 4;
+}
+
+// Service definition for intent management
+service IntentService {
+  // Create a new intent
+  rpc CreateIntent(CreateIntentRequest) returns (CreateIntentResponse);
+
+  // Cancel an existing intent
+  rpc CancelIntent(CancelIntentRequest) returns (CancelIntentResponse);
+
+  // Submit a transaction via intent
+  rpc SubmitIntentTransaction(SubmitIntentTransactionRequest) returns (SubmitIntentTransactionResponse);
+
+  // Query intents
+  rpc GetIntents(GetIntentsRequest) returns (GetIntentsResponse);
+
+  // Evaluate intent execution conditions
+  rpc EvaluateIntentConditions(EvaluateIntentConditionsRequest) returns (EvaluateIntentConditionsResponse);
+}
