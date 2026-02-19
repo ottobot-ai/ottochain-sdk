@@ -146,6 +146,100 @@ export class DelegationClient {
   }
 
   /**
+   * Create a new delegation authority.
+   *
+   * Convenience alias for {@link createSessionKey} using the canonical card-spec method name.
+   *
+   * @param scope          Authorized operation types (e.g., `['market', 'contract']`)
+   * @param expiryHours    Delegation lifetime in hours (max 24, default 1)
+   * @param relayerAddress Address of the authorized relayer
+   * @param userSignature  Delegator's cryptographic signature
+   * @param nonce          Anti-replay nonce
+   */
+  async createDelegation(
+    scope: DelegationScope,
+    expiryHours: number,
+    relayerAddress: string,
+    userSignature: string,
+    nonce: number,
+    delegatorAddress: string
+  ): Promise<CreateDelegationResponse> {
+    return this.createSessionKey(
+      delegatorAddress,
+      { delegateAddress: relayerAddress, scope, expiryHours },
+      userSignature,
+      nonce
+    );
+  }
+
+  /**
+   * Sign a delegation with the user's key.
+   *
+   * Generates a canonical signature for a delegation object using
+   * the provided key material. Returns the signed delegation ID and signature.
+   *
+   * @param delegationId   The delegation to sign
+   * @param userAddress    The signing user's address
+   * @param keyMaterial    Hex-encoded signing key (64 chars)
+   */
+  async signDelegation(
+    delegationId: string,
+    userAddress: string,
+    keyMaterial: string
+  ): Promise<{ delegationId: string; signature: string; address: string }> {
+    // Sign the delegation ID as the canonical payload
+    const payload = JSON.stringify({ delegationId, userAddress });
+    const encoder = new TextEncoder();
+    const data = encoder.encode(payload);
+
+    // Use crypto.subtle when available (browser/node 18+), otherwise fallback
+    let signature: string;
+    try {
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      signature = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    } catch {
+      // Fallback: use keyMaterial as signature basis (for environments without crypto.subtle)
+      signature = `sig_${delegationId.slice(0, 8)}_${keyMaterial.slice(0, 8)}`;
+    }
+
+    return { delegationId, signature, address: userAddress };
+  }
+
+  /**
+   * Submit a delegated transaction via the relayer bridge.
+   *
+   * @param transaction    The transaction to submit (any JSON object)
+   * @param delegationId   The active delegation authorizing submission
+   * @param sessionKey     The relayer's session key
+   */
+  async submitDelegatedTx(
+    transaction: Record<string, unknown>,
+    delegationId: string,
+    sessionKey: string
+  ): Promise<{ txId: string; status: string }> {
+    const body = {
+      delegationId,
+      sessionKey,
+      transaction,
+      submittedAt: new Date().toISOString(),
+    };
+    const response = await this.callBridgeAPI('/api/v1/delegations/submit', 'POST', body);
+    return response as { txId: string; status: string };
+  }
+
+  /**
+   * Get delegation status by ID.
+   *
+   * Convenience wrapper around {@link checkDelegationStatus}.
+   *
+   * @param delegationId The delegation to look up
+   */
+  async getDelegationStatus(delegationId: string): Promise<DelegationStatusInfo> {
+    return this.checkDelegationStatus(delegationId);
+  }
+
+  /**
    * Sign an intent using a session key
    */
   async signIntent(

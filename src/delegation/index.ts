@@ -32,8 +32,12 @@
  * ```
  */
 
-// Main delegation client (note: uses optional validation/revocation clients)
+// Main delegation client
 export { DelegationClient, DelegationHelpers } from './delegation-client.js';
+
+// Policy builder — pre-built JSON Logic delegation operators for state machine guards
+export { PolicyBuilder, DELEGATION_KEYS } from './policy-builder.js';
+export type { JsonLogicExpression } from './policy-builder.js';
 
 // Validation and revocation clients are available but not re-exported 
 // to avoid conflicts with existing SDK validation
