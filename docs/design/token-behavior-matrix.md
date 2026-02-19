@@ -53,12 +53,23 @@ This matrix is the canonical reference for:
 
 | Value | Meaning |
 |-------|---------|
-| `true` | Token carries an `expiresAt` timestamp. After that instant, all operations except `burn` are rejected. |
+| `true` | Token carries an `expiresAtOrdinal` field — a snapshot ordinal deadline. Once the current ordinal exceeds this value, all operations except `burn` are rejected. |
 | `false` | Token is permanent — no validity deadline. Once minted, it exists until explicitly burned. |
 
 **Real-world analogy:** A parking permit valid for one year (expirable) vs. a property deed (permanent).
 
-> **Note:** Expiry is checked against the metagraph snapshot timestamp (`$timestamp` in JSON Logic), not wall clock time. This ensures deterministic consensus across all validators.
+> **⚠️ Critical: Ordinal-based expiry, not Unix timestamps.**  
+> The JLVM does not expose a `$timestamp` variable. The available context variables are:
+> - `$ordinal` — current snapshot ordinal (integer counter)
+> - `$epochProgress` — current epoch progress
+> - `$lastSnapshotHash` — parent snapshot hash (for pseudo-randomness)
+>
+> Token expiry must be stored as `expiresAtOrdinal` (an ordinal integer), not as a Unix millisecond timestamp. Example guard:
+> ```json
+> { "<": [{ "var": "$ordinal" }, { "var": "state.expiresAtOrdinal" }] }
+> ```
+>
+> **Ordinal-to-time approximation:** The OttoChain network produces approximately 1 snapshot per 5–10 seconds. A rough conversion: `expiresAtOrdinal ≈ currentOrdinal + (durationSeconds / avgSecondsPerSnapshot)`. This is an estimate — ordinal rates vary under load. For strict deadline enforcement, err on the side of a shorter ordinal window.
 
 ---
 
@@ -121,9 +132,9 @@ For each of the 8 core operations, this table shows when it is **allowed (✓)**
 | `merge` | any ✓ | any ✓ | ✗ | ✓ | any ✓ | ✓ | ✗ | any ✓ | policy |
 | `set_policy` | any | any | any | any | any | any | any | ✗ | ✓ |
 | `extend_expiry` | any | any | any | any | ✗ | ✓ | ✓* | any ✓ | policy |
-| `check_valid` | any ✓ | any ✓ | any ✓ | any ✓ | always valid | valid | ✗ invalid | any ✓ | policy |
+| `check_valid` | any ✓ | any ✓ | any ✓ | any ✓ | always valid | `$ordinal < state.expiresAtOrdinal` | invalid | any ✓ | policy |
 
-> *`extend_expiry` on an expired token: permitted only if `G=1` and policy allows revival.
+> *`extend_expiry` on an expired token: permitted only if `G=1` and policy allows revival (i.e., sets a new `expiresAtOrdinal` greater than current `$ordinal`).
 
 ### Operation Definitions
 
@@ -135,7 +146,7 @@ For each of the 8 core operations, this table shows when it is **allowed (✓)**
 | `split` | Divide a token amount into two smaller amounts (D=1 only) |
 | `merge` | Combine two token amounts from the same holder (D=1 only) |
 | `set_policy` | Update the JSON Logic governance policy attached to the token (G=1 only) |
-| `extend_expiry` | Move the `expiresAt` timestamp forward in time (E=1 only) |
+| `extend_expiry` | Move the `expiresAtOrdinal` deadline forward (E=1 only) |
 | `check_valid` | Query whether the token is still within its validity window |
 
 ---
@@ -152,7 +163,7 @@ For each of the 8 core operations, this table shows when it is **allowed (✓)**
 **State invariants:**
 - `holder` never changes after mint
 - `amount` is always a non-negative integer
-- No `expiresAt` field present
+- No `expiresAtOrdinal` field present
 
 **Example use case:** Graduation diploma, "Hall of Fame" trophy, on-chain achievement badge.
 
@@ -183,10 +194,14 @@ const validatorLicense = {
   type: 1,
   holder: "DAGvalidator1",
   policy: {
-    "mint": { "===": [{ "var": "event.approvedBy" }, "DAO_ADDRESS"] },
-    "burn": { "===": [{ "var": "event.initiator" }, "DAO_ADDRESS"] }
+    // Mint: the DAO address must be among the cryptographic signers of the transaction
+    "mint": { "in": ["DAO_ADDRESS", { "map": [{ "var": "proofs" }, { "var": "address" }] }] },
+    // Burn: same — DAO must have signed the burn request
+    "burn": { "in": ["DAO_ADDRESS", { "map": [{ "var": "proofs" }, { "var": "address" }] }] }
   }
 };
+// ⚠️ Do NOT use { "var": "event.initiator" } for access control — event payload is user-controlled
+// and not cryptographically verified. Always check proofs[] for authorization.
 ```
 
 ---
@@ -205,9 +220,9 @@ const safetycert = {
   type: 2,
   holder: "DAGworker42",
   amount: 1,
-  expiresAt: 1767225600000  // 2026-01-01 UTC
+  expiresAtOrdinal: 1_500_000  // ~ordinal deadline; ≈ currentOrdinal + (365days / secsPerSnapshot)
 };
-// After expiresAt: transfer → REJECTED, split → REJECTED, merge → REJECTED
+// Once $ordinal >= expiresAtOrdinal: transfer → REJECTED, split → REJECTED, merge → REJECTED
 // burn after expiry → still allowed (cleanup)
 ```
 
@@ -253,8 +268,15 @@ const reputationScore = {
 **Use case:** Credit score or trust rating where an authority controls the accrual rate and can cap maximum values via policy. Prevents gaming via self-issuance.
 
 ```typescript
-// Policy: mint requires event.initiator to be SCORING_SERVICE_ADDRESS
-// Policy: single mint cannot exceed 5.0 points at once
+// Policy: mint requires SCORING_SERVICE_ADDRESS to be among the transaction signers
+const mintPolicy = {
+  "and": [
+    // Scoring service must have signed this transaction
+    { "in": ["SCORING_SERVICE_ADDRESS", { "map": [{ "var": "proofs" }, { "var": "address" }] }] },
+    // Single mint cannot exceed 5.0 points
+    { "<=": [{ "var": "event.amount" }, 5.0] }
+  ]
+};
 ```
 
 ---
@@ -338,8 +360,13 @@ const equityToken = {
 **Use case:** Airline boarding pass — transferable (with airline approval), expirable (flight date), governed (policy prevents transfer after check-in window).
 
 ```typescript
-// Policy: transfer requires !state.checkedIn
-// Policy: extend_expiry requires event.initiator === AIRLINE_ADDRESS
+// Policy: transfer requires passenger has not checked in yet
+const transferPolicy = { "!": [{ "var": "state.checkedIn" }] };
+
+// Policy: extend_expiry requires the airline address to be among the transaction signers
+const extendPolicy = {
+  "in": ["AIRLINE_ADDRESS", { "map": [{ "var": "proofs" }, { "var": "address" }] }]
+};
 ```
 
 ---
@@ -374,8 +401,10 @@ const utilityToken = {
 const stablecoin = {
   type: 13,
   policy: {
+    // Transfer: recipient must not be on the blacklist
     "transfer": { "!": [{ "getKey": [{ "var": "state.blacklist" }, { "var": "event.recipient" }] }] },
-    "mint": { "===": [{ "var": "event.initiator" }, "ISSUER_ADDRESS"] }
+    // Mint: the issuer address must be among the cryptographic signers of this operation
+    "mint": { "in": ["ISSUER_ADDRESS", { "map": [{ "var": "proofs" }, { "var": "address" }] }] }
   }
 };
 ```
@@ -499,25 +528,29 @@ const transferGuard = {
   "and": [
     // Must be transferable (bit 3 set)
     { "!==": [{ "&": [{ "var": "state.tokenBehavior" }, 8] }, 0] },
-    // Must not be expired (if expirable)
+    // Must not be expired (if expirable): $ordinal < state.expiresAtOrdinal
     {
       "or": [
         // Not expirable (bit 1 not set)
         { "===": [{ "&": [{ "var": "state.tokenBehavior" }, 2] }, 0] },
-        // Expirable but not yet expired
-        { ">": [{ "var": "state.expiresAt" }, { "var": "$timestamp" }] }
+        // Expirable: current ordinal must be less than the expiry ordinal deadline
+        { "<": [{ "var": "$ordinal" }, { "var": "state.expiresAtOrdinal" }] }
       ]
     }
   ]
 };
 
-// JSON Logic guard for mint — if governable, checks issuer
+// JSON Logic guard for mint — if governable, checks that a specific address signed
+// ⚠️ Use proofs[], NOT event.initiator — the event payload is user-supplied and unverified
 const mintGuard = {
   "or": [
     // Not governable — permit freely
     { "===": [{ "&": [{ "var": "state.tokenBehavior" }, 1] }, 0] },
-    // Governable — must pass policy
-    { "===": [{ "var": "event.initiator" }, { "var": "state.policy.allowedMinter" }] }
+    // Governable — allowedMinter address must appear in the cryptographic proof signers
+    { "in": [
+        { "var": "state.policy.allowedMinter" },
+        { "map": [{ "var": "proofs" }, { "var": "address" }] }
+    ]}
   ]
 };
 ```
@@ -531,20 +564,23 @@ syntax = "proto3";
 package ottochain.assets.v1;
 
 message Token {
-  string id            = 1;
-  uint32 behavior      = 2;  // 0–15, encodes TDEG bits
-  string holder        = 3;  // DAG address
-  string amount        = 4;  // decimal string for divisible, integer for non-divisible
-  optional uint64 expires_at = 5;  // Unix ms; only present if E=1
-  optional string policy     = 6;  // JSON Logic string; only present if G=1
+  string id              = 1;
+  uint32 behavior        = 2;  // 0–15, encodes TDEG bits
+  string holder          = 3;  // DAG address
+  string amount          = 4;  // decimal string for divisible, integer for non-divisible
+  optional uint64 expires_at_ordinal = 5;  // Snapshot ordinal deadline; only present if E=1
+                                           // NOT a Unix timestamp — ordinals are monotone integers
+  optional string policy = 6;  // JSON Logic string; only present if G=1
   map<string, string> metadata = 7;
 }
 
 message TokenOperation {
   string token_id  = 1;
   string operation = 2;  // "mint" | "burn" | "transfer" | "split" | "merge" | "set_policy" | "extend_expiry"
-  string initiator = 3;
-  map<string, string> params = 4;
+  // Note: initiator is intentionally absent — authorization is verified via the
+  // transaction's cryptographic proofs at consensus time, not a self-reported field.
+  // Signers are accessible in JSON Logic via the `proofs` context array.
+  map<string, string> params = 3;
 }
 ```
 
@@ -564,6 +600,15 @@ Soulbound achievements (Type 0) should have `amount = 1` and be non-divisible. U
 ### ❌ Checking expiry client-side only
 Expiry must be enforced in the metagraph's JSON Logic guards, not just in the UI. A client that doesn't check expiry can submit an operation, but the validator will reject it at consensus.
 
+### ❌ Using Unix timestamps for expiry (or expecting `$timestamp`)
+The JLVM does **not** expose a `$timestamp` variable. Token expiry must use `expiresAtOrdinal` with the `$ordinal` context variable. Storing a Unix timestamp in a token and trying to compare it with `$timestamp` will always evaluate as falsy (undefined variable), making the guard silently incorrect.
+
+### ❌ Using `event.initiator` for access control
+The `event` object is the user-supplied payload — **any caller can set any field to any value**. It provides zero security guarantees. For authorization checks, always use `proofs[]`:
+```json
+{ "in": ["AUTHORIZED_ADDRESS", { "map": [{ "var": "proofs" }, { "var": "address" }] }] }
+```
+
 ### ❌ Confusing transfer with delegation
 `transfer` permanently changes the holder. Delegating authority to act on a token is a separate concept handled by the delegation framework — the holder address doesn't change.
 
@@ -576,8 +621,8 @@ The OttoChain metagraph enforces token behavior at the **DataUpdate validation p
 1. **Operation arrives** as a `DataUpdate` containing a `TokenOperation`
 2. **Type extraction:** metagraph reads `token.behavior` (0–15)
 3. **Structural check:** Is this operation legal for this type? (e.g., `transfer` on T=0 → immediate reject)
-4. **Expiry check:** If E=1, is `$timestamp < token.expiresAt`? If not → reject
-5. **Policy evaluation:** If G=1, evaluate token's JSON Logic `policy[operation]` against the event context. If result is falsy → reject
+4. **Expiry check:** If E=1, is `$ordinal < token.expiresAtOrdinal`? If not → reject. Note: `$ordinal` is the current snapshot ordinal integer, not a Unix timestamp.
+5. **Policy evaluation:** If G=1, evaluate token's JSON Logic `policy[operation]` against the JLVM context (which includes `state`, `event`, `proofs`, `$ordinal`, `$epochProgress`, `$lastSnapshotHash`). If result is falsy → reject.
 6. **State transition:** If all checks pass, apply the operation to the fiber state
 
 Rejection details are available via the rejection notification webhook system (see `rejection-notifications.md`).
