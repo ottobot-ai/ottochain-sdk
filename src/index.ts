@@ -8,6 +8,7 @@
  * - `generated` — Protobuf-generated types (source of truth)
  * - `apps/identity` — Agent Identity application types
  * - `apps/contracts` — Contract application types
+ * - `delegation` — Session key delegation, intent signing, and validation
  * - `errors` — Custom error classes for structured error handling
  * - `validation` — Input validation with Zod schemas
  *
@@ -73,6 +74,9 @@ export {
   type ValidatedAcceptContractRequest,
   type ValidatedCompleteContractRequest,
 } from './validation.js';
+
+// Delegation management (session keys, intents, validation)
+export * from './delegation/index.js';
 
 // Error classes
 export * from './errors.js';

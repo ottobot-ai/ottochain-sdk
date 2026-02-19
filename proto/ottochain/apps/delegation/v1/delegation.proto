@@ -1,0 +1,235 @@
+syntax = "proto3";
+
+package ottochain.apps.delegation.v1;
+
+import "google/protobuf/timestamp.proto";
+import "ottochain/v1/common.proto";
+
+option java_package = "xyz.kd5ujc.shared_data.apps.delegation.v1";
+option java_outer_classname = "DelegationProto";
+
+// Session key delegation that grants limited authority to agents
+message Delegation {
+  // Unique identifier for this delegation
+  string delegation_id = 1;
+
+  // Address of the user granting the delegation
+  string delegator_address = 2;
+
+  // Address of the agent receiving the delegation
+  string delegate_address = 3;
+
+  // Session key that can be used to sign transactions
+  SessionKey session_key = 4;
+
+  // Operations that are permitted under this delegation
+  DelegationScope scope = 5;
+
+  // When this delegation was created
+  google.protobuf.Timestamp created_at = 6;
+
+  // When this delegation expires (max 24 hours from creation)
+  google.protobuf.Timestamp expires_at = 7;
+
+  // Current status of the delegation
+  DelegationStatus status = 8;
+
+  // Nonce for replay protection
+  uint64 nonce = 9;
+
+  // User's signature authorizing this delegation
+  string user_signature = 10;
+}
+
+// Session key for signing delegated transactions
+message SessionKey {
+  // Unique identifier for this session key
+  string session_key_id = 1;
+
+  // Public key (compressed format)
+  string public_key = 2;
+
+  // When this session key was created
+  google.protobuf.Timestamp created_at = 3;
+
+  // When this session key expires
+  google.protobuf.Timestamp expires_at = 4;
+
+  // Whether this key is currently active
+  bool is_active = 5;
+}
+
+// Scope of operations permitted by a delegation
+message DelegationScope {
+  // Operations that are allowed (e.g., "transfer", "create_market", "vote")
+  repeated string allowed_operations = 1;
+
+  // Contract addresses that can be called (empty means all contracts)
+  repeated string allowed_contracts = 2;
+
+  // Maximum amount that can be spent in a single transaction
+  optional string max_transaction_amount = 3;
+
+  // Maximum total amount that can be spent during delegation lifetime
+  optional string max_total_amount = 4;
+
+  // Minimum reputation score required for delegate
+  optional uint32 min_reputation_score = 5;
+}
+
+// Status of a delegation
+enum DelegationStatus {
+  DELEGATION_STATUS_UNSPECIFIED = 0;
+  DELEGATION_STATUS_ACTIVE = 1;        // Currently valid and usable
+  DELEGATION_STATUS_EXPIRED = 2;       // Expired due to time limit
+  DELEGATION_STATUS_REVOKED = 3;       // Revoked by user or system
+  DELEGATION_STATUS_SUSPENDED = 4;     // Temporarily suspended due to issues
+}
+
+// Transaction signed using a session key
+message DelegatedTransaction {
+  // Reference to the delegation authorizing this transaction
+  string delegation_id = 1;
+
+  // Session key used to sign this transaction
+  string session_key_id = 2;
+
+  // The operation being performed
+  string operation = 3;
+
+  // Target address or contract
+  string target = 4;
+
+  // Amount being transferred or spent
+  optional string amount = 5;
+
+  // Transaction payload
+  bytes payload = 6;
+
+  // Session key signature
+  string session_signature = 7;
+
+  // Transaction nonce (separate from delegation nonce)
+  uint64 transaction_nonce = 8;
+
+  // When transaction was created
+  google.protobuf.Timestamp created_at = 9;
+}
+
+// Request to create a new delegation
+message CreateDelegationRequest {
+  // Delegation to create
+  Delegation delegation = 1;
+}
+
+// Response when delegation is created
+message CreateDelegationResponse {
+  // ID of the created delegation
+  string delegation_id = 1;
+  
+  // Session key details
+  SessionKey session_key = 2;
+  
+  // Success indicator
+  bool success = 3;
+  
+  // Error message if creation failed
+  string error_message = 4;
+  
+  // Validation errors
+  repeated DelegationValidationError validation_errors = 5;
+}
+
+// Request to revoke a delegation
+message RevokeDelegationRequest {
+  // ID of delegation to revoke
+  string delegation_id = 1;
+  
+  // Address of user revoking (must match delegator)
+  string user_address = 2;
+  
+  // User signature authorizing revocation
+  string revocation_signature = 3;
+  
+  // Nonce for replay protection
+  uint64 nonce = 4;
+  
+  // Reason for revocation
+  string reason = 5;
+}
+
+// Response when delegation is revoked
+message RevokeDelegationResponse {
+  bool success = 1;
+  string error_message = 2;
+}
+
+// Request to query delegations
+message GetDelegationsRequest {
+  // Filter by delegator address
+  optional string delegator_address = 1;
+  
+  // Filter by delegate address
+  optional string delegate_address = 2;
+  
+  // Filter by status
+  optional DelegationStatus status_filter = 3;
+  
+  // Pagination
+  uint32 limit = 4;
+  uint32 offset = 5;
+}
+
+// Response with delegation list
+message GetDelegationsResponse {
+  repeated Delegation delegations = 1;
+  uint32 total_count = 2;
+  bool has_more = 3;
+}
+
+// Request to validate a delegated transaction
+message ValidateDelegatedTransactionRequest {
+  DelegatedTransaction transaction = 1;
+}
+
+// Response with validation result
+message ValidateDelegatedTransactionResponse {
+  bool is_valid = 1;
+  repeated DelegationValidationError validation_errors = 2;
+}
+
+// Delegation validation error
+message DelegationValidationError {
+  DelegationValidationErrorType error_type = 1;
+  string error_message = 2;
+  string field_path = 3;
+}
+
+enum DelegationValidationErrorType {
+  DELEGATION_VALIDATION_ERROR_UNSPECIFIED = 0;
+  DELEGATION_VALIDATION_ERROR_DELEGATION_NOT_FOUND = 1;
+  DELEGATION_VALIDATION_ERROR_DELEGATION_EXPIRED = 2;
+  DELEGATION_VALIDATION_ERROR_DELEGATION_REVOKED = 3;
+  DELEGATION_VALIDATION_ERROR_SCOPE_VIOLATION = 4;
+  DELEGATION_VALIDATION_ERROR_SPENDING_LIMIT_EXCEEDED = 5;
+  DELEGATION_VALIDATION_ERROR_REPUTATION_TOO_LOW = 6;
+  DELEGATION_VALIDATION_ERROR_INVALID_SIGNATURE = 7;
+  DELEGATION_VALIDATION_ERROR_INVALID_NONCE = 8;
+  DELEGATION_VALIDATION_ERROR_SESSION_KEY_EXPIRED = 9;
+  DELEGATION_VALIDATION_ERROR_SESSION_KEY_INACTIVE = 10;
+}
+
+// Service definition for delegation management
+service DelegationService {
+  // Create a new delegation
+  rpc CreateDelegation(CreateDelegationRequest) returns (CreateDelegationResponse);
+  
+  // Revoke an existing delegation
+  rpc RevokeDelegation(RevokeDelegationRequest) returns (RevokeDelegationResponse);
+  
+  // Get delegations (with filtering)
+  rpc GetDelegations(GetDelegationsRequest) returns (GetDelegationsResponse);
+  
+  // Validate a delegated transaction
+  rpc ValidateDelegatedTransaction(ValidateDelegatedTransactionRequest) returns (ValidateDelegatedTransactionResponse);
+}

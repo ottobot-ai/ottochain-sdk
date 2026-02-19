@@ -12,6 +12,7 @@ TypeScript SDK for OttoChain metagraph on Constellation Network.
 - **Transaction Signing** — Sign and batch-sign metagraph transactions
 - **Key Management** — Generate and manage DAG keypairs  
 - **HTTP Client** — Interact with metagraph L0/L1 APIs
+- **Delegation Management** — Session key delegation, intent signing, and validation
 - **Type Definitions** — Full TypeScript types for OttoChain domain model
 - **Input Validation** — Runtime validation with Zod schemas
 - **Custom Errors** — Structured error handling with error codes
@@ -157,6 +158,97 @@ Available schemas:
 - `AcceptContractRequestSchema` - Contract acceptance
 - `CompleteContractRequestSchema` - Contract completion
 
+### Delegation Management
+
+The SDK provides comprehensive delegation management for agent-to-agent interactions:
+
+```typescript
+import { 
+  DelegationClient, 
+  DelegationHelpers,
+  DELEGATION_CONSTANTS 
+} from '@ottochain/sdk';
+
+// Initialize delegation client
+const client = new DelegationClient({
+  bridgeUrl: 'https://bridge.ottochain.xyz',
+  enableValidation: true,
+  enableRevocationMonitoring: true,
+});
+
+// Create delegation scope for transfers
+const scope = DelegationHelpers.createTransferScope(
+  '100.0', // Max per transaction: 100 DAG
+  '500.0'  // Max total: 500 DAG
+);
+
+// Create session key delegation
+const delegation = await client.createSessionKey(
+  userAddress,
+  {
+    delegateAddress: agentAddress,
+    scope,
+    expiryHours: 2,
+    autoRevoke: true,
+  },
+  userSignature,
+  nonce
+);
+
+// Sign an intent using the delegation
+const intent = await client.signIntent(
+  userAddress,
+  {
+    delegationId: delegation.delegationId,
+    intent: myIntent,
+    validateBeforeSign: true,
+  },
+  sessionKeyPrivateKey
+);
+
+// Check delegation status
+const status = await client.checkDelegationStatus(delegation.delegationId);
+console.log('Valid:', status.isValid);
+console.log('Time remaining:', status.timeRemaining, 'seconds');
+
+// Revoke when done
+await client.revokeDelegation(
+  delegation.delegationId,
+  userAddress,
+  'Task completed',
+  revocationSignature,
+  newNonce
+);
+```
+
+**Delegation Helpers:**
+
+```typescript
+// Pre-configured scopes for common use cases
+const transferScope = DelegationHelpers.createTransferScope('100', '500');
+const marketScope = DelegationHelpers.createMarketScope('50', '200', 75);
+const governanceScope = DelegationHelpers.createGovernanceScope(80);
+
+// Validate custom scopes
+const validation = DelegationHelpers.validateScope(customScope);
+if (!validation.isValid) {
+  console.log('Scope errors:', validation.errors);
+}
+```
+
+**Delegation Constants:**
+
+```typescript
+// Available operations
+DELEGATION_CONSTANTS.OPERATIONS.TRANSFER        // 'transfer'
+DELEGATION_CONSTANTS.OPERATIONS.CREATE_MARKET   // 'create_market'
+DELEGATION_CONSTANTS.OPERATIONS.VOTE            // 'vote'
+
+// Time limits
+DELEGATION_CONSTANTS.MAX_DELEGATION_DURATION_MS  // 24 hours
+DELEGATION_CONSTANTS.DEFAULT_DELEGATION_DURATION_MS // 1 hour
+```
+
 ## Error Handling
 
 The SDK provides custom error classes for structured error handling.
@@ -215,6 +307,7 @@ See the [examples/](./examples/) directory for complete working examples:
 | [batch-transactions.ts](./examples/batch-transactions.ts) | Multi-party signing and batch operations |
 | [wallet-management.ts](./examples/wallet-management.ts) | Key generation, import, export, validation |
 | [query-state.ts](./examples/query-state.ts) | Query network state and handle errors |
+| [delegation-flow.ts](./examples/delegation-flow.ts) | Complete delegation workflow with session keys, intents, and validation |
 
 Run an example:
 ```bash
