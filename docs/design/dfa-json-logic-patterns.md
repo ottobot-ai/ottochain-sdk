@@ -1,7 +1,7 @@
 # DFA + JSON Logic State Machine Patterns and Templates
 
-**Status:** Design Reference  
-**Author:** @think  
+**Status:** Specification — Ready for TDD  
+**Author:** @think (design) + @research (corrections: 2026-02-19)  
 **Date:** 2026-02-19  
 **Epic:** [Asset Model App - OttoChain SDK Integration](https://trello.com/c/6988fb33)  
 **Trello Card:** [📐 Spec: DFA + JSON Logic state machine patterns and templates](https://trello.com/c/699630188cd55eb7feafdc57)  
@@ -21,6 +21,7 @@
 8. [Anti-Patterns](#8-anti-patterns)
 9. [Composition Patterns](#9-composition-patterns)
 10. [Design Checklist](#10-design-checklist)
+11. [Test Scenarios](#11-test-scenarios)
 
 ---
 
@@ -122,29 +123,49 @@ interface TransitionDefinition {
 
 ### 3.1 Evaluation Context
 
-When a `TransitionStateMachine` DataUpdate arrives at ML0, the JLVM evaluates each candidate transition's `guard` against a **context object** assembled from:
+When a `TransitionStateMachine` DataUpdate arrives at ML0, the JLVM evaluates each candidate transition's `guard` against a **context object** assembled by `ContextProvider.buildStateMachineContext`. The following table is the definitive reference derived directly from `ContextProvider.scala` and `ReservedKeys.scala` (PR #90):
 
-```typescript
-interface JLVMGuardContext {
-  // The event payload (from TransitionStateMachine.payload)
-  event: Record<string, unknown>;
+### Context Variable Reference (Authoritative)
 
-  // Current fiber state (from fiber's calculatedState)
-  state: Record<string, unknown>;
+| JSON Logic path | Source | Type | Notes |
+|----------------|--------|------|-------|
+| `state` | `fiber.stateData` | object | Current fiber state. ALL state fields accessible as `state.field` |
+| `event` | `input.content` (payload) | object | TransitionStateMachine payload. Fields accessible as `event.field` |
+| `eventName` | `input.key` | string | The event type string |
+| `machineId` | `fiber.fiberId` | string | UUID of this fiber |
+| `currentStateId` | `fiber.currentState.value` | string | Current DFA state name |
+| `sequenceNumber` | `fiber.sequenceNumber` | number | Fiber update count (monotonically increasing; **use for ordering/expiry**) |
+| `proofs` | DataUpdate signature proofs | array | Array of `{address, id, signature}` |
+| `proofs.0.address` | First signer DAG address | string | **Primary signer address** — use this for caller identity checks |
+| `proofs.0.id` | First signer key ID | string | Public key ID (hex) |
+| `proofs.N.address` | Nth signer DAG address | string | Multi-sig scenarios |
+| `machines.{fiberId}.state` | Dependent SM fiber state | object | Only available if fiberId in `dependencies` |
+| `machines.{fiberId}.currentStateId` | Dependent SM current state | string | — |
+| `machines.{fiberId}.sequenceNumber` | Dependent SM sequence | number | — |
+| `scripts.{fiberId}.state` | Script oracle state | object | Only if fiberId in `dependencies` |
+| `scripts.{fiberId}.status` | Oracle fiber status | string | `"ACTIVE"`, `"ARCHIVED"`, etc. |
+| `scripts.{fiberId}.sequenceNumber` | Oracle sequence | number | — |
+| `parent.state` | Parent fiber state | object | `null` if no parent |
+| `parent.currentStateId` | Parent SM current state | string | — |
+| `children.{fiberId}.state` | Child fiber state | object | — |
+| `delegation.active` | Active delegation | boolean | `false` when no delegation or revoked/expired |
+| `delegation.expiresAt` | Delegation expiry ordinal | number | Pre-validated; checking in guard is redundant |
+| `delegation.scope` | Delegation allowed ops | string[] | May contain `"*"` wildcard |
+| `delegation.spendRemaining` | Remaining spend budget | number | — |
+| `delegation.delegator` | Delegator DAG address | string | — |
+| `delegation.relayer` | Relayer (agent) DAG address | string | — |
 
-  // Signer addresses from the DataUpdate proofs
-  // Index 0 is the primary signer
-  proofs: Array<{ address: string }>;
+**Variables NOT in context (common mistakes):**
 
-  // Script oracle states (keyed by fiber ID)
-  // Only populated for fiber IDs listed in transition.dependencies
-  scripts: Record<string, {
-    state: Record<string, unknown>;
-  }>;
-}
-```
+| Wrong path | Why wrong | Use instead |
+|-----------|-----------|-------------|
+| `event.initiator` | Never injected | `proofs.0.address` |
+| `$ordinal` | Not in context root (defaults to 0) | `sequenceNumber` |
+| `event.$ordinal` | Not injected by ML0 | `sequenceNumber` |
+| `event.$timestamp` | Non-deterministic; never use | `sequenceNumber` |
+| `context.signer` | Doesn't exist | `proofs.0.address` |
 
-> **Important:** `event.initiator` does NOT exist. Use `proofs[0].address` for the submitter's DAG address (applies to both standard DataUpdates and DataProof-bearing asset model updates).
+> **Important:** `event.initiator` does NOT exist. Use `proofs.0.address` for the primary signer's DAG address (applies to both standard DataUpdates and DataProof-bearing asset model updates).
 
 ### 3.2 Common Guard Patterns
 
@@ -191,27 +212,94 @@ interface JLVMGuardContext {
 { "===": [{ "var": "state.status" }, "verified"] }
 ```
 
-#### Ordinal-based expiry check
-```json
-{ ">=": [{ "var": "event.$ordinal" }, { "var": "state.expiresAtOrdinal" }] }
-```
+#### Sequence-number-based expiry check
 
-> Use `$ordinal` (current snapshot ordinal), NOT `$timestamp`. Timestamps are non-deterministic across validators.
+> **⚠️ Important:** The Constellation snapshot ordinal is **not** injected into the JLVM context (as of PR #90). `{"var": "$ordinal"}` at the context root evaluates to `0` (VarExpression default). `{"var": "event.$ordinal"}` is also unavailable unless the SDK explicitly enriches the payload. Use `{"var": "sequenceNumber"}` — the fiber's own monotonically increasing update count — for ordering-based logic.
+
+For ordinal-based lifecycle control, two approaches work:
+
+**Approach A — Fiber-sequence expiry** (recommended for relative limits):
+```json
+{ ">=": [{ "var": "sequenceNumber" }, { "var": "state.expiresAtSequence" }] }
+```
+Store `expiresAtSequence` in `initialData`. This is relative to the fiber's update count, not global time.
+
+**Approach B — Submitter-included ordinal in payload** (for external ordinal awareness):
+```json
+{ ">=": [{ "var": "event.currentOrdinal" }, { "var": "state.expiresAtSequence" }] }
+```
+The submitter includes `currentOrdinal` in the event payload. The validator/guardian can then verify this externally. Guard only checks the claim is consistent. **Not trustless** — malicious submitter can forge; use only when expiry trigger is controlled by the validator.
+
+**Future:** Snapshot ordinal injection into JLVM context root (`$ordinal`) is tracked as a separate enhancement. When available, use `{"var": "$ordinal"}`.
+
+> **Never use `$timestamp`** — wall-clock timestamps are non-deterministic across validators and break consensus.
 
 #### Enum membership check
 ```json
 { "in": [{ "var": "event.currency" }, ["DAG", "USDC", "ETH"]] }
 ```
 
-#### Delegation check (requires JLVM Delegation Operators — PR #90)
+#### Delegation check (requires PR #90 JLVM Delegation Operators)
+
+Delegation validation is done via **context variable injection**, not custom operators. When a relayer submits on behalf of a delegator, `delegation.*` variables are injected into the JLVM context by `DelegationContext`. When no delegation is present, `delegation.active` is `false`.
+
+> **Important:** `is_delegated_by`, `delegation_scope_includes`, and `delegation_not_expired` are **not** JLVM operator names. Use the `delegation.*` context variables shown below.
+
 ```json
 {
   "and": [
-    { "is_delegated_by": [{ "var": "proofs.0.address" }, { "var": "state.ownerAddress" }] },
-    { "delegation_scope_includes": [{ "var": "proofs.0.address" }, "transfer"] },
-    { "delegation_not_expired": [{ "var": "proofs.0.address" }] }
+    { "===": [{ "var": "delegation.active" }, true] },
+    {
+      "or": [
+        { "in": ["transfer", { "var": "delegation.scope" }] },
+        { "in": ["*", { "var": "delegation.scope" }] }
+      ]
+    }
   ]
 }
+```
+
+> **Note on expiry:** Delegation expiry is validated **pre-JLVM** in `ContextProvider.buildDelegationContext` — an expired delegation results in `delegation.active = false`. You do **not** need to check `delegation.expiresAt` explicitly in the guard.
+
+**Available `delegation.*` context keys** (from `DelegationContext.scala`):
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `delegation.active` | boolean | `true` when a valid, non-expired, non-revoked delegation exists |
+| `delegation.expiresAt` | number | Expiry ordinal (validated pre-JLVM; guard check is redundant) |
+| `delegation.scope` | string[] | Allowed operations (may include `"*"` wildcard) |
+| `delegation.spendLimit` | number | Max total spend |
+| `delegation.spendUsed` | number | Amount already spent |
+| `delegation.spendRemaining` | number | Remaining spend budget |
+| `delegation.delegator` | string | DAG address of the user who granted the delegation |
+| `delegation.relayer` | string | DAG address of the authorized relayer (agent) |
+| `delegation.sessionKey` | string | Session key public key |
+| `delegation.bondedStake` | number | Stake bonded to this delegation |
+
+**Spend-limited delegation check:**
+```json
+{
+  "and": [
+    { "===": [{ "var": "delegation.active" }, true] },
+    { "in": ["transfer", { "var": "delegation.scope" }] },
+    { ">=": [{ "var": "delegation.spendRemaining" }, { "var": "event.amount" }] }
+  ]
+}
+```
+
+**In Scala state machine definitions** (equivalent, using `DelegationPredicates`):
+```scala
+// Require active delegation with "transfer" scope
+val guard = DelegationPredicates.requireDelegation("transfer")
+
+// Require delegation + spend limit check
+val guardWithSpend = DelegationPredicates.requireDelegationWithSpend("transfer", amountKey = "amount")
+
+// Compose with other checks
+val fullGuard = DelegationPredicates.and(
+  DelegationPredicates.requireDelegation("transfer"),
+  myOtherGuard
+)
 ```
 
 #### Oracle state check (requires `dependencies: [oracleFiberId]`)
@@ -284,13 +372,13 @@ The `effect` field is a JSON Logic expression evaluated after a transition fires
 {
   "owner": { "var": "event.initialOwner" },
   "amount": { "var": "event.initialAmount" },
-  "createdAtOrdinal": { "var": "event.$ordinal" }
+  "createdAtOrdinal": { "var": "sequenceNumber" }
 }
 ```
 
 #### Increment a counter
 ```json
-{ "merge": [{ "var": "state" }, { "count": { "+": [{ "var": "state.count" }, 1] }] }] }
+{ "merge": [{ "var": "state" }, { "count": { "+": [{ "var": "state.count" }, 1] } }] }
 ```
 
 #### Update ownership
@@ -301,7 +389,7 @@ The `effect` field is a JSON Logic expression evaluated after a transition fires
     {
       "previousOwner": { "var": "state.currentOwner" },
       "currentOwner": { "var": "event.newOwner" },
-      "transferredAtOrdinal": { "var": "event.$ordinal" }
+      "transferredAtOrdinal": { "var": "sequenceNumber" }
     }
   ]
 }
@@ -354,7 +442,7 @@ The script oracle executes its method; its updated state is then available via `
 
 ```json
 {
-  "merge": [{ "var": "state" }, { "completedAt": { "var": "event.$ordinal" } }],
+  "merge": [{ "var": "state" }, { "completedAt": { "var": "sequenceNumber" } }],
   "_emit": [
     {
       "name": "asset_transferred",
@@ -394,21 +482,21 @@ draft → cancelled
       "from": {"value":"draft"}, "to": {"value":"active"},
       "eventName": "activate",
       "guard": { "!!": [{"var": "event.activatedBy"}] },
-      "effect": { "merge": [{"var":"state"}, {"activatedBy": {"var":"event.activatedBy"}, "activatedAt": {"var":"event.$ordinal"}}] },
+      "effect": { "merge": [{"var":"state"}, {"activatedBy": {"var":"event.activatedBy"}, "activatedAt": {"var":"sequenceNumber"}}] },
       "dependencies": []
     },
     {
       "from": {"value":"draft"}, "to": {"value":"cancelled"},
       "eventName": "cancel",
       "guard": { "==": [1, 1] },
-      "effect": { "merge": [{"var":"state"}, {"cancelledAt": {"var":"event.$ordinal"}}] },
+      "effect": { "merge": [{"var":"state"}, {"cancelledAt": {"var":"sequenceNumber"}}] },
       "dependencies": []
     },
     {
       "from": {"value":"active"}, "to": {"value":"cancelled"},
       "eventName": "cancel",
       "guard": { "==": [1, 1] },
-      "effect": { "merge": [{"var":"state"}, {"cancelledAt": {"var":"event.$ordinal"}}] },
+      "effect": { "merge": [{"var":"state"}, {"cancelledAt": {"var":"sequenceNumber"}}] },
       "dependencies": []
     }
   ]
@@ -437,19 +525,19 @@ draft → submitted → approved (terminal)
     {
       "from": {"value":"draft"}, "to": {"value":"submitted"}, "eventName": "submit",
       "guard": { "!!": [{"var": "event.submittedBy"}] },
-      "effect": { "merge": [{"var":"state"}, {"submittedBy": {"var":"event.submittedBy"}, "submittedAt": {"var":"event.$ordinal"}}] },
+      "effect": { "merge": [{"var":"state"}, {"submittedBy": {"var":"event.submittedBy"}, "submittedAt": {"var":"sequenceNumber"}}] },
       "dependencies": []
     },
     {
       "from": {"value":"submitted"}, "to": {"value":"approved"}, "eventName": "approve",
       "guard": { "!!": [{"var": "event.approver"}] },
-      "effect": { "merge": [{"var":"state"}, {"approvedBy": {"var":"event.approver"}, "approvedAt": {"var":"event.$ordinal"}}] },
+      "effect": { "merge": [{"var":"state"}, {"approvedBy": {"var":"event.approver"}, "approvedAt": {"var":"sequenceNumber"}}] },
       "dependencies": []
     },
     {
       "from": {"value":"submitted"}, "to": {"value":"rejected"}, "eventName": "reject",
       "guard": { "!!": [{"var": "event.approver"}] },
-      "effect": { "merge": [{"var":"state"}, {"rejectedBy": {"var":"event.approver"}, "reason": {"var":"event.reason"}, "rejectedAt": {"var":"event.$ordinal"}}] },
+      "effect": { "merge": [{"var":"state"}, {"rejectedBy": {"var":"event.approver"}, "reason": {"var":"event.reason"}, "rejectedAt": {"var":"sequenceNumber"}}] },
       "dependencies": []
     }
   ]
@@ -504,7 +592,7 @@ draft → active → locked → burned (terminal)
 ```
 States: draft, active, locked, expired, burned, error
 Events: activate, lock, unlock, expire, burn
-Guards on expire: { ">=": [{"var": "event.$ordinal"}, {"var": "state.expiresAtOrdinal"}] }
+Guards on expire: { ">=": [{"var": "sequenceNumber"}, {"var": "state.expiresAtSequence"}] }
 ```
 
 ---
@@ -539,7 +627,7 @@ From the [16-type token behavior matrix](./token-behavior-matrix.md), each combi
 | Behavior | DFA Guard Pattern |
 |----------|------------------|
 | `!transferable` | Guard on `transfer` events: `{ "===": [{"var": "proofs.0.address"}, {"var": "state.ownerAddress"}] }` — only owner can "transfer" (which in this case is rejected by DFA, so there's no transfer transition at all) |
-| `expirable` | Add `expired` terminal state; guard `{ ">=": [{"var": "event.$ordinal"}, {"var": "state.expiresAtOrdinal"}] }` on `expire` event from any non-terminal state |
+| `expirable` | Add `expired` terminal state; guard `{ ">=": [{"var": "sequenceNumber"}, {"var": "state.expiresAtSequence"}] }` on `expire` event from any non-terminal state |
 | `governable` | Add validator-gated transitions; guard on policy-required events checks `proofs.0.address` against known validator addresses |
 | `divisible` | State must track `amount`; split transitions produce multiple child fibers |
 
@@ -562,7 +650,7 @@ To allow producers to act only in certain states:
     "merge": [{"var": "state"}, {
       "lastSubmission": {"var": "event.payload"},
       "submissionCount": {"+": [{"var": "state.submissionCount"}, 1]},
-      "lastSubmittedAt": {"var": "event.$ordinal"}
+      "lastSubmittedAt": {"var": "sequenceNumber"}
     }]
   },
   "dependencies": []
@@ -651,7 +739,7 @@ A digital sports collectible (NFT-like asset) with a full lifecycle, ordinal-bas
           {
             "askingPrice": { "var": "event.askingPrice" },
             "currency": { "var": "event.currency" },
-            "listedAt": { "var": "event.$ordinal" }
+            "listedAt": { "var": "sequenceNumber" }
           }
         ]
       },
@@ -697,7 +785,7 @@ A digital sports collectible (NFT-like asset) with a full lifecycle, ordinal-bas
             "previousOwner": { "var": "state.ownerAddress" },
             "ownerAddress": { "var": "event.buyerAddress" },
             "purchasePrice": { "var": "event.paidAmount" },
-            "purchasedAt": { "var": "event.$ordinal" },
+            "purchasedAt": { "var": "sequenceNumber" },
             "askingPrice": null,
             "currency": null,
             "listedAt": null,
@@ -729,7 +817,7 @@ A digital sports collectible (NFT-like asset) with a full lifecycle, ordinal-bas
           {
             "previousOwner": { "var": "state.ownerAddress" },
             "ownerAddress": { "var": "event.recipientAddress" },
-            "transferredAt": { "var": "event.$ordinal" },
+            "transferredAt": { "var": "sequenceNumber" },
             "transferCount": { "+": [{ "var": "state.transferCount" }, 1] }
           }
         ]
@@ -752,7 +840,7 @@ A digital sports collectible (NFT-like asset) with a full lifecycle, ordinal-bas
           { "var": "state" },
           {
             "lockReason": { "var": "event.lockReason" },
-            "lockedAt": { "var": "event.$ordinal" },
+            "lockedAt": { "var": "sequenceNumber" },
             "lockedBy": { "var": "proofs.0.address" }
           }
         ]
@@ -770,7 +858,7 @@ A digital sports collectible (NFT-like asset) with a full lifecycle, ordinal-bas
       "effect": {
         "merge": [
           { "var": "state" },
-          { "lockReason": null, "lockedAt": null, "lockedBy": null, "unlockedAt": { "var": "event.$ordinal" } }
+          { "lockReason": null, "lockedAt": null, "lockedBy": null, "unlockedAt": { "var": "sequenceNumber" } }
         ]
       },
       "dependencies": []
@@ -782,12 +870,12 @@ A digital sports collectible (NFT-like asset) with a full lifecycle, ordinal-bas
       "eventName": "expire",
       "guard": {
         "and": [
-          { ">": [{ "var": "state.expiresAtOrdinal" }, 0] },
-          { ">=": [{ "var": "event.$ordinal" }, { "var": "state.expiresAtOrdinal" }] }
+          { ">": [{ "var": "state.expiresAtSequence" }, 0] },
+          { ">=": [{ "var": "sequenceNumber" }, { "var": "state.expiresAtSequence" }] }
         ]
       },
       "effect": {
-        "merge": [{ "var": "state" }, { "expiredAt": { "var": "event.$ordinal" } }]
+        "merge": [{ "var": "state" }, { "expiredAt": { "var": "sequenceNumber" } }]
       },
       "dependencies": []
     },
@@ -798,12 +886,12 @@ A digital sports collectible (NFT-like asset) with a full lifecycle, ordinal-bas
       "eventName": "expire",
       "guard": {
         "and": [
-          { ">": [{ "var": "state.expiresAtOrdinal" }, 0] },
-          { ">=": [{ "var": "event.$ordinal" }, { "var": "state.expiresAtOrdinal" }] }
+          { ">": [{ "var": "state.expiresAtSequence" }, 0] },
+          { ">=": [{ "var": "sequenceNumber" }, { "var": "state.expiresAtSequence" }] }
         ]
       },
       "effect": {
-        "merge": [{ "var": "state" }, { "expiredAt": { "var": "event.$ordinal" } }]
+        "merge": [{ "var": "state" }, { "expiredAt": { "var": "sequenceNumber" } }]
       },
       "dependencies": []
     },
@@ -816,7 +904,7 @@ A digital sports collectible (NFT-like asset) with a full lifecycle, ordinal-bas
         "===": [{ "var": "proofs.0.address" }, { "var": "state.ownerAddress" }]
       },
       "effect": {
-        "merge": [{ "var": "state" }, { "burnedAt": { "var": "event.$ordinal" } }]
+        "merge": [{ "var": "state" }, { "burnedAt": { "var": "sequenceNumber" } }]
       },
       "dependencies": []
     }
@@ -840,7 +928,7 @@ A digital sports collectible (NFT-like asset) with a full lifecycle, ordinal-bas
   "ownerAddress": "DAGproducerAddress...",
   "validatorAddress": "DAGvalidatorAddress...",
   "agreementId": "abc123...",
-  "expiresAtOrdinal": 50000,
+  "expiresAtSequence": 500,
   "transferCount": 0,
   "createdAt": 4201
 }
@@ -918,19 +1006,24 @@ locked → expired          (ordinal-based timeout)
 
 **Rule:** For any given (from, eventName) pair, guards must partition the input space.
 
-### 8.5 ❌ Using `$timestamp` Instead of `$ordinal`
+### 8.5 ❌ Using `$timestamp` or `$ordinal` for Time-Based Guards
 
-**Problem:** `$timestamp` is not reliably consistent across validators in distributed consensus. Guards based on wall-clock time can evaluate differently across nodes, breaking DFA determinism.
+**Problem (timestamps):** `$timestamp` is not reliably consistent across validators in distributed consensus. Guards based on wall-clock time can evaluate differently across nodes, breaking DFA determinism.
+
+**Problem (`$ordinal`):** The Constellation snapshot ordinal is **not currently injected** into the JLVM context (as of PR #90). `{"var": "$ordinal"}` evaluates to `0` (the `VarExpression` default), making any guard using it non-functional.
 
 ```json
-// ❌ WRONG
+// ❌ WRONG — wall-clock timestamp, non-deterministic
 { ">=": [{"var": "event.$timestamp"}, {"var": "state.expiresAt"}] }
 
-// ✅ CORRECT
-{ ">=": [{"var": "event.$ordinal"}, {"var": "state.expiresAtOrdinal"}] }
+// ❌ WRONG — $ordinal not in JLVM context (defaults to 0)
+{ ">=": [{"var": "$ordinal"}, {"var": "state.expiresAtSequence"}] }
+
+// ✅ CORRECT — fiber sequenceNumber is deterministic and always in context
+{ ">=": [{"var": "sequenceNumber"}, {"var": "state.expiresAtSequence"}] }
 ```
 
-**Rule:** Always use `$ordinal` for time-based comparisons.
+**Rule:** Use `sequenceNumber` (the fiber's monotonically increasing update count) for time-based guards. Snapshot ordinal injection (`$ordinal`) is a planned future enhancement — when available, it will be preferred over `sequenceNumber` for global time-awareness.
 
 ### 8.6 ❌ Side Effects in Guards
 
@@ -1018,7 +1111,9 @@ Before finalizing a state machine definition, verify:
 **Determinism:**
 - [ ] For every (state, eventName) pair, guards are mutually exclusive
 - [ ] No overlapping numeric ranges in guards
-- [ ] No `$timestamp` used — only `$ordinal`
+- [ ] No `$timestamp` used (non-deterministic across validators)
+- [ ] No `$ordinal` used in guards (not in JLVM context as of PR #90; defaults to 0)
+- [ ] Time-based expiry uses `sequenceNumber` instead
 
 **Security:**
 - [ ] Every sensitive transition checks `proofs.0.address` against expected caller
@@ -1037,8 +1132,125 @@ Before finalizing a state machine definition, verify:
 
 **Asset Model:**
 - [ ] `metadata["asset_model"] = "true"` set if this fiber uses the Producer-Validator framework
-- [ ] `expiresAtOrdinal` is set in `initialData` for expirable token types (or `0` for no expiry)
+- [ ] `expiresAtSequence` is set in `initialData` for expirable token types (or `0` for no expiry); compared against `sequenceNumber` in guard
 - [ ] `validatorAddress` stored in state for governable tokens
+
+---
+
+## 11. Test Scenarios
+
+Required test cases for @code to implement as failing tests before any DFA/JLVM implementation. These verify that the state machine engine and JLVM evaluation work according to the patterns in this spec.
+
+### 11.1 Guard Evaluation (JLVM unit tests)
+
+```
+✅ always-true guard { "==": [1, 1] } → always evaluates to true
+✅ field presence guard: present field → true; absent field → false
+✅ numeric equality guard: matches exact value → true; mismatches → false
+✅ numeric range guard: in-range → true; out-of-range → false
+✅ string equality guard: matches → true; mismatches → false
+✅ enum membership guard (in): member → true; non-member → false
+✅ multi-field AND guard: all present → true; any missing → false
+✅ OR guard: any branch true → true; all false → false
+✅ negation guard: inverts boolean result
+```
+
+### 11.2 Context Variable Access (JLVM integration tests)
+
+```
+✅ event.fieldName resolves to payload field value
+✅ state.fieldName resolves to current fiber state field
+✅ proofs.0.address resolves to first signer's DAG address
+✅ proofs.1.address resolves to second signer (multi-sig scenario)
+✅ sequenceNumber resolves to current fiber update count
+✅ currentStateId resolves to current DFA state name
+✅ machineId resolves to fiber UUID
+✅ scripts.{fiberId}.state resolves to oracle state (when in dependencies)
+✅ scripts.{fiberId}.state evaluates to null when fiberId not in dependencies
+✅ event.initiator does NOT exist in context (no such key)
+✅ $ordinal at root defaults to 0 (not a supported variable yet)
+✅ delegation.active is false when no delegation present
+✅ delegation.active is true when active delegation from relayer exists
+✅ delegation.scope contains the operation strings from the delegation
+```
+
+### 11.3 State Machine Transitions (metagraph integration tests)
+
+```
+✅ CreateStateMachine: fiber starts in initialState
+✅ CreateStateMachine with isFinal states: no outgoing transitions from final state
+✅ TransitionStateMachine: guard passes → state advances to `to` state
+✅ TransitionStateMachine: guard fails → rejected, fiber stays in from-state
+✅ TransitionStateMachine: wrong from-state → rejected (no matching transition)
+✅ TransitionStateMachine: unknown eventName → rejected (no matching transition)
+✅ TransitionStateMachine: multiple transitions for same (from, event) → first matching guard wins
+✅ TransitionStateMachine: final state → all events rejected
+✅ TransitionStateMachine: effect applied → state data updated correctly
+✅ TransitionStateMachine: effect merge → preserves existing state fields
+✅ TransitionStateMachine: target_sequence_number must match current fiber sequence
+```
+
+### 11.4 Effect System (metagraph integration tests)
+
+```
+✅ merge effect: { "merge": [{"var":"state"}, {newField: value}] } → adds newField, preserves rest
+✅ merge effect: { "merge": [{"var":"state"}, {existingField: newValue}] } → overwrites field
+✅ counter increment: { "+": [{"var":"state.count"}, 1] } → increments by 1
+✅ ownership transfer: state.ownerAddress updated to event.newOwner
+✅ sequenceNumber in effect: { "var": "sequenceNumber" } resolves to current sequence
+✅ _oracleCall reserved key is NOT merged into state (extracted as side effect)
+✅ _emit reserved key is NOT merged into state (extracted as side effect)
+✅ _spawn reserved key is NOT merged into state (extracted as side effect)
+```
+
+### 11.5 Sequence-Number Expiry Guards (metagraph integration tests)
+
+```
+✅ sequenceNumber < expiresAtSequence → expiry guard fails, transition blocked
+✅ sequenceNumber == expiresAtSequence → expiry guard passes, transition fires
+✅ sequenceNumber > expiresAtSequence → expiry guard passes, transition fires
+✅ expiresAtSequence = 0 → guard { ">=": [{"var":"sequenceNumber"}, 0] } always passes
+```
+
+### 11.6 Delegation Guards (metagraph integration tests — requires PR #90)
+
+```
+✅ No delegation submitted → delegation.active = false → delegation guard fails
+✅ Active delegation submitted → delegation.active = true
+✅ Expired delegation (ordinal past expiresAt) → delegation.active = false
+✅ Revoked delegation → delegation.active = false
+✅ Delegation scope contains operation → scope guard passes
+✅ Delegation scope missing operation + no wildcard → scope guard fails
+✅ Delegation scope contains "*" wildcard → any scope guard passes
+✅ Spend-limit guard: spendRemaining >= amount → passes
+✅ Spend-limit guard: spendRemaining < amount → fails
+✅ session key check: proofs.0.address == delegation.relayer → matches
+```
+
+### 11.7 Digital Sports Collectible E2E (integration tests)
+
+Using the definition from [Section 7](#7-complete-example-digital-sports-collectible):
+
+```
+✅ CreateStateMachine → fiber in "minted" state
+✅ list event from owner with askingPrice and currency → moves to "listed"
+✅ list event from non-owner → rejected (proofs.0.address != state.ownerAddress)
+✅ delist from owner → moves back to "minted"
+✅ purchase with exact price and currency → moves to "owned", ownerAddress updated
+✅ purchase where buyer == owner → rejected (no self-purchase)
+✅ purchase with wrong price → rejected
+✅ transfer from owner to recipient → stays in "owned", ownerAddress updated
+✅ transfer from non-owner → rejected
+✅ lock from validatorAddress → moves to "governance_locked"
+✅ lock from non-validator → rejected
+✅ unlock from validatorAddress → moves back to "owned"
+✅ expire when sequenceNumber >= expiresAtSequence → moves to "expired"
+✅ expire when sequenceNumber < expiresAtSequence → rejected
+✅ burn from owner → moves to "burned"
+✅ any event on "expired" (final) → rejected
+✅ any event on "burned" (final) → rejected
+✅ transferCount increments on each purchase and transfer
+```
 
 ---
 
