@@ -1,11 +1,12 @@
 # Adding a New App to OttoChain
 
-**Author:** @think  
-**Date:** 2026-02-19  
+**Author:** @think (2026-02-19) + corrections 2026-02-20 (applied @research review)  
 **Card:** [📚 Documentation: Adding a New App skill guide](https://trello.com/c/6996294c49cc619074a81ce5)  
 **Related:** [DFA + JSON Logic Patterns](./design/dfa-json-logic-patterns.md) | [Architecture](../ottochain/docs/reference/architecture.md)
 
-A step-by-step recipe for building a new OttoChain domain from scratch — from proto schema through metagraph validators, bridge routes, SDK, explorer UI, traffic generation, and deployment.
+A step-by-step recipe for building a new OttoChain domain from scratch — from proto schema through metagraph (domain-agnostic!), bridge routes, SDK, explorer UI, traffic generation, and deployment.
+
+> **Prior art:** An older guide exists at `ottochain/docs/guides/adding-new-app.md` (PR #86, ~600 lines). This guide is more comprehensive and better located in `ottochain-sdk/docs/`. The older guide should be cross-referenced or deprecated once this one is reviewed. Flag for James.
 
 ---
 
@@ -13,7 +14,7 @@ A step-by-step recipe for building a new OttoChain domain from scratch — from 
 
 1. [Anatomy of an OttoChain App](#1-anatomy-of-an-ottochain-app)
 2. [Step 1 — Define the Proto Schema](#2-step-1--define-the-proto-schema)
-3. [Step 2 — Implement Metagraph Validators (Scala)](#3-step-2--implement-metagraph-validators-scala)
+3. [Step 2 — Metagraph: Domain-Agnostic by Design](#3-step-2--metagraph-domain-agnostic-by-design)
 4. [Step 3 — Add Bridge Routes](#4-step-3--add-bridge-routes)
 5. [Step 4 — Add SDK Types and Client Methods](#5-step-4--add-sdk-types-and-client-methods)
 6. [Step 5 — Build Explorer UI Components](#6-step-5--build-explorer-ui-components)
@@ -200,157 +201,146 @@ Then run `sbt compile` to generate `LoanRecord`, `ProposeLoan`, etc. as Scala ca
 
 ---
 
-## 3. Step 2 — Implement Metagraph Validators (Scala)
+## 3. Step 2 — Metagraph: Domain-Agnostic by Design
 
-The metagraph validators define what's allowed. They gate every DataUpdate.
+> **Key insight:** For most new domains, **you do not need to write any new Scala code**. The OttoChain metagraph is intentionally domain-agnostic. The fiber engine (`FiberValidator` + `FiberEvaluator` + `FiberEngine`) evaluates any `CreateStateMachine` / `TransitionStateMachine` / `ArchiveStateMachine` payload generically using the JSON `StateMachineDefinition` and JLVM guards.
 
-### 3.1 Create the App Module
+### 3.1 How the Metagraph Validates Your Domain
 
-```
-modules/shared-data/src/main/scala/xyz/kd5ujc/shared_data/apps/lending/
-├── LendingValidator.scala      # DataUpdate validation logic
-├── LendingStateManager.scala   # CalculatedState updates
-├── LendingFibers.scala         # StateMachineDefinition factory
-└── LendingApp.scala            # Wires everything together
-```
+The validation pipeline (`lifecycle/Validator.scala` → `validate/FiberValidator.scala`) handles your new domain automatically:
 
-### 3.2 Write the State Machine Definition
+**L1 (Data-L1) — structural checks (no Scala changes needed):**
+- `fiberId` is a valid UUID not already used
+- `definition` JSON is structurally valid (states, transitions, guards parseable)
+- `definition` is within size and depth limits
+- No reserved operator field names in the definition
+- `initialData` is a valid map within size limits
+- Parent fiber exists (if `parentFiberId` set)
 
-The fiber-based approach: create a `StateMachineDefinition` for each loan lifecycle.
+**L0 (Metagraph-L0) — contextual checks (no Scala changes needed):**
+- Fiber exists for `TransitionStateMachine`
+- Signer is in `AccessControlPolicy` whitelist (if set)
+- Fiber is not archived
+- JLVM guard evaluation
 
+Your new domain flows through this generic pipeline **unchanged**. There is no `DataL1.scala` dispatcher to edit, no `LendingValidator.scala` to write.
+
+### 3.2 The Only Required Scala Work: ScalaPB Codegen
+
+The Scala layer auto-generates types from your proto. This is handled by the build system.
+
+**In the `ottochain` repo `build.sbt` (already configured for all protos under `proto/`):**
 ```scala
-// LendingFibers.scala
-package xyz.kd5ujc.shared_data.apps.lending
-
-import io.constellationnetwork.metagraph_sdk.json_logic._
-import xyz.kd5ujc.schema.fiber.ReservedKeys
-
-object LendingFibers {
-
-  /**
-   * Loan lifecycle state machine.
-   *
-   * States: proposed → active → repaid (terminal)
-   *                  → defaulted (terminal)
-   *
-   * Guards use:
-   *   - proofs.0.address — signer identity
-   *   - state.borrowerAddress, state.lenderAddress — from initialData
-   *   - state.principalAmount — loan amount
-   *   - event.amountPaid — repayment amount
-   */
-  def loanLifecycle: Map[String, Any] = Map(
-    "states" -> Map(
-      "proposed"  -> Map("id" -> Map("value" -> "proposed"),  "isFinal" -> false, "metadata" -> null),
-      "active"    -> Map("id" -> Map("value" -> "active"),    "isFinal" -> false, "metadata" -> null),
-      "repaid"    -> Map("id" -> Map("value" -> "repaid"),    "isFinal" -> true,  "metadata" -> null),
-      "defaulted" -> Map("id" -> Map("value" -> "defaulted"), "isFinal" -> true,  "metadata" -> null)
-    ),
-    "initialState" -> Map("value" -> "proposed"),
-    "transitions" -> List(
-      // Lender accepts → active
-      Map(
-        "from"        -> Map("value" -> "proposed"),
-        "to"          -> Map("value" -> "active"),
-        "eventName"   -> "accept",
-        "guard"       -> Map("===" -> List(Map("var" -> "proofs.0.address"), Map("var" -> "state.lenderAddress"))),
-        "effect"      -> Map("merge" -> List(Map("var" -> "state"), Map("acceptedAtSeq" -> Map("var" -> "sequenceNumber")))),
-        "dependencies" -> List()
-      ),
-      // Borrower repays in full → repaid
-      Map(
-        "from"        -> Map("value" -> "active"),
-        "to"          -> Map("value" -> "repaid"),
-        "eventName"   -> "repay",
-        "guard"       -> Map("and" -> List(
-          Map("===" -> List(Map("var" -> "proofs.0.address"), Map("var" -> "state.borrowerAddress"))),
-          Map(">=" -> List(Map("var" -> "event.amountPaid"), Map("var" -> "state.principalAmount")))
-        )),
-        "effect"      -> Map("merge" -> List(Map("var" -> "state"), Map(
-          "repaidAtSeq" -> Map("var" -> "sequenceNumber"),
-          "amountPaid"  -> Map("var" -> "event.amountPaid")
-        ))),
-        "dependencies" -> List()
-      ),
-      // Guardian marks default → defaulted
-      Map(
-        "from"        -> Map("value" -> "active"),
-        "to"          -> Map("value" -> "defaulted"),
-        "eventName"   -> "mark_default",
-        "guard"       -> Map("==" -> List(1, 1)),  // governed externally
-        "effect"      -> Map("merge" -> List(Map("var" -> "state"), Map(
-          "defaultedAtSeq" -> Map("var" -> "sequenceNumber"),
-          "defaultReason"  -> Map("var" -> "event.reason")
-        ))),
-        "dependencies" -> List()
-      )
-    ),
-    "metadata" -> Map("name" -> "LoanLifecycle", "description" -> "Lending protocol loan lifecycle")
-  )
-}
+// This is already set up — your new proto is picked up automatically
+// when placed in proto/ottochain/apps/lending/v1/lending.proto
+Compile / PB.targets := Seq(
+  scalapb.gen(flatPackage = false) -> (Compile / sourceManaged).value / "scalapb"
+)
 ```
 
-### 3.3 Write the Validator
+After adding your proto file, run:
+```bash
+sbt compile   # Generates case classes: LoanRecord, ProposeLoan, AcceptLoan, etc.
+sbt test      # Verify no regressions
+```
 
-```scala
-// LendingValidator.scala
-package xyz.kd5ujc.shared_data.apps.lending
+The generated Scala types (`LoanRecord`, `ProposeLoan`, etc.) are available for type-safe use in any Scala code that needs them (e.g., indexer, analytics). The metagraph itself receives these as generic `JsonLogicValue` / protobuf `Value` payloads.
 
-import cats.data.EitherT
-import cats.effect.Async
-import xyz.kd5ujc.shared_data.DataUpdateRejection
+### 3.3 Write the State Machine Definition (JSON)
 
-trait LendingValidator[F[_]] {
-  def validateProposeLoan(update: ProposeLoan, signer: Address): F[Either[DataUpdateRejection, ProposeLoan]]
-  def validateAcceptLoan(update: AcceptLoan, signer: Address, state: CalculatedState): F[Either[DataUpdateRejection, AcceptLoan]]
-  // ...
-}
+The state machine definition for your domain is **a JSON file** (or TypeScript object matching `StateMachineDefinition`). This is what gets submitted in the `definition` field of a `CreateStateMachine` DataUpdate.
 
-object LendingValidator {
-  def make[F[_]: Async](calculatedState: CalculatedState): LendingValidator[F] =
-    new LendingValidator[F] {
-      def validateProposeLoan(update: ProposeLoan, signer: Address) = {
-        // 1. Borrower must be the signer
-        // 2. principalAmount > 0
-        // 3. dueAtOrdinal > current ordinal
-        // 4. loan_id must be unique in calculatedState.lendingLoans
-        ???
-      }
-      // ...
+Create `e2e-test/examples/lending/definition.json` (for testing) and `src/apps/lending/definition.ts` (for SDK use):
+
+```json
+{
+  "states": {
+    "proposed":  { "id": { "value": "proposed" },  "isFinal": false, "metadata": null },
+    "active":    { "id": { "value": "active" },    "isFinal": false, "metadata": null },
+    "repaid":    { "id": { "value": "repaid" },    "isFinal": true,  "metadata": null },
+    "defaulted": { "id": { "value": "defaulted" }, "isFinal": true,  "metadata": null }
+  },
+  "initialState": { "value": "proposed" },
+  "transitions": [
+    {
+      "from": { "value": "proposed" },
+      "to":   { "value": "active" },
+      "eventName": "accept",
+      "guard": { "===": [{ "var": "proofs.0.address" }, { "var": "state.lenderAddress" }] },
+      "effect": { "merge": [{ "var": "state" }, { "acceptedAtSeq": { "var": "sequenceNumber" } }] },
+      "dependencies": []
+    },
+    {
+      "from": { "value": "active" },
+      "to":   { "value": "repaid" },
+      "eventName": "repay",
+      "guard": {
+        "and": [
+          { "===": [{ "var": "proofs.0.address" }, { "var": "state.borrowerAddress" }] },
+          { ">=":  [{ "var": "event.amountPaid" }, { "var": "state.principalAmount" }] }
+        ]
+      },
+      "effect": { "merge": [{ "var": "state" }, {
+        "repaidAtSeq": { "var": "sequenceNumber" },
+        "amountPaid":  { "var": "event.amountPaid" }
+      }] },
+      "dependencies": []
+    },
+    {
+      "from": { "value": "active" },
+      "to":   { "value": "defaulted" },
+      "eventName": "mark_default",
+      "guard": { "==": [1, 1] },
+      "effect": { "merge": [{ "var": "state" }, {
+        "defaultedAtSeq": { "var": "sequenceNumber" },
+        "defaultReason":  { "var": "event.reason" }
+      }] },
+      "dependencies": []
     }
+  ],
+  "metadata": { "name": "LoanLifecycle", "description": "Lending protocol loan lifecycle" }
 }
 ```
 
-**Validation rules checklist:**
-- [ ] All required fields present and valid (addresses are valid DAG format)
-- [ ] Signer identity matches expected role (`proofs[0].address`)
-- [ ] No duplicate IDs in calculatedState
-- [ ] Numeric ranges valid (amounts > 0, ordinals in future for deadlines)
-- [ ] State transitions are consistent with current fiber state
+> **Note:** The `definition` field in `CreateStateMachine` is typed as `google.protobuf.Value` — a generic JSON value. The fiber engine parses it at runtime. You do NOT need Scala code to describe this definition; JSON is the runtime format.
 
-### 3.4 Register in the App Dispatcher
+### 3.4 Optional: Domain-Specific Pre-Fiber Validation
 
-In `modules/shared-data/src/main/scala/xyz/kd5ujc/shared_data/DataL1.scala` (or equivalent dispatcher), add your validator to the match:
+For **most domains**, the generic `FiberValidator` is sufficient. However, if your domain requires pre-fiber business logic (e.g., "a borrower can only have 3 active loans at once"), you can add a small rule to `FiberRules`.
 
+**When this is needed:**
+- Uniqueness constraints across fibers (e.g., "loan ID must be globally unique")
+- Cross-fiber state checks (e.g., "agent must be registered before creating a contract")
+- Custom CID-level validation beyond structural checks
+
+**How to add it** (advanced — only if required):
 ```scala
-case ProposeLoan(loanId, borrower, principal, rate, dueAt) =>
-  lendingValidator.validateProposeLoan(update, signer).flatMap {
-    case Left(rejection) => rejection.pure[F]
-    case Right(validated) =>
-      // Create a fiber for this loan
-      fiberEngine.createStateMachine(
-        fiberId   = UUID.fromString(loanId),
-        definition = LendingFibers.loanLifecycle,
-        initialData = Map(
-          "loanId"          -> loanId,
-          "borrowerAddress" -> borrower.show,
-          "lenderAddress"   -> "", // set when accepted
-          "principalAmount" -> principal,
-          "interestRateBps" -> rate
-        )
-      )
+// In modules/shared-data/src/main/scala/xyz/kd5ujc/shared_data/lifecycle/validate/rules/FiberRules.scala
+// Add a new rule to the existing L0Validator:
+
+object L0 {
+  // ... existing rules ...
+
+  /** Domain-specific: borrower must not exceed active loan limit */
+  def borrowerLoanLimitNotExceeded(
+    update: CreateStateMachine,
+    calculatedState: CalculatedState
+  ): ValidationResult = {
+    val activeLoanCount = calculatedState.stateMachines.values.count { fiber =>
+      fiber.stateData.asJsonObject.flatMap(_.apply("borrowerAddress")).contains(
+        update.initialData.asJsonObject.flatMap(_.apply("borrowerAddress")).getOrElse(Json.Null)
+      ) && fiber.currentState.value != "repaid" && fiber.currentState.value != "defaulted"
+    }
+    if (activeLoanCount >= 3)
+      ValidationResult.invalid("BORROW_LIMIT_EXCEEDED", "Borrower already has 3 active loans")
+    else ValidationResult.valid
   }
+}
 ```
+
+Then wire it into `FiberValidator.L0Validator.createFiber(...)` alongside the existing rules. Submit a PR to `scasplte2/ottochain` with a clear description.
+
+**For most domains: skip this step entirely.**
 
 ---
 
@@ -691,72 +681,126 @@ export function useLoan(loanId: string) {
 
 ## 7. Step 6 — Write Traffic Generator Scenarios
 
-The traffic generator (`ottochain-services/packages/traffic-gen`) drives realistic load for testing and development.
+The traffic generator (`ottochain-services/packages/traffic-generator`) drives realistic load for testing and development. It uses the `WorkflowDefinition` type from `workflows.ts`.
 
-### 7.1 Create Scenario Directory
+### 7.1 Understand the WorkflowDefinition Shape
 
-```
-packages/traffic-gen/src/scenarios/lending/
-├── index.ts              # Scenario registration
-├── propose-loan.ts       # Single propose loan scenario
-├── full-lifecycle.ts     # Propose → Accept → Repay full cycle
-└── default-scenario.ts   # Propose → Accept → (timeout) → Default
-```
-
-### 7.2 Write a Scenario
+The real traffic generator uses `WorkflowDefinition` (from `src/workflows.ts`), not a custom `Scenario` type. Your domain adds a new entry to `src/fiber-definitions.ts`.
 
 ```typescript
-// packages/traffic-gen/src/scenarios/lending/full-lifecycle.ts
-import type { Scenario, ScenarioContext } from '../../types.js';
-import { lending } from '@ottochain/sdk/apps';
+// From packages/traffic-generator/src/fiber-definitions.ts
+export interface FiberDefinition {
+  type: string;
+  name: string;
+  workflowType: 'Contract' | 'AgentIdentity' | 'Custom' | 'Market' | ...;
+  roles: string[];
+  states: string[];
+  initialState: string;
+  finalStates: string[];
+  transitions: TransitionDef[];
+  generateStateData: (participants: Map<string, string>, ctx: FiberContext) => unknown;
+}
 
-export const lendingFullLifecycle: Scenario = {
-  name: 'lending-full-lifecycle',
-  description: 'Borrower proposes, lender accepts, borrower repays',
-  weight: 1,
+// From packages/traffic-generator/src/workflows.ts
+export interface WorkflowDefinition {
+  type: WorkflowType;
+  name: string;
+  states: string[];
+  finalStates: string[];
+  transitions: WorkflowTransition[];
+  expectedDuration: number;
+  frequency: number;
+  stateMachineDefinition: StateMachineDefinition;  // The JSON SM definition
+  initialDataFn: (ctx: CreateContext) => Record<string, unknown>;
+}
 
-  async run(ctx: ScenarioContext) {
-    // Generate random actors for this scenario
-    const borrower = ctx.randomWallet();
-    const lender = ctx.randomWallet();
+export interface WorkflowTransition {
+  from: string;
+  to: string;
+  event: string;
+  actor: 'owner' | 'counterparty' | 'any' | 'third_party';
+  weight: number;
+  payloadFn?: (ctx: TransitionContext) => Record<string, unknown>;
+}
 
-    // Step 1: Propose
-    const { loanId } = await lending.proposeLoan({
-      borrowerAddress: borrower.address,
-      principalAmount: Math.floor(Math.random() * 1000) + 100,
-      interestRateBps: 500,         // 5%
-      dueAtOrdinal: undefined       // no expiry for test
-    }, { bridgeBaseUrl: ctx.bridgeUrl });
+export interface CreateContext {
+  fiberId: string;
+  participants: string[];
+  ownerAddress: string;
+  generation: number;
+}
 
-    ctx.log('info', `Loan proposed: ${loanId}`);
-    await ctx.waitForFiberState(loanId, 'proposed');
+export interface TransitionContext {
+  fiberId: string;
+  currentState: string;
+  participants: string[];
+  ownerAddress: string;
+  generation: number;
+}
+```
 
-    // Step 2: Accept (lender action)
-    await lending.acceptLoan(loanId, { bridgeBaseUrl: ctx.bridgeUrl });
-    await ctx.waitForFiberState(loanId, 'active');
+### 7.2 Add a WorkflowDefinition for Your Domain
 
-    // Step 3: Repay
-    const loan = await lending.getLoan(loanId, { bridgeBaseUrl: ctx.bridgeUrl });
-    await ctx.submitEvent(loanId, 'repay', {
-      amountPaid: loan.principalAmount
-    }, borrower.privateKey);
+```typescript
+// packages/traffic-generator/src/workflows.ts (add to WORKFLOW_DEFINITIONS array)
+import lendingDefinition from './definitions/lending.json' assert { type: 'json' };
 
-    await ctx.waitForFiberState(loanId, 'repaid');
-    ctx.log('info', `Loan repaid: ${loanId}`);
-  }
+export const LENDING_WORKFLOW: WorkflowDefinition = {
+  type: 'Lending',           // Add 'Lending' to WorkflowType union in workflows.ts
+  name: 'Lending Protocol',
+  states: ['proposed', 'active', 'repaid', 'defaulted'],
+  finalStates: ['repaid', 'defaulted'],
+  expectedDuration: 3,       // Typical generations to completion
+  frequency: 0.15,           // 15% of traffic
+  stateMachineDefinition: lendingDefinition as StateMachineDefinition,
+
+  initialDataFn: (ctx: CreateContext) => ({
+    loanId:          ctx.fiberId,
+    borrowerAddress: ctx.ownerAddress,
+    lenderAddress:   ctx.participants[1] ?? ctx.ownerAddress,
+    principalAmount: Math.floor(Math.random() * 900) + 100,  // 100–1000
+    interestRateBps: 500,     // 5%
+    dueAtOrdinal:    0        // No expiry in traffic gen
+  }),
+
+  transitions: [
+    {
+      from: 'proposed', to: 'active', event: 'accept',
+      actor: 'counterparty', weight: 3,
+      payloadFn: () => ({})   // No payload needed; guard checks proofs.0.address
+    },
+    {
+      from: 'active', to: 'repaid', event: 'repay',
+      actor: 'owner', weight: 4,
+      payloadFn: (ctx: TransitionContext) => ({
+        amountPaid: (ctx as any).stateData?.principalAmount ?? 500
+      })
+    },
+    {
+      from: 'active', to: 'defaulted', event: 'mark_default',
+      actor: 'third_party', weight: 1,
+      payloadFn: () => ({ reason: 'traffic-gen-simulated-default' })
+    }
+  ]
 };
 ```
 
-### 7.3 Register the Scenario
+### 7.3 Add the Definition JSON
+
+Save your `definition.json` (from §3.3) to:
+```
+packages/traffic-generator/src/definitions/lending.json
+```
+
+The simulator loads this and submits it as the `definition` field in `CreateStateMachine`.
+
+### 7.4 Register the Workflow
 
 ```typescript
-// packages/traffic-gen/src/scenarios/index.ts
-import { lendingFullLifecycle } from './lending/full-lifecycle.js';
-// ... other scenarios
-
-export const scenarios = [
-  // ... existing
-  lendingFullLifecycle,
+// packages/traffic-generator/src/workflows.ts
+export const WORKFLOW_DEFINITIONS: WorkflowDefinition[] = [
+  // ... existing workflows
+  LENDING_WORKFLOW,
 ];
 ```
 
@@ -802,61 +846,127 @@ cd ottochain && npm run e2e -- --scenario lending-full-lifecycle
 
 ### 8.3 E2E Test Pattern
 
+The `ottochain` repo's E2E runner (in `e2e-test/`) uses `sendSignedUpdate` + `waitForOrdinalConfirmation` to submit updates and verify state. The indexer-based approach uses `IndexerClient.waitForState()`.
+
+**Option A — E2E runner style** (matches existing examples in `e2e-test/examples/`):
+
+```
+e2e-test/examples/lending/
+├── definition.json           # Copy of your SM definition
+├── sm-initial-data.ts        # Initial data generator (called with context)
+├── event-accept.ts           # Accept event payload
+├── event-repay.ts            # Repay event payload
+└── example.json              # Test flow definition
+```
+
 ```typescript
-// e2e-test/lending/full-lifecycle.test.ts
-import { describe, it, expect, beforeAll } from 'vitest';
-import { TestEnvironment } from '../helpers/test-env.js';
-import { lending } from '@ottochain/sdk/apps';
+// e2e-test/examples/lending/sm-initial-data.ts
+import crypto from 'crypto';
 
-describe('Lending: full lifecycle', () => {
-  let env: TestEnvironment;
-
-  beforeAll(async () => {
-    env = await TestEnvironment.start();
-  });
-
-  it('borrower proposes → lender accepts → borrower repays', async () => {
-    const borrower = env.wallet('borrower');
-    const lender = env.wallet('lender');
-
-    // Propose
-    const { loanId } = await lending.proposeLoan({
-      borrowerAddress: borrower.address,
-      principalAmount: 500,
-      interestRateBps: 500
-    }, env.config);
-
-    await env.waitForState(loanId, 'proposed');
-    expect(loanId).toBeTruthy();
-
-    // Accept (as lender)
-    await lending.acceptLoan(loanId, env.config);
-    await env.waitForState(loanId, 'active');
-
-    const loan = await lending.getLoan(loanId, env.config);
-    expect(loan.status).toBe('ACTIVE');
-
-    // Repay
-    await env.submitEventAs(loanId, 'repay', { amountPaid: 500 }, borrower);
-    await env.waitForState(loanId, 'repaid');
-
-    const repaid = await lending.getLoan(loanId, env.config);
-    expect(repaid.status).toBe('REPAID');
-  });
-
-  it('accept from wrong address is rejected', async () => {
-    const attacker = env.wallet('attacker');
-
-    const { loanId } = await lending.proposeLoan({ ... }, env.config);
-    await env.waitForState(loanId, 'proposed');
-
-    // Wrong signer — should be rejected by JLVM guard
-    await expect(
-      env.submitEventAs(loanId, 'accept', {}, attacker)
-    ).rejects.toThrow('rejected');
-  });
+export default (context: Record<string, unknown>) => ({
+  loanId:          crypto.randomUUID(),
+  borrowerAddress: (context.wallets as any)?.alice?.address ?? '',
+  lenderAddress:   (context.wallets as any)?.bob?.address ?? '',
+  principalAmount: 500,
+  interestRateBps: 500
 });
 ```
+
+```typescript
+// e2e-test/examples/lending/event-accept.ts
+export default () => ({});  // No payload; guard checks proofs.0.address
+```
+
+```typescript
+// e2e-test/examples/lending/event-repay.ts
+export default (context: Record<string, unknown>) => ({
+  amountPaid: (context.state as any)?.principalAmount ?? 500
+});
+```
+
+```json
+// e2e-test/examples/lending/example.json
+{
+  "name": "Lending: full lifecycle",
+  "flows": [
+    {
+      "name": "propose → accept → repay",
+      "steps": [
+        {
+          "type": "createStateMachine",
+          "definitionFile": "definition.json",
+          "initialDataFile": "sm-initial-data",
+          "wallet": "alice"
+        },
+        {
+          "type": "transitionStateMachine",
+          "eventName": "accept",
+          "payloadFile": "event-accept",
+          "wallet": "bob",
+          "expectedState": "active"
+        },
+        {
+          "type": "transitionStateMachine",
+          "eventName": "repay",
+          "payloadFile": "event-repay",
+          "wallet": "alice",
+          "expectedState": "repaid"
+        }
+      ]
+    }
+  ]
+}
+```
+
+Run with:
+```bash
+cd ottochain/e2e-test && npx tsx runner.ts --target local --wallets alice,bob
+```
+
+**Option B — Indexer polling** (for integration tests using `IndexerClient`):
+
+```typescript
+// packages/traffic-generator/src/__tests__/lending.test.ts
+import { IndexerClient } from '../indexer-client.js';
+import { BridgeClient } from '../bridge-client.js';
+
+const indexer = new IndexerClient({ indexerUrl: 'http://localhost:3031' });
+const bridge = new BridgeClient({ bridgeUrl: 'http://localhost:3030' });
+
+it('lending full lifecycle', async () => {
+  // Submit CreateStateMachine
+  const loanId = crypto.randomUUID();
+  await bridge.createStateMachine(loanId, definition, initialData, aliceWallet);
+
+  // Wait for indexer to see it
+  const { found } = await indexer.waitForFiber(loanId, { timeoutMs: 30000 });
+  expect(found).toBe(true);
+
+  // Submit accept event
+  await bridge.transitionStateMachine(loanId, 'accept', {}, bobWallet);
+
+  // Wait for active state
+  const { found: active } = await indexer.waitForState(loanId, 'active', { timeoutMs: 30000 });
+  expect(active).toBe(true);
+
+  // Submit repay event
+  await bridge.transitionStateMachine(loanId, 'repay', { amountPaid: 500 }, aliceWallet);
+
+  // Wait for repaid state
+  const { found: repaid } = await indexer.waitForState(loanId, 'repaid', { timeoutMs: 30000 });
+  expect(repaid).toBe(true);
+}, 120_000);
+```
+
+**`IndexerClient` polling API** (from `packages/traffic-generator/src/indexer-client.ts`):
+
+| Method | Signature | Returns |
+|--------|-----------|---------|
+| `waitForFiber` | `(fiberId, { timeoutMs?, pollIntervalMs? })` | `{ found: boolean; fiber: IndexedFiber \| null }` |
+| `waitForState` | `(fiberId, expectedState, { timeoutMs?, pollIntervalMs? })` | `{ found: boolean; fiber, actualState }` |
+| `waitForOrdinal` | `(targetOrdinal, { timeoutMs?, pollIntervalMs? })` | `{ reached: boolean; currentOrdinal }` |
+| `getFiber` | `(fiberId)` | `IndexedFiber \| null` |
+| `getRejections` | `(params: RejectionQueryParams)` | `RejectedTransaction[]` |
 
 ### 8.4 Deployment Checklist
 
@@ -868,10 +978,10 @@ Before merging to `develop`:
 - [ ] `npm run build` passes in `ottochain-sdk`
 
 **Metagraph (Scala):**
-- [ ] Validator rejects all invalid inputs (unit tests pass)
-- [ ] State machine transitions tested
-- [ ] `sbt test` passes (no regressions)
+- [ ] `definition.json` is valid — checked by `FiberValidator.L1.validStateMachineDefinition` test
+- [ ] `sbt test` passes (no regressions — generic FiberValidator handles your domain)
 - [ ] JAR build succeeds: `sbt assembly`
+- [ ] If custom `FiberRules` were added: unit test the new rule
 
 **Bridge (Services):**
 - [ ] All routes return correct status codes
@@ -902,12 +1012,11 @@ Quick reference for the complete "add a new app" workflow:
   □ Verify ScalaPB compiles: sbt compile
 
 □ Metagraph (Scala)
-  □ Create apps/{domain}/ module in shared-data
-  □ Write StateMachineDefinition (states, transitions, guards, effects)
-  □ Write DataUpdate validators (field validation + business rules)
-  □ Register in DataUpdate dispatcher
-  □ Unit tests: validator rejects invalid; accepts valid
-  □ State machine tests: transitions work correctly
+  □ Write StateMachineDefinition as JSON (definition.json or TypeScript object)
+  □ Verify definition passes structural validation: sbt test (FiberValidator tests)
+  □ Run sbt compile — ScalaPB generates types from your new proto automatically
+  □ Optional: Add domain-specific FiberRules.L0 rule only if cross-fiber checks needed
+  □ No per-domain validator module required — FiberEngine handles it generically
 
 □ Bridge (Services)
   □ POST routes for all mutations
