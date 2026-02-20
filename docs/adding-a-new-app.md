@@ -209,6 +209,10 @@ export function getMyAppDefinition(): unknown {
 }
 ```
 
+Then wire it into `FiberValidator.L0Validator.createFiber(...)` alongside the existing rules. Submit a PR to `scasplte2/ottochain` with a clear description.
+
+**For most domains: skip this step entirely.**
+
 ---
 
 ## 4. Step 3 — Add Bridge Routes
@@ -674,6 +678,19 @@ export const WORKFLOWS: WorkflowDefinition[] = [
 ### Local testing (without cluster)
 
 Unit-test your state machine JSON directly using the SDK test harness:
+
+The `ottochain` repo's E2E runner (in `e2e-test/`) uses `sendSignedUpdate` + `waitForOrdinalConfirmation` to submit updates and verify state. The indexer-based approach uses `IndexerClient.waitForState()`.
+
+**Option A — E2E runner style** (matches existing examples in `e2e-test/examples/`):
+
+```
+e2e-test/examples/lending/
+├── definition.json           # Copy of your SM definition
+├── sm-initial-data.ts        # Initial data generator (called with context)
+├── event-accept.ts           # Accept event payload
+├── event-repay.ts            # Repay event payload
+└── example.json              # Test flow definition
+```
 
 ```typescript
 // ottochain-sdk/src/apps/my-app/__tests__/my-app.test.ts
