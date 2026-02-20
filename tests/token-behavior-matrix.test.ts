@@ -1,511 +1,1412 @@
 /**
- * Token Behavior Matrix TDD Tests
+ * TDD Tests for 16-Type Token Behavior Matrix
  * 
- * Tests for 16-type token behavior matrix based on 4 boolean dimensions:
- * - Transferable (T): Can tokens be moved between accounts
- * - Divisible (D): Can tokens be split into fractional amounts  
- * - Expirable (E): Do tokens have expiration logic
- * - Governable (G): Can tokens participate in governance
+ * These tests define the expected behavior for the token behavior matrix
+ * as described in docs/design/token-behavior-matrix.md
  * 
- * These tests will FAIL until the token behavior enforcement is implemented.
+ * Card: 📊 Reference: 16-type token behavior matrix spec (#6996301865712baccd17883a)
+ * Epic: Asset Model Exploration: Complete Artifacts
+ * 
+ * @group tdd
+ * @group token-behavior
+ * @group asset-model
  */
 
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect, beforeEach } from '@jest/testing-library/jest-dom';
 
-// Type definitions that should be implemented
-interface TokenType {
-  transferable: boolean;
-  divisible: boolean;
-  expirable: boolean;
-  governable: boolean;
-  typeCode: string; // e.g., "TDEG", "T--G", "----"
-  typeName: string; // e.g., "Full Feature Token", "Simple Currency", "Non-Transferable Credential"
-}
+// Token behavior type definitions based on spec
+export type TokenBehavior = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15;
 
-interface TokenBehaviorMatrix {
-  getTokenType(transferable: boolean, divisible: boolean, expirable: boolean, governable: boolean): TokenType;
-  isOperationAllowed(tokenType: TokenType, operation: TokenOperation): boolean;
-  validateOperation(tokenType: TokenType, operation: TokenOperation, context: OperationContext): ValidationResult;
-  getTypeByCode(typeCode: string): TokenType;
-  getAllTypes(): TokenType[];
+export const TOKEN_BEHAVIOR_FLAGS = {
+  TRANSFERABLE: 0b1000,   // 8
+  DIVISIBLE:    0b0100,   // 4
+  EXPIRABLE:    0b0010,   // 2
+  GOVERNABLE:   0b0001,   // 1
+} as const;
+
+// Core interfaces based on the spec
+interface Token {
+  id: string;
+  behavior: TokenBehavior;
+  holder: string;
+  amount: number | string;  // decimal string for divisible, integer for non-divisible
+  expiresAtOrdinal?: number;
+  policy?: any;  // JSON Logic
+  metadata?: Record<string, string>;
 }
 
 interface TokenOperation {
-  type: 'transfer' | 'divide' | 'expire' | 'govern' | 'mint' | 'burn';
-  amount?: bigint;
-  from?: string;
-  to?: string;
-  metadata?: Record<string, unknown>;
+  tokenId: string;
+  operation: 'mint' | 'burn' | 'transfer' | 'split' | 'merge' | 'set_policy' | 'extend_expiry' | 'check_valid';
+  params: Record<string, any>;
 }
 
-interface OperationContext {
-  currentTime: number;
-  requesterAddress: string;
-  tokenExpirationTime?: number;
-  governanceProposalId?: string;
+interface ValidationContext {
+  ordinal: number;  // Current snapshot ordinal (NOT Unix timestamp)
+  epochProgress: number;
+  lastSnapshotHash: string;
+  proofs: Array<{ address: string; signature: string }>;
+  state: any;
+  event: any;
 }
 
-interface ValidationResult {
-  allowed: boolean;
-  reason?: string;
-  errorCode?: string;
-}
-
-describe('Token Behavior Matrix TDD Tests', () => {
+describe('Token Behavior Matrix: Core Type System', () => {
   
-  describe('Token Type Classification', () => {
-    
-    it('SHOULD FAIL: should create all 16 token types from boolean combinations', () => {
-      // This will fail until TokenBehaviorMatrix is implemented
-      const matrix = new TokenBehaviorMatrix();
+  describe('Token Behavior Flags and Encoding', () => {
+    it('should correctly identify transferable tokens', () => {
+      // ARRANGE & ACT: Test transferable flag detection
+      const transferableTypes = [8, 9, 10, 11, 12, 13, 14, 15]; // T=1
+      const nonTransferableTypes = [0, 1, 2, 3, 4, 5, 6, 7];     // T=0
       
-      const expectedTypes = [
-        { t: false, d: false, e: false, g: false, code: '----', name: 'Static Asset' },
-        { t: false, d: false, e: false, g: true,  code: '---G', name: 'Non-Transferable Governance Token' },
-        { t: false, d: false, e: true,  g: false, code: '--E-', name: 'Expiring Certificate' },
-        { t: false, d: false, e: true,  g: true,  code: '--EG', name: 'Expiring Governance Certificate' },
-        { t: false, d: true,  e: false, g: false, code: '-D--', name: 'Divisible Credential' },
-        { t: false, d: true,  e: false, g: true,  code: '-D-G', name: 'Divisible Governance Credential' },
-        { t: false, d: true,  e: true,  g: false, code: '-DE-', name: 'Expiring Divisible Credential' },
-        { t: false, d: true,  e: true,  g: true,  code: '-DEG', name: 'Full Non-Transferable Token' },
-        { t: true,  d: false, e: false, g: false, code: 'T---', name: 'Simple Currency' },
-        { t: true,  d: false, e: false, g: true,  code: 'T--G', name: 'Governance Currency' },
-        { t: true,  d: false, e: true,  g: false, code: 'T-E-', name: 'Expiring Currency' },
-        { t: true,  d: false, e: true,  g: true,  code: 'T-EG', name: 'Expiring Governance Currency' },
-        { t: true,  d: true,  e: false, g: false, code: 'TD--', name: 'Divisible Currency' },
-        { t: true,  d: true,  e: false, g: true,  code: 'TD-G', name: 'Standard Utility Token' },
-        { t: true,  d: true,  e: true,  g: false, code: 'TDE-', name: 'Expiring Utility Token' },
-        { t: true,  d: true,  e: true,  g: true,  code: 'TDEG', name: 'Full Feature Token' }
-      ];
+      // ASSERT: Transferable detection
+      for (const type of transferableTypes) {
+        expect(isTransferable(type as TokenBehavior)).toBe(true);
+      }
       
-      for (const expected of expectedTypes) {
-        const tokenType = matrix.getTokenType(expected.t, expected.d, expected.e, expected.g);
+      for (const type of nonTransferableTypes) {
+        expect(isTransferable(type as TokenBehavior)).toBe(false);
+      }
+    });
+
+    it('should correctly identify divisible tokens', () => {
+      // ARRANGE & ACT: Test divisible flag detection
+      const divisibleTypes = [4, 5, 6, 7, 12, 13, 14, 15];       // D=1
+      const indivisibleTypes = [0, 1, 2, 3, 8, 9, 10, 11];       // D=0
+      
+      // ASSERT: Divisible detection
+      for (const type of divisibleTypes) {
+        expect(isDivisible(type as TokenBehavior)).toBe(true);
+      }
+      
+      for (const type of indivisibleTypes) {
+        expect(isDivisible(type as TokenBehavior)).toBe(false);
+      }
+    });
+
+    it('should correctly identify expirable tokens', () => {
+      // ARRANGE & ACT: Test expirable flag detection
+      const expirableTypes = [2, 3, 6, 7, 10, 11, 14, 15];       // E=1
+      const nonExpirableTypes = [0, 1, 4, 5, 8, 9, 12, 13];      // E=0
+      
+      // ASSERT: Expirable detection
+      for (const type of expirableTypes) {
+        expect(isExpirable(type as TokenBehavior)).toBe(true);
+      }
+      
+      for (const type of nonExpirableTypes) {
+        expect(isExpirable(type as TokenBehavior)).toBe(false);
+      }
+    });
+
+    it('should correctly identify governable tokens', () => {
+      // ARRANGE & ACT: Test governable flag detection
+      const governableTypes = [1, 3, 5, 7, 9, 11, 13, 15];       // G=1
+      const nonGovernableTypes = [0, 2, 4, 6, 8, 10, 12, 14];    // G=0
+      
+      // ASSERT: Governable detection
+      for (const type of governableTypes) {
+        expect(isGovernable(type as TokenBehavior)).toBe(true);
+      }
+      
+      for (const type of nonGovernableTypes) {
+        expect(isGovernable(type as TokenBehavior)).toBe(false);
+      }
+    });
+
+    it('should compose token behavior from boolean dimensions', () => {
+      // ARRANGE & ACT & ASSERT: Test all 16 combinations
+      expect(makeTokenBehavior(false, false, false, false)).toBe(0);  // Type 0
+      expect(makeTokenBehavior(false, false, false, true)).toBe(1);   // Type 1
+      expect(makeTokenBehavior(false, false, true, false)).toBe(2);   // Type 2
+      expect(makeTokenBehavior(false, false, true, true)).toBe(3);    // Type 3
+      expect(makeTokenBehavior(false, true, false, false)).toBe(4);   // Type 4
+      expect(makeTokenBehavior(false, true, false, true)).toBe(5);    // Type 5
+      expect(makeTokenBehavior(false, true, true, false)).toBe(6);    // Type 6
+      expect(makeTokenBehavior(false, true, true, true)).toBe(7);     // Type 7
+      expect(makeTokenBehavior(true, false, false, false)).toBe(8);   // Type 8 (NFT)
+      expect(makeTokenBehavior(true, false, false, true)).toBe(9);    // Type 9
+      expect(makeTokenBehavior(true, false, true, false)).toBe(10);   // Type 10 (Ticket)
+      expect(makeTokenBehavior(true, false, true, true)).toBe(11);    // Type 11
+      expect(makeTokenBehavior(true, true, false, false)).toBe(12);   // Type 12 (ERC20)
+      expect(makeTokenBehavior(true, true, false, true)).toBe(13);    // Type 13 (Stablecoin)
+      expect(makeTokenBehavior(true, true, true, false)).toBe(14);    // Type 14 (Loyalty)
+      expect(makeTokenBehavior(true, true, true, true)).toBe(15);     // Type 15 (Full)
+    });
+
+    it('should validate token behavior is in valid range 0-15', () => {
+      // ARRANGE: Valid and invalid behavior values
+      const validBehaviors = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+      const invalidBehaviors = [-1, 16, 17, 255, 1000];
+      
+      // ACT & ASSERT: Valid behaviors
+      for (const behavior of validBehaviors) {
+        expect(isValidTokenBehavior(behavior)).toBe(true);
+      }
+      
+      // ACT & ASSERT: Invalid behaviors
+      for (const behavior of invalidBehaviors) {
+        expect(isValidTokenBehavior(behavior)).toBe(false);
+      }
+    });
+  });
+
+  describe('Token Type Archetypes', () => {
+    it('should identify Type 0 as Soulbound Collectible', () => {
+      // ARRANGE: Type 0 token
+      const type0 = 0 as TokenBehavior;
+      
+      // ACT & ASSERT: Properties
+      expect(isTransferable(type0)).toBe(false); // Soulbound
+      expect(isDivisible(type0)).toBe(false);    // Whole unit only
+      expect(isExpirable(type0)).toBe(false);    // Permanent
+      expect(isGovernable(type0)).toBe(false);   // No policy
+      
+      // ASSERT: Archetype identification
+      expect(getTokenArchetype(type0)).toBe('Soulbound Collectible');
+      expect(getTokenDescription(type0)).toContain('Permanent achievements, honors, diplomas');
+    });
+
+    it('should identify Type 8 as Pure Collectible (NFT)', () => {
+      // ARRANGE: Type 8 token
+      const type8 = 8 as TokenBehavior;
+      
+      // ACT & ASSERT: Properties
+      expect(isTransferable(type8)).toBe(true);  // Transferable
+      expect(isDivisible(type8)).toBe(false);    // Whole unit only
+      expect(isExpirable(type8)).toBe(false);    // Permanent
+      expect(isGovernable(type8)).toBe(false);   // No policy
+      
+      // ASSERT: Archetype identification
+      expect(getTokenArchetype(type8)).toBe('Pure Collectible (NFT)');
+      expect(getTokenDescription(type8)).toContain('Digital art, sports trading cards');
+    });
+
+    it('should identify Type 12 as Fungible Token (ERC-20 equivalent)', () => {
+      // ARRANGE: Type 12 token
+      const type12 = 12 as TokenBehavior;
+      
+      // ACT & ASSERT: Properties
+      expect(isTransferable(type12)).toBe(true); // Transferable
+      expect(isDivisible(type12)).toBe(true);    // Fractional amounts
+      expect(isExpirable(type12)).toBe(false);   // Permanent
+      expect(isGovernable(type12)).toBe(false);  // No policy
+      
+      // ASSERT: Archetype identification
+      expect(getTokenArchetype(type12)).toBe('Fungible Token');
+      expect(getTokenDescription(type12)).toContain('ERC-20 equivalent');
+    });
+
+    it('should identify Type 15 as Full-Featured Asset', () => {
+      // ARRANGE: Type 15 token
+      const type15 = 15 as TokenBehavior;
+      
+      // ACT & ASSERT: All properties enabled
+      expect(isTransferable(type15)).toBe(true); // Transferable
+      expect(isDivisible(type15)).toBe(true);    // Fractional amounts
+      expect(isExpirable(type15)).toBe(true);    // Can expire
+      expect(isGovernable(type15)).toBe(true);   // Policy enforced
+      
+      // ASSERT: Archetype identification
+      expect(getTokenArchetype(type15)).toBe('Full-Featured Asset');
+      expect(getTokenDescription(type15)).toContain('Complex financial instruments');
+    });
+  });
+});
+
+describe('Token Behavior Matrix: Operation Legality', () => {
+  let mockContext: ValidationContext;
+
+  beforeEach(() => {
+    mockContext = {
+      ordinal: 1000,
+      epochProgress: 0.5,
+      lastSnapshotHash: '0xabc123',
+      proofs: [{ address: 'DAGtester123...', signature: 'sig123' }],
+      state: {},
+      event: {}
+    };
+  });
+
+  describe('Mint Operation', () => {
+    it('should allow mint on all token types when not expired and policy passes', () => {
+      // ARRANGE: Test all 16 token types
+      for (let type = 0; type <= 15; type++) {
+        const token: Token = {
+          id: `token_${type}`,
+          behavior: type as TokenBehavior,
+          holder: 'DAGholder123...',
+          amount: 1,
+          // Non-expirable or not yet expired
+          ...(isExpirable(type as TokenBehavior) ? { expiresAtOrdinal: 2000 } : {}),
+          // Non-governable or policy that allows mint
+          ...(isGovernable(type as TokenBehavior) ? { policy: { mint: true } } : {})
+        };
         
-        expect(tokenType.transferable).toBe(expected.t);
-        expect(tokenType.divisible).toBe(expected.d);
-        expect(tokenType.expirable).toBe(expected.e);
-        expect(tokenType.governable).toBe(expected.g);
-        expect(tokenType.typeCode).toBe(expected.code);
-        expect(tokenType.typeName).toBe(expected.name);
+        const operation: TokenOperation = {
+          tokenId: token.id,
+          operation: 'mint',
+          params: { amount: 5 }
+        };
+        
+        // ACT & ASSERT: Mint should be allowed
+        expect(isOperationLegal(token, operation, mockContext)).toBe(true);
       }
     });
 
-    it('SHOULD FAIL: should retrieve token type by code', () => {
-      const matrix = new TokenBehaviorMatrix();
+    it('should reject mint on expired tokens', () => {
+      // ARRANGE: Expired expirable token (Type 2)
+      const expiredToken: Token = {
+        id: 'expired_credential',
+        behavior: 2, // Expirable but not governable
+        holder: 'DAGholder123...',
+        amount: 1,
+        expiresAtOrdinal: 500 // Expired (current ordinal is 1000)
+      };
       
-      const fullFeatureToken = matrix.getTypeByCode('TDEG');
-      expect(fullFeatureToken.transferable).toBe(true);
-      expect(fullFeatureToken.divisible).toBe(true);
-      expect(fullFeatureToken.expirable).toBe(true);
-      expect(fullFeatureToken.governable).toBe(true);
-      expect(fullFeatureToken.typeName).toBe('Full Feature Token');
+      const mintOperation: TokenOperation = {
+        tokenId: expiredToken.id,
+        operation: 'mint',
+        params: { amount: 1 }
+      };
       
-      const staticAsset = matrix.getTypeByCode('----');
-      expect(staticAsset.transferable).toBe(false);
-      expect(staticAsset.divisible).toBe(false);
-      expect(staticAsset.expirable).toBe(false);
-      expect(staticAsset.governable).toBe(false);
-      expect(staticAsset.typeName).toBe('Static Asset');
+      // ACT & ASSERT: Should reject expired mint
+      expect(isOperationLegal(expiredToken, mintOperation, mockContext)).toBe(false);
+      expect(getOperationRejectionReason(expiredToken, mintOperation, mockContext))
+        .toBe('TOKEN_EXPIRED');
     });
 
-    it('SHOULD FAIL: should throw error for invalid type codes', () => {
-      const matrix = new TokenBehaviorMatrix();
+    it('should reject mint when governable token policy denies', () => {
+      // ARRANGE: Governable token with denying policy
+      const governedToken: Token = {
+        id: 'governed_token',
+        behavior: 1, // Governable soulbound badge
+        holder: 'DAGholder123...',
+        amount: 1,
+        policy: {
+          mint: { "===": [1, 0] } // Always false
+        }
+      };
       
-      expect(() => matrix.getTypeByCode('INVALID')).toThrow('Invalid token type code');
-      expect(() => matrix.getTypeByCode('TDEX')).toThrow('Invalid token type code');
-      expect(() => matrix.getTypeByCode('T')).toThrow('Invalid token type code');
+      const mintOperation: TokenOperation = {
+        tokenId: governedToken.id,
+        operation: 'mint',
+        params: { amount: 1 }
+      };
+      
+      // ACT & ASSERT: Should reject due to policy
+      expect(isOperationLegal(governedToken, mintOperation, mockContext)).toBe(false);
+      expect(getOperationRejectionReason(governedToken, mintOperation, mockContext))
+        .toBe('POLICY_FAILED');
     });
 
-    it('SHOULD FAIL: should return all 16 types', () => {
-      const matrix = new TokenBehaviorMatrix();
+    it('should allow mint when governable policy checks proof signatures', () => {
+      // ARRANGE: Governable token requiring specific signer
+      const authorizedAddress = 'DAGtester123...'; // Matches mockContext.proofs[0].address
+      const governedToken: Token = {
+        id: 'governed_mint_token',
+        behavior: 9, // Governed collectible
+        holder: 'DAGholder123...',
+        amount: 1,
+        policy: {
+          mint: {
+            "in": [
+              authorizedAddress,
+              { "map": [{ "var": "proofs" }, { "var": "address" }] }
+            ]
+          }
+        }
+      };
       
-      const allTypes = matrix.getAllTypes();
-      expect(allTypes).toHaveLength(16);
+      const mintOperation: TokenOperation = {
+        tokenId: governedToken.id,
+        operation: 'mint',
+        params: { amount: 1 }
+      };
       
-      // Verify all type codes are unique
-      const typeCodes = allTypes.map(t => t.typeCode);
-      expect(new Set(typeCodes).size).toBe(16);
-      
-      // Verify all type names are unique
-      const typeNames = allTypes.map(t => t.typeName);
-      expect(new Set(typeNames).size).toBe(16);
+      // ACT & ASSERT: Should allow mint with proper proof
+      expect(isOperationLegal(governedToken, mintOperation, mockContext)).toBe(true);
     });
   });
 
-  describe('Operation Authorization', () => {
-    
-    it('SHOULD FAIL: should allow transfer operations only for transferable tokens', () => {
-      const matrix = new TokenBehaviorMatrix();
+  describe('Transfer Operation', () => {
+    it('should reject transfer on all soulbound tokens (T=0)', () => {
+      // ARRANGE: All soulbound types (0-7)
+      const soulboundTypes = [0, 1, 2, 3, 4, 5, 6, 7];
       
-      const transferableToken = matrix.getTypeByCode('T---'); // Simple Currency
-      const nonTransferableToken = matrix.getTypeByCode('----'); // Static Asset
-      
-      const transferOp: TokenOperation = { type: 'transfer', from: 'addr1', to: 'addr2' };
-      
-      expect(matrix.isOperationAllowed(transferableToken, transferOp)).toBe(true);
-      expect(matrix.isOperationAllowed(nonTransferableToken, transferOp)).toBe(false);
+      for (const type of soulboundTypes) {
+        const token: Token = {
+          id: `soulbound_${type}`,
+          behavior: type as TokenBehavior,
+          holder: 'DAGholder123...',
+          amount: 1
+        };
+        
+        const transferOperation: TokenOperation = {
+          tokenId: token.id,
+          operation: 'transfer',
+          params: { recipient: 'DAGrecipient456...', amount: 1 }
+        };
+        
+        // ACT & ASSERT: Transfer should be rejected
+        expect(isOperationLegal(token, transferOperation, mockContext)).toBe(false);
+        expect(getOperationRejectionReason(token, transferOperation, mockContext))
+          .toBe('NOT_TRANSFERABLE');
+      }
     });
 
-    it('SHOULD FAIL: should allow divide operations only for divisible tokens', () => {
-      const matrix = new TokenBehaviorMatrix();
+    it('should allow transfer on all transferable tokens (T=1) when not expired', () => {
+      // ARRANGE: All transferable types (8-15)
+      const transferableTypes = [8, 9, 10, 11, 12, 13, 14, 15];
       
-      const divisibleToken = matrix.getTypeByCode('-D--'); // Divisible Credential
-      const nonDivisibleToken = matrix.getTypeByCode('T---'); // Simple Currency (non-divisible)
-      
-      const divideOp: TokenOperation = { type: 'divide', amount: 500n };
-      
-      expect(matrix.isOperationAllowed(divisibleToken, divideOp)).toBe(true);
-      expect(matrix.isOperationAllowed(nonDivisibleToken, divideOp)).toBe(false);
+      for (const type of transferableTypes) {
+        const token: Token = {
+          id: `transferable_${type}`,
+          behavior: type as TokenBehavior,
+          holder: 'DAGholder123...',
+          amount: 1,
+          // Set expiry in future if expirable
+          ...(isExpirable(type as TokenBehavior) ? { expiresAtOrdinal: 2000 } : {}),
+          // Allow transfer policy if governable
+          ...(isGovernable(type as TokenBehavior) ? { policy: { transfer: true } } : {})
+        };
+        
+        const transferOperation: TokenOperation = {
+          tokenId: token.id,
+          operation: 'transfer',
+          params: { recipient: 'DAGrecipient456...', amount: 1 }
+        };
+        
+        // ACT & ASSERT: Transfer should be allowed
+        expect(isOperationLegal(token, transferOperation, mockContext)).toBe(true);
+      }
     });
 
-    it('SHOULD FAIL: should allow expire operations only for expirable tokens', () => {
-      const matrix = new TokenBehaviorMatrix();
+    it('should reject transfer on expired transferable tokens', () => {
+      // ARRANGE: Expired ticket (Type 10)
+      const expiredTicket: Token = {
+        id: 'expired_ticket',
+        behavior: 10, // Transferable, indivisible, expirable, non-governable
+        holder: 'DAGholder123...',
+        amount: 1,
+        expiresAtOrdinal: 500 // Expired
+      };
       
-      const expirableToken = matrix.getTypeByCode('--E-'); // Expiring Certificate
-      const nonExpirableToken = matrix.getTypeByCode('TD--'); // Divisible Currency
+      const transferOperation: TokenOperation = {
+        tokenId: expiredTicket.id,
+        operation: 'transfer',
+        params: { recipient: 'DAGrecipient456...', amount: 1 }
+      };
       
-      const expireOp: TokenOperation = { type: 'expire' };
+      // ACT & ASSERT: Should reject expired transfer
+      expect(isOperationLegal(expiredTicket, transferOperation, mockContext)).toBe(false);
+      expect(getOperationRejectionReason(expiredTicket, transferOperation, mockContext))
+        .toBe('TOKEN_EXPIRED');
+    });
+  });
+
+  describe('Split Operation', () => {
+    it('should reject split on all indivisible tokens (D=0)', () => {
+      // ARRANGE: All indivisible types
+      const indivisibleTypes = [0, 1, 2, 3, 8, 9, 10, 11];
       
-      expect(matrix.isOperationAllowed(expirableToken, expireOp)).toBe(true);
-      expect(matrix.isOperationAllowed(nonExpirableToken, expireOp)).toBe(false);
+      for (const type of indivisibleTypes) {
+        const token: Token = {
+          id: `indivisible_${type}`,
+          behavior: type as TokenBehavior,
+          holder: 'DAGholder123...',
+          amount: 1
+        };
+        
+        const splitOperation: TokenOperation = {
+          tokenId: token.id,
+          operation: 'split',
+          params: { amounts: [0.5, 0.5] }
+        };
+        
+        // ACT & ASSERT: Split should be rejected
+        expect(isOperationLegal(token, splitOperation, mockContext)).toBe(false);
+        expect(getOperationRejectionReason(token, splitOperation, mockContext))
+          .toBe('NOT_DIVISIBLE');
+      }
     });
 
-    it('SHOULD FAIL: should allow govern operations only for governable tokens', () => {
-      const matrix = new TokenBehaviorMatrix();
+    it('should allow split on divisible tokens when not expired', () => {
+      // ARRANGE: All divisible types
+      const divisibleTypes = [4, 5, 6, 7, 12, 13, 14, 15];
       
-      const governableToken = matrix.getTypeByCode('---G'); // Non-Transferable Governance Token
-      const nonGovernableToken = matrix.getTypeByCode('TD--'); // Divisible Currency
-      
-      const governOp: TokenOperation = { type: 'govern', metadata: { proposalId: 'prop-123' } };
-      
-      expect(matrix.isOperationAllowed(governableToken, governOp)).toBe(true);
-      expect(matrix.isOperationAllowed(nonGovernableToken, governOp)).toBe(false);
+      for (const type of divisibleTypes) {
+        const token: Token = {
+          id: `divisible_${type}`,
+          behavior: type as TokenBehavior,
+          holder: 'DAGholder123...',
+          amount: 100.0,
+          // Set expiry in future if expirable
+          ...(isExpirable(type as TokenBehavior) ? { expiresAtOrdinal: 2000 } : {}),
+          // Allow split policy if governable
+          ...(isGovernable(type as TokenBehavior) ? { policy: { split: true } } : {})
+        };
+        
+        const splitOperation: TokenOperation = {
+          tokenId: token.id,
+          operation: 'split',
+          params: { amounts: [60.0, 40.0] }
+        };
+        
+        // ACT & ASSERT: Split should be allowed
+        expect(isOperationLegal(token, splitOperation, mockContext)).toBe(true);
+      }
     });
 
-    it('SHOULD FAIL: should always allow mint and burn operations for all token types', () => {
-      const matrix = new TokenBehaviorMatrix();
+    it('should reject split when split amounts do not sum to original', () => {
+      // ARRANGE: Divisible token with invalid split
+      const token: Token = {
+        id: 'utility_token',
+        behavior: 12, // Fungible token
+        holder: 'DAGholder123...',
+        amount: 100.0
+      };
       
-      const allTypes = matrix.getAllTypes();
-      const mintOp: TokenOperation = { type: 'mint', amount: 1000n };
-      const burnOp: TokenOperation = { type: 'burn', amount: 500n };
+      const invalidSplitOperation: TokenOperation = {
+        tokenId: token.id,
+        operation: 'split',
+        params: { amounts: [60.0, 50.0] } // Sum is 110, not 100
+      };
       
-      for (const tokenType of allTypes) {
-        expect(matrix.isOperationAllowed(tokenType, mintOp)).toBe(true);
-        expect(matrix.isOperationAllowed(tokenType, burnOp)).toBe(true);
+      // ACT & ASSERT: Should reject invalid split
+      expect(isOperationLegal(token, invalidSplitOperation, mockContext)).toBe(false);
+      expect(getOperationRejectionReason(token, invalidSplitOperation, mockContext))
+        .toBe('INVALID_SPLIT_AMOUNTS');
+    });
+  });
+
+  describe('Burn Operation', () => {
+    it('should allow burn on all token types including expired ones', () => {
+      // ARRANGE: Test all types including expired expirable ones
+      for (let type = 0; type <= 15; type++) {
+        const token: Token = {
+          id: `burn_test_${type}`,
+          behavior: type as TokenBehavior,
+          holder: 'DAGholder123...',
+          amount: 1,
+          // Make expirable tokens expired to test burn-after-expiry
+          ...(isExpirable(type as TokenBehavior) ? { expiresAtOrdinal: 500 } : {}),
+          // Allow burn policy if governable
+          ...(isGovernable(type as TokenBehavior) ? { policy: { burn: true } } : {})
+        };
+        
+        const burnOperation: TokenOperation = {
+          tokenId: token.id,
+          operation: 'burn',
+          params: { amount: 1 }
+        };
+        
+        // ACT & ASSERT: Burn should be allowed even on expired tokens
+        expect(isOperationLegal(token, burnOperation, mockContext)).toBe(true);
+      }
+    });
+
+    it('should respect governance policy on burn for governable tokens', () => {
+      // ARRANGE: Governed token that denies burn
+      const governedToken: Token = {
+        id: 'no_burn_token',
+        behavior: 13, // Regulated token
+        holder: 'DAGholder123...',
+        amount: 100.0,
+        policy: {
+          burn: { "===": [1, 0] } // Always deny
+        }
+      };
+      
+      const burnOperation: TokenOperation = {
+        tokenId: governedToken.id,
+        operation: 'burn',
+        params: { amount: 10.0 }
+      };
+      
+      // ACT & ASSERT: Should reject due to policy
+      expect(isOperationLegal(governedToken, burnOperation, mockContext)).toBe(false);
+      expect(getOperationRejectionReason(governedToken, burnOperation, mockContext))
+        .toBe('POLICY_FAILED');
+    });
+  });
+
+  describe('Set Policy Operation', () => {
+    it('should reject set_policy on all non-governable tokens (G=0)', () => {
+      // ARRANGE: All non-governable types
+      const nonGovernableTypes = [0, 2, 4, 6, 8, 10, 12, 14];
+      
+      for (const type of nonGovernableTypes) {
+        const token: Token = {
+          id: `non_governable_${type}`,
+          behavior: type as TokenBehavior,
+          holder: 'DAGholder123...',
+          amount: 1
+        };
+        
+        const setPolicyOperation: TokenOperation = {
+          tokenId: token.id,
+          operation: 'set_policy',
+          params: { policy: { mint: true } }
+        };
+        
+        // ACT & ASSERT: set_policy should be rejected
+        expect(isOperationLegal(token, setPolicyOperation, mockContext)).toBe(false);
+        expect(getOperationRejectionReason(token, setPolicyOperation, mockContext))
+          .toBe('NOT_GOVERNABLE');
+      }
+    });
+
+    it('should allow set_policy on governable tokens', () => {
+      // ARRANGE: All governable types
+      const governableTypes = [1, 3, 5, 7, 9, 11, 13, 15];
+      
+      for (const type of governableTypes) {
+        const token: Token = {
+          id: `governable_${type}`,
+          behavior: type as TokenBehavior,
+          holder: 'DAGholder123...',
+          amount: 1,
+          policy: { set_policy: true } // Allow policy updates
+        };
+        
+        const setPolicyOperation: TokenOperation = {
+          tokenId: token.id,
+          operation: 'set_policy',
+          params: { 
+            policy: { 
+              mint: { ">=": [{ "var": "event.amount" }, 1] } 
+            } 
+          }
+        };
+        
+        // ACT & ASSERT: set_policy should be allowed
+        expect(isOperationLegal(token, setPolicyOperation, mockContext)).toBe(true);
       }
     });
   });
 
-  describe('Operation Validation', () => {
-    
-    it('SHOULD FAIL: should validate transfer operations with proper context', () => {
-      const matrix = new TokenBehaviorMatrix();
-      const transferableToken = matrix.getTypeByCode('TDEG'); // Full Feature Token
+  describe('Extend Expiry Operation', () => {
+    it('should reject extend_expiry on non-expirable tokens (E=0)', () => {
+      // ARRANGE: All non-expirable types
+      const nonExpirableTypes = [0, 1, 4, 5, 8, 9, 12, 13];
       
-      const validTransfer: TokenOperation = {
-        type: 'transfer',
-        amount: 100n,
-        from: 'addr1',
-        to: 'addr2'
-      };
-      
-      const context: OperationContext = {
-        currentTime: Date.now(),
-        requesterAddress: 'addr1'
-      };
-      
-      const result = matrix.validateOperation(transferableToken, validTransfer, context);
-      expect(result.allowed).toBe(true);
-      expect(result.reason).toBeUndefined();
-    });
-
-    it('SHOULD FAIL: should reject transfer from unauthorized address', () => {
-      const matrix = new TokenBehaviorMatrix();
-      const transferableToken = matrix.getTypeByCode('T---'); // Simple Currency
-      
-      const unauthorizedTransfer: TokenOperation = {
-        type: 'transfer',
-        amount: 100n,
-        from: 'addr1',
-        to: 'addr2'
-      };
-      
-      const context: OperationContext = {
-        currentTime: Date.now(),
-        requesterAddress: 'addr3' // Different from 'from' address
-      };
-      
-      const result = matrix.validateOperation(transferableToken, unauthorizedTransfer, context);
-      expect(result.allowed).toBe(false);
-      expect(result.reason).toBe('Requester is not the token owner');
-      expect(result.errorCode).toBe('UNAUTHORIZED_TRANSFER');
-    });
-
-    it('SHOULD FAIL: should reject operations on expired tokens', () => {
-      const matrix = new TokenBehaviorMatrix();
-      const expirableToken = matrix.getTypeByCode('T-E-'); // Expiring Currency
-      
-      const transferOp: TokenOperation = {
-        type: 'transfer',
-        amount: 100n,
-        from: 'addr1',
-        to: 'addr2'
-      };
-      
-      const expiredContext: OperationContext = {
-        currentTime: Date.now(),
-        requesterAddress: 'addr1',
-        tokenExpirationTime: Date.now() - 3600000 // Expired 1 hour ago
-      };
-      
-      const result = matrix.validateOperation(expirableToken, transferOp, expiredContext);
-      expect(result.allowed).toBe(false);
-      expect(result.reason).toBe('Token has expired');
-      expect(result.errorCode).toBe('TOKEN_EXPIRED');
-    });
-
-    it('SHOULD FAIL: should reject fractional operations on non-divisible tokens', () => {
-      const matrix = new TokenBehaviorMatrix();
-      const nonDivisibleToken = matrix.getTypeByCode('T---'); // Simple Currency
-      
-      const fractionalTransfer: TokenOperation = {
-        type: 'transfer',
-        amount: 150n, // Fractional amount (1.5 if decimals = 2)
-        from: 'addr1',
-        to: 'addr2'
-      };
-      
-      const context: OperationContext = {
-        currentTime: Date.now(),
-        requesterAddress: 'addr1'
-      };
-      
-      const result = matrix.validateOperation(nonDivisibleToken, fractionalTransfer, context);
-      expect(result.allowed).toBe(false);
-      expect(result.reason).toBe('Fractional amounts not allowed for non-divisible tokens');
-      expect(result.errorCode).toBe('INVALID_FRACTIONAL_AMOUNT');
-    });
-  });
-
-  describe('Complex Token Type Behavior', () => {
-    
-    it('SHOULD FAIL: Full Feature Token (TDEG) should support all operations', () => {
-      const matrix = new TokenBehaviorMatrix();
-      const fullFeatureToken = matrix.getTypeByCode('TDEG');
-      
-      const operations: TokenOperation[] = [
-        { type: 'transfer', from: 'addr1', to: 'addr2' },
-        { type: 'divide', amount: 500n },
-        { type: 'expire' },
-        { type: 'govern', metadata: { proposalId: 'prop-123' } },
-        { type: 'mint', amount: 1000n },
-        { type: 'burn', amount: 200n }
-      ];
-      
-      for (const operation of operations) {
-        expect(matrix.isOperationAllowed(fullFeatureToken, operation)).toBe(true);
+      for (const type of nonExpirableTypes) {
+        const token: Token = {
+          id: `non_expirable_${type}`,
+          behavior: type as TokenBehavior,
+          holder: 'DAGholder123...',
+          amount: 1
+        };
+        
+        const extendExpiryOperation: TokenOperation = {
+          tokenId: token.id,
+          operation: 'extend_expiry',
+          params: { newExpiryOrdinal: 3000 }
+        };
+        
+        // ACT & ASSERT: extend_expiry should be rejected
+        expect(isOperationLegal(token, extendExpiryOperation, mockContext)).toBe(false);
+        expect(getOperationRejectionReason(token, extendExpiryOperation, mockContext))
+          .toBe('NOT_EXPIRABLE');
       }
     });
 
-    it('SHOULD FAIL: Static Asset (----) should only support mint and burn', () => {
-      const matrix = new TokenBehaviorMatrix();
-      const staticAsset = matrix.getTypeByCode('----');
+    it('should allow extend_expiry on active expirable tokens', () => {
+      // ARRANGE: Active expirable tokens
+      const expirableTypes = [2, 3, 6, 7, 10, 11, 14, 15];
       
-      const allowedOps: TokenOperation[] = [
-        { type: 'mint', amount: 1000n },
-        { type: 'burn', amount: 200n }
-      ];
-      
-      const disallowedOps: TokenOperation[] = [
-        { type: 'transfer', from: 'addr1', to: 'addr2' },
-        { type: 'divide', amount: 500n },
-        { type: 'expire' },
-        { type: 'govern', metadata: { proposalId: 'prop-123' } }
-      ];
-      
-      for (const operation of allowedOps) {
-        expect(matrix.isOperationAllowed(staticAsset, operation)).toBe(true);
+      for (const type of expirableTypes) {
+        const token: Token = {
+          id: `expirable_${type}`,
+          behavior: type as TokenBehavior,
+          holder: 'DAGholder123...',
+          amount: 1,
+          expiresAtOrdinal: 2000, // Active (current ordinal is 1000)
+          ...(isGovernable(type as TokenBehavior) ? { policy: { extend_expiry: true } } : {})
+        };
+        
+        const extendExpiryOperation: TokenOperation = {
+          tokenId: token.id,
+          operation: 'extend_expiry',
+          params: { newExpiryOrdinal: 3000 }
+        };
+        
+        // ACT & ASSERT: extend_expiry should be allowed
+        expect(isOperationLegal(token, extendExpiryOperation, mockContext)).toBe(true);
       }
-      
-      for (const operation of disallowedOps) {
-        expect(matrix.isOperationAllowed(staticAsset, operation)).toBe(false);
-      }
     });
 
-    it('SHOULD FAIL: Standard Utility Token (TD-G) should behave like typical DeFi token', () => {
-      const matrix = new TokenBehaviorMatrix();
-      const utilityToken = matrix.getTypeByCode('TD-G');
-      
-      expect(utilityToken.transferable).toBe(true);
-      expect(utilityToken.divisible).toBe(true);
-      expect(utilityToken.expirable).toBe(false);
-      expect(utilityToken.governable).toBe(true);
-      expect(utilityToken.typeName).toBe('Standard Utility Token');
-      
-      // Should support typical DeFi operations
-      expect(matrix.isOperationAllowed(utilityToken, { type: 'transfer', from: 'addr1', to: 'addr2' })).toBe(true);
-      expect(matrix.isOperationAllowed(utilityToken, { type: 'divide', amount: 500n })).toBe(true);
-      expect(matrix.isOperationAllowed(utilityToken, { type: 'govern', metadata: { proposalId: 'prop-123' } })).toBe(true);
-      expect(matrix.isOperationAllowed(utilityToken, { type: 'expire' })).toBe(false); // No expiration
-    });
-  });
-
-  describe('Edge Cases and Error Handling', () => {
-    
-    it('SHOULD FAIL: should handle null/undefined operation inputs', () => {
-      const matrix = new TokenBehaviorMatrix();
-      const tokenType = matrix.getTypeByCode('TDEG');
-      
-      expect(() => matrix.isOperationAllowed(tokenType, null as any)).toThrow('Operation cannot be null or undefined');
-      expect(() => matrix.isOperationAllowed(tokenType, undefined as any)).toThrow('Operation cannot be null or undefined');
-    });
-
-    it('SHOULD FAIL: should handle invalid operation types', () => {
-      const matrix = new TokenBehaviorMatrix();
-      const tokenType = matrix.getTypeByCode('TDEG');
-      
-      const invalidOp = { type: 'invalid_operation' } as any;
-      expect(() => matrix.isOperationAllowed(tokenType, invalidOp)).toThrow('Invalid operation type');
-    });
-
-    it('SHOULD FAIL: should validate required fields for each operation type', () => {
-      const matrix = new TokenBehaviorMatrix();
-      const tokenType = matrix.getTypeByCode('TDEG');
-      const context: OperationContext = {
-        currentTime: Date.now(),
-        requesterAddress: 'addr1'
+    it('should allow extend_expiry on expired tokens for revival (if policy allows)', () => {
+      // ARRANGE: Expired governable token with revival policy
+      const expiredGovernableToken: Token = {
+        id: 'revivable_license',
+        behavior: 3, // Governed credential
+        holder: 'DAGholder123...',
+        amount: 1,
+        expiresAtOrdinal: 500, // Expired
+        policy: {
+          extend_expiry: {
+            // Allow revival if new expiry is greater than current ordinal
+            ">": [{ "var": "event.newExpiryOrdinal" }, { "var": "$ordinal" }]
+          }
+        }
       };
       
-      // Transfer without from/to addresses
-      const incompleteTransfer: TokenOperation = { type: 'transfer', amount: 100n };
-      const transferResult = matrix.validateOperation(tokenType, incompleteTransfer, context);
-      expect(transferResult.allowed).toBe(false);
-      expect(transferResult.reason).toBe('Transfer operation requires from and to addresses');
-      
-      // Divide without amount
-      const incompleteDivide: TokenOperation = { type: 'divide' };
-      const divideResult = matrix.validateOperation(tokenType, incompleteDivide, context);
-      expect(divideResult.allowed).toBe(false);
-      expect(divideResult.reason).toBe('Divide operation requires amount');
-    });
-
-    it('SHOULD FAIL: should handle zero and negative amounts properly', () => {
-      const matrix = new TokenBehaviorMatrix();
-      const tokenType = matrix.getTypeByCode('TDEG');
-      const context: OperationContext = {
-        currentTime: Date.now(),
-        requesterAddress: 'addr1'
+      const reviveOperation: TokenOperation = {
+        tokenId: expiredGovernableToken.id,
+        operation: 'extend_expiry',
+        params: { newExpiryOrdinal: 2000 }
       };
       
-      // Zero amount transfer
-      const zeroTransfer: TokenOperation = {
-        type: 'transfer',
-        amount: 0n,
-        from: 'addr1',
-        to: 'addr2'
-      };
-      
-      const zeroResult = matrix.validateOperation(tokenType, zeroTransfer, context);
-      expect(zeroResult.allowed).toBe(false);
-      expect(zeroResult.reason).toBe('Amount must be greater than zero');
-      expect(zeroResult.errorCode).toBe('INVALID_AMOUNT');
-    });
-
-    it('SHOULD FAIL: should validate expiration times for expirable tokens', () => {
-      const matrix = new TokenBehaviorMatrix();
-      const expirableToken = matrix.getTypeByCode('--E-');
-      const nonExpirableToken = matrix.getTypeByCode('TD--');
-      
-      const expireOp: TokenOperation = { type: 'expire' };
-      const currentTime = Date.now();
-      
-      // Valid expiration (token is expired)
-      const validExpireContext: OperationContext = {
-        currentTime,
-        requesterAddress: 'addr1',
-        tokenExpirationTime: currentTime - 1000 // Expired
-      };
-      
-      const validResult = matrix.validateOperation(expirableToken, expireOp, validExpireContext);
-      expect(validResult.allowed).toBe(true);
-      
-      // Invalid expiration (token not yet expired)
-      const invalidExpireContext: OperationContext = {
-        currentTime,
-        requesterAddress: 'addr1',
-        tokenExpirationTime: currentTime + 3600000 // Expires in 1 hour
-      };
-      
-      const invalidResult = matrix.validateOperation(expirableToken, expireOp, invalidExpireContext);
-      expect(invalidResult.allowed).toBe(false);
-      expect(invalidResult.reason).toBe('Token has not yet expired');
-    });
-  });
-
-  describe('Type Selection Guidance', () => {
-    
-    it('SHOULD FAIL: should provide type selection guidance based on use case', () => {
-      const matrix = new TokenBehaviorMatrix();
-      
-      // Should have a method to suggest token types based on requirements
-      expect(() => {
-        const guidance = (matrix as any).getTypeGuidance('currency');
-        expect(guidance).toContain('T---'); // Simple Currency
-        expect(guidance).toContain('TD--'); // Divisible Currency
-      }).not.toThrow();
-      
-      expect(() => {
-        const guidance = (matrix as any).getTypeGuidance('governance');
-        expect(guidance).toContain('---G'); // Non-Transferable Governance Token
-        expect(guidance).toContain('TD-G'); // Standard Utility Token
-      }).not.toThrow();
-      
-      expect(() => {
-        const guidance = (matrix as any).getTypeGuidance('certificate');
-        expect(guidance).toContain('----'); // Static Asset
-        expect(guidance).toContain('--E-'); // Expiring Certificate
-      }).not.toThrow();
+      // ACT & ASSERT: Revival should be allowed
+      expect(isOperationLegal(expiredGovernableToken, reviveOperation, mockContext)).toBe(true);
     });
   });
 });
 
-// Additional integration tests for JSON Logic integration
-describe('Token Behavior Matrix JSON Logic Integration', () => {
+describe('Token Behavior Matrix: JSON Logic Integration', () => {
+  let mockContext: ValidationContext;
+
+  beforeEach(() => {
+    mockContext = {
+      ordinal: 1000,
+      epochProgress: 0.5,
+      lastSnapshotHash: '0xabc123',
+      proofs: [
+        { address: 'DAGauthorized123...', signature: 'sig1' },
+        { address: 'DAGsigner456...', signature: 'sig2' }
+      ],
+      state: {},
+      event: {}
+    };
+  });
+
+  describe('Expiry Guards Using Ordinals', () => {
+    it('should create correct JSON Logic guard for ordinal-based expiry', () => {
+      // ARRANGE: Expirable token guard
+      const expiryGuard = createExpiryGuard();
+      
+      // ASSERT: Guard structure
+      expect(expiryGuard).toEqual({
+        "or": [
+          // Not expirable
+          { "===": [{ "&": [{ "var": "state.tokenBehavior" }, 2] }, 0] },
+          // Expirable and not expired
+          { "<": [{ "var": "$ordinal" }, { "var": "state.expiresAtOrdinal" }] }
+        ]
+      });
+    });
+
+    it('should reject tokens that use timestamp instead of ordinal', () => {
+      // ARRANGE: Token with invalid timestamp expiry
+      const invalidToken: Token = {
+        id: 'invalid_timestamp_token',
+        behavior: 10, // Expirable ticket
+        holder: 'DAGholder123...',
+        amount: 1,
+        metadata: { 
+          expiresAtTimestamp: Date.now() + 86400000 // Unix timestamp - WRONG
+        }
+      };
+      
+      // ACT & ASSERT: Should be flagged as invalid
+      expect(validateTokenStructure(invalidToken)).toBe(false);
+      expect(getTokenValidationErrors(invalidToken)).toContain(
+        'Expirable tokens must use expiresAtOrdinal, not timestamps'
+      );
+    });
+
+    it('should evaluate expiry correctly with ordinal context', () => {
+      // ARRANGE: Token with ordinal expiry
+      const expiringToken: Token = {
+        id: 'ordinal_expiry_token',
+        behavior: 14, // Loyalty points
+        holder: 'DAGholder123...',
+        amount: 500.0,
+        expiresAtOrdinal: 1200 // Expires in future
+      };
+      
+      const context1000 = { ...mockContext, ordinal: 1000 }; // Before expiry
+      const context1500 = { ...mockContext, ordinal: 1500 }; // After expiry
+      
+      // ACT & ASSERT: Should be valid before expiry
+      expect(isTokenValid(expiringToken, context1000)).toBe(true);
+      
+      // ACT & ASSERT: Should be invalid after expiry
+      expect(isTokenValid(expiringToken, context1500)).toBe(false);
+    });
+  });
+
+  describe('Transfer Guards with Proof Verification', () => {
+    it('should create correct transfer guard using proofs for authorization', () => {
+      // ARRANGE: Transfer guard for regulated token
+      const transferGuard = createTransferGuard();
+      
+      // ASSERT: Guard uses proofs[], not event.initiator
+      expect(transferGuard).toEqual({
+        "and": [
+          // Must be transferable
+          { "!==": [{ "&": [{ "var": "state.tokenBehavior" }, 8] }, 0] },
+          // Must not be expired (if expirable)
+          {
+            "or": [
+              { "===": [{ "&": [{ "var": "state.tokenBehavior" }, 2] }, 0] },
+              { "<": [{ "var": "$ordinal" }, { "var": "state.expiresAtOrdinal" }] }
+            ]
+          },
+          // If governable, check policy using proofs
+          {
+            "or": [
+              { "===": [{ "&": [{ "var": "state.tokenBehavior" }, 1] }, 0] },
+              // Policy check - example: authorized address in proofs
+              { "in": [
+                { "var": "state.policy.authorizedTransferAgent" },
+                { "map": [{ "var": "proofs" }, { "var": "address" }] }
+              ]}
+            ]
+          }
+        ]
+      });
+    });
+
+    it('should reject guards that use event.initiator for access control', () => {
+      // ARRANGE: Insecure guard using event.initiator
+      const insecureGuard = {
+        "===": [{ "var": "event.initiator" }, "DAGauthorized123..."]
+      };
+      
+      // ACT & ASSERT: Should be flagged as security vulnerability
+      expect(validateJSONLogicSecurity(insecureGuard)).toBe(false);
+      expect(getJSONLogicSecurityErrors(insecureGuard)).toContain(
+        'event.initiator is user-controlled and insecure for access control'
+      );
+    });
+
+    it('should accept guards that properly use proofs for authorization', () => {
+      // ARRANGE: Secure guard using proofs
+      const secureGuard = {
+        "in": [
+          "DAGauthorized123...",
+          { "map": [{ "var": "proofs" }, { "var": "address" }] }
+        ]
+      };
+      
+      // ACT & ASSERT: Should pass security validation
+      expect(validateJSONLogicSecurity(secureGuard)).toBe(true);
+    });
+  });
+
+  describe('Complex Policy Scenarios', () => {
+    it('should handle multi-condition governance policies', () => {
+      // ARRANGE: Complex governed token with multiple conditions
+      const complexToken: Token = {
+        id: 'complex_governed_asset',
+        behavior: 15, // Full-featured asset
+        holder: 'DAGholder123...',
+        amount: 1000.0,
+        expiresAtOrdinal: 2000,
+        policy: {
+          transfer: {
+            "and": [
+              // Amount limits
+              { "<=": [{ "var": "event.amount" }, 100.0] },
+              // Authorized signer required
+              { "in": [
+                "DAGauthorized123...",
+                { "map": [{ "var": "proofs" }, { "var": "address" }] }
+              ]},
+              // Recipient must be verified
+              { "===": [{ "var": "event.recipientVerified" }, true] },
+              // Not during blackout periods
+              { "<": [{ "var": "$epochProgress" }, 0.9] }
+            ]
+          },
+          mint: {
+            "and": [
+              // Only minting authority
+              { "in": [
+                "DAGminter789...",
+                { "map": [{ "var": "proofs" }, { "var": "address" }] }
+              ]},
+              // Maximum supply check
+              { "<=": [
+                { "+": [{ "var": "state.totalSupply" }, { "var": "event.amount" }] },
+                1000000.0
+              ]}
+            ]
+          }
+        }
+      };
+      
+      // Test transfer with valid conditions
+      const validTransferContext = {
+        ...mockContext,
+        proofs: [{ address: 'DAGauthorized123...', signature: 'sig' }],
+        event: { 
+          amount: 50.0, 
+          recipient: 'DAGrecipient456...',
+          recipientVerified: true 
+        }
+      };
+      
+      const transferOperation: TokenOperation = {
+        tokenId: complexToken.id,
+        operation: 'transfer',
+        params: validTransferContext.event
+      };
+      
+      // ACT & ASSERT: Should allow valid transfer
+      expect(isOperationLegal(complexToken, transferOperation, validTransferContext)).toBe(true);
+      
+      // Test transfer with invalid amount
+      const invalidTransferContext = {
+        ...validTransferContext,
+        event: { ...validTransferContext.event, amount: 200.0 } // Exceeds limit
+      };
+      
+      const invalidTransferOperation: TokenOperation = {
+        tokenId: complexToken.id,
+        operation: 'transfer',
+        params: invalidTransferContext.event
+      };
+      
+      // ACT & ASSERT: Should reject invalid transfer
+      expect(isOperationLegal(complexToken, invalidTransferOperation, invalidTransferContext)).toBe(false);
+    });
+
+    it('should support policy inheritance and defaults', () => {
+      // ARRANGE: Token with partial policy (inherits defaults)
+      const partialPolicyToken: Token = {
+        id: 'partial_policy_token',
+        behavior: 13, // Regulated token
+        holder: 'DAGholder123...',
+        amount: 500.0,
+        policy: {
+          // Only defines mint policy, transfer should use default
+          mint: { "===": [1, 0] } // Always deny mint
+          // transfer policy missing - should inherit default or be permissive
+        }
+      };
+      
+      const mintOperation: TokenOperation = {
+        tokenId: partialPolicyToken.id,
+        operation: 'mint',
+        params: { amount: 10.0 }
+      };
+      
+      const transferOperation: TokenOperation = {
+        tokenId: partialPolicyToken.id,
+        operation: 'transfer',
+        params: { recipient: 'DAGrecipient123...', amount: 10.0 }
+      };
+      
+      // ACT & ASSERT: Mint should be denied by explicit policy
+      expect(isOperationLegal(partialPolicyToken, mintOperation, mockContext)).toBe(false);
+      
+      // ACT & ASSERT: Transfer should be allowed (no explicit policy = default allow)
+      expect(isOperationLegal(partialPolicyToken, transferOperation, mockContext)).toBe(true);
+    });
+  });
+});
+
+describe('Token Behavior Matrix: Anti-Pattern Detection', () => {
   
-  it('SHOULD FAIL: should export type rules as JSON Logic expressions', () => {
-    const matrix = new TokenBehaviorMatrix();
-    
-    // Should be able to export rules for external validation
-    const transferRule = (matrix as any).getTransferRule();
-    expect(transferRule).toEqual({
-      'if': [
-        { 'var': 'tokenType.transferable' },
-        { 'and': [
-          { '>': [{ 'var': 'operation.amount' }, 0] },
-          { '==': [{ 'var': 'context.requesterAddress' }, { 'var': 'operation.from' }] }
-        ]},
-        false
-      ]
+  describe('Type Selection Anti-Patterns', () => {
+    it('should flag Type 15 usage when simpler type would suffice', () => {
+      // ARRANGE: Token that claims to be Type 15 but only uses basic features
+      const unnecessaryComplexToken: Token = {
+        id: 'overcomplicated_token',
+        behavior: 15, // Full-featured but only uses T,D features
+        holder: 'DAGholder123...',
+        amount: 1000.0,
+        // No expiry set despite E=1
+        // No policy set despite G=1
+      };
+      
+      // ACT & ASSERT: Should recommend simpler Type 12
+      const analysis = analyzeTokenDesign(unnecessaryComplexToken);
+      expect(analysis.hasAntiPatterns).toBe(true);
+      expect(analysis.recommendations).toContain(
+        'Consider using Type 12 (Fungible Token) instead of Type 15 - no expiry or governance features used'
+      );
+    });
+
+    it('should flag missing policy on governable tokens', () => {
+      // ARRANGE: Governable token without policy
+      const governableWithoutPolicy: Token = {
+        id: 'governable_no_policy',
+        behavior: 9, // Governed collectible
+        holder: 'DAGholder123...',
+        amount: 1
+        // Missing policy field
+      };
+      
+      // ACT & ASSERT: Should flag missing policy
+      const validation = validateTokenStructure(governableWithoutPolicy);
+      expect(validation).toBe(false);
+      expect(getTokenValidationErrors(governableWithoutPolicy)).toContain(
+        'Governable tokens (G=1) must define a policy'
+      );
+    });
+
+    it('should flag divisible tokens used for "one per person" semantics', () => {
+      // ARRANGE: Achievement token that allows fractional amounts
+      const fractionalAchievement: Token = {
+        id: 'fractional_diploma',
+        behavior: 4, // Soulbound but divisible - problematic for achievements
+        holder: 'DAGgraduate123...',
+        amount: 0.5, // Fractional diploma?!
+        metadata: { type: 'graduation_diploma' }
+      };
+      
+      // ACT & ASSERT: Should recommend Type 0 instead
+      const analysis = analyzeTokenDesign(fractionalAchievement);
+      expect(analysis.hasAntiPatterns).toBe(true);
+      expect(analysis.recommendations).toContain(
+        'Achievement/diploma tokens should be indivisible (Type 0) to maintain "one per person" semantics'
+      );
     });
   });
 
-  it('SHOULD FAIL: should validate operations using JSON Logic', () => {
-    const matrix = new TokenBehaviorMatrix();
-    
-    const tokenType = matrix.getTypeByCode('TDEG');
-    const operation: TokenOperation = {
-      type: 'transfer',
-      amount: 100n,
-      from: 'addr1',
-      to: 'addr2'
-    };
-    const context: OperationContext = {
-      currentTime: Date.now(),
-      requesterAddress: 'addr1'
-    };
-    
-    // Should be able to use JSON Logic for validation
-    const jsonLogicResult = (matrix as any).validateWithJsonLogic(tokenType, operation, context);
-    expect(jsonLogicResult.allowed).toBe(true);
+  describe('Security Anti-Patterns', () => {
+    it('should detect timestamp usage instead of ordinal for expiry', () => {
+      // ARRANGE: Policy using non-existent $timestamp
+      const timestampPolicy = {
+        transfer: { "<": [{ "var": "$timestamp" }, 1677649200000] } // Unix timestamp
+      };
+      
+      // ACT & ASSERT: Should flag invalid context variable
+      const validation = validateJSONLogicSecurity(timestampPolicy);
+      expect(validation).toBe(false);
+      expect(getJSONLogicSecurityErrors(timestampPolicy)).toContain(
+        '$timestamp is not available in JLVM context - use $ordinal instead'
+      );
+    });
+
+    it('should detect event.initiator usage in access control', () => {
+      // ARRANGE: Multiple insecure patterns
+      const insecurePolicies = [
+        { "===": [{ "var": "event.initiator" }, "DAGauthorized..."] },
+        { "in": [{ "var": "event.initiator" }, ["DAG1...", "DAG2..."]] },
+        { 
+          "and": [
+            { ">=": [{ "var": "event.amount" }, 1] },
+            { "===": [{ "var": "event.initiator" }, { "var": "state.owner" }] }
+          ]
+        }
+      ];
+      
+      for (const policy of insecurePolicies) {
+        // ACT & ASSERT: Should flag each insecure usage
+        expect(validateJSONLogicSecurity(policy)).toBe(false);
+        expect(getJSONLogicSecurityErrors(policy)).toContain(
+          'event.initiator is user-controlled and insecure for access control'
+        );
+      }
+    });
+
+    it('should accept secure alternatives using proofs', () => {
+      // ARRANGE: Secure policy patterns
+      const securePolicies = [
+        // Single authorized address
+        { "in": [
+          "DAGauthorized...",
+          { "map": [{ "var": "proofs" }, { "var": "address" }] }
+        ]},
+        // Multiple authorized addresses
+        {
+          "some": [
+            { "map": [{ "var": "proofs" }, { "var": "address" }] },
+            { "in": [{ "var": "this" }, ["DAG1...", "DAG2...", "DAG3..."]] }
+          ]
+        },
+        // Multi-sig requirement (at least 2 of 3)
+        {
+          ">=": [
+            {
+              "reduce": [
+                { "map": [{ "var": "proofs" }, { "var": "address" }] },
+                {
+                  "if": [
+                    { "in": [{ "var": "accumulator" }, ["DAG1...", "DAG2...", "DAG3..."]] },
+                    { "+": [{ "var": "current" }, 1] },
+                    { "var": "current" }
+                  ]
+                },
+                0
+              ]
+            },
+            2
+          ]
+        }
+      ];
+      
+      for (const policy of securePolicies) {
+        // ACT & ASSERT: Should pass security validation
+        expect(validateJSONLogicSecurity(policy)).toBe(true);
+      }
+    });
+  });
+
+  describe('Validation Edge Cases', () => {
+    it('should handle edge case of zero-amount tokens', () => {
+      // ARRANGE: Token with zero amount
+      const zeroAmountToken: Token = {
+        id: 'zero_amount_token',
+        behavior: 12,
+        holder: 'DAGholder123...',
+        amount: 0
+      };
+      
+      // ACT & ASSERT: Should handle gracefully
+      const validation = validateTokenStructure(zeroAmountToken);
+      expect(validation).toBe(true); // Zero amounts may be valid for burns
+    });
+
+    it('should validate amount precision for divisible tokens', () => {
+      // ARRANGE: Divisible token with too much precision
+      const highPrecisionToken: Token = {
+        id: 'high_precision_token',
+        behavior: 12,
+        holder: 'DAGholder123...',
+        amount: 123.123456789012345 // Very high precision
+      };
+      
+      // ACT & ASSERT: Should flag precision concerns
+      const analysis = analyzeTokenDesign(highPrecisionToken);
+      expect(analysis.warnings).toContain(
+        'High precision amounts may cause floating-point issues - consider using integer amounts with implied decimals'
+      );
+    });
+
+    it('should validate holder address format', () => {
+      // ARRANGE: Token with invalid holder address
+      const invalidHolderToken: Token = {
+        id: 'invalid_holder_token',
+        behavior: 8,
+        holder: 'invalid_address_format',
+        amount: 1
+      };
+      
+      // ACT & ASSERT: Should reject invalid address
+      expect(validateTokenStructure(invalidHolderToken)).toBe(false);
+      expect(getTokenValidationErrors(invalidHolderToken)).toContain(
+        'Holder must be valid DAG address format'
+      );
+    });
   });
 });
+
+describe('Token Behavior Matrix: Integration Scenarios', () => {
+  
+  it('should handle complete token lifecycle for Type 8 NFT', () => {
+    // ARRANGE: NFT lifecycle
+    let nft: Token = {
+      id: 'nft_artwork_001',
+      behavior: 8, // Pure collectible
+      holder: 'DAGcreator123...',
+      amount: 1,
+      metadata: { 
+        title: 'Digital Sunset #42',
+        artist: 'Alice Creator',
+        edition: '1/1'
+      }
+    };
+    
+    const context = {
+      ordinal: 1000,
+      epochProgress: 0.5,
+      lastSnapshotHash: '0xabc123',
+      proofs: [{ address: 'DAGcreator123...', signature: 'sig1' }],
+      state: {},
+      event: {}
+    };
+    
+    // ACT & ASSERT: Mint should be allowed
+    const mintOp = { tokenId: nft.id, operation: 'mint' as const, params: { amount: 1 } };
+    expect(isOperationLegal(nft, mintOp, context)).toBe(true);
+    
+    // ACT & ASSERT: Transfer should be allowed
+    const transferOp = { 
+      tokenId: nft.id, 
+      operation: 'transfer' as const, 
+      params: { recipient: 'DAGcollector456...', amount: 1 } 
+    };
+    expect(isOperationLegal(nft, transferOp, context)).toBe(true);
+    
+    // ACT & ASSERT: Split should be rejected (indivisible)
+    const splitOp = { 
+      tokenId: nft.id, 
+      operation: 'split' as const, 
+      params: { amounts: [0.5, 0.5] } 
+    };
+    expect(isOperationLegal(nft, splitOp, context)).toBe(false);
+    
+    // ACT & ASSERT: set_policy should be rejected (non-governable)
+    const setPolicyOp = { 
+      tokenId: nft.id, 
+      operation: 'set_policy' as const, 
+      params: { policy: { transfer: false } } 
+    };
+    expect(isOperationLegal(nft, setPolicyOp, context)).toBe(false);
+  });
+
+  it('should handle token evolution from Type 12 to Type 13', () => {
+    // ARRANGE: Utility token that becomes regulated
+    let utilityToken: Token = {
+      id: 'utility_to_regulated',
+      behavior: 12, // Initially fungible
+      holder: 'DAGholder123...',
+      amount: 1000.0
+    };
+    
+    const context = {
+      ordinal: 1000,
+      epochProgress: 0.5,
+      lastSnapshotHash: '0xabc123',
+      proofs: [{ address: 'DAGholder123...', signature: 'sig1' }],
+      state: {},
+      event: {}
+    };
+    
+    // Phase 1: Initial unrestricted transfers
+    const initialTransferOp = {
+      tokenId: utilityToken.id,
+      operation: 'transfer' as const,
+      params: { recipient: 'DAGuser456...', amount: 100.0 }
+    };
+    expect(isOperationLegal(utilityToken, initialTransferOp, context)).toBe(true);
+    
+    // Phase 2: Token becomes regulated (behavior change)
+    const regulatedToken: Token = {
+      ...utilityToken,
+      behavior: 13, // Now regulated
+      policy: {
+        transfer: {
+          // Require KYC verification
+          "===": [{ "var": "event.recipientKYC" }, true]
+        },
+        mint: {
+          // Only regulator can mint
+          "in": [
+            "DAGregulator789...",
+            { "map": [{ "var": "proofs" }, { "var": "address" }] }
+          ]
+        }
+      }
+    };
+    
+    // ACT & ASSERT: Transfer now requires KYC
+    const restrictedTransferOp = {
+      tokenId: regulatedToken.id,
+      operation: 'transfer' as const,
+      params: { 
+        recipient: 'DAGuser456...', 
+        amount: 100.0,
+        recipientKYC: false  // Failed KYC
+      }
+    };
+    
+    const kycContext = {
+      ...context,
+      event: restrictedTransferOp.params
+    };
+    
+    expect(isOperationLegal(regulatedToken, restrictedTransferOp, kycContext)).toBe(false);
+    
+    // ACT & ASSERT: Transfer with KYC should work
+    const kycTransferOp = {
+      ...restrictedTransferOp,
+      params: { ...restrictedTransferOp.params, recipientKYC: true }
+    };
+    
+    const validKycContext = {
+      ...context,
+      event: kycTransferOp.params
+    };
+    
+    expect(isOperationLegal(regulatedToken, kycTransferOp, validKycContext)).toBe(true);
+  });
+
+  it('should validate cross-type compatibility in multi-token scenarios', () => {
+    // ARRANGE: Multiple tokens in a complex transaction
+    const tokens = [
+      { // Utility token for fees
+        id: 'fee_token',
+        behavior: 12 as TokenBehavior,
+        holder: 'DAGtrader123...',
+        amount: 100.0
+      },
+      { // NFT being traded
+        id: 'traded_nft',
+        behavior: 8 as TokenBehavior,
+        holder: 'DAGtrader123...',
+        amount: 1
+      },
+      { // Expiring auction bid
+        id: 'bid_token',
+        behavior: 14 as TokenBehavior,
+        holder: 'DAGbidder456...',
+        amount: 500.0,
+        expiresAtOrdinal: 1200
+      }
+    ];
+    
+    const context = {
+      ordinal: 1100, // Before bid expiry
+      epochProgress: 0.5,
+      lastSnapshotHash: '0xabc123',
+      proofs: [{ address: 'DAGtrader123...', signature: 'sig1' }],
+      state: {},
+      event: {}
+    };
+    
+    // ACT & ASSERT: Multi-token transaction validation
+    const transactionValid = validateMultiTokenTransaction(tokens, [
+      { tokenId: 'fee_token', operation: 'burn', params: { amount: 5.0 } },
+      { tokenId: 'traded_nft', operation: 'transfer', params: { recipient: 'DAGbidder456...', amount: 1 } },
+      { tokenId: 'bid_token', operation: 'transfer', params: { recipient: 'DAGtrader123...', amount: 500.0 } }
+    ], context);
+    
+    expect(transactionValid).toBe(true);
+    
+    // ACT & ASSERT: Same transaction after bid expiry should fail
+    const expiredContext = { ...context, ordinal: 1300 };
+    const expiredTransactionValid = validateMultiTokenTransaction(tokens, [
+      { tokenId: 'fee_token', operation: 'burn', params: { amount: 5.0 } },
+      { tokenId: 'traded_nft', operation: 'transfer', params: { recipient: 'DAGbidder456...', amount: 1 } },
+      { tokenId: 'bid_token', operation: 'transfer', params: { recipient: 'DAGtrader123...', amount: 500.0 } }
+    ], expiredContext);
+    
+    expect(expiredTransactionValid).toBe(false);
+  });
+});
+
+// Mock helper functions (these would be implemented in the actual token framework)
+
+function isTransferable(behavior: TokenBehavior): boolean {
+  return (behavior & TOKEN_BEHAVIOR_FLAGS.TRANSFERABLE) !== 0;
+}
+
+function isDivisible(behavior: TokenBehavior): boolean {
+  return (behavior & TOKEN_BEHAVIOR_FLAGS.DIVISIBLE) !== 0;
+}
+
+function isExpirable(behavior: TokenBehavior): boolean {
+  return (behavior & TOKEN_BEHAVIOR_FLAGS.EXPIRABLE) !== 0;
+}
+
+function isGovernable(behavior: TokenBehavior): boolean {
+  return (behavior & TOKEN_BEHAVIOR_FLAGS.GOVERNABLE) !== 0;
+}
+
+function makeTokenBehavior(t: boolean, d: boolean, e: boolean, g: boolean): TokenBehavior {
+  return ((t ? 8 : 0) | (d ? 4 : 0) | (e ? 2 : 0) | (g ? 1 : 0)) as TokenBehavior;
+}
+
+function isValidTokenBehavior(behavior: number): boolean {
+  return Number.isInteger(behavior) && behavior >= 0 && behavior <= 15;
+}
+
+function getTokenArchetype(behavior: TokenBehavior): string {
+  const archetypes = [
+    'Soulbound Collectible',      // 0
+    'Governed Badge',             // 1
+    'Expiring Credential',        // 2
+    'Governed Credential',        // 3
+    'Reputation Score',           // 4
+    'Governed Score',             // 5
+    'Expiring Credits',           // 6
+    'Governed Expiring Credits',  // 7
+    'Pure Collectible (NFT)',     // 8
+    'Governed Collectible',       // 9
+    'Ticket',                     // 10
+    'Governed Ticket',            // 11
+    'Fungible Token',             // 12
+    'Regulated Token',            // 13
+    'Loyalty Points',             // 14
+    'Full-Featured Asset'         // 15
+  ];
+  return archetypes[behavior] || 'Unknown';
+}
+
+function getTokenDescription(behavior: TokenBehavior): string {
+  // Mock implementation - would return detailed use case descriptions
+  throw new Error('Not yet implemented - TDD test should fail');
+}
+
+function isOperationLegal(
+  token: Token, 
+  operation: TokenOperation, 
+  context: ValidationContext
+): boolean {
+  // Mock implementation - would validate operation legality
+  throw new Error('Not yet implemented - TDD test should fail');
+}
+
+function getOperationRejectionReason(
+  token: Token, 
+  operation: TokenOperation, 
+  context: ValidationContext
+): string {
+  // Mock implementation - would return specific rejection reason
+  throw new Error('Not yet implemented - TDD test should fail');
+}
+
+function validateTokenStructure(token: Token): boolean {
+  // Mock implementation - would validate token structure
+  throw new Error('Not yet implemented - TDD test should fail');
+}
+
+function getTokenValidationErrors(token: Token): string[] {
+  // Mock implementation - would return validation errors
+  throw new Error('Not yet implemented - TDD test should fail');
+}
+
+function isTokenValid(token: Token, context: ValidationContext): boolean {
+  // Mock implementation - would check token validity
+  throw new Error('Not yet implemented - TDD test should fail');
+}
+
+function createExpiryGuard(): any {
+  // Mock implementation - would create JSON Logic guard for expiry
+  return {
+    "or": [
+      { "===": [{ "&": [{ "var": "state.tokenBehavior" }, 2] }, 0] },
+      { "<": [{ "var": "$ordinal" }, { "var": "state.expiresAtOrdinal" }] }
+    ]
+  };
+}
+
+function createTransferGuard(): any {
+  // Mock implementation - would create JSON Logic guard for transfer
+  throw new Error('Not yet implemented - TDD test should fail');
+}
+
+function validateJSONLogicSecurity(policy: any): boolean {
+  // Mock implementation - would validate JSON Logic security
+  throw new Error('Not yet implemented - TDD test should fail');
+}
+
+function getJSONLogicSecurityErrors(policy: any): string[] {
+  // Mock implementation - would return security errors
+  throw new Error('Not yet implemented - TDD test should fail');
+}
+
+function analyzeTokenDesign(token: Token): { 
+  hasAntiPatterns: boolean; 
+  recommendations: string[];
+  warnings: string[];
+} {
+  // Mock implementation - would analyze token design for anti-patterns
+  throw new Error('Not yet implemented - TDD test should fail');
+}
+
+function validateMultiTokenTransaction(
+  tokens: Token[], 
+  operations: TokenOperation[], 
+  context: ValidationContext
+): boolean {
+  // Mock implementation - would validate multi-token transactions
+  throw new Error('Not yet implemented - TDD test should fail');
+}
