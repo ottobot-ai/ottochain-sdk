@@ -47,15 +47,47 @@ export const CONTRACT_DEFINITIONS: Record<ContractDefinitionType, unknown> = {
 };
 
 /**
+ * Move documentation-only fields (crossReferences, emits) into metadata
+ * so they're preserved but don't conflict with the metagraph schema.
+ * Metadata accepts arbitrary JSON — ideal for informational fields.
+ */
+function moveDocsToMetadata(def: Record<string, unknown>): Record<string, unknown> {
+  const { crossReferences, metadata: existingMetadata, ...rest } = def;
+
+  // Collect emits from transitions
+  const transitionEmits: Record<string, unknown> = {};
+  if (Array.isArray(rest.transitions)) {
+    rest.transitions = (rest.transitions as Record<string, unknown>[]).map(t => {
+      const { emits, ...transition } = t;
+      if (emits) {
+        const key = `${transition.from}_${transition.eventName ?? 'event'}_${transition.to}`;
+        transitionEmits[key] = emits;
+      }
+      return transition;
+    });
+  }
+
+  const metadata = {
+    ...((existingMetadata as Record<string, unknown>) ?? {}),
+    ...(crossReferences ? { crossReferences } : {}),
+    ...(Object.keys(transitionEmits).length > 0 ? { transitionEmits } : {}),
+  };
+
+  return { ...rest, metadata };
+}
+
+/**
  * Get the contract state machine definition.
+ * Moves documentation fields (crossReferences, emits) into metadata.
  */
 export function getContractDefinition(): unknown {
-  return contractDef;
+  return moveDocsToMetadata(contractDef as Record<string, unknown>);
 }
 
 /**
  * Get the escrow state machine definition.
+ * Moves documentation fields (crossReferences, emits) into metadata.
  */
 export function getEscrowDefinition(): unknown {
-  return escrowDef;
+  return moveDocsToMetadata(escrowDef as Record<string, unknown>);
 }

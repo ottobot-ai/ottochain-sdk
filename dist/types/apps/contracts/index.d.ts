@@ -22,9 +22,11 @@ export type ContractDefinitionType = 'Contract' | 'Escrow';
 export declare const CONTRACT_DEFINITIONS: Record<ContractDefinitionType, unknown>;
 /**
  * Get the contract state machine definition.
+ * Moves documentation fields (crossReferences, emits) into metadata.
  */
 export declare function getContractDefinition(): unknown;
 /**
  * Get the escrow state machine definition.
+ * Moves documentation fields (crossReferences, emits) into metadata.
  */
 export declare function getEscrowDefinition(): unknown;
