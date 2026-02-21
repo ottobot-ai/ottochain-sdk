@@ -2,7 +2,13 @@
     "metadata": {
         "name": "Contract",
         "description": "Agreement between two agents with completion attestation and dispute resolution",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "crossReferences": {
+            "proposerIdentityId": "Links to proposer's AgentIdentity fiber",
+            "counterpartyIdentityId": "Links to counterparty's AgentIdentity fiber",
+            "escrowId": "Links to Escrow if payment is escrowed",
+            "arbitrationPoolId": "Links to ArbitrationPool for dispute resolution"
+        }
     },
     "states": {
         "PROPOSED": {
@@ -50,12 +56,6 @@
     },
     "initialState": {
         "value": "PROPOSED"
-    },
-    "crossReferences": {
-        "proposerIdentityId": "Links to proposer's AgentIdentity fiber",
-        "counterpartyIdentityId": "Links to counterparty's AgentIdentity fiber",
-        "escrowId": "Links to Escrow if payment is escrowed",
-        "arbitrationPoolId": "Links to ArbitrationPool for dispute resolution"
     },
     "transitions": [
         {
@@ -279,33 +279,35 @@
                     }
                 ]
             },
-            "emits": [
-                {
-                    "_comment": "Credit proposer's identity with completion",
-                    "target": {
-                        "var": "state.proposerIdentityId"
+            "dependencies": [],
+            "metadata": {
+                "emits": [
+                    {
+                        "_comment": "Credit proposer's identity with completion",
+                        "target": {
+                            "var": "state.proposerIdentityId"
+                        },
+                        "event": "receive_completion",
+                        "payload": {
+                            "contractId": {
+                                "var": "fiberId"
+                            }
+                        }
                     },
-                    "event": "receive_completion",
-                    "payload": {
-                        "contractId": {
-                            "var": "fiberId"
+                    {
+                        "_comment": "Credit counterparty's identity with completion",
+                        "target": {
+                            "var": "state.counterpartyIdentityId"
+                        },
+                        "event": "receive_completion",
+                        "payload": {
+                            "contractId": {
+                                "var": "fiberId"
+                            }
                         }
                     }
-                },
-                {
-                    "_comment": "Credit counterparty's identity with completion",
-                    "target": {
-                        "var": "state.counterpartyIdentityId"
-                    },
-                    "event": "receive_completion",
-                    "payload": {
-                        "contractId": {
-                            "var": "fiberId"
-                        }
-                    }
-                }
-            ],
-            "dependencies": []
+                ]
+            }
         },
         {
             "from": {
