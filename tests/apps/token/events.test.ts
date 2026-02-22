@@ -3,81 +3,22 @@
  * 
  * Tests for type-safe event construction and validation utilities.
  * Based on specification: docs/design/asset-model-token-spec.md § 6.3
- * 
- * These tests should FAIL initially since the implementation doesn't exist yet.
  */
 
-// Event types that should be exported but don't exist yet
-export interface TransferEvent {
-  eventName: 'transfer';
-  fiberId: string;
-  recipient: string;
-  amount?: number;
-}
-
-export interface SplitEvent {
-  eventName: 'split';
-  fiberId: string;
-  amount: number;
-  childFiberId?: string;
-}
-
-export interface MergeEvent {
-  eventName: 'merge';
-  fiberId: string;
-  sourceFiberId: string;
-  amount: number;
-}
-
-export interface ExpireEvent {
-  eventName: 'expire';
-  fiberId: string;
-}
-
-export interface BurnEvent {
-  eventName: 'burn';
-  fiberId: string;
-}
-
-export type TokenEvent = TransferEvent | SplitEvent | MergeEvent | ExpireEvent | BurnEvent;
-
-// Mock functions that should exist in the actual implementation
-const validateTokenEvent = (_event: TokenEvent, _behavior: number): void => {
-  throw new Error('validateTokenEvent not implemented yet - TDD failing test');
-};
-
-const isTransferable = (_b: number): boolean => {
-  throw new Error('isTransferable not implemented yet - TDD failing test');
-};
-
-const isDivisible = (_b: number): boolean => {
-  throw new Error('isDivisible not implemented yet - TDD failing test');
-};
-
-const isExpirable = (_b: number): boolean => {
-  throw new Error('isExpirable not implemented yet - TDD failing test');
-};
-
-// Event builder functions that should exist
-const createTransferEvent = (_fiberId: string, _recipient: string, _amount?: number): TransferEvent => {
-  throw new Error('createTransferEvent not implemented yet - TDD failing test');
-};
-
-const createSplitEvent = (_fiberId: string, _amount: number, _childFiberId?: string): SplitEvent => {
-  throw new Error('createSplitEvent not implemented yet - TDD failing test');
-};
-
-const createMergeEvent = (_fiberId: string, _sourceFiberId: string, _amount: number): MergeEvent => {
-  throw new Error('createMergeEvent not implemented yet - TDD failing test');
-};
-
-const createExpireEvent = (_fiberId: string): ExpireEvent => {
-  throw new Error('createExpireEvent not implemented yet - TDD failing test');
-};
-
-const createBurnEvent = (_fiberId: string): BurnEvent => {
-  throw new Error('createBurnEvent not implemented yet - TDD failing test');
-};
+import {
+  BurnEvent,
+  ExpireEvent,
+  MergeEvent,
+  SplitEvent,
+  TokenEvent,
+  TransferEvent,
+  createBurnEvent,
+  createExpireEvent,
+  createMergeEvent,
+  createSplitEvent,
+  createTransferEvent,
+  validateTokenEvent,
+} from '../../../src/apps/token';
 
 describe('Token Event Builders and Validators', () => {
   
@@ -275,7 +216,7 @@ describe('Token Event Builders and Validators', () => {
       const unknownEvent = {
         eventName: 'unknown-event',
         fiberId: 'test-fiber'
-      } as any;
+      } as unknown as TokenEvent;
       
       expect(() => {
         validateTokenEvent(unknownEvent, 8);
