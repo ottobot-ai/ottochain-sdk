@@ -80,3 +80,6 @@ import agentIdentityDef from './state-machines/agent-identity.json';
 export function getIdentityDefinition(): unknown {
   return agentIdentityDef;
 }
+
+// Agent Profile system (reputation, capabilities, delegation eligibility)
+export * from './agent-profile/index.js';

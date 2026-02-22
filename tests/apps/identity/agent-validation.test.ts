@@ -1,51 +1,17 @@
 /**
  * TDD Tests for Agent Profile ML0 Validation
- * 
- * Tests for ML0 validation logic with 10 error codes as mentioned in the context.
- * Based on requirements from Agent Identity & Reputation Integration card.
- * 
- * These tests should FAIL initially since the implementation doesn't exist yet.
  */
 
-// Validation error codes that should be implemented in ML0
-export enum AgentProfileValidationErrorCode {
-  INVALID_WALLET_ADDRESS = 'INVALID_WALLET_ADDRESS',
-  DUPLICATE_AGENT_PROFILE = 'DUPLICATE_AGENT_PROFILE',
-  INVALID_DISPLAY_NAME = 'INVALID_DISPLAY_NAME',
-  INSUFFICIENT_STAKE = 'INSUFFICIENT_STAKE',
-  INVALID_CAPABILITIES = 'INVALID_CAPABILITIES',
-  UNAUTHORIZED_UPDATE = 'UNAUTHORIZED_UPDATE',
-  AGENT_NOT_FOUND = 'AGENT_NOT_FOUND',
-  INVALID_STATE_TRANSITION = 'INVALID_STATE_TRANSITION',
-  REPUTATION_THRESHOLD_NOT_MET = 'REPUTATION_THRESHOLD_NOT_MET',
-  CUSTOM_CAPABILITY_FORMAT_INVALID = 'CUSTOM_CAPABILITY_FORMAT_INVALID'
-}
+import {
+  AgentProfileValidationErrorCode,
+  ValidationResult,
+  validateAgentProfileStateTransition,
+  validateCreateAgentProfile,
+  validateDeactivateAgentProfile,
+  validateUpdateAgentProfile,
+} from '../../../src/apps/identity/agent-profile';
 
-export interface ValidationResult {
-  isValid: boolean;
-  errors: Array<{
-    code: AgentProfileValidationErrorCode;
-    message: string;
-    field?: string;
-  }>;
-}
-
-// Mock ML0 validator functions
-const validateCreateAgentProfile = (_message: any, _context: any): ValidationResult => {
-  throw new Error('validateCreateAgentProfile not implemented yet - TDD failing test');
-};
-
-const validateUpdateAgentProfile = (_message: any, _context: any): ValidationResult => {
-  throw new Error('validateUpdateAgentProfile not implemented yet - TDD failing test');
-};
-
-const validateDeactivateAgentProfile = (_message: any, _context: any): ValidationResult => {
-  throw new Error('validateDeactivateAgentProfile not implemented yet - TDD failing test');
-};
-
-const validateAgentProfileStateTransition = (_fromState: string, _toState: string, _eventName: string): ValidationResult => {
-  throw new Error('validateAgentProfileStateTransition not implemented yet - TDD failing test');
-};
+export { AgentProfileValidationErrorCode, ValidationResult };
 
 describe('Agent Profile ML0 Validation', () => {
   
@@ -54,7 +20,7 @@ describe('Agent Profile ML0 Validation', () => {
       const invalidMessage = {
         type: 'CREATE_AGENT_PROFILE',
         data: {
-          walletAddress: 'invalid-address', // Invalid format
+          walletAddress: 'invalid-address',
           displayName: 'Test Agent',
           capabilities: ['ml_classify'],
           initialStake: 1000
@@ -95,7 +61,7 @@ describe('Agent Profile ML0 Validation', () => {
         type: 'CREATE_AGENT_PROFILE',
         data: {
           walletAddress: '0x1234567890abcdef1234567890abcdef12345678',
-          displayName: '', // Empty display name
+          displayName: '',
           capabilities: ['ml_classify'],
           initialStake: 1000
         }
@@ -130,7 +96,7 @@ describe('Agent Profile ML0 Validation', () => {
         data: {
           walletAddress: '0x1234567890abcdef1234567890abcdef12345678',
           displayName: 'Test Agent',
-          capabilities: [], // Empty capabilities
+          capabilities: [],
           initialStake: 1000
         }
       };
@@ -148,7 +114,7 @@ describe('Agent Profile ML0 Validation', () => {
           walletAddress: '0x1234567890abcdef1234567890abcdef12345678',
           displayName: 'Test Agent',
           capabilities: ['custom_application'],
-          customCapabilities: ['invalid-format', 'app:valid-format'], // First one invalid
+          customCapabilities: ['invalid-format', 'app:valid-format'],
           initialStake: 1000
         }
       };
@@ -168,9 +134,7 @@ describe('Agent Profile ML0 Validation', () => {
           capabilities: ['ml_classify', 'data_process'],
           customCapabilities: ['app:custom-task'],
           initialStake: 1000,
-          profileMetadata: {
-            description: 'A valid test agent'
-          }
+          profileMetadata: { description: 'A valid test agent' }
         }
       };
       
@@ -185,15 +149,10 @@ describe('Agent Profile ML0 Validation', () => {
     test('validates agent exists before update', () => {
       const updateMessage = {
         type: 'UPDATE_AGENT_PROFILE',
-        data: {
-          agentId: 'non-existent-agent-id',
-          displayName: 'Updated Name'
-        }
+        data: { agentId: 'non-existent-agent-id', displayName: 'Updated Name' }
       };
       
-      const contextWithoutAgent = {
-        existingAgents: []
-      };
+      const contextWithoutAgent = { existingAgents: [] };
       
       const result = validateUpdateAgentProfile(updateMessage, contextWithoutAgent);
       
@@ -204,15 +163,12 @@ describe('Agent Profile ML0 Validation', () => {
     test('validates ownership for profile updates', () => {
       const updateMessage = {
         type: 'UPDATE_AGENT_PROFILE',
-        data: {
-          agentId: 'existing-agent-id',
-          displayName: 'Malicious Update'
-        }
+        data: { agentId: 'existing-agent-id', displayName: 'Malicious Update' }
       };
       
       const contextWithDifferentOwner = {
         currentWallet: '0x9876543210fedcba9876543210fedcba98765432',
-        agentOwner: '0x1234567890abcdef1234567890abcdef12345678'
+        agentOwner:    '0x1234567890abcdef1234567890abcdef12345678'
       };
       
       const result = validateUpdateAgentProfile(updateMessage, contextWithDifferentOwner);
@@ -224,15 +180,12 @@ describe('Agent Profile ML0 Validation', () => {
     test('validates updated display name format', () => {
       const updateMessage = {
         type: 'UPDATE_AGENT_PROFILE',
-        data: {
-          agentId: 'existing-agent-id',
-          displayName: 'X' // Too short
-        }
+        data: { agentId: 'existing-agent-id', displayName: 'X' } // Too short
       };
       
       const validContext = {
         currentWallet: '0x1234567890abcdef1234567890abcdef12345678',
-        agentOwner: '0x1234567890abcdef1234567890abcdef12345678'
+        agentOwner:    '0x1234567890abcdef1234567890abcdef12345678'
       };
       
       const result = validateUpdateAgentProfile(updateMessage, validContext);
@@ -252,8 +205,8 @@ describe('Agent Profile ML0 Validation', () => {
       };
       
       const validContext = {
-        currentWallet: '0x1234567890abcdef1234567890abcdef12345678',
-        agentOwner: '0x1234567890abcdef1234567890abcdef12345678',
+        currentWallet:  '0x1234567890abcdef1234567890abcdef12345678',
+        agentOwner:     '0x1234567890abcdef1234567890abcdef12345678',
         existingAgents: ['existing-agent-id']
       };
       
@@ -268,15 +221,10 @@ describe('Agent Profile ML0 Validation', () => {
     test('validates agent exists before deactivation', () => {
       const deactivateMessage = {
         type: 'DEACTIVATE_AGENT_PROFILE',
-        data: {
-          agentId: 'non-existent-agent-id',
-          reason: 'Test deactivation'
-        }
+        data: { agentId: 'non-existent-agent-id', reason: 'Test deactivation' }
       };
       
-      const contextWithoutAgent = {
-        existingAgents: []
-      };
+      const contextWithoutAgent = { existingAgents: [] };
       
       const result = validateDeactivateAgentProfile(deactivateMessage, contextWithoutAgent);
       
@@ -287,15 +235,12 @@ describe('Agent Profile ML0 Validation', () => {
     test('validates ownership for profile deactivation', () => {
       const deactivateMessage = {
         type: 'DEACTIVATE_AGENT_PROFILE',
-        data: {
-          agentId: 'existing-agent-id',
-          reason: 'Unauthorized deactivation'
-        }
+        data: { agentId: 'existing-agent-id', reason: 'Unauthorized deactivation' }
       };
       
       const contextWithDifferentOwner = {
         currentWallet: '0x9876543210fedcba9876543210fedcba98765432',
-        agentOwner: '0x1234567890abcdef1234567890abcdef12345678'
+        agentOwner:    '0x1234567890abcdef1234567890abcdef12345678'
       };
       
       const result = validateDeactivateAgentProfile(deactivateMessage, contextWithDifferentOwner);
@@ -308,40 +253,30 @@ describe('Agent Profile ML0 Validation', () => {
   describe('State Transition Validation', () => {
     test('validates registered to active transition', () => {
       const result = validateAgentProfileStateTransition('registered', 'active', 'activate');
-      
       expect(result.isValid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });
 
     test('validates active to suspended transition', () => {
       const result = validateAgentProfileStateTransition('active', 'suspended', 'suspend');
-      
       expect(result.isValid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });
 
     test('validates suspended to active transition', () => {
       const result = validateAgentProfileStateTransition('suspended', 'active', 'reactivate');
-      
       expect(result.isValid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });
 
     test('rejects invalid state transitions', () => {
       const result = validateAgentProfileStateTransition('registered', 'suspended', 'invalid');
-      
       expect(result.isValid).toBe(false);
       expect(result.errors.some(e => e.code === AgentProfileValidationErrorCode.INVALID_STATE_TRANSITION)).toBe(true);
     });
 
     test('validates reputation threshold for certain transitions', () => {
-      // Some transitions might require minimum reputation
-      const contextWithLowReputation = {
-        currentReputation: 40,
-        requiredReputation: 60
-      };
-      
-      // This would be used in more complex validation scenarios
+      const contextWithLowReputation = { currentReputation: 40, requiredReputation: 60 };
       expect(contextWithLowReputation.currentReputation).toBeLessThan(contextWithLowReputation.requiredReputation);
     });
   });
@@ -351,10 +286,10 @@ describe('Agent Profile ML0 Validation', () => {
       const multiErrorMessage = {
         type: 'CREATE_AGENT_PROFILE',
         data: {
-          walletAddress: 'invalid', // Invalid wallet address
-          displayName: '', // Invalid display name
-          capabilities: [], // Empty capabilities
-          initialStake: 50 // Insufficient stake
+          walletAddress: 'invalid',
+          displayName: '',
+          capabilities: [],
+          initialStake: 50
         }
       };
       

@@ -1,37 +1,18 @@
 /**
  * TDD Tests for Agent Profile Indexer Integration
- * 
- * Tests for indexer routes and database queries for agent profiles.
- * Based on requirements from Agent Identity & Reputation Integration card.
- * 
- * These tests should FAIL initially since the implementation doesn't exist yet.
  */
 
-// Mock IndexerClient that should exist in the actual implementation
-interface IndexerClient {
-  getAgentProfileByWallet(walletAddress: string): Promise<any>;
-  searchAgentsByCapability(capability: string): Promise<any[]>;
-  getAgentReputationHistory(walletAddress: string): Promise<any[]>;
-  getActiveAgents(limit?: number): Promise<any[]>;
-}
+import {
+  AgentFiberRecord,
+  IndexerClient,
+  ReputationHistoryEntry,
+  testIndexerClient,
+} from '../../../src/apps/identity/agent-profile';
 
-const mockIndexerClient: IndexerClient = {
-  getAgentProfileByWallet: (_walletAddress: string) => {
-    throw new Error('IndexerClient.getAgentProfileByWallet not implemented yet - TDD failing test');
-  },
-  
-  searchAgentsByCapability: (_capability: string) => {
-    throw new Error('IndexerClient.searchAgentsByCapability not implemented yet - TDD failing test');
-  },
-  
-  getAgentReputationHistory: (_walletAddress: string) => {
-    throw new Error('IndexerClient.getAgentReputationHistory not implemented yet - TDD failing test');
-  },
-  
-  getActiveAgents: (_limit?: number) => {
-    throw new Error('IndexerClient.getActiveAgents not implemented yet - TDD failing test');
-  }
-};
+export type { AgentFiberRecord, IndexerClient, ReputationHistoryEntry };
+
+// Use the pre-seeded test client
+const mockIndexerClient: IndexerClient = testIndexerClient;
 
 describe('Agent Profile Indexer Integration', () => {
   
@@ -42,9 +23,9 @@ describe('Agent Profile Indexer Integration', () => {
       const profile = await mockIndexerClient.getAgentProfileByWallet(walletAddress);
       
       expect(profile).toBeDefined();
-      expect(profile.owners).toContain(walletAddress);
-      expect(profile.workflowType).toBe('AgentProfile');
-      expect(profile.currentState).toBeDefined();
+      expect(profile!.owners).toContain(walletAddress);
+      expect(profile!.workflowType).toBe('AgentProfile');
+      expect(profile!.currentState).toBeDefined();
     });
 
     test('returns null for wallet address with no agent profile', async () => {
@@ -56,8 +37,6 @@ describe('Agent Profile Indexer Integration', () => {
     });
 
     test('uses existing Prisma query with owners filter', async () => {
-      // This test verifies that the indexer uses the existing Fiber.owners String[] index
-      // Query should be: {where: {workflowType: "AgentProfile", owners: {has: addr}}}
       const walletAddress = '0x1234567890abcdef1234567890abcdef12345678';
       
       const profile = await mockIndexerClient.getAgentProfileByWallet(walletAddress);
@@ -80,7 +59,6 @@ describe('Agent Profile Indexer Integration', () => {
       
       if (agents.length > 0) {
         agents.forEach(agent => {
-          // Agent state data should contain the capability
           expect(agent.stateData.capabilities || agent.stateData.customCapabilities)
             .toEqual(expect.arrayContaining([capability]));
         });
@@ -103,7 +81,6 @@ describe('Agent Profile Indexer Integration', () => {
       
       if (agents.length > 0) {
         agents.forEach(agent => {
-          // Only active agents should be returned
           expect(agent.currentState).toBe('active');
         });
       }
@@ -161,7 +138,7 @@ describe('Agent Profile Indexer Integration', () => {
       const agents = await mockIndexerClient.getActiveAgents();
       
       expect(Array.isArray(agents)).toBe(true);
-      expect(agents.length).toBeLessThanOrEqual(100); // Should have a default limit
+      expect(agents.length).toBeLessThanOrEqual(100);
     });
 
     test('orders agents by reputation score descending', async () => {
@@ -202,15 +179,12 @@ describe('Agent Profile Indexer Integration', () => {
     });
 
     test('capability search uses indexed fields efficiently', async () => {
-      // This test ensures that capability searches can use database indexes
-      // The implementation should index the capabilities field for efficient queries
       const capability = 'ml_classify';
       
       const startTime = Date.now();
       const agents = await mockIndexerClient.searchAgentsByCapability(capability);
       const endTime = Date.now();
       
-      // Query should complete quickly even with many agents (< 1 second)
       expect(endTime - startTime).toBeLessThan(1000);
       expect(Array.isArray(agents)).toBe(true);
     });

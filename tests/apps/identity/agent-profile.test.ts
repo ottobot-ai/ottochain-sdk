@@ -3,127 +3,42 @@
  * 
  * Tests for AgentProfile fiber system, reputation scoring, and delegation authority.
  * Based on card: 🆔 Agent Identity & Reputation Integration (698d5b26)
- * 
- * These tests should FAIL initially since the implementation doesn't exist yet.
- * Implementation should make these tests pass.
- * 
- * Expected: 17 tests in 6 groups (Phase 1: 15 tests; Phase 2: 2 JLVM tests after PR #90)
  */
 
-// Types that should be exported but don't exist yet - this will cause TypeScript errors initially
-export interface AgentProfile {
-  agentId: string;
-  walletAddress: string;
-  displayName: string;
-  capabilities: CapabilityType[];
-  customCapabilities?: string[];
-  reputationScore: number;
-  stakeBonded: number;
-  isActive: boolean;
-  registrationOrdinal: number;
-  lastActiveOrdinal?: number;
-  profileMetadata?: Record<string, any>;
-}
+import {
+  AgentProfile,
+  AgentProfileClient,
+  AgentProfileMessage,
+  AgentProfileValidationError,
+  CapabilityType,
+  CreateAgentProfileMessage,
+  DeactivateAgentProfileMessage,
+  ReputationScore,
+  UpdateAgentProfileMessage,
+  calculateReputationScore,
+  getAgentStateMachineDefinition,
+  isEligibleForDelegation,
+  validateAgentProfileMessage,
+} from '../../../src/apps/identity/agent-profile';
 
-export enum CapabilityType {
-  ML_CLASSIFY = 'ml_classify',
-  DATA_PROCESS = 'data_process',
-  COMPUTE_HEAVY = 'compute_heavy',
-  STORAGE_PROVIDER = 'storage_provider',
-  ORACLE_FEED = 'oracle_feed',
-  VALIDATION_SERVICE = 'validation_service',
-  BRIDGE_RELAYER = 'bridge_relayer',
-  GOVERNANCE_DELEGATE = 'governance_delegate',
-  CUSTOM_APPLICATION = 'custom_application'
-}
-
-export interface CreateAgentProfileMessage {
-  walletAddress: string;
-  displayName: string;
-  capabilities: CapabilityType[];
-  customCapabilities?: string[];
-  initialStake: number;
-  profileMetadata?: Record<string, any>;
-}
-
-export interface UpdateAgentProfileMessage {
-  agentId: string;
-  displayName?: string;
-  capabilities?: CapabilityType[];
-  customCapabilities?: string[];
-  profileMetadata?: Record<string, any>;
-}
-
-export interface DeactivateAgentProfileMessage {
-  agentId: string;
-  reason?: string;
-}
-
-export type AgentProfileMessage = 
-  | { type: 'CREATE_AGENT_PROFILE'; data: CreateAgentProfileMessage }
-  | { type: 'UPDATE_AGENT_PROFILE'; data: UpdateAgentProfileMessage }
-  | { type: 'DEACTIVATE_AGENT_PROFILE'; data: DeactivateAgentProfileMessage };
-
-export interface AgentProfileValidationError {
-  code: string;
-  message: string;
-  field?: string;
-}
-
-export interface ReputationScore {
-  overall: number;
-  reliability: number;
-  performance: number;
-  trustworthiness: number;
-  totalTasks: number;
-  successfulTasks: number;
-  lastUpdatedOrdinal: number;
-}
-
-// Mock implementations that should exist in the actual implementation
-const AgentProfileClient = {
-  createProfile: (_profile: CreateAgentProfileMessage): Promise<string> => {
-    throw new Error('AgentProfileClient.createProfile not implemented yet - TDD failing test');
-  },
-  
-  getProfile: (_walletAddress: string): Promise<AgentProfile | null> => {
-    throw new Error('AgentProfileClient.getProfile not implemented yet - TDD failing test');
-  },
-  
-  updateProfile: (_update: UpdateAgentProfileMessage): Promise<void> => {
-    throw new Error('AgentProfileClient.updateProfile not implemented yet - TDD failing test');
-  },
-  
-  deactivateProfile: (_deactivate: DeactivateAgentProfileMessage): Promise<void> => {
-    throw new Error('AgentProfileClient.deactivateProfile not implemented yet - TDD failing test');
-  },
-  
-  searchByCapability: (_capability: CapabilityType): Promise<AgentProfile[]> => {
-    throw new Error('AgentProfileClient.searchByCapability not implemented yet - TDD failing test');
-  },
-  
-  getReputationScore: (_walletAddress: string): Promise<ReputationScore | null> => {
-    throw new Error('AgentProfileClient.getReputationScore not implemented yet - TDD failing test');
-  }
-};
-
-const validateAgentProfileMessage = (_message: AgentProfileMessage): AgentProfileValidationError[] => {
-  throw new Error('validateAgentProfileMessage not implemented yet - TDD failing test');
-};
-
-const calculateReputationScore = (_walletAddress: string, _historicalData: any[]): ReputationScore => {
-  throw new Error('calculateReputationScore not implemented yet - TDD failing test');
-};
-
-const isEligibleForDelegation = (_walletAddress: string, _minReputation: number, _minStake: number): Promise<boolean> => {
-  throw new Error('isEligibleForDelegation not implemented yet - TDD failing test');
-};
-
-const getAgentStateMachineDefinition = (): any => {
-  throw new Error('getAgentStateMachineDefinition not implemented yet - TDD failing test');
+// Re-export types used by test assertions
+export type {
+  AgentProfile,
+  CapabilityType,
+  CreateAgentProfileMessage,
+  UpdateAgentProfileMessage,
+  DeactivateAgentProfileMessage,
+  AgentProfileMessage,
+  AgentProfileValidationError,
+  ReputationScore,
 };
 
 describe('Agent Identity & Reputation Integration', () => {
+
+  beforeEach(() => {
+    // Reset in-memory store between tests
+    AgentProfileClient.reset();
+  });
   
   describe('Group 1: Agent Profile Creation (4 tests)', () => {
     test('creates agent profile with valid data', async () => {
@@ -151,7 +66,7 @@ describe('Agent Identity & Reputation Integration', () => {
         displayName: 'Test Agent',
         capabilities: [CapabilityType.ML_CLASSIFY],
         initialStake: 1000
-      };
+      } as CreateAgentProfileMessage;
       
       await expect(
         AgentProfileClient.createProfile(invalidProfile)
@@ -224,8 +139,16 @@ describe('Agent Identity & Reputation Integration', () => {
 
   describe('Group 3: Agent Profile Updates (3 tests)', () => {
     test('updates agent profile display name', async () => {
+      // Create a profile first
+      const agentId = await AgentProfileClient.createProfile({
+        walletAddress: '0x1234567890abcdef1234567890abcdef12345678',
+        displayName: 'Original Name',
+        capabilities: [CapabilityType.ML_CLASSIFY],
+        initialStake: 1000,
+      });
+
       const updateData: UpdateAgentProfileMessage = {
-        agentId: 'test-agent-id',
+        agentId,
         displayName: 'Updated Agent Name'
       };
       
@@ -235,8 +158,15 @@ describe('Agent Identity & Reputation Integration', () => {
     });
 
     test('adds new capabilities to agent profile', async () => {
+      const agentId = await AgentProfileClient.createProfile({
+        walletAddress: '0x1234567890abcdef1234567890abcdef12345678',
+        displayName: 'Test Agent',
+        capabilities: [CapabilityType.ML_CLASSIFY],
+        initialStake: 1000,
+      });
+
       const updateData: UpdateAgentProfileMessage = {
-        agentId: 'test-agent-id',
+        agentId,
         capabilities: [
           CapabilityType.ML_CLASSIFY,
           CapabilityType.DATA_PROCESS,
@@ -324,18 +254,18 @@ describe('Agent Identity & Reputation Integration', () => {
       
       // Should allow registered -> active transition
       const activateTransition = stateMachine.transitions.find(
-        (t: any) => t.from === 'registered' && t.to === 'active' && t.eventName === 'activate'
+        (t) => t.from === 'registered' && t.to === 'active' && t.eventName === 'activate'
       );
       expect(activateTransition).toBeDefined();
       
       // Should allow active <-> suspended bidirectional transitions
       const suspendTransition = stateMachine.transitions.find(
-        (t: any) => t.from === 'active' && t.to === 'suspended' && t.eventName === 'suspend'
+        (t) => t.from === 'active' && t.to === 'suspended' && t.eventName === 'suspend'
       );
       expect(suspendTransition).toBeDefined();
       
       const reactivateTransition = stateMachine.transitions.find(
-        (t: any) => t.from === 'suspended' && t.to === 'active' && t.eventName === 'reactivate'
+        (t) => t.from === 'suspended' && t.to === 'active' && t.eventName === 'reactivate'
       );
       expect(reactivateTransition).toBeDefined();
     });
@@ -417,13 +347,11 @@ describe.skip('Agent Identity JLVM Integration (Phase 2)', () => {
   
   test('injects agent profile context into JLVM delegation operators', async () => {
     // This test requires PR #90 to be merged first
-    // It should verify that delegation.delegate.* context variables include agent profile data
-    expect(true).toBe(false); // This should fail until Phase 2 implementation
+    expect(true).toBe(false);
   });
 
   test('validates delegation authority using agent reputation in JLVM', async () => {
     // This test requires PR #90 to be merged first
-    // It should verify that JLVM guards can access and validate agent reputation scores
-    expect(true).toBe(false); // This should fail until Phase 2 implementation
+    expect(true).toBe(false);
   });
 });
