@@ -3,82 +3,20 @@
  * 
  * Tests for TokenBehavior type system, flags, and named constants.
  * Based on specification: docs/design/asset-model-token-spec.md § 3
- * 
- * These tests should FAIL initially since the implementation doesn't exist yet.
  */
 
-// Types and constants that should be exported but don't exist yet
-export type TokenBehavior = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15;
-
-const TOKEN_BEHAVIOR_FLAGS = {
-  TRANSFERABLE: 0b1000,  // 8
-  DIVISIBLE:    0b0100,  // 4
-  EXPIRABLE:    0b0010,  // 2
-  GOVERNABLE:   0b0001,  // 1
-} as const;
-
-const TOKEN_BEHAVIOR_TYPES = {
-  SOULBOUND_RECEIPT: 0,
-  GOVERNED_BADGE: 1,
-  EXPIRABLE_CREDENTIAL: 2,
-  GOVERNED_LICENSE: 3,
-  LOYALTY_POINTS: 4,
-  GOVERNED_ALLOCATION: 5,
-  EXPIRABLE_POINTS: 6,
-  GOVERNED_EXPIRABLE_POINTS: 7,
-  NFT: 8,
-  GOVERNED_NFT: 9,
-  EXPIRABLE_NFT: 10,
-  GOVERNED_EXPIRABLE_NFT: 11,
-  FUNGIBLE_TOKEN: 12,
-  GOVERNED_FUNGIBLE_TOKEN: 13,
-  EXPIRABLE_FUNGIBLE_TOKEN: 14,
-  GOVERNED_EXPIRABLE_FUNGIBLE: 15,
-} as const;
-
-const TOKEN_BEHAVIOR_NAMES: Record<number, string> = {
-  0: 'SOULBOUND_RECEIPT',
-  1: 'GOVERNED_BADGE',
-  2: 'EXPIRABLE_CREDENTIAL',
-  3: 'GOVERNED_LICENSE',
-  4: 'LOYALTY_POINTS',
-  5: 'GOVERNED_ALLOCATION',
-  6: 'EXPIRABLE_POINTS',
-  7: 'GOVERNED_EXPIRABLE_POINTS',
-  8: 'NFT',
-  9: 'GOVERNED_NFT',
-  10: 'EXPIRABLE_NFT',
-  11: 'GOVERNED_EXPIRABLE_NFT',
-  12: 'FUNGIBLE_TOKEN',
-  13: 'GOVERNED_FUNGIBLE_TOKEN',
-  14: 'EXPIRABLE_FUNGIBLE_TOKEN',
-  15: 'GOVERNED_EXPIRABLE_FUNGIBLE',
-};
-
-// Mock functions that should exist in the actual implementation
-const makeTokenBehavior = (_t: boolean, _d: boolean, _e: boolean, _g: boolean): TokenBehavior => {
-  throw new Error('makeTokenBehavior not implemented yet - TDD failing test');
-};
-
-const isTransferable = (_b: TokenBehavior): boolean => {
-  throw new Error('isTransferable not implemented yet - TDD failing test');
-};
-
-const isDivisible = (_b: TokenBehavior): boolean => {
-  throw new Error('isDivisible not implemented yet - TDD failing test');
-};
-
-const isExpirable = (_b: TokenBehavior): boolean => {
-  throw new Error('isExpirable not implemented yet - TDD failing test');
-};
-
-const isGovernable = (_b: TokenBehavior): boolean => {
-  throw new Error('isGovernable not implemented yet - TDD failing test');
-};
-
-const describeTokenBehavior = (_b: TokenBehavior): string => {
-  throw new Error('describeTokenBehavior not implemented yet - TDD failing test');
-};
+import {
+  TOKEN_BEHAVIOR_FLAGS,
+  TOKEN_BEHAVIOR_NAMES,
+  TOKEN_BEHAVIOR_TYPES,
+  TokenBehavior,
+  describeTokenBehavior,
+  isDivisible,
+  isExpirable,
+  isGovernable,
+  isTransferable,
+  makeTokenBehavior,
+} from '../../../src/apps/token';
 
 describe('Token Types and Constants', () => {
   

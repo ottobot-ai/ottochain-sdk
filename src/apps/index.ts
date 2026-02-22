@@ -33,3 +33,4 @@ export * as contracts from './contracts/index.js';
 export * as markets from './markets/index.js';
 export * as governance from './governance/index.js';
 export * as corporate from './corporate/index.js';
+export * as token from './token/index.js';

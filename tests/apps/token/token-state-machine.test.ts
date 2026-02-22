@@ -4,118 +4,33 @@
  * Tests for token state machine factory functions and utilities.
  * Based on specification: docs/design/asset-model-token-spec.md
  * 
- * These tests should FAIL initially since the implementation doesn't exist yet.
- * Implementation should make these tests pass.
- * 
  * Total: 48 test cases across 6 groups
  */
 
-// Types that should be exported but don't exist yet - this will cause TypeScript errors initially
-export interface TokenBehavior {
-  // This will be a type alias for numbers 0-15 in the actual implementation
-}
+import {
+  createTokenStateMachine,
+  getFungibleTokenDefinition,
+  getLicenseDefinition,
+  getNFTDefinition,
+  getSoulboundBadgeDefinition,
+  getStablecoinDefinition,
+  isDivisible,
+  isExpirable,
+  isGovernable,
+  isTransferable,
+  makeTokenBehavior,
+  TOKEN_BEHAVIOR_TYPES,
+  TokenStateMachineDefinition,
+  validateTokenEvent,
+} from '../../../src/apps/token';
 
-export interface TokenStateMachineDefinition {
-  metadata?: {
-    name?: string;
-    description?: string;
-    version?: string;
-    category?: string;
-    tokenBehavior?: number;
-  };
-  states: Record<string, any>;
-  initialState: { value: string };
-  transitions: Array<{
-    from: { value: string };
-    to: { value: string };
-    eventName: string;
-    guard: object | null;
-    effect: object | null;
-    dependencies?: string[];
-  }>;
-}
+// ── Re-export TokenEvent for this test file ──────────────────────────────────
 
-// Mock imports that should exist in the actual implementation
-const createTokenStateMachine = (_behavior: number): TokenStateMachineDefinition => {
-  throw new Error('createTokenStateMachine not implemented yet - TDD failing test');
-};
-
-const makeTokenBehavior = (_t: boolean, _d: boolean, _e: boolean, _g: boolean): number => {
-  throw new Error('makeTokenBehavior not implemented yet - TDD failing test');
-};
-
-const isTransferable = (_b: number): boolean => {
-  throw new Error('isTransferable not implemented yet - TDD failing test');
-};
-
-const isDivisible = (_b: number): boolean => {
-  throw new Error('isDivisible not implemented yet - TDD failing test');  
-};
-
-const isExpirable = (_b: number): boolean => {
-  throw new Error('isExpirable not implemented yet - TDD failing test');
-};
-
-const isGovernable = (_b: number): boolean => {
-  throw new Error('isGovernable not implemented yet - TDD failing test');
-};
-
-const TOKEN_BEHAVIOR_FLAGS = {
-  TRANSFERABLE: 0b1000,
-  DIVISIBLE:    0b0100,
-  EXPIRABLE:    0b0010,
-  GOVERNABLE:   0b0001,
-} as const;
-
-const TOKEN_BEHAVIOR_TYPES = {
-  SOULBOUND_RECEIPT: 0,
-  GOVERNED_BADGE: 1,
-  EXPIRABLE_CREDENTIAL: 2,
-  GOVERNED_LICENSE: 3,
-  LOYALTY_POINTS: 4,
-  GOVERNED_ALLOCATION: 5,
-  EXPIRABLE_POINTS: 6,
-  GOVERNED_EXPIRABLE_POINTS: 7,
-  NFT: 8,
-  GOVERNED_NFT: 9,
-  EXPIRABLE_NFT: 10,
-  GOVERNED_EXPIRABLE_NFT: 11,
-  FUNGIBLE_TOKEN: 12,
-  GOVERNED_FUNGIBLE_TOKEN: 13,
-  EXPIRABLE_FUNGIBLE_TOKEN: 14,
-  GOVERNED_EXPIRABLE_FUNGIBLE: 15,
-} as const;
-
-const getNFTDefinition = (): TokenStateMachineDefinition => {
-  throw new Error('getNFTDefinition not implemented yet - TDD failing test');
-};
-
-const getFungibleTokenDefinition = (): TokenStateMachineDefinition => {
-  throw new Error('getFungibleTokenDefinition not implemented yet - TDD failing test');
-};
-
-const getStablecoinDefinition = (): TokenStateMachineDefinition => {
-  throw new Error('getStablecoinDefinition not implemented yet - TDD failing test');
-};
-
-const getLicenseDefinition = (): TokenStateMachineDefinition => {
-  throw new Error('getLicenseDefinition not implemented yet - TDD failing test');
-};
-
-const getSoulboundBadgeDefinition = (): TokenStateMachineDefinition => {
-  throw new Error('getSoulboundBadgeDefinition not implemented yet - TDD failing test');
-};
-
-// Event types that should be implemented
 interface TokenEvent {
   eventName: string;
   fiberId: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
-
-const validateTokenEvent = (_event: TokenEvent, _behavior: number): void => {
-  throw new Error('validateTokenEvent not implemented yet - TDD failing test');
-};
 
 describe('Asset Model: Token State Machine SDK', () => {
   
@@ -330,7 +245,7 @@ describe('Asset Model: Token State Machine SDK', () => {
       };
       
       expect(() => {
-        validateTokenEvent(transferEvent, 0); // Soulbound receipt
+        validateTokenEvent(transferEvent as Parameters<typeof validateTokenEvent>[0], 0);
       }).toThrow();
     });
 
@@ -342,7 +257,7 @@ describe('Asset Model: Token State Machine SDK', () => {
       };
       
       expect(() => {
-        validateTokenEvent(transferEvent, 8); // NFT
+        validateTokenEvent(transferEvent as Parameters<typeof validateTokenEvent>[0], 8);
       }).not.toThrow();
     });
 
@@ -354,7 +269,7 @@ describe('Asset Model: Token State Machine SDK', () => {
       };
       
       expect(() => {
-        validateTokenEvent(splitEvent, 8); // NFT (indivisible)
+        validateTokenEvent(splitEvent as Parameters<typeof validateTokenEvent>[0], 8);
       }).toThrow();
     });
 
@@ -366,7 +281,7 @@ describe('Asset Model: Token State Machine SDK', () => {
       };
       
       expect(() => {
-        validateTokenEvent(splitEvent, 12); // Fungible token (divisible)
+        validateTokenEvent(splitEvent as Parameters<typeof validateTokenEvent>[0], 12);
       }).not.toThrow();
     });
   });
@@ -420,5 +335,11 @@ describe('Asset Model: Token State Machine SDK', () => {
       const uniqueValues = new Set(values);
       expect(uniqueValues.size).toBe(16);
     });
+  });
+
+  // Smoke test for the unused preset
+  test('getSoulboundBadgeDefinition().metadata.tokenBehavior === 0', () => {
+    const result: TokenStateMachineDefinition = getSoulboundBadgeDefinition();
+    expect(result.metadata.tokenBehavior).toBe(0);
   });
 });
