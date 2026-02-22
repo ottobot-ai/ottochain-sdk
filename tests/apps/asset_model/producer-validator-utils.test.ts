@@ -1,117 +1,33 @@
 /**
  * TDD Tests for Producer-Validator Framework - Core Utilities
- * 
- * Tests for message signing, agreement computation, and proof building utilities.
- * Based on specification: docs/design/producer-validator-spec.md
+ *
  * Groups 9.1-9.6: Utility functions for producer-validator agreements
- * 
- * These tests should FAIL initially since the implementation doesn't exist yet.
- * Implementation should make these tests pass.
  */
 
-// Types that should be exported but don't exist yet
-export interface ProducerIdentity {
-  address: string;
-  metadata?: Record<string, string>;
-}
+import {
+  ProducerIdentity,
+  ValidatorIdentity,
+  AgreementScope,
+  ProducerValidatorAgreement,
+  RegisterAgreementMessage,
+  DataProof,
+  agreementSignatureMessage,
+  computeAgreementId,
+  revocationSignatureMessage,
+  buildAgreement,
+  buildRegisterAgreementMessage,
+  buildDataProof,
+  attachDataProof,
+} from '../../../src/apps/asset_model/producer-validator';
 
-export interface ValidatorIdentity {
-  address: string;
-  name: string;
-  metadata?: Record<string, string>;
-}
-
-export interface AgreementScope {
-  fiberIds?: string[];
-  allowedOperations?: string[];
-}
-
-export interface ProducerValidatorAgreement {
-  agreementId: string;
-  producer: ProducerIdentity;
-  validator: ValidatorIdentity;
-  scope: AgreementScope;
-  policyJson: string;
-  expiresAtOrdinal?: number;
-  nonce: number;
-  createdAt?: Date;
-  // Signatures added during signing process
-  producerSignature?: string;
-  validatorSignature?: string;
-}
-
-export interface RegisterAgreementMessage {
-  agreement: ProducerValidatorAgreement;
-  producerSignature: string;
-  validatorSignature: string;
-}
-
-export interface DataProof {
-  agreementId: string;
-  producerAddress: string;
-  producerSignature: string;
-  timestamp: string;
-}
-
-export interface ValidationProof {
-  agreementId: string;
-  dataProofHash: string;
-  validatorAddress: string;
-  validatedAt: string;
-  result: 'ACCEPTED' | 'REJECTED';
-  reason?: string;
-}
-
-export interface RevokeAgreementMessage {
-  agreementId: string;
-  revokerAddress: string;
-  revocationOrdinal: number;
-  nonce: number;
-  revokerSignature: string;
-}
-
-// Mock implementations that should exist in the actual implementation
-const agreementSignatureMessage = (_agreement: ProducerValidatorAgreement): string => {
-  throw new Error('agreementSignatureMessage not implemented yet - TDD failing test');
-};
-
-const computeAgreementId = (_agreement: ProducerValidatorAgreement): string => {
-  throw new Error('computeAgreementId not implemented yet - TDD failing test');
-};
-
-const revocationSignatureMessage = (_agreementId: string, _revocationOrdinal: number, _nonce: number): string => {
-  throw new Error('revocationSignatureMessage not implemented yet - TDD failing test');
-};
-
-const buildAgreement = (
-  _producer: ProducerIdentity,
-  _validator: ValidatorIdentity,
-  _scope: AgreementScope,
-  _policyJson: string,
-  _expiresAtOrdinal?: number
-): ProducerValidatorAgreement => {
-  throw new Error('buildAgreement not implemented yet - TDD failing test');
-};
-
-const buildRegisterAgreementMessage = (
-  _agreement: ProducerValidatorAgreement,
-  _producerSignature: string,
-  _validatorSignature: string
-): RegisterAgreementMessage => {
-  throw new Error('buildRegisterAgreementMessage not implemented yet - TDD failing test');
-};
-
-const buildDataProof = (
-  _agreementId: string,
-  _producerAddress: string,
-  _payload: any,
-  _producerSignature: string
-): DataProof => {
-  throw new Error('buildDataProof not implemented yet - TDD failing test');
-};
-
-const attachDataProof = (_payload: any, _dataProof: DataProof): any => {
-  throw new Error('attachDataProof not implemented yet - TDD failing test');
+// Re-export types for downstream test files
+export type {
+  ProducerIdentity,
+  ValidatorIdentity,
+  AgreementScope,
+  ProducerValidatorAgreement,
+  RegisterAgreementMessage,
+  DataProof,
 };
 
 describe('Producer-Validator Framework - Core Utilities', () => {

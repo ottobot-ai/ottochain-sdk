@@ -1,53 +1,25 @@
 /**
  * TDD Tests for Producer-Validator Framework - Bridge API
- * 
- * Tests for Bridge REST endpoints and SDK integration.
- * Based on specification: docs/design/producer-validator-spec.md  
+ *
  * Group 9.10: Bridge REST endpoints integration tests
- * 
- * These tests should FAIL initially since the implementation doesn't exist yet.
- * Implementation should make these tests pass.
  */
 
-import type { 
-  ProducerValidatorAgreement,
-  ValidationProofRecord
-} from './producer-validator-ml0.test';
+import {
+  BridgeClient,
+  AgreementResponse,
+  AgreementListResponse,
+  ValidationProofListResponse,
+  RegisterAgreementRequest,
+} from '../../../src/apps/asset_model/producer-validator';
 
-// Bridge API Response types that should be implemented
-export interface AgreementResponse {
-  agreementId: string;
-  producer: { address: string; metadata?: Record<string, string> };
-  validator: { address: string; name: string; metadata?: Record<string, string> };
-  scope: { fiberIds?: string[]; allowedOperations?: string[] };
-  policyJson: string;
-  nonce: number;
-  expiresAtOrdinal?: number;
-  status: 'ACTIVE' | 'REVOKED' | 'EXPIRED';
-  createdAtOrdinal: number;
-  revokedAtOrdinal?: number;
-}
+export type {
+  AgreementResponse,
+  AgreementListResponse,
+  ValidationProofListResponse,
+  RegisterAgreementRequest,
+};
 
-export interface AgreementListResponse {
-  agreements: AgreementResponse[];
-  total: number;
-  limit: number;
-  offset: number;
-}
-
-export interface ValidationProofListResponse {
-  proofs: ValidationProofRecord[];
-  total: number;
-  limit: number;
-  offset: number;
-}
-
-export interface RegisterAgreementRequest {
-  agreement: ProducerValidatorAgreement;
-  producerSignature: string;
-  validatorSignature: string;
-}
-
+// RevokeAgreementRequest mirrors bridge client contract
 export interface RevokeAgreementRequest {
   agreementId: string;
   revokerAddress: string;
@@ -56,41 +28,10 @@ export interface RevokeAgreementRequest {
   revokerSignature: string;
 }
 
-// Mock Bridge API client that should exist
-const BridgeClient = {
-  getAgreement: (_agreementId: string): Promise<AgreementResponse | null> => {
-    throw new Error('BridgeClient.getAgreement not implemented yet - TDD failing test');
-  },
-  
-  getAgreements: (_filters?: {
-    producer?: string;
-    validator?: string;
-    status?: string;
-    limit?: number;
-    offset?: number;
-  }): Promise<AgreementListResponse> => {
-    throw new Error('BridgeClient.getAgreements not implemented yet - TDD failing test');
-  },
-  
-  getAgreementProofs: (_agreementId: string, _options?: {
-    limit?: number;
-    offset?: number;
-  }): Promise<ValidationProofListResponse> => {
-    throw new Error('BridgeClient.getAgreementProofs not implemented yet - TDD failing test');
-  },
-  
-  registerAgreement: (_request: RegisterAgreementRequest): Promise<{ agreementId: string }> => {
-    throw new Error('BridgeClient.registerAgreement not implemented yet - TDD failing test');
-  },
-  
-  revokeAgreement: (_request: RevokeAgreementRequest): Promise<{ success: boolean }> => {
-    throw new Error('BridgeClient.revokeAgreement not implemented yet - TDD failing test');
-  }
-};
-
 describe('Producer-Validator Framework - Bridge API', () => {
 
   describe('Group 9.10: Bridge REST endpoints (integration tests)', () => {
+    beforeEach(() => BridgeClient.reset());
 
     describe('GET /api/agreements/:id', () => {
       test('returns agreement for registered agreement', async () => {

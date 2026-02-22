@@ -1,102 +1,37 @@
 /**
  * TDD Tests for Producer-Validator Framework - ML0 Integration
- * 
- * Tests for ML0 metagraph validation of agreements, revocations, and data proofs.
- * Based on specification: docs/design/producer-validator-spec.md
- * Groups 9.7-9.9: ML0 validation logic and state management
- * 
- * These tests should FAIL initially since the implementation doesn't exist yet.
- * Implementation should make these tests pass.
+ *
+ * Groups 9.7-9.9: ML0 validation of agreements, revocations, and data proofs
  */
 
-import type { 
-  ProducerValidatorAgreement, 
-  RegisterAgreementMessage, 
-  RevokeAgreementMessage,
-  DataProof 
+import type {
+  ProducerValidatorAgreement,
+  RegisterAgreementMessage,
+  DataProof,
 } from './producer-validator-utils.test';
 
-// Re-export types for use in other test files
-export type { 
-  ProducerValidatorAgreement, 
-  RegisterAgreementMessage, 
+import {
   RevokeAgreementMessage,
-  DataProof 
-} from './producer-validator-utils.test';
+  ProducerValidatorErrorCode,
+  ValidationResult,
+  AgreementState,
+  ValidationProofRecord,
+  validateRegisterAgreement,
+  validateRevokeAgreement,
+  validateTransitionWithDataProof,
+  storeAgreement,
+  getAgreement,
+  storeValidationProof,
+} from '../../../src/apps/asset_model/producer-validator';
 
-// Error codes that should be implemented in ML0
-export enum ProducerValidatorErrorCode {
-  AGREEMENT_ALREADY_EXISTS = 'AGREEMENT_ALREADY_EXISTS',
-  AGREEMENT_ID_MISMATCH = 'AGREEMENT_ID_MISMATCH', 
-  INVALID_PRODUCER_SIGNATURE = 'INVALID_PRODUCER_SIGNATURE',
-  INVALID_VALIDATOR_SIGNATURE = 'INVALID_VALIDATOR_SIGNATURE',
-  AGREEMENT_ALREADY_EXPIRED = 'AGREEMENT_ALREADY_EXPIRED',
-  INVALID_POLICY_JSON = 'INVALID_POLICY_JSON',
-  INVALID_PRODUCER_ADDRESS = 'INVALID_PRODUCER_ADDRESS',
-  INVALID_VALIDATOR_ADDRESS = 'INVALID_VALIDATOR_ADDRESS',
-  AGREEMENT_NOT_FOUND = 'AGREEMENT_NOT_FOUND',
-  AGREEMENT_NOT_ACTIVE = 'AGREEMENT_NOT_ACTIVE',
-  UNAUTHORIZED_REVOKER = 'UNAUTHORIZED_REVOKER',
-  INVALID_REVOCATION_ORDINAL = 'INVALID_REVOCATION_ORDINAL',
-  INVALID_REVOKER_SIGNATURE = 'INVALID_REVOKER_SIGNATURE',
-  NONCE_ALREADY_USED = 'NONCE_ALREADY_USED',
-  PROOF_REQUIRED = 'PROOF_REQUIRED',
-  AGREEMENT_EXPIRED = 'AGREEMENT_EXPIRED',
-  PRODUCER_MISMATCH = 'PRODUCER_MISMATCH',
-  SCOPE_OPERATION_VIOLATION = 'SCOPE_OPERATION_VIOLATION',
-  SCOPE_FIBER_VIOLATION = 'SCOPE_FIBER_VIOLATION',
-  POLICY_EVALUATION_FAILED = 'POLICY_EVALUATION_FAILED'
-}
-
-export interface ValidationResult {
-  isValid: boolean;
-  errors: Array<{
-    code: ProducerValidatorErrorCode;
-    message: string;
-    field?: string;
-  }>;
-}
-
-export interface AgreementState {
-  agreement: ProducerValidatorAgreement;
-  status: 'ACTIVE' | 'REVOKED' | 'EXPIRED';
-  createdAtOrdinal: number;
-  revokedAtOrdinal?: number;
-}
-
-export interface ValidationProofRecord {
-  agreementId: string;
-  dataProofHash: string;
-  validatorAddress: string;
-  validatedAtOrdinal: number;
-  result: 'ACCEPTED' | 'REJECTED';
-  reason?: string;
-}
-
-// Mock ML0 validation functions that should exist
-const validateRegisterAgreement = (_message: RegisterAgreementMessage, _context: any): ValidationResult => {
-  throw new Error('validateRegisterAgreement not implemented yet - TDD failing test');
+export type {
+  ProducerValidatorAgreement,
+  RegisterAgreementMessage,
+  RevokeAgreementMessage,
+  DataProof,
 };
-
-const validateRevokeAgreement = (_message: RevokeAgreementMessage, _context: any): ValidationResult => {
-  throw new Error('validateRevokeAgreement not implemented yet - TDD failing test');
-};
-
-const validateTransitionWithDataProof = (_transition: any, _dataProof: DataProof, _context: any): ValidationResult => {
-  throw new Error('validateTransitionWithDataProof not implemented yet - TDD failing test');
-};
-
-const storeAgreement = (_agreement: ProducerValidatorAgreement, _ordinal: number): void => {
-  throw new Error('storeAgreement not implemented yet - TDD failing test');
-};
-
-const getAgreement = (_agreementId: string): AgreementState | null => {
-  throw new Error('getAgreement not implemented yet - TDD failing test');
-};
-
-const storeValidationProof = (_proof: ValidationProofRecord): void => {
-  throw new Error('storeValidationProof not implemented yet - TDD failing test');
-};
+export { ProducerValidatorErrorCode };
+export type { ValidationResult, AgreementState, ValidationProofRecord };
 
 describe('Producer-Validator Framework - ML0 Integration', () => {
 
