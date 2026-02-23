@@ -55,6 +55,11 @@
       "import": "./dist/esm/apps/index.js",
       "require": "./dist/cjs/apps/index.js",
       "types": "./dist/types/apps/index.d.ts"
+    },
+    "./generated": {
+      "import": "./dist/esm/generated/index.js",
+      "require": "./dist/cjs/generated/index.js",
+      "types": "./dist/types/generated/index.d.ts"
     }
   },
   "files": [
@@ -108,15 +113,11 @@
   },
   "devDependencies": {
     "@bufbuild/buf": "^1.65.0",
-    "@bufbuild/protoc-gen-es": "^2.11.0",
-    "@protobuf-ts/plugin": "^2.11.1",
-    "@protobuf-ts/runtime": "^2.11.1",
     "@types/jest": "^29.5.0",
     "@types/node": "^20.0.0",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
     "eslint": "^8.0.0",
-    "grpc-tools": "^1.13.1",
     "jest": "^29.0.0",
     "prettier": "^3.0.0",
     "ts-jest": "^29.0.0",

@@ -3,9 +3,19 @@
  * Generated Protobuf Types
  *
  * Auto-generated from proto/ definitions using ts-proto.
- * DO NOT EDIT - regenerate with `pnpm run generate`
+ * DO NOT EDIT - regenerate with `npm run generate`
  *
  * @packageDocumentation
+ *
+ * NOTE — Dual-type architecture:
+ * These generated types use proto conventions (FIBER_STATUS_ACTIVE, StateId { value } wrappers).
+ * The wire-format REST API types in src/ottochain/types.ts use plain strings ('Active').
+ * Both coexist intentionally until PR #89 (Migrate fiber-engine to generated Scala types) merges.
+ *
+ * TODO PR #89 migration: after PR #89 merges and cluster confirms new format,
+ * migrate all state-machine JSON files in src/apps/ from Circe-format
+ * ({ value: '...' } wrapped initialState) to plain string format.
+ * See docs/type-architecture.md for full migration plan.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MarketDefinition = exports.CancelMarketRequest = exports.SubmitResolutionRequest = exports.CommitToMarketRequest = exports.CreateMarketRequest = exports.Market = exports.Resolution = exports.Commitment = exports.MarketState = exports.MarketType = exports.ContractDefinition = exports.DisputeContractRequest = exports.RejectContractRequest = exports.CompleteContractRequest = exports.AcceptContractRequest = exports.ProposeContractRequest = exports.Contract = exports.ContractState = exports.ReputationConfig = exports.ChallengeRequest = exports.VouchRequest = exports.Attestation = exports.ReputationDelta = exports.AttestationType = exports.AgentIdentityDefinition = exports.AgentIdentity = exports.PlatformLink = exports.Platform = exports.AgentState = exports.CalculatedState = exports.OnChainState = exports.FiberCommit = exports.ScriptFiberRecord = exports.StateMachineFiberRecord = exports.OttochainMessage = exports.InvokeScript = exports.CreateScript = exports.ArchiveStateMachine = exports.TransitionStateMachine = exports.CreateStateMachine = exports.FiberLogEntry = exports.ScriptInvocation = exports.EventReceipt = exports.EmittedEvent = exports.StateMachineDefinition = exports.FiberOwnedAccess = exports.WhitelistAccess = exports.PublicAccess = exports.AccessControlPolicy = exports.FiberStatus = void 0;
