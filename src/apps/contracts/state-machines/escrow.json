@@ -159,18 +159,7 @@
           }
         ]
       },
-      "dependencies": [],
-      "metadata": {
-        "emits": {
-          "target": "Contract",
-          "event": "escrow_activated",
-          "payload": {
-            "escrowId": {
-              "var": "fiberId"
-            }
-          }
-        }
-      }
+      "dependencies": []
     },
     {
       "from": {
@@ -272,26 +261,7 @@
           }
         ]
       },
-      "dependencies": [],
-      "metadata": {
-        "emits": {
-          "target": "Treasury",
-          "event": "collect_fee",
-          "payload": {
-            "amount": {
-              "*": [
-                {
-                  "var": "state.balance"
-                },
-                {
-                  "var": "state.feePercent"
-                }
-              ]
-            },
-            "source": "escrow"
-          }
-        }
-      }
+      "dependencies": []
     },
     {
       "from": {
