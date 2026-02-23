@@ -279,35 +279,7 @@
           }
         ]
       },
-      "dependencies": [],
-      "metadata": {
-        "emits": [
-          {
-            "_comment": "Credit proposer's identity with completion",
-            "target": {
-              "var": "state.proposerIdentityId"
-            },
-            "event": "receive_completion",
-            "payload": {
-              "contractId": {
-                "var": "fiberId"
-              }
-            }
-          },
-          {
-            "_comment": "Credit counterparty's identity with completion",
-            "target": {
-              "var": "state.counterpartyIdentityId"
-            },
-            "event": "receive_completion",
-            "payload": {
-              "contractId": {
-                "var": "fiberId"
-              }
-            }
-          }
-        ]
-      }
+      "dependencies": []
     },
     {
       "from": {
