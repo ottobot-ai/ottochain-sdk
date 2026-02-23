@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3](https://github.com/ottobot-ai/ottochain-sdk/compare/v1.0.2...v1.0.3) (2026-02-23)
+
+
+### Bug Fixes
+
+* remove emits from transition definitions ([#50](https://github.com/ottobot-ai/ottochain-sdk/issues/50)) ([c2ab539](https://github.com/ottobot-ai/ottochain-sdk/commit/c2ab5390ec73380dcf686013a3e305522973cac1))
+
 ## [1.0.2](https://github.com/ottobot-ai/ottochain-sdk/compare/v1.0.1...v1.0.2) (2026-02-23)
 
 
