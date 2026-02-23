@@ -1,6 +1,6 @@
 {
   "name": "@ottochain/sdk",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "TypeScript SDK for ottochain metagraph operations - signing, encoding, and network interactions",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",

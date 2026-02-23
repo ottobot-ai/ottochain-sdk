@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.2](https://github.com/ottobot-ai/ottochain-sdk/compare/v1.0.1...v1.0.2) (2026-02-23)
+
+
+### Bug Fixes
+
+* **docs:** apply [@research](https://github.com/research) corrections to token behavior matrix spec ([dbf9ea3](https://github.com/ottobot-ai/ottochain-sdk/commit/dbf9ea3bcd0aa8e679b0147bd3a010249bb8e7b0))
+* move crossReferences and emits into metadata namespace ([#42](https://github.com/ottobot-ai/ottochain-sdk/issues/42)) ([bb9fd02](https://github.com/ottobot-ai/ottochain-sdk/commit/bb9fd02adc54a28e940eee3a0bc2eb525288479f))
+
 ## [1.0.1](https://github.com/ottobot-ai/ottochain-sdk/compare/v1.0.0...v1.0.1) (2026-02-13)
 
 
