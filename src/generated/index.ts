@@ -2,9 +2,19 @@
  * Generated Protobuf Types
  *
  * Auto-generated from proto/ definitions using ts-proto.
- * DO NOT EDIT - regenerate with `pnpm run generate`
+ * DO NOT EDIT - regenerate with `npm run generate`
  *
  * @packageDocumentation
+ *
+ * NOTE — Dual-type architecture:
+ * These generated types use proto conventions (FIBER_STATUS_ACTIVE, StateId { value } wrappers).
+ * The wire-format REST API types in src/ottochain/types.ts use plain strings ('Active').
+ * Both coexist intentionally until PR #89 (Migrate fiber-engine to generated Scala types) merges.
+ *
+ * TODO PR #89 migration: after PR #89 merges and cluster confirms new format,
+ * migrate all state-machine JSON files in src/apps/ from Circe-format
+ * ({ value: '...' } wrapped initialState) to plain string format.
+ * See docs/type-architecture.md for full migration plan.
  */
 
 // Core types (primitives - no wrapper messages)
