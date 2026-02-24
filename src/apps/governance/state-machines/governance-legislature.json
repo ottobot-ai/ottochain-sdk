@@ -1,0 +1,726 @@
+{
+  "metadata": {
+    "name": "Governance",
+    "description": "Flexible governance for proposals, voting, delegation, and execution across relationship types",
+    "version": "1.0.0"
+  },
+  "states": {
+    "DRAFT": {
+      "id": {
+        "value": "DRAFT"
+      },
+      "isFinal": false,
+      "metadata": null
+    },
+    "ACTIVE": {
+      "id": {
+        "value": "ACTIVE"
+      },
+      "isFinal": false,
+      "metadata": null
+    },
+    "PENDING": {
+      "id": {
+        "value": "PENDING"
+      },
+      "isFinal": false,
+      "metadata": null
+    },
+    "EXECUTING": {
+      "id": {
+        "value": "EXECUTING"
+      },
+      "isFinal": false,
+      "metadata": null
+    },
+    "EXECUTED": {
+      "id": {
+        "value": "EXECUTED"
+      },
+      "isFinal": true,
+      "metadata": null
+    },
+    "VETOED": {
+      "id": {
+        "value": "VETOED"
+      },
+      "isFinal": true,
+      "metadata": null
+    },
+    "DEFEATED": {
+      "id": {
+        "value": "DEFEATED"
+      },
+      "isFinal": true,
+      "metadata": null
+    },
+    "EXPIRED": {
+      "id": {
+        "value": "EXPIRED"
+      },
+      "isFinal": true,
+      "metadata": null
+    },
+    "CANCELLED": {
+      "id": {
+        "value": "CANCELLED"
+      },
+      "isFinal": true,
+      "metadata": null
+    }
+  },
+  "initialState": {
+    "value": "DRAFT"
+  },
+  "transitions": [
+    {
+      "from": {
+        "value": "DRAFT"
+      },
+      "to": {
+        "value": "ACTIVE"
+      },
+      "eventName": "submit",
+      "guard": {
+        "and": [
+          {
+            "in": [
+              {
+                "var": "event.agent"
+              },
+              {
+                "var": "state.proposers"
+              }
+            ]
+          },
+          {
+            "var": "state.proposal.title"
+          },
+          {
+            "var": "state.proposal.actions"
+          }
+        ]
+      },
+      "effect": {
+        "merge": [
+          {
+            "var": "state"
+          },
+          {
+            "status": "ACTIVE",
+            "submittedAt": {
+              "var": "$timestamp"
+            },
+            "votingEndsAt": {
+              "+": [
+                {
+                  "var": "$timestamp"
+                },
+                {
+                  "var": "state.config.votingPeriodMs"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "dependencies": []
+    },
+    {
+      "from": {
+        "value": "ACTIVE"
+      },
+      "to": {
+        "value": "ACTIVE"
+      },
+      "eventName": "vote",
+      "guard": {
+        "and": [
+          {
+            "<=": [
+              {
+                "var": "$timestamp"
+              },
+              {
+                "var": "state.votingEndsAt"
+              }
+            ]
+          },
+          {
+            "!": [
+              {
+                "getKey": [
+                  {
+                    "var": "state.votes"
+                  },
+                  {
+                    "var": "event.agent"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "or": [
+              {
+                "in": [
+                  {
+                    "var": "event.agent"
+                  },
+                  {
+                    "var": "state.voters"
+                  }
+                ]
+              },
+              {
+                "===": [
+                  {
+                    "var": "state.config.openVoting"
+                  },
+                  true
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "effect": {
+        "merge": [
+          {
+            "var": "state"
+          },
+          {
+            "votes": {
+              "setKey": [
+                {
+                  "var": "state.votes"
+                },
+                {
+                  "var": "event.agent"
+                },
+                {
+                  "choice": {
+                    "var": "event.choice"
+                  },
+                  "weight": {
+                    "var": "event.weight"
+                  },
+                  "conviction": {
+                    "var": "event.conviction"
+                  },
+                  "delegatedFrom": {
+                    "var": "event.delegatedFrom"
+                  },
+                  "votedAt": {
+                    "var": "$timestamp"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "dependencies": []
+    },
+    {
+      "from": {
+        "value": "ACTIVE"
+      },
+      "to": {
+        "value": "ACTIVE"
+      },
+      "eventName": "delegate",
+      "guard": {
+        "and": [
+          {
+            "var": "state.config.allowDelegation"
+          },
+          {
+            "!==": [
+              {
+                "var": "event.agent"
+              },
+              {
+                "var": "event.delegateTo"
+              }
+            ]
+          },
+          {
+            "!": [
+              {
+                "getKey": [
+                  {
+                    "var": "state.votes"
+                  },
+                  {
+                    "var": "event.agent"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "effect": {
+        "merge": [
+          {
+            "var": "state"
+          },
+          {
+            "delegations": {
+              "setKey": [
+                {
+                  "var": "state.delegations"
+                },
+                {
+                  "var": "event.agent"
+                },
+                {
+                  "delegateTo": {
+                    "var": "event.delegateTo"
+                  },
+                  "weight": {
+                    "var": "event.weight"
+                  },
+                  "delegatedAt": {
+                    "var": "$timestamp"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "dependencies": []
+    },
+    {
+      "from": {
+        "value": "ACTIVE"
+      },
+      "to": {
+        "value": "PENDING"
+      },
+      "eventName": "finalize_voting",
+      "guard": {
+        "and": [
+          {
+            ">=": [
+              {
+                "var": "$timestamp"
+              },
+              {
+                "var": "state.votingEndsAt"
+              }
+            ]
+          },
+          {
+            "var": "state.tally.passed"
+          }
+        ]
+      },
+      "effect": {
+        "merge": [
+          {
+            "var": "state"
+          },
+          {
+            "status": "PENDING",
+            "finalizedAt": {
+              "var": "$timestamp"
+            },
+            "vetoEndsAt": {
+              "+": [
+                {
+                  "var": "$timestamp"
+                },
+                {
+                  "var": "state.config.vetoPeriodMs"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "dependencies": []
+    },
+    {
+      "from": {
+        "value": "ACTIVE"
+      },
+      "to": {
+        "value": "DEFEATED"
+      },
+      "eventName": "finalize_voting",
+      "guard": {
+        "and": [
+          {
+            ">=": [
+              {
+                "var": "$timestamp"
+              },
+              {
+                "var": "state.votingEndsAt"
+              }
+            ]
+          },
+          {
+            "!": [
+              {
+                "var": "state.tally.passed"
+              }
+            ]
+          }
+        ]
+      },
+      "effect": {
+        "merge": [
+          {
+            "var": "state"
+          },
+          {
+            "status": "DEFEATED",
+            "finalizedAt": {
+              "var": "$timestamp"
+            },
+            "defeatReason": {
+              "var": "state.tally.reason"
+            }
+          }
+        ]
+      },
+      "dependencies": []
+    },
+    {
+      "from": {
+        "value": "PENDING"
+      },
+      "to": {
+        "value": "VETOED"
+      },
+      "eventName": "veto",
+      "guard": {
+        "and": [
+          {
+            "<=": [
+              {
+                "var": "$timestamp"
+              },
+              {
+                "var": "state.vetoEndsAt"
+              }
+            ]
+          },
+          {
+            "in": [
+              {
+                "var": "event.agent"
+              },
+              {
+                "var": "state.vetoers"
+              }
+            ]
+          }
+        ]
+      },
+      "effect": {
+        "merge": [
+          {
+            "var": "state"
+          },
+          {
+            "status": "VETOED",
+            "vetoedBy": {
+              "var": "event.agent"
+            },
+            "vetoReason": {
+              "var": "event.reason"
+            },
+            "vetoedAt": {
+              "var": "$timestamp"
+            }
+          }
+        ]
+      },
+      "dependencies": []
+    },
+    {
+      "from": {
+        "value": "PENDING"
+      },
+      "to": {
+        "value": "EXECUTING"
+      },
+      "eventName": "execute",
+      "guard": {
+        "and": [
+          {
+            ">=": [
+              {
+                "var": "$timestamp"
+              },
+              {
+                "var": "state.vetoEndsAt"
+              }
+            ]
+          },
+          {
+            "in": [
+              {
+                "var": "event.agent"
+              },
+              {
+                "var": "state.executors"
+              }
+            ]
+          }
+        ]
+      },
+      "effect": {
+        "merge": [
+          {
+            "var": "state"
+          },
+          {
+            "status": "EXECUTING",
+            "executedBy": {
+              "var": "event.agent"
+            },
+            "executionStartedAt": {
+              "var": "$timestamp"
+            }
+          }
+        ]
+      },
+      "dependencies": []
+    },
+    {
+      "from": {
+        "value": "EXECUTING"
+      },
+      "to": {
+        "value": "EXECUTED"
+      },
+      "eventName": "complete",
+      "guard": {
+        "in": [
+          {
+            "var": "event.agent"
+          },
+          {
+            "var": "state.executors"
+          }
+        ]
+      },
+      "effect": {
+        "merge": [
+          {
+            "var": "state"
+          },
+          {
+            "status": "EXECUTED",
+            "completedAt": {
+              "var": "$timestamp"
+            },
+            "executionProof": {
+              "var": "event.proof"
+            }
+          }
+        ]
+      },
+      "dependencies": []
+    },
+    {
+      "from": {
+        "value": "DRAFT"
+      },
+      "to": {
+        "value": "CANCELLED"
+      },
+      "eventName": "cancel",
+      "guard": {
+        "===": [
+          {
+            "var": "event.agent"
+          },
+          {
+            "var": "state.proposer"
+          }
+        ]
+      },
+      "effect": {
+        "merge": [
+          {
+            "var": "state"
+          },
+          {
+            "status": "CANCELLED",
+            "cancelledAt": {
+              "var": "$timestamp"
+            }
+          }
+        ]
+      },
+      "dependencies": []
+    },
+    {
+      "from": {
+        "value": "ACTIVE"
+      },
+      "to": {
+        "value": "CANCELLED"
+      },
+      "eventName": "cancel",
+      "guard": {
+        "or": [
+          {
+            "===": [
+              {
+                "var": "event.agent"
+              },
+              {
+                "var": "state.proposer"
+              }
+            ]
+          },
+          {
+            "in": [
+              {
+                "var": "event.agent"
+              },
+              {
+                "var": "state.admins"
+              }
+            ]
+          }
+        ]
+      },
+      "effect": {
+        "merge": [
+          {
+            "var": "state"
+          },
+          {
+            "status": "CANCELLED",
+            "cancelledBy": {
+              "var": "event.agent"
+            },
+            "cancelledAt": {
+              "var": "$timestamp"
+            }
+          }
+        ]
+      },
+      "dependencies": []
+    },
+    {
+      "from": {
+        "value": "ACTIVE"
+      },
+      "to": {
+        "value": "EXPIRED"
+      },
+      "eventName": "expire",
+      "guard": {
+        ">": [
+          {
+            "var": "$timestamp"
+          },
+          {
+            "+": [
+              {
+                "var": "state.votingEndsAt"
+              },
+              {
+                "var": "state.config.gracePeriodMs"
+              }
+            ]
+          }
+        ]
+      },
+      "effect": {
+        "merge": [
+          {
+            "var": "state"
+          },
+          {
+            "status": "EXPIRED",
+            "expiredAt": {
+              "var": "$timestamp"
+            }
+          }
+        ]
+      },
+      "dependencies": []
+    }
+  ],
+  "presets": {
+    "_comment": "Common governance configurations",
+    "bilateral": {
+      "description": "Two-party mutual consent (like a contract)",
+      "config": {
+        "votingMechanism": "simple",
+        "quorumType": "absolute",
+        "quorumValue": 2,
+        "passingThreshold": 1,
+        "allowDelegation": false,
+        "openVoting": false
+      }
+    },
+    "multisig": {
+      "description": "N-of-M threshold signing",
+      "config": {
+        "votingMechanism": "simple",
+        "quorumType": "absolute",
+        "passingThreshold": 0.6,
+        "vetoPeriodMs": 0,
+        "allowDelegation": false
+      }
+    },
+    "council": {
+      "description": "Small elected/appointed body",
+      "config": {
+        "votingMechanism": "simple",
+        "quorumType": "percentage",
+        "quorumValue": 0.5,
+        "passingThreshold": 0.5,
+        "openVoting": false,
+        "allowDelegation": true
+      }
+    },
+    "liquid_democracy": {
+      "description": "Delegatable voting power",
+      "config": {
+        "votingMechanism": "simple",
+        "allowDelegation": true,
+        "openVoting": true,
+        "onePersonOneVote": true
+      }
+    },
+    "conviction": {
+      "description": "Time-weighted conviction voting",
+      "config": {
+        "votingMechanism": "conviction",
+        "allowDelegation": true,
+        "convictionHalfLifeMs": 604800000
+      }
+    },
+    "quadratic": {
+      "description": "Quadratic voting to reduce whale power",
+      "config": {
+        "votingMechanism": "quadratic",
+        "onePersonOneVote": false
+      }
+    },
+    "dictator": {
+      "description": "Single admin with full control",
+      "config": {
+        "votingMechanism": "simple",
+        "quorumType": "absolute",
+        "quorumValue": 1,
+        "passingThreshold": 1,
+        "vetoPeriodMs": 0,
+        "allowDelegation": false
+      }
+    }
+  }
+}

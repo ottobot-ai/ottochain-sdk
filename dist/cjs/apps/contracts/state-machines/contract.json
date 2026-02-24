@@ -1,0 +1,394 @@
+{
+    "metadata": {
+        "name": "Contract",
+        "description": "Agreement between two agents with completion attestation and dispute resolution",
+        "version": "1.0.0",
+        "crossReferences": {
+            "proposerIdentityId": "Links to proposer's AgentIdentity fiber",
+            "counterpartyIdentityId": "Links to counterparty's AgentIdentity fiber",
+            "escrowId": "Links to Escrow if payment is escrowed",
+            "arbitrationPoolId": "Links to ArbitrationPool for dispute resolution"
+        }
+    },
+    "states": {
+        "PROPOSED": {
+            "id": {
+                "value": "PROPOSED"
+            },
+            "isFinal": false,
+            "metadata": null
+        },
+        "ACTIVE": {
+            "id": {
+                "value": "ACTIVE"
+            },
+            "isFinal": false,
+            "metadata": null
+        },
+        "COMPLETED": {
+            "id": {
+                "value": "COMPLETED"
+            },
+            "isFinal": true,
+            "metadata": null
+        },
+        "DISPUTED": {
+            "id": {
+                "value": "DISPUTED"
+            },
+            "isFinal": false,
+            "metadata": null
+        },
+        "REJECTED": {
+            "id": {
+                "value": "REJECTED"
+            },
+            "isFinal": true,
+            "metadata": null
+        },
+        "CANCELLED": {
+            "id": {
+                "value": "CANCELLED"
+            },
+            "isFinal": true,
+            "metadata": null
+        }
+    },
+    "initialState": {
+        "value": "PROPOSED"
+    },
+    "transitions": [
+        {
+            "from": {
+                "value": "PROPOSED"
+            },
+            "to": {
+                "value": "ACTIVE"
+            },
+            "eventName": "accept",
+            "guard": {
+                "===": [
+                    {
+                        "var": "event.agent"
+                    },
+                    {
+                        "var": "state.counterparty"
+                    }
+                ]
+            },
+            "effect": {
+                "merge": [
+                    {
+                        "var": "state"
+                    },
+                    {
+                        "status": "ACTIVE",
+                        "acceptedAt": {
+                            "var": "$timestamp"
+                        }
+                    }
+                ]
+            },
+            "dependencies": []
+        },
+        {
+            "from": {
+                "value": "PROPOSED"
+            },
+            "to": {
+                "value": "REJECTED"
+            },
+            "eventName": "reject",
+            "guard": {
+                "===": [
+                    {
+                        "var": "event.agent"
+                    },
+                    {
+                        "var": "state.counterparty"
+                    }
+                ]
+            },
+            "effect": {
+                "merge": [
+                    {
+                        "var": "state"
+                    },
+                    {
+                        "status": "REJECTED",
+                        "rejectedAt": {
+                            "var": "$timestamp"
+                        },
+                        "rejectReason": {
+                            "var": "event.reason"
+                        }
+                    }
+                ]
+            },
+            "dependencies": []
+        },
+        {
+            "from": {
+                "value": "PROPOSED"
+            },
+            "to": {
+                "value": "CANCELLED"
+            },
+            "eventName": "cancel",
+            "guard": {
+                "===": [
+                    {
+                        "var": "event.agent"
+                    },
+                    {
+                        "var": "state.proposer"
+                    }
+                ]
+            },
+            "effect": {
+                "merge": [
+                    {
+                        "var": "state"
+                    },
+                    {
+                        "status": "CANCELLED",
+                        "cancelledAt": {
+                            "var": "$timestamp"
+                        }
+                    }
+                ]
+            },
+            "dependencies": []
+        },
+        {
+            "from": {
+                "value": "ACTIVE"
+            },
+            "to": {
+                "value": "ACTIVE"
+            },
+            "eventName": "submit_completion",
+            "guard": {
+                "and": [
+                    {
+                        "or": [
+                            {
+                                "===": [
+                                    {
+                                        "var": "event.agent"
+                                    },
+                                    {
+                                        "var": "state.proposer"
+                                    }
+                                ]
+                            },
+                            {
+                                "===": [
+                                    {
+                                        "var": "event.agent"
+                                    },
+                                    {
+                                        "var": "state.counterparty"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "!": [
+                            {
+                                "in": [
+                                    {
+                                        "var": "event.agent"
+                                    },
+                                    {
+                                        "map": [
+                                            {
+                                                "var": "state.completions"
+                                            },
+                                            {
+                                                "var": "agent"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            "effect": {
+                "merge": [
+                    {
+                        "var": "state"
+                    },
+                    {
+                        "completions": {
+                            "cat": [
+                                {
+                                    "var": "state.completions"
+                                },
+                                [
+                                    {
+                                        "agent": {
+                                            "var": "event.agent"
+                                        },
+                                        "proof": {
+                                            "var": "event.proof"
+                                        },
+                                        "submittedAt": {
+                                            "var": "$timestamp"
+                                        }
+                                    }
+                                ]
+                            ]
+                        }
+                    }
+                ]
+            },
+            "dependencies": []
+        },
+        {
+            "from": {
+                "value": "ACTIVE"
+            },
+            "to": {
+                "value": "COMPLETED"
+            },
+            "eventName": "finalize",
+            "guard": {
+                ">=": [
+                    {
+                        "size": {
+                            "var": "state.completions"
+                        }
+                    },
+                    2
+                ]
+            },
+            "effect": {
+                "merge": [
+                    {
+                        "var": "state"
+                    },
+                    {
+                        "status": "COMPLETED",
+                        "completedAt": {
+                            "var": "$timestamp"
+                        }
+                    }
+                ]
+            },
+            "dependencies": []
+        },
+        {
+            "from": {
+                "value": "ACTIVE"
+            },
+            "to": {
+                "value": "DISPUTED"
+            },
+            "eventName": "dispute",
+            "guard": {
+                "or": [
+                    {
+                        "===": [
+                            {
+                                "var": "event.agent"
+                            },
+                            {
+                                "var": "state.proposer"
+                            }
+                        ]
+                    },
+                    {
+                        "===": [
+                            {
+                                "var": "event.agent"
+                            },
+                            {
+                                "var": "state.counterparty"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "effect": {
+                "merge": [
+                    {
+                        "var": "state"
+                    },
+                    {
+                        "status": "DISPUTED",
+                        "disputedAt": {
+                            "var": "$timestamp"
+                        },
+                        "disputeReason": {
+                            "var": "event.reason"
+                        },
+                        "disputedBy": {
+                            "var": "event.agent"
+                        }
+                    }
+                ]
+            },
+            "dependencies": []
+        },
+        {
+            "from": {
+                "value": "DISPUTED"
+            },
+            "to": {
+                "value": "COMPLETED"
+            },
+            "eventName": "resolve",
+            "guard": {
+                "or": [
+                    {
+                        "var": "event.judicialRuling"
+                    },
+                    {
+                        "and": [
+                            {
+                                "===": [
+                                    {
+                                        "var": "event.proposerApproves"
+                                    },
+                                    true
+                                ]
+                            },
+                            {
+                                "===": [
+                                    {
+                                        "var": "event.counterpartyApproves"
+                                    },
+                                    true
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            "effect": {
+                "merge": [
+                    {
+                        "var": "state"
+                    },
+                    {
+                        "status": "COMPLETED",
+                        "resolvedAt": {
+                            "var": "$timestamp"
+                        },
+                        "resolution": {
+                            "var": "event.resolution"
+                        },
+                        "rulingId": {
+                            "var": "event.rulingId"
+                        }
+                    }
+                ]
+            },
+            "dependencies": []
+        }
+    ]
+}

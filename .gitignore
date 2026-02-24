@@ -1,0 +1,7 @@
+node_modules/
+# dist/ is committed for GitHub-based consumption
+*.log
+.DS_Store
+coverage/
+.env
+*.tsbuildinfo

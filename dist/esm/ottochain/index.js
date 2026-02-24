@@ -1,0 +1,13 @@
+/**
+ * Ottochain SDK
+ *
+ * Domain-specific types and clients for the ottochain metagraph.
+ *
+ * @packageDocumentation
+ */
+// Re-export generated protobuf types (for binary encoding)
+export * as proto from '../generated/index.js';
+export { decodeOnChainState, getSnapshotOnChainState, getLatestOnChainState, getLogsForFiber, getEventReceipts, getScriptInvocations, extractOnChainState, } from './snapshot.js';
+export { MetagraphClient } from './metagraph-client.js';
+// Note: Governance and Corporate types are now in src/apps/
+// Import from '@ottochain/sdk/apps' instead

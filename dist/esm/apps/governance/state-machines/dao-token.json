@@ -1,0 +1,680 @@
+{
+    "metadata": {
+        "name": "TokenDAO",
+        "description": "Token-weighted voting. Voting power proportional to token holdings.",
+        "version": "1.0.0",
+        "category": "governance/dao"
+    },
+    "states": {
+        "ACTIVE": {
+            "id": {
+                "value": "ACTIVE"
+            },
+            "isFinal": false,
+            "metadata": null
+        },
+        "VOTING": {
+            "id": {
+                "value": "VOTING"
+            },
+            "isFinal": false,
+            "metadata": null
+        },
+        "QUEUED": {
+            "id": {
+                "value": "QUEUED"
+            },
+            "isFinal": false,
+            "metadata": null
+        },
+        "DISSOLVED": {
+            "id": {
+                "value": "DISSOLVED"
+            },
+            "isFinal": true,
+            "metadata": null
+        }
+    },
+    "initialState": {
+        "value": "ACTIVE"
+    },
+    "transitions": [
+        {
+            "from": {
+                "value": "ACTIVE"
+            },
+            "to": {
+                "value": "VOTING"
+            },
+            "eventName": "propose",
+            "guard": {
+                ">=": [
+                    {
+                        "getKey": [
+                            {
+                                "var": "state.balances"
+                            },
+                            {
+                                "var": "event.agent"
+                            }
+                        ]
+                    },
+                    {
+                        "var": "state.proposalThreshold"
+                    }
+                ]
+            },
+            "effect": {
+                "merge": [
+                    {
+                        "var": "state"
+                    },
+                    {
+                        "proposal": {
+                            "id": {
+                                "var": "event.proposalId"
+                            },
+                            "title": {
+                                "var": "event.title"
+                            },
+                            "description": {
+                                "var": "event.description"
+                            },
+                            "actionType": {
+                                "var": "event.actionType"
+                            },
+                            "payload": {
+                                "var": "event.payload"
+                            },
+                            "proposer": {
+                                "var": "event.agent"
+                            },
+                            "proposedAt": {
+                                "var": "$timestamp"
+                            },
+                            "votingEndsAt": {
+                                "+": [
+                                    {
+                                        "var": "$timestamp"
+                                    },
+                                    {
+                                        "var": "state.votingPeriodMs"
+                                    }
+                                ]
+                            },
+                            "snapshotBlock": {
+                                "var": "event.snapshotBlock"
+                            }
+                        },
+                        "votes": {
+                            "for": 0,
+                            "against": 0,
+                            "abstain": 0,
+                            "voters": {}
+                        }
+                    }
+                ]
+            },
+            "dependencies": []
+        },
+        {
+            "from": {
+                "value": "VOTING"
+            },
+            "to": {
+                "value": "VOTING"
+            },
+            "eventName": "vote",
+            "guard": {
+                "and": [
+                    {
+                        ">": [
+                            {
+                                "getKey": [
+                                    {
+                                        "var": "state.balances"
+                                    },
+                                    {
+                                        "var": "event.agent"
+                                    }
+                                ]
+                            },
+                            0
+                        ]
+                    },
+                    {
+                        "!": [
+                            {
+                                "getKey": [
+                                    {
+                                        "var": "state.votes.voters"
+                                    },
+                                    {
+                                        "var": "event.agent"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "<=": [
+                            {
+                                "var": "$timestamp"
+                            },
+                            {
+                                "var": "state.proposal.votingEndsAt"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "effect": {
+                "merge": [
+                    {
+                        "var": "state"
+                    },
+                    {
+                        "votes": {
+                            "merge": [
+                                {
+                                    "var": "state.votes"
+                                },
+                                {
+                                    "if": [
+                                        {
+                                            "===": [
+                                                {
+                                                    "var": "event.vote"
+                                                },
+                                                "for"
+                                            ]
+                                        },
+                                        {
+                                            "for": {
+                                                "+": [
+                                                    {
+                                                        "var": "state.votes.for"
+                                                    },
+                                                    {
+                                                        "getKey": [
+                                                            {
+                                                                "var": "state.balances"
+                                                            },
+                                                            {
+                                                                "var": "event.agent"
+                                                            }
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "===": [
+                                                {
+                                                    "var": "event.vote"
+                                                },
+                                                "against"
+                                            ]
+                                        },
+                                        {
+                                            "against": {
+                                                "+": [
+                                                    {
+                                                        "var": "state.votes.against"
+                                                    },
+                                                    {
+                                                        "getKey": [
+                                                            {
+                                                                "var": "state.balances"
+                                                            },
+                                                            {
+                                                                "var": "event.agent"
+                                                            }
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "abstain": {
+                                                "+": [
+                                                    {
+                                                        "var": "state.votes.abstain"
+                                                    },
+                                                    {
+                                                        "getKey": [
+                                                            {
+                                                                "var": "state.balances"
+                                                            },
+                                                            {
+                                                                "var": "event.agent"
+                                                            }
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "voters": {
+                                        "setKey": [
+                                            {
+                                                "var": "state.votes.voters"
+                                            },
+                                            {
+                                                "var": "event.agent"
+                                            },
+                                            {
+                                                "vote": {
+                                                    "var": "event.vote"
+                                                },
+                                                "weight": {
+                                                    "getKey": [
+                                                        {
+                                                            "var": "state.balances"
+                                                        },
+                                                        {
+                                                            "var": "event.agent"
+                                                        }
+                                                    ]
+                                                },
+                                                "votedAt": {
+                                                    "var": "$timestamp"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "dependencies": []
+        },
+        {
+            "from": {
+                "value": "VOTING"
+            },
+            "to": {
+                "value": "QUEUED"
+            },
+            "eventName": "queue",
+            "guard": {
+                "and": [
+                    {
+                        ">": [
+                            {
+                                "var": "$timestamp"
+                            },
+                            {
+                                "var": "state.proposal.votingEndsAt"
+                            }
+                        ]
+                    },
+                    {
+                        ">": [
+                            {
+                                "var": "state.votes.for"
+                            },
+                            {
+                                "var": "state.votes.against"
+                            }
+                        ]
+                    },
+                    {
+                        ">=": [
+                            {
+                                "+": [
+                                    {
+                                        "var": "state.votes.for"
+                                    },
+                                    {
+                                        "var": "state.votes.against"
+                                    },
+                                    {
+                                        "var": "state.votes.abstain"
+                                    }
+                                ]
+                            },
+                            {
+                                "var": "state.quorum"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "effect": {
+                "merge": [
+                    {
+                        "var": "state"
+                    },
+                    {
+                        "proposal": {
+                            "merge": [
+                                {
+                                    "var": "state.proposal"
+                                },
+                                {
+                                    "queuedAt": {
+                                        "var": "$timestamp"
+                                    },
+                                    "executableAt": {
+                                        "+": [
+                                            {
+                                                "var": "$timestamp"
+                                            },
+                                            {
+                                                "var": "state.timelockMs"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "dependencies": []
+        },
+        {
+            "from": {
+                "value": "QUEUED"
+            },
+            "to": {
+                "value": "ACTIVE"
+            },
+            "eventName": "execute",
+            "guard": {
+                ">=": [
+                    {
+                        "var": "$timestamp"
+                    },
+                    {
+                        "var": "state.proposal.executableAt"
+                    }
+                ]
+            },
+            "effect": {
+                "merge": [
+                    {
+                        "var": "state"
+                    },
+                    {
+                        "executedProposals": {
+                            "cat": [
+                                {
+                                    "var": "state.executedProposals"
+                                },
+                                [
+                                    {
+                                        "merge": [
+                                            {
+                                                "var": "state.proposal"
+                                            },
+                                            {
+                                                "votes": {
+                                                    "var": "state.votes"
+                                                },
+                                                "executedAt": {
+                                                    "var": "$timestamp"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ]
+                            ]
+                        },
+                        "proposal": null,
+                        "votes": null
+                    }
+                ]
+            },
+            "emits": [
+                {
+                    "event": "proposal_executed",
+                    "to": "external"
+                }
+            ],
+            "dependencies": []
+        },
+        {
+            "from": {
+                "value": "VOTING"
+            },
+            "to": {
+                "value": "ACTIVE"
+            },
+            "eventName": "reject",
+            "guard": {
+                "and": [
+                    {
+                        ">": [
+                            {
+                                "var": "$timestamp"
+                            },
+                            {
+                                "var": "state.proposal.votingEndsAt"
+                            }
+                        ]
+                    },
+                    {
+                        "or": [
+                            {
+                                "<=": [
+                                    {
+                                        "var": "state.votes.for"
+                                    },
+                                    {
+                                        "var": "state.votes.against"
+                                    }
+                                ]
+                            },
+                            {
+                                "<": [
+                                    {
+                                        "+": [
+                                            {
+                                                "var": "state.votes.for"
+                                            },
+                                            {
+                                                "var": "state.votes.against"
+                                            },
+                                            {
+                                                "var": "state.votes.abstain"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "var": "state.quorum"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            "effect": {
+                "merge": [
+                    {
+                        "var": "state"
+                    },
+                    {
+                        "rejectedProposals": {
+                            "cat": [
+                                {
+                                    "var": "state.rejectedProposals"
+                                },
+                                [
+                                    {
+                                        "merge": [
+                                            {
+                                                "var": "state.proposal"
+                                            },
+                                            {
+                                                "votes": {
+                                                    "var": "state.votes"
+                                                },
+                                                "rejectedAt": {
+                                                    "var": "$timestamp"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ]
+                            ]
+                        },
+                        "proposal": null,
+                        "votes": null
+                    }
+                ]
+            },
+            "dependencies": []
+        },
+        {
+            "from": {
+                "value": "QUEUED"
+            },
+            "to": {
+                "value": "ACTIVE"
+            },
+            "eventName": "cancel",
+            "guard": {
+                "===": [
+                    {
+                        "var": "event.agent"
+                    },
+                    {
+                        "var": "state.proposal.proposer"
+                    }
+                ]
+            },
+            "effect": {
+                "merge": [
+                    {
+                        "var": "state"
+                    },
+                    {
+                        "cancelledProposals": {
+                            "cat": [
+                                {
+                                    "var": "state.cancelledProposals"
+                                },
+                                [
+                                    {
+                                        "merge": [
+                                            {
+                                                "var": "state.proposal"
+                                            },
+                                            {
+                                                "cancelledAt": {
+                                                    "var": "$timestamp"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ]
+                            ]
+                        },
+                        "proposal": null,
+                        "votes": null
+                    }
+                ]
+            },
+            "dependencies": []
+        },
+        {
+            "from": {
+                "value": "ACTIVE"
+            },
+            "to": {
+                "value": "ACTIVE"
+            },
+            "eventName": "delegate",
+            "guard": {
+                ">": [
+                    {
+                        "getKey": [
+                            {
+                                "var": "state.balances"
+                            },
+                            {
+                                "var": "event.agent"
+                            }
+                        ]
+                    },
+                    0
+                ]
+            },
+            "effect": {
+                "merge": [
+                    {
+                        "var": "state"
+                    },
+                    {
+                        "delegations": {
+                            "setKey": [
+                                {
+                                    "var": "state.delegations"
+                                },
+                                {
+                                    "var": "event.agent"
+                                },
+                                {
+                                    "var": "event.delegateTo"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "dependencies": []
+        },
+        {
+            "from": {
+                "value": "ACTIVE"
+            },
+            "to": {
+                "value": "ACTIVE"
+            },
+            "eventName": "undelegate",
+            "guard": {
+                "getKey": [
+                    {
+                        "var": "state.delegations"
+                    },
+                    {
+                        "var": "event.agent"
+                    }
+                ]
+            },
+            "effect": {
+                "merge": [
+                    {
+                        "var": "state"
+                    },
+                    {
+                        "delegations": {
+                            "deleteKey": [
+                                {
+                                    "var": "state.delegations"
+                                },
+                                {
+                                    "var": "event.agent"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "dependencies": []
+        }
+    ],
+    "crossReferences": {
+        "Identity": "voter verification",
+        "Token": "balance snapshots",
+        "Contract": "action execution",
+        "Treasury": "fund management"
+    }
+}

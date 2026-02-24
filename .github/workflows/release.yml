@@ -1,0 +1,94 @@
+name: Publish
+
+on:
+  # Triggered by release-please when tag is created
+  push:
+    tags: ['v*']
+  # Manual trigger still available
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g., 0.2.0) - must match existing tag'
+        required: true
+        type: string
+
+jobs:
+  publish:
+    name: Build & Publish to npm
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then
+            VERSION="${{ inputs.version }}"
+          else
+            # Extract from tag
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Publishing version: $VERSION"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
+          scope: '@ottochain'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Run tests
+        run: npm test
+
+      - name: Publish to npmjs.com
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Setup for GitHub Packages
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@ottobot-ai'
+
+      - name: Publish to GitHub Packages
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true  # Don't fail if already published
+
+      - name: Notify deploy repo
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.DEPLOY_REPO_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "⚠️ DEPLOY_REPO_TOKEN not set, skipping deploy notification"
+            exit 0
+          fi
+          gh api repos/ottobot-ai/ottochain-deploy/dispatches \
+            -f event_type=version-bump \
+            -f 'client_payload={"component":"sdk","version":"${{ steps.version.outputs.version }}"}'
+          echo "✅ Notified deploy repo to bump SDK to v${{ steps.version.outputs.version }}"
+
+      - name: Summary
+        run: |
+          echo "## 📦 Publish Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: v${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **npmjs.com**: \`@ottochain/sdk@${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **GitHub Packages**: \`@ottochain/sdk@${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY

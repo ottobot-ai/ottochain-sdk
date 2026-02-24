@@ -1,0 +1,258 @@
+{
+    "metadata": {
+        "name": "SingleOwnerDAO",
+        "description": "Single owner controls all actions. Simplest governance model.",
+        "version": "1.0.0",
+        "category": "governance/dao"
+    },
+    "states": {
+        "ACTIVE": {
+            "id": {
+                "value": "ACTIVE"
+            },
+            "isFinal": false,
+            "metadata": null
+        },
+        "TRANSFERRING": {
+            "id": {
+                "value": "TRANSFERRING"
+            },
+            "isFinal": false,
+            "metadata": null
+        },
+        "DISSOLVED": {
+            "id": {
+                "value": "DISSOLVED"
+            },
+            "isFinal": true,
+            "metadata": null
+        }
+    },
+    "initialState": {
+        "value": "ACTIVE"
+    },
+    "transitions": [
+        {
+            "from": {
+                "value": "ACTIVE"
+            },
+            "to": {
+                "value": "ACTIVE"
+            },
+            "eventName": "execute",
+            "guard": {
+                "===": [
+                    {
+                        "var": "event.agent"
+                    },
+                    {
+                        "var": "state.owner"
+                    }
+                ]
+            },
+            "effect": {
+                "merge": [
+                    {
+                        "var": "state"
+                    },
+                    {
+                        "actions": {
+                            "cat": [
+                                {
+                                    "var": "state.actions"
+                                },
+                                [
+                                    {
+                                        "id": {
+                                            "var": "event.actionId"
+                                        },
+                                        "type": {
+                                            "var": "event.actionType"
+                                        },
+                                        "payload": {
+                                            "var": "event.payload"
+                                        },
+                                        "executedAt": {
+                                            "var": "$timestamp"
+                                        }
+                                    }
+                                ]
+                            ]
+                        }
+                    }
+                ]
+            },
+            "emits": [
+                {
+                    "event": "action_executed",
+                    "to": "external"
+                }
+            ],
+            "dependencies": []
+        },
+        {
+            "from": {
+                "value": "ACTIVE"
+            },
+            "to": {
+                "value": "TRANSFERRING"
+            },
+            "eventName": "transfer_ownership",
+            "guard": {
+                "===": [
+                    {
+                        "var": "event.agent"
+                    },
+                    {
+                        "var": "state.owner"
+                    }
+                ]
+            },
+            "effect": {
+                "merge": [
+                    {
+                        "var": "state"
+                    },
+                    {
+                        "pendingOwner": {
+                            "var": "event.newOwner"
+                        },
+                        "transferInitiatedAt": {
+                            "var": "$timestamp"
+                        }
+                    }
+                ]
+            },
+            "dependencies": []
+        },
+        {
+            "from": {
+                "value": "TRANSFERRING"
+            },
+            "to": {
+                "value": "ACTIVE"
+            },
+            "eventName": "accept_ownership",
+            "guard": {
+                "===": [
+                    {
+                        "var": "event.agent"
+                    },
+                    {
+                        "var": "state.pendingOwner"
+                    }
+                ]
+            },
+            "effect": {
+                "merge": [
+                    {
+                        "var": "state"
+                    },
+                    {
+                        "owner": {
+                            "var": "state.pendingOwner"
+                        },
+                        "pendingOwner": null,
+                        "transferInitiatedAt": null,
+                        "ownershipHistory": {
+                            "cat": [
+                                {
+                                    "var": "state.ownershipHistory"
+                                },
+                                [
+                                    {
+                                        "from": {
+                                            "var": "state.owner"
+                                        },
+                                        "to": {
+                                            "var": "state.pendingOwner"
+                                        },
+                                        "at": {
+                                            "var": "$timestamp"
+                                        }
+                                    }
+                                ]
+                            ]
+                        }
+                    }
+                ]
+            },
+            "emits": [
+                {
+                    "event": "ownership_transferred",
+                    "to": "Identity"
+                }
+            ],
+            "dependencies": []
+        },
+        {
+            "from": {
+                "value": "TRANSFERRING"
+            },
+            "to": {
+                "value": "ACTIVE"
+            },
+            "eventName": "cancel_transfer",
+            "guard": {
+                "===": [
+                    {
+                        "var": "event.agent"
+                    },
+                    {
+                        "var": "state.owner"
+                    }
+                ]
+            },
+            "effect": {
+                "merge": [
+                    {
+                        "var": "state"
+                    },
+                    {
+                        "pendingOwner": null,
+                        "transferInitiatedAt": null
+                    }
+                ]
+            },
+            "dependencies": []
+        },
+        {
+            "from": {
+                "value": "ACTIVE"
+            },
+            "to": {
+                "value": "DISSOLVED"
+            },
+            "eventName": "dissolve",
+            "guard": {
+                "===": [
+                    {
+                        "var": "event.agent"
+                    },
+                    {
+                        "var": "state.owner"
+                    }
+                ]
+            },
+            "effect": {
+                "merge": [
+                    {
+                        "var": "state"
+                    },
+                    {
+                        "dissolvedAt": {
+                            "var": "$timestamp"
+                        },
+                        "status": "DISSOLVED"
+                    }
+                ]
+            },
+            "dependencies": []
+        }
+    ],
+    "crossReferences": {
+        "Identity": "owner registration",
+        "Contract": "action execution targets",
+        "Treasury": "fund management"
+    }
+}

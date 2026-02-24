@@ -1,0 +1,127 @@
+"use strict";
+/**
+ * Wallet and Key Management Utilities
+ *
+ * Functions for generating and managing cryptographic keys.
+ */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.isValidPublicKey = exports.isValidPrivateKey = exports.getAddress = exports.getPublicKeyId = exports.getPublicKeyHex = exports.keyPairFromPrivateKey = exports.generateKeyPair = void 0;
+const dag4_1 = require("@stardust-collective/dag4");
+/**
+ * Generate a new random key pair
+ *
+ * @returns KeyPair with private key, public key, and DAG address
+ *
+ * @example
+ * ```typescript
+ * const keyPair = generateKeyPair();
+ * console.log(keyPair.address);    // DAG address
+ * console.log(keyPair.privateKey); // 64 char hex
+ * console.log(keyPair.publicKey);  // 130 char hex (with 04 prefix)
+ * ```
+ */
+function generateKeyPair() {
+    const privateKey = dag4_1.dag4.keyStore.generatePrivateKey();
+    return keyPairFromPrivateKey(privateKey);
+}
+exports.generateKeyPair = generateKeyPair;
+/**
+ * Derive a key pair from an existing private key
+ *
+ * @param privateKey - Private key in hex format (64 characters)
+ * @returns KeyPair with private key, public key, and DAG address
+ *
+ * @example
+ * ```typescript
+ * const keyPair = keyPairFromPrivateKey(existingPrivateKey);
+ * ```
+ */
+function keyPairFromPrivateKey(privateKey) {
+    // Get uncompressed public key (with 04 prefix)
+    const publicKey = dag4_1.dag4.keyStore.getPublicKeyFromPrivate(privateKey, false);
+    // Derive DAG address
+    const address = dag4_1.dag4.keyStore.getDagAddressFromPublicKey(publicKey);
+    return {
+        privateKey,
+        publicKey: normalizePublicKey(publicKey),
+        address,
+    };
+}
+exports.keyPairFromPrivateKey = keyPairFromPrivateKey;
+/**
+ * Get the public key hex from a private key
+ *
+ * @param privateKey - Private key in hex format
+ * @param compressed - If true, returns compressed public key (33 bytes)
+ * @returns Public key in hex format
+ */
+function getPublicKeyHex(privateKey, compressed = false) {
+    return dag4_1.dag4.keyStore.getPublicKeyFromPrivate(privateKey, compressed);
+}
+exports.getPublicKeyHex = getPublicKeyHex;
+/**
+ * Get the public key ID (without 04 prefix) from a private key
+ *
+ * This format is used in SignatureProof.id
+ *
+ * @param privateKey - Private key in hex format
+ * @returns Public key ID (128 characters, no 04 prefix)
+ */
+function getPublicKeyId(privateKey) {
+    const publicKey = dag4_1.dag4.keyStore.getPublicKeyFromPrivate(privateKey, false);
+    // Remove 04 prefix if present
+    if (publicKey.length === 130 && publicKey.startsWith('04')) {
+        return publicKey.substring(2);
+    }
+    return publicKey;
+}
+exports.getPublicKeyId = getPublicKeyId;
+/**
+ * Get DAG address from a public key
+ *
+ * @param publicKey - Public key in hex format (with or without 04 prefix)
+ * @returns DAG address string
+ */
+function getAddress(publicKey) {
+    const normalizedKey = normalizePublicKey(publicKey);
+    return dag4_1.dag4.keyStore.getDagAddressFromPublicKey(normalizedKey);
+}
+exports.getAddress = getAddress;
+/**
+ * Validate that a private key is correctly formatted
+ *
+ * @param privateKey - Private key to validate
+ * @returns true if valid hex string of correct length
+ */
+function isValidPrivateKey(privateKey) {
+    if (typeof privateKey !== 'string')
+        return false;
+    if (privateKey.length !== 64)
+        return false;
+    return /^[0-9a-fA-F]+$/.test(privateKey);
+}
+exports.isValidPrivateKey = isValidPrivateKey;
+/**
+ * Validate that a public key is correctly formatted
+ *
+ * @param publicKey - Public key to validate
+ * @returns true if valid hex string of correct length
+ */
+function isValidPublicKey(publicKey) {
+    if (typeof publicKey !== 'string')
+        return false;
+    // With 04 prefix: 130 chars, without: 128 chars
+    if (publicKey.length !== 128 && publicKey.length !== 130)
+        return false;
+    return /^[0-9a-fA-F]+$/.test(publicKey);
+}
+exports.isValidPublicKey = isValidPublicKey;
+/**
+ * Normalize public key to include 04 prefix
+ */
+function normalizePublicKey(publicKey) {
+    if (publicKey.length === 128) {
+        return '04' + publicKey;
+    }
+    return publicKey;
+}

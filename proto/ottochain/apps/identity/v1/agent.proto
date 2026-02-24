@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package ottochain.apps.identity.v1;
+
+import "ottochain/v1/common.proto";
+import "google/protobuf/timestamp.proto";
+
+// Agent lifecycle states in the identity state machine
+enum AgentState {
+  AGENT_STATE_UNSPECIFIED = 0;
+  AGENT_STATE_REGISTERED = 1;    // Initial state after registration
+  AGENT_STATE_ACTIVE = 2;        // Activated and participating
+  AGENT_STATE_CHALLENGED = 3;    // Under dispute/challenge
+  AGENT_STATE_SUSPENDED = 4;     // Challenge upheld, temporarily suspended
+  AGENT_STATE_PROBATION = 5;     // Recovering from suspension
+  AGENT_STATE_WITHDRAWN = 6;     // Voluntarily exited (terminal)
+}
+
+// Platform where agent identity is linked
+enum Platform {
+  PLATFORM_UNSPECIFIED = 0;
+  PLATFORM_DISCORD = 1;
+  PLATFORM_TELEGRAM = 2;
+  PLATFORM_TWITTER = 3;
+  PLATFORM_GITHUB = 4;
+  PLATFORM_CUSTOM = 5;
+}
+
+// Platform identity link
+message PlatformLink {
+  Platform platform = 1;
+  string platform_user_id = 2;
+  string platform_username = 3;
+  google.protobuf.Timestamp linked_at = 4;
+  bool verified = 5;
+}
+
+// Agent identity on-chain state
+message AgentIdentity {
+  string address = 1;
+  string public_key = 2;
+  string display_name = 3;
+  int32 reputation = 4;
+  AgentState state = 5;
+  repeated PlatformLink platform_links = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+}
+
+// State machine definition for AgentIdentity workflow
+// This defines the valid states and transitions
+message AgentIdentityDefinition {
+  // Initial state is always REGISTERED
+  // Valid transitions:
+  //   REGISTERED -> ACTIVE (activate)
+  //   ACTIVE -> CHALLENGED (challenge)
+  //   ACTIVE -> WITHDRAWN (withdraw)
+  //   CHALLENGED -> SUSPENDED (uphold_challenge)
+  //   CHALLENGED -> ACTIVE (dismiss_challenge)
+  //   SUSPENDED -> PROBATION (begin_probation)
+  //   PROBATION -> ACTIVE (complete_probation)
+  
+  int32 initial_reputation = 1;  // Default: 10
+  int32 activation_threshold = 2; // Min rep to activate (default: 0)
+  int32 suspension_duration_epochs = 3; // How long suspension lasts
+}
