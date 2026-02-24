@@ -74,7 +74,7 @@
           {
             "status": "ACTIVE",
             "activatedAt": {
-              "var": "$timestamp"
+              "var": "sequenceNumber"
             }
           }
         ]
@@ -142,6 +142,51 @@
                 },
                 5
               ]
+            }
+          }
+        ]
+      },
+      "dependencies": []
+    },
+    {
+      "from": {
+        "value": "ACTIVE"
+      },
+      "to": {
+        "value": "ACTIVE"
+      },
+      "eventName": "receive_violation",
+      "guard": {
+        "!!": [
+          {
+            "var": "event.reporter"
+          }
+        ]
+      },
+      "effect": {
+        "merge": [
+          {
+            "var": "state"
+          },
+          {
+            "reputation": {
+              "+": [
+                {
+                  "var": "state.reputation"
+                },
+                -10
+              ]
+            },
+            "violations": {
+              "+": [
+                {
+                  "var": "state.violations"
+                },
+                1
+              ]
+            },
+            "lastViolationAt": {
+              "var": "sequenceNumber"
             }
           }
         ]
@@ -227,7 +272,7 @@
           {
             "status": "SUSPENDED",
             "suspendedAt": {
-              "var": "$timestamp"
+              "var": "sequenceNumber"
             }
           }
         ]
@@ -256,7 +301,7 @@
           {
             "status": "PROBATION",
             "probationStartedAt": {
-              "var": "$timestamp"
+              "var": "sequenceNumber"
             }
           }
         ]
