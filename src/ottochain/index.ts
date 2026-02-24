@@ -72,7 +72,13 @@ export {
 } from './snapshot.js';
 
 // Metagraph client
-export type { Checkpoint, MetagraphClientConfig } from './metagraph-client.js';
+export type {
+  Checkpoint,
+  MetagraphClientConfig,
+  SubscribeOptions,
+  FiberStateCallback,
+  Unsubscribe,
+} from './metagraph-client.js';
 export { MetagraphClient } from './metagraph-client.js';
 
 // Note: Governance and Corporate types are now in src/apps/

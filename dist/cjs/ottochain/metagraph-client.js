@@ -138,6 +138,153 @@ class MetagraphClient {
         return snapshot.value.ordinal;
     }
     // -------------------------------------------------------------------------
+    // Fiber state subscription
+    // -------------------------------------------------------------------------
+    /**
+     * Subscribe to state changes for a state machine fiber.
+     *
+     * Polls ML0 at the configured interval and compares `sequenceNumber` to
+     * detect changes. Fires the callback with `(current, previous)` on the
+     * first poll (if `fireImmediately` is true — the default) and on every
+     * subsequent change.
+     *
+     * ML0 consistency: state is read from snapshot-level `CalculatedState`
+     * (via `checkpointService.get`), so a poll never returns a mid-transition
+     * value — every observation is a fully committed state.
+     *
+     * Uses `setTimeout` recursion to prevent overlapping polls when a request
+     * takes longer than `pollIntervalMs`.
+     *
+     * @param fiberId  - UUID of the state machine fiber to watch
+     * @param callback - Called on first observation and on every state change
+     * @param options  - Polling interval, error handler, fireImmediately flag
+     * @returns Unsubscribe function — call to stop polling immediately
+     *
+     * @example
+     * ```typescript
+     * const unsub = client.subscribeFiberState(fiberId, (current, prev) => {
+     *   if (current?.currentState === 'Completed') {
+     *     unsub();
+     *   }
+     * });
+     * // Later:
+     * unsub();
+     * ```
+     */
+    subscribeFiberState(fiberId, callback, options) {
+        const intervalMs = options?.pollIntervalMs ?? 2000;
+        const onError = options?.onError ?? ((e) => console.warn('[subscribeFiberState]', e));
+        const fireImmediately = options?.fireImmediately ?? true;
+        let previous = null;
+        let lastSeqNum = null;
+        let firstPoll = true; // Track first poll separately — handles null seqNum on missing fiber
+        let active = true;
+        const invokeCallback = (current, prev) => {
+            try {
+                callback(current, prev);
+            }
+            catch (cbErr) {
+                try {
+                    onError(cbErr instanceof Error ? cbErr : new Error(String(cbErr)));
+                }
+                catch { /* ignore */ }
+            }
+        };
+        const poll = async () => {
+            if (!active)
+                return;
+            let current;
+            try {
+                current = await this.getStateMachine(fiberId);
+            }
+            catch (err) {
+                // Network / timeout error — notify and reschedule
+                if (!active)
+                    return;
+                try {
+                    onError(err instanceof Error ? err : new Error(String(err)));
+                }
+                catch { /* ignore */ }
+                if (active)
+                    setTimeout(poll, intervalMs);
+                return;
+            }
+            // Guard: unsubscribe may have been called while awaiting
+            if (!active)
+                return;
+            const currentSeq = current?.sequenceNumber ?? null;
+            if (firstPoll) {
+                firstPoll = false;
+                lastSeqNum = currentSeq;
+                previous = current;
+                if (fireImmediately) {
+                    invokeCallback(current, null);
+                }
+            }
+            else if (currentSeq !== lastSeqNum) {
+                // State changed — sequenceNumber differs (handles null → value and value → null)
+                const prev = previous;
+                previous = current;
+                lastSeqNum = currentSeq;
+                invokeCallback(current, prev);
+            }
+            // No change → no callback
+            // Schedule next poll (setTimeout recursion prevents overlapping polls)
+            if (active)
+                setTimeout(poll, intervalMs);
+        };
+        // Start first poll via setTimeout(0) so Jest fake-timer control works correctly:
+        // callers can unsubscribe before the first poll runs, and each
+        // jest.runOnlyPendingTimersAsync() advances exactly one poll cycle.
+        setTimeout(poll, 0);
+        return () => { active = false; };
+    }
+    /**
+     * Wait for a fiber to reach a specific state, with an optional timeout.
+     *
+     * Builds on `subscribeFiberState` — resolves with the fiber record once
+     * `currentState === targetState`, or resolves with `null` after `timeoutMs`.
+     * Always calls unsubscribe on resolution or timeout (no memory leaks).
+     *
+     * @param fiberId     - UUID of the state machine fiber
+     * @param targetState - State name to wait for (e.g. `'Completed'`)
+     * @param timeoutMs   - Maximum wait in milliseconds (default: 30 000)
+     * @returns Fiber record when target state reached, or `null` on timeout
+     *
+     * @example
+     * ```typescript
+     * const result = await client.waitForState(fiberId, 'Completed', 15_000);
+     * if (result === null) console.warn('Timed out waiting for Completed');
+     * ```
+     */
+    waitForState(fiberId, targetState, timeoutMs = 30000, options) {
+        return new Promise((resolve) => {
+            let resolved = false;
+            let timer = null;
+            // unsub starts as a no-op so it's safe to call even if subscribeFiberState
+            // invokes the callback synchronously (before returning the real unsubscribe).
+            let unsub = () => { };
+            const done = (result) => {
+                if (resolved)
+                    return;
+                resolved = true;
+                if (timer !== null)
+                    clearTimeout(timer);
+                unsub(); // safe: either the real unsub or the initial no-op
+                resolve(result);
+            };
+            unsub = this.subscribeFiberState(fiberId, (current) => {
+                if (current?.currentState === targetState) {
+                    done(current);
+                }
+            }, { fireImmediately: true, ...options });
+            // Only arm the timeout if the callback hasn't already resolved (synchronous case)
+            if (!resolved) {
+                timer = setTimeout(() => done(null), timeoutMs);
+            }
+        });
+    }
+    // -------------------------------------------------------------------------
     // DL1 data submission (framework POST /data)
     // -------------------------------------------------------------------------
     /**
