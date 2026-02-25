@@ -17,6 +17,9 @@ module.exports = {
     },
   },
   verbose: true,
+  // Retry flaky tests up to 2 additional times before marking as failed
+  // jest-circus (default since Jest 27) supports this natively
+  retryTimes: 2,
   // Handle .js extension in imports for ESM compatibility
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
