@@ -112,7 +112,6 @@
     "zod": "^3.22.0"
   },
   "devDependencies": {
-    "@bufbuild/buf": "^1.65.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^20.0.0",
     "@typescript-eslint/eslint-plugin": "^8.56.1",
