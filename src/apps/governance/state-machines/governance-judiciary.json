@@ -6,80 +6,56 @@
   },
   "states": {
     "FILED": {
-      "id": {
-        "value": "FILED"
-      },
+      "id": "FILED",
       "isFinal": false,
       "metadata": null
     },
     "REVIEW": {
-      "id": {
-        "value": "REVIEW"
-      },
+      "id": "REVIEW",
       "isFinal": false,
       "metadata": null
     },
     "HEARING": {
-      "id": {
-        "value": "HEARING"
-      },
+      "id": "HEARING",
       "isFinal": false,
       "metadata": null
     },
     "DELIBERATION": {
-      "id": {
-        "value": "DELIBERATION"
-      },
+      "id": "DELIBERATION",
       "isFinal": false,
       "metadata": null
     },
     "RULING": {
-      "id": {
-        "value": "RULING"
-      },
+      "id": "RULING",
       "isFinal": false,
       "metadata": null
     },
     "ENFORCING": {
-      "id": {
-        "value": "ENFORCING"
-      },
+      "id": "ENFORCING",
       "isFinal": false,
       "metadata": null
     },
     "CLOSED": {
-      "id": {
-        "value": "CLOSED"
-      },
+      "id": "CLOSED",
       "isFinal": true,
       "metadata": null
     },
     "DISMISSED": {
-      "id": {
-        "value": "DISMISSED"
-      },
+      "id": "DISMISSED",
       "isFinal": true,
       "metadata": null
     },
     "APPEALED": {
-      "id": {
-        "value": "APPEALED"
-      },
+      "id": "APPEALED",
       "isFinal": false,
       "metadata": null
     }
   },
-  "initialState": {
-    "value": "FILED"
-  },
+  "initialState": "FILED",
   "transitions": [
     {
-      "from": {
-        "value": "FILED"
-      },
-      "to": {
-        "value": "REVIEW"
-      },
+      "from": "FILED",
+      "to": "REVIEW",
       "eventName": "accept",
       "guard": {
         "in": [
@@ -113,12 +89,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "FILED"
-      },
-      "to": {
-        "value": "DISMISSED"
-      },
+      "from": "FILED",
+      "to": "DISMISSED",
       "eventName": "dismiss",
       "guard": {
         "in": [
@@ -152,12 +124,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "REVIEW"
-      },
-      "to": {
-        "value": "REVIEW"
-      },
+      "from": "REVIEW",
+      "to": "REVIEW",
       "eventName": "issue_stay",
       "guard": {
         "in": [
@@ -198,12 +166,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "REVIEW"
-      },
-      "to": {
-        "value": "HEARING"
-      },
+      "from": "REVIEW",
+      "to": "HEARING",
       "eventName": "schedule_hearing",
       "guard": {
         "in": [
@@ -232,12 +196,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "HEARING"
-      },
-      "to": {
-        "value": "HEARING"
-      },
+      "from": "HEARING",
+      "to": "HEARING",
       "eventName": "submit_evidence",
       "guard": {
         "or": [
@@ -308,12 +268,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "HEARING"
-      },
-      "to": {
-        "value": "DELIBERATION"
-      },
+      "from": "HEARING",
+      "to": "DELIBERATION",
       "eventName": "close_hearing",
       "guard": {
         "in": [
@@ -342,12 +298,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "DELIBERATION"
-      },
-      "to": {
-        "value": "DELIBERATION"
-      },
+      "from": "DELIBERATION",
+      "to": "DELIBERATION",
       "eventName": "vote",
       "guard": {
         "and": [
@@ -410,12 +362,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "DELIBERATION"
-      },
-      "to": {
-        "value": "RULING"
-      },
+      "from": "DELIBERATION",
+      "to": "RULING",
       "eventName": "issue_ruling",
       "guard": {
         ">=": [
@@ -459,12 +407,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "RULING"
-      },
-      "to": {
-        "value": "ENFORCING"
-      },
+      "from": "RULING",
+      "to": "ENFORCING",
       "eventName": "begin_enforcement",
       "guard": {
         "var": "state.ruling.remedy"
@@ -485,12 +429,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "RULING"
-      },
-      "to": {
-        "value": "CLOSED"
-      },
+      "from": "RULING",
+      "to": "CLOSED",
       "eventName": "close",
       "guard": {
         "!": [
@@ -515,12 +455,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "ENFORCING"
-      },
-      "to": {
-        "value": "CLOSED"
-      },
+      "from": "ENFORCING",
+      "to": "CLOSED",
       "eventName": "enforcement_complete",
       "guard": {
         "var": "event.evidence"
@@ -544,12 +480,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "RULING"
-      },
-      "to": {
-        "value": "APPEALED"
-      },
+      "from": "RULING",
+      "to": "APPEALED",
       "eventName": "appeal",
       "guard": {
         "and": [

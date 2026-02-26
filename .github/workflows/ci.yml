@@ -60,7 +60,7 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit
 
-  build:
+  build-matrix:
     runs-on: ubuntu-latest
     needs: [lint, typecheck]
     strategy:
@@ -84,7 +84,7 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-    needs: [build]
+    needs: [build-matrix]
     strategy:
       matrix:
         node-version: [20, 22, 24]
@@ -128,7 +128,7 @@ jobs:
 
   docs:
     runs-on: ubuntu-latest
-    needs: [build]
+    needs: [build-matrix]
     
     steps:
       - uses: actions/checkout@v6
@@ -154,6 +154,19 @@ jobs:
           name: documentation
           path: docs/
           retention-days: 30
+
+  # Summary job for branch protection — matrix jobs expand names (e.g. "build (20)")
+  # but branch protection needs a single stable check name.
+  build:
+    if: always()
+    runs-on: ubuntu-latest
+    needs: [commitlint, lint, typecheck, build-matrix, test, docs]
+    steps:
+      - run: |
+          if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" ]]; then
+            echo "One or more jobs failed"
+            exit 1
+          fi
 
   # Placeholder for future npm publishing
   # publish:

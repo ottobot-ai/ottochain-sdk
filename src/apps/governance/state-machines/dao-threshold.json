@@ -7,38 +7,26 @@
   },
   "states": {
     "ACTIVE": {
-      "id": {
-        "value": "ACTIVE"
-      },
+      "id": "ACTIVE",
       "isFinal": false,
       "metadata": null
     },
     "VOTING": {
-      "id": {
-        "value": "VOTING"
-      },
+      "id": "VOTING",
       "isFinal": false,
       "metadata": null
     },
     "DISSOLVED": {
-      "id": {
-        "value": "DISSOLVED"
-      },
+      "id": "DISSOLVED",
       "isFinal": true,
       "metadata": null
     }
   },
-  "initialState": {
-    "value": "ACTIVE"
-  },
+  "initialState": "ACTIVE",
   "transitions": [
     {
-      "from": {
-        "value": "ACTIVE"
-      },
-      "to": {
-        "value": "VOTING"
-      },
+      "from": "ACTIVE",
+      "to": "VOTING",
       "eventName": "propose",
       "guard": {
         ">=": [
@@ -100,12 +88,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "VOTING"
-      },
-      "to": {
-        "value": "VOTING"
-      },
+      "from": "VOTING",
+      "to": "VOTING",
       "eventName": "vote",
       "guard": {
         "and": [
@@ -268,12 +252,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "VOTING"
-      },
-      "to": {
-        "value": "ACTIVE"
-      },
+      "from": "VOTING",
+      "to": "ACTIVE",
       "eventName": "execute",
       "guard": {
         "and": [
@@ -371,12 +351,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "VOTING"
-      },
-      "to": {
-        "value": "ACTIVE"
-      },
+      "from": "VOTING",
+      "to": "ACTIVE",
       "eventName": "reject",
       "guard": {
         "and": [
@@ -466,12 +442,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "ACTIVE"
-      },
-      "to": {
-        "value": "ACTIVE"
-      },
+      "from": "ACTIVE",
+      "to": "ACTIVE",
       "eventName": "join",
       "guard": {
         "and": [
@@ -538,12 +510,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "ACTIVE"
-      },
-      "to": {
-        "value": "ACTIVE"
-      },
+      "from": "ACTIVE",
+      "to": "ACTIVE",
       "eventName": "leave",
       "guard": {
         "in": [
@@ -584,12 +552,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "ACTIVE"
-      },
-      "to": {
-        "value": "VOTING"
-      },
+      "from": "ACTIVE",
+      "to": "VOTING",
       "eventName": "propose_threshold_change",
       "guard": {
         ">=": [

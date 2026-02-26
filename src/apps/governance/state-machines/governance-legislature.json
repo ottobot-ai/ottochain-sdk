@@ -6,80 +6,56 @@
   },
   "states": {
     "DRAFT": {
-      "id": {
-        "value": "DRAFT"
-      },
+      "id": "DRAFT",
       "isFinal": false,
       "metadata": null
     },
     "ACTIVE": {
-      "id": {
-        "value": "ACTIVE"
-      },
+      "id": "ACTIVE",
       "isFinal": false,
       "metadata": null
     },
     "PENDING": {
-      "id": {
-        "value": "PENDING"
-      },
+      "id": "PENDING",
       "isFinal": false,
       "metadata": null
     },
     "EXECUTING": {
-      "id": {
-        "value": "EXECUTING"
-      },
+      "id": "EXECUTING",
       "isFinal": false,
       "metadata": null
     },
     "EXECUTED": {
-      "id": {
-        "value": "EXECUTED"
-      },
+      "id": "EXECUTED",
       "isFinal": true,
       "metadata": null
     },
     "VETOED": {
-      "id": {
-        "value": "VETOED"
-      },
+      "id": "VETOED",
       "isFinal": true,
       "metadata": null
     },
     "DEFEATED": {
-      "id": {
-        "value": "DEFEATED"
-      },
+      "id": "DEFEATED",
       "isFinal": true,
       "metadata": null
     },
     "EXPIRED": {
-      "id": {
-        "value": "EXPIRED"
-      },
+      "id": "EXPIRED",
       "isFinal": true,
       "metadata": null
     },
     "CANCELLED": {
-      "id": {
-        "value": "CANCELLED"
-      },
+      "id": "CANCELLED",
       "isFinal": true,
       "metadata": null
     }
   },
-  "initialState": {
-    "value": "DRAFT"
-  },
+  "initialState": "DRAFT",
   "transitions": [
     {
-      "from": {
-        "value": "DRAFT"
-      },
-      "to": {
-        "value": "ACTIVE"
-      },
+      "from": "DRAFT",
+      "to": "ACTIVE",
       "eventName": "submit",
       "guard": {
         "and": [
@@ -127,12 +103,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "ACTIVE"
-      },
-      "to": {
-        "value": "ACTIVE"
-      },
+      "from": "ACTIVE",
+      "to": "ACTIVE",
       "eventName": "vote",
       "guard": {
         "and": [
@@ -223,12 +195,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "ACTIVE"
-      },
-      "to": {
-        "value": "ACTIVE"
-      },
+      "from": "ACTIVE",
+      "to": "ACTIVE",
       "eventName": "delegate",
       "guard": {
         "and": [
@@ -294,12 +262,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "ACTIVE"
-      },
-      "to": {
-        "value": "PENDING"
-      },
+      "from": "ACTIVE",
+      "to": "PENDING",
       "eventName": "finalize_voting",
       "guard": {
         "and": [
@@ -344,12 +308,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "ACTIVE"
-      },
-      "to": {
-        "value": "DEFEATED"
-      },
+      "from": "ACTIVE",
+      "to": "DEFEATED",
       "eventName": "finalize_voting",
       "guard": {
         "and": [
@@ -391,12 +351,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "PENDING"
-      },
-      "to": {
-        "value": "VETOED"
-      },
+      "from": "PENDING",
+      "to": "VETOED",
       "eventName": "veto",
       "guard": {
         "and": [
@@ -444,12 +400,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "PENDING"
-      },
-      "to": {
-        "value": "EXECUTING"
-      },
+      "from": "PENDING",
+      "to": "EXECUTING",
       "eventName": "execute",
       "guard": {
         "and": [
@@ -494,12 +446,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "EXECUTING"
-      },
-      "to": {
-        "value": "EXECUTED"
-      },
+      "from": "EXECUTING",
+      "to": "EXECUTED",
       "eventName": "complete",
       "guard": {
         "in": [
@@ -530,12 +478,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "DRAFT"
-      },
-      "to": {
-        "value": "CANCELLED"
-      },
+      "from": "DRAFT",
+      "to": "CANCELLED",
       "eventName": "cancel",
       "guard": {
         "===": [
@@ -563,12 +507,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "ACTIVE"
-      },
-      "to": {
-        "value": "CANCELLED"
-      },
+      "from": "ACTIVE",
+      "to": "CANCELLED",
       "eventName": "cancel",
       "guard": {
         "or": [
@@ -613,12 +553,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "ACTIVE"
-      },
-      "to": {
-        "value": "EXPIRED"
-      },
+      "from": "ACTIVE",
+      "to": "EXPIRED",
       "eventName": "expire",
       "guard": {
         ">": [
