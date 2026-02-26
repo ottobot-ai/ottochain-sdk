@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.1.0](https://github.com/ottobot-ai/ottochain-sdk/compare/v1.0.3...v1.1.0) (2026-02-26)
+
+
+### Features
+
+* **sdk:** subscribeFiberState + waitForState on MetagraphClient ([#44](https://github.com/ottobot-ai/ottochain-sdk/issues/44)) ([14c3ec4](https://github.com/ottobot-ai/ottochain-sdk/commit/14c3ec46df5edf5ba076e7450493ce1774f3f879))
+* ts-proto Phase 1 cleanup ([#52](https://github.com/ottobot-ai/ottochain-sdk/issues/52)) ([30f8d33](https://github.com/ottobot-ai/ottochain-sdk/commit/30f8d335949250f7f02b6e5ed89072af1aa6aceb))
+
+
+### Bug Fixes
+
+* remove dist/ from git, fix zod 4 z.record() API change ([#76](https://github.com/ottobot-ai/ottochain-sdk/issues/76)) ([b5a3687](https://github.com/ottobot-ai/ottochain-sdk/commit/b5a3687c1d716e1f5f19c4606b1b64ad7e80a56f))
+
 ## [1.0.3](https://github.com/ottobot-ai/ottochain-sdk/compare/v1.0.2...v1.0.3) (2026-02-23)
 
 
