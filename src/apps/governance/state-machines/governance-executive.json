@@ -6,73 +6,51 @@
   },
   "states": {
     "RECEIVED": {
-      "id": {
-        "value": "RECEIVED"
-      },
+      "id": "RECEIVED",
       "isFinal": false,
       "metadata": null
     },
     "PLANNING": {
-      "id": {
-        "value": "PLANNING"
-      },
+      "id": "PLANNING",
       "isFinal": false,
       "metadata": null
     },
     "EXECUTING": {
-      "id": {
-        "value": "EXECUTING"
-      },
+      "id": "EXECUTING",
       "isFinal": false,
       "metadata": null
     },
     "PAUSED": {
-      "id": {
-        "value": "PAUSED"
-      },
+      "id": "PAUSED",
       "isFinal": false,
       "metadata": null
     },
     "COMPLETED": {
-      "id": {
-        "value": "COMPLETED"
-      },
+      "id": "COMPLETED",
       "isFinal": true,
       "metadata": null
     },
     "FAILED": {
-      "id": {
-        "value": "FAILED"
-      },
+      "id": "FAILED",
       "isFinal": true,
       "metadata": null
     },
     "BLOCKED": {
-      "id": {
-        "value": "BLOCKED"
-      },
+      "id": "BLOCKED",
       "isFinal": true,
       "metadata": null
     },
     "VETOED": {
-      "id": {
-        "value": "VETOED"
-      },
+      "id": "VETOED",
       "isFinal": true,
       "metadata": null
     }
   },
-  "initialState": {
-    "value": "RECEIVED"
-  },
+  "initialState": "RECEIVED",
   "transitions": [
     {
-      "from": {
-        "value": "RECEIVED"
-      },
-      "to": {
-        "value": "PLANNING"
-      },
+      "from": "RECEIVED",
+      "to": "PLANNING",
       "eventName": "accept",
       "guard": {
         "in": [
@@ -106,12 +84,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "RECEIVED"
-      },
-      "to": {
-        "value": "VETOED"
-      },
+      "from": "RECEIVED",
+      "to": "VETOED",
       "eventName": "veto",
       "guard": {
         "and": [
@@ -152,12 +126,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "PLANNING"
-      },
-      "to": {
-        "value": "EXECUTING"
-      },
+      "from": "PLANNING",
+      "to": "EXECUTING",
       "eventName": "begin",
       "guard": {
         "in": [
@@ -186,12 +156,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "EXECUTING"
-      },
-      "to": {
-        "value": "EXECUTING"
-      },
+      "from": "EXECUTING",
+      "to": "EXECUTING",
       "eventName": "report_progress",
       "guard": {
         "in": [
@@ -238,12 +204,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "EXECUTING"
-      },
-      "to": {
-        "value": "PAUSED"
-      },
+      "from": "EXECUTING",
+      "to": "PAUSED",
       "eventName": "pause",
       "guard": {
         "or": [
@@ -287,12 +249,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "PAUSED"
-      },
-      "to": {
-        "value": "EXECUTING"
-      },
+      "from": "PAUSED",
+      "to": "EXECUTING",
       "eventName": "resume",
       "guard": {
         "and": [
@@ -331,12 +289,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "PAUSED"
-      },
-      "to": {
-        "value": "BLOCKED"
-      },
+      "from": "PAUSED",
+      "to": "BLOCKED",
       "eventName": "block",
       "guard": {
         "var": "event.judicialRuling"
@@ -363,12 +317,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "EXECUTING"
-      },
-      "to": {
-        "value": "COMPLETED"
-      },
+      "from": "EXECUTING",
+      "to": "COMPLETED",
       "eventName": "complete",
       "guard": {
         "in": [
@@ -402,12 +352,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "EXECUTING"
-      },
-      "to": {
-        "value": "FAILED"
-      },
+      "from": "EXECUTING",
+      "to": "FAILED",
       "eventName": "fail",
       "guard": {
         "in": [

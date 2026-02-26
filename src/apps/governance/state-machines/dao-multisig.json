@@ -7,38 +7,26 @@
   },
   "states": {
     "ACTIVE": {
-      "id": {
-        "value": "ACTIVE"
-      },
+      "id": "ACTIVE",
       "isFinal": false,
       "metadata": null
     },
     "PENDING": {
-      "id": {
-        "value": "PENDING"
-      },
+      "id": "PENDING",
       "isFinal": false,
       "metadata": null
     },
     "DISSOLVED": {
-      "id": {
-        "value": "DISSOLVED"
-      },
+      "id": "DISSOLVED",
       "isFinal": true,
       "metadata": null
     }
   },
-  "initialState": {
-    "value": "ACTIVE"
-  },
+  "initialState": "ACTIVE",
   "transitions": [
     {
-      "from": {
-        "value": "ACTIVE"
-      },
-      "to": {
-        "value": "PENDING"
-      },
+      "from": "ACTIVE",
+      "to": "PENDING",
       "eventName": "propose",
       "guard": {
         "in": [
@@ -100,12 +88,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "PENDING"
-      },
-      "to": {
-        "value": "PENDING"
-      },
+      "from": "PENDING",
+      "to": "PENDING",
       "eventName": "sign",
       "guard": {
         "and": [
@@ -172,12 +156,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "PENDING"
-      },
-      "to": {
-        "value": "ACTIVE"
-      },
+      "from": "PENDING",
+      "to": "ACTIVE",
       "eventName": "execute",
       "guard": {
         ">=": [
@@ -237,12 +217,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "PENDING"
-      },
-      "to": {
-        "value": "ACTIVE"
-      },
+      "from": "PENDING",
+      "to": "ACTIVE",
       "eventName": "cancel",
       "guard": {
         "or": [
@@ -303,12 +279,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "ACTIVE"
-      },
-      "to": {
-        "value": "PENDING"
-      },
+      "from": "ACTIVE",
+      "to": "PENDING",
       "eventName": "propose_add_signer",
       "guard": {
         "in": [
@@ -370,12 +342,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "ACTIVE"
-      },
-      "to": {
-        "value": "PENDING"
-      },
+      "from": "ACTIVE",
+      "to": "PENDING",
       "eventName": "propose_remove_signer",
       "guard": {
         "and": [
@@ -453,12 +421,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "ACTIVE"
-      },
-      "to": {
-        "value": "PENDING"
-      },
+      "from": "ACTIVE",
+      "to": "PENDING",
       "eventName": "propose_change_threshold",
       "guard": {
         "and": [
@@ -544,12 +508,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "PENDING"
-      },
-      "to": {
-        "value": "ACTIVE"
-      },
+      "from": "PENDING",
+      "to": "ACTIVE",
       "eventName": "apply_signer_change",
       "guard": {
         "and": [
@@ -667,12 +627,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "ACTIVE"
-      },
-      "to": {
-        "value": "DISSOLVED"
-      },
+      "from": "ACTIVE",
+      "to": "DISSOLVED",
       "eventName": "dissolve",
       "guard": {
         "===": [

@@ -7,38 +7,26 @@
   },
   "states": {
     "ACTIVE": {
-      "id": {
-        "value": "ACTIVE"
-      },
+      "id": "ACTIVE",
       "isFinal": false,
       "metadata": null
     },
     "TRANSFERRING": {
-      "id": {
-        "value": "TRANSFERRING"
-      },
+      "id": "TRANSFERRING",
       "isFinal": false,
       "metadata": null
     },
     "DISSOLVED": {
-      "id": {
-        "value": "DISSOLVED"
-      },
+      "id": "DISSOLVED",
       "isFinal": true,
       "metadata": null
     }
   },
-  "initialState": {
-    "value": "ACTIVE"
-  },
+  "initialState": "ACTIVE",
   "transitions": [
     {
-      "from": {
-        "value": "ACTIVE"
-      },
-      "to": {
-        "value": "ACTIVE"
-      },
+      "from": "ACTIVE",
+      "to": "ACTIVE",
       "eventName": "execute",
       "guard": {
         "===": [
@@ -91,12 +79,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "ACTIVE"
-      },
-      "to": {
-        "value": "TRANSFERRING"
-      },
+      "from": "ACTIVE",
+      "to": "TRANSFERRING",
       "eventName": "transfer_ownership",
       "guard": {
         "===": [
@@ -126,12 +110,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "TRANSFERRING"
-      },
-      "to": {
-        "value": "ACTIVE"
-      },
+      "from": "TRANSFERRING",
+      "to": "ACTIVE",
       "eventName": "accept_ownership",
       "guard": {
         "===": [
@@ -186,12 +166,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "TRANSFERRING"
-      },
-      "to": {
-        "value": "ACTIVE"
-      },
+      "from": "TRANSFERRING",
+      "to": "ACTIVE",
       "eventName": "cancel_transfer",
       "guard": {
         "===": [
@@ -217,12 +193,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "ACTIVE"
-      },
-      "to": {
-        "value": "DISSOLVED"
-      },
+      "from": "ACTIVE",
+      "to": "DISSOLVED",
       "eventName": "dissolve",
       "guard": {
         "===": [

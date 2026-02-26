@@ -6,52 +6,36 @@
   },
   "states": {
     "UNREGISTERED": {
-      "id": {
-        "value": "UNREGISTERED"
-      },
+      "id": "UNREGISTERED",
       "isFinal": false,
       "metadata": null
     },
     "REGISTERED": {
-      "id": {
-        "value": "REGISTERED"
-      },
+      "id": "REGISTERED",
       "isFinal": false,
       "metadata": null
     },
     "ACTIVE": {
-      "id": {
-        "value": "ACTIVE"
-      },
+      "id": "ACTIVE",
       "isFinal": false,
       "metadata": null
     },
     "SLASHED": {
-      "id": {
-        "value": "SLASHED"
-      },
+      "id": "SLASHED",
       "isFinal": false,
       "metadata": null
     },
     "WITHDRAWN": {
-      "id": {
-        "value": "WITHDRAWN"
-      },
+      "id": "WITHDRAWN",
       "isFinal": true,
       "metadata": null
     }
   },
-  "initialState": {
-    "value": "UNREGISTERED"
-  },
+  "initialState": "UNREGISTERED",
   "transitions": [
     {
-      "from": {
-        "value": "UNREGISTERED"
-      },
-      "to": {
-        "value": "REGISTERED"
-      },
+      "from": "UNREGISTERED",
+      "to": "REGISTERED",
       "eventName": "register",
       "guard": {
         ">=": [
@@ -95,12 +79,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "REGISTERED"
-      },
-      "to": {
-        "value": "ACTIVE"
-      },
+      "from": "REGISTERED",
+      "to": "ACTIVE",
       "eventName": "activate",
       "guard": {
         "or": [
@@ -135,12 +115,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "ACTIVE"
-      },
-      "to": {
-        "value": "ACTIVE"
-      },
+      "from": "ACTIVE",
+      "to": "ACTIVE",
       "eventName": "add_stake",
       "guard": {
         "and": [
@@ -189,12 +165,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "ACTIVE"
-      },
-      "to": {
-        "value": "ACTIVE"
-      },
+      "from": "ACTIVE",
+      "to": "ACTIVE",
       "eventName": "record_resolution",
       "guard": {
         "var": "event.marketId"
@@ -249,12 +221,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "ACTIVE"
-      },
-      "to": {
-        "value": "SLASHED"
-      },
+      "from": "ACTIVE",
+      "to": "SLASHED",
       "eventName": "slash",
       "guard": {
         "and": [
@@ -330,12 +298,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "SLASHED"
-      },
-      "to": {
-        "value": "ACTIVE"
-      },
+      "from": "SLASHED",
+      "to": "ACTIVE",
       "eventName": "reactivate",
       "guard": {
         "and": [
@@ -377,12 +341,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "ACTIVE"
-      },
-      "to": {
-        "value": "WITHDRAWN"
-      },
+      "from": "ACTIVE",
+      "to": "WITHDRAWN",
       "eventName": "withdraw",
       "guard": {
         "===": [
@@ -413,12 +373,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "SLASHED"
-      },
-      "to": {
-        "value": "WITHDRAWN"
-      },
+      "from": "SLASHED",
+      "to": "WITHDRAWN",
       "eventName": "withdraw",
       "guard": {
         "===": [

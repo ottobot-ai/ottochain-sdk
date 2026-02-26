@@ -7,45 +7,31 @@
   },
   "states": {
     "ACTIVE": {
-      "id": {
-        "value": "ACTIVE"
-      },
+      "id": "ACTIVE",
       "isFinal": false,
       "metadata": null
     },
     "VOTING": {
-      "id": {
-        "value": "VOTING"
-      },
+      "id": "VOTING",
       "isFinal": false,
       "metadata": null
     },
     "QUEUED": {
-      "id": {
-        "value": "QUEUED"
-      },
+      "id": "QUEUED",
       "isFinal": false,
       "metadata": null
     },
     "DISSOLVED": {
-      "id": {
-        "value": "DISSOLVED"
-      },
+      "id": "DISSOLVED",
       "isFinal": true,
       "metadata": null
     }
   },
-  "initialState": {
-    "value": "ACTIVE"
-  },
+  "initialState": "ACTIVE",
   "transitions": [
     {
-      "from": {
-        "value": "ACTIVE"
-      },
-      "to": {
-        "value": "VOTING"
-      },
+      "from": "ACTIVE",
+      "to": "VOTING",
       "eventName": "propose",
       "guard": {
         ">=": [
@@ -118,12 +104,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "VOTING"
-      },
-      "to": {
-        "value": "VOTING"
-      },
+      "from": "VOTING",
+      "to": "VOTING",
       "eventName": "vote",
       "guard": {
         "and": [
@@ -294,12 +276,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "VOTING"
-      },
-      "to": {
-        "value": "QUEUED"
-      },
+      "from": "VOTING",
+      "to": "QUEUED",
       "eventName": "queue",
       "guard": {
         "and": [
@@ -379,12 +357,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "QUEUED"
-      },
-      "to": {
-        "value": "ACTIVE"
-      },
+      "from": "QUEUED",
+      "to": "ACTIVE",
       "eventName": "execute",
       "guard": {
         ">=": [
@@ -440,12 +414,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "VOTING"
-      },
-      "to": {
-        "value": "ACTIVE"
-      },
+      "from": "VOTING",
+      "to": "ACTIVE",
       "eventName": "reject",
       "guard": {
         "and": [
@@ -533,12 +503,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "QUEUED"
-      },
-      "to": {
-        "value": "ACTIVE"
-      },
+      "from": "QUEUED",
+      "to": "ACTIVE",
       "eventName": "cancel",
       "guard": {
         "===": [
@@ -585,12 +551,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "ACTIVE"
-      },
-      "to": {
-        "value": "ACTIVE"
-      },
+      "from": "ACTIVE",
+      "to": "ACTIVE",
       "eventName": "delegate",
       "guard": {
         ">": [
@@ -632,12 +594,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "ACTIVE"
-      },
-      "to": {
-        "value": "ACTIVE"
-      },
+      "from": "ACTIVE",
+      "to": "ACTIVE",
       "eventName": "undelegate",
       "guard": {
         "getKey": [

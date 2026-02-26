@@ -6,120 +6,178 @@
   },
   "states": {
     "PROPOSED": {
-      "id": { "value": "PROPOSED" },
+      "id": "PROPOSED",
       "isFinal": false,
       "metadata": null
     },
     "OPEN": {
-      "id": { "value": "OPEN" },
+      "id": "OPEN",
       "isFinal": false,
       "metadata": null
     },
     "CLOSED": {
-      "id": { "value": "CLOSED" },
+      "id": "CLOSED",
       "isFinal": false,
       "metadata": null
     },
     "RESOLVING": {
-      "id": { "value": "RESOLVING" },
+      "id": "RESOLVING",
       "isFinal": false,
       "metadata": null
     },
     "SETTLED": {
-      "id": { "value": "SETTLED" },
+      "id": "SETTLED",
       "isFinal": true,
       "metadata": null
     },
     "REFUNDED": {
-      "id": { "value": "REFUNDED" },
+      "id": "REFUNDED",
       "isFinal": true,
       "metadata": null
     },
     "CANCELLED": {
-      "id": { "value": "CANCELLED" },
+      "id": "CANCELLED",
       "isFinal": true,
       "metadata": null
     }
   },
-  "initialState": { "value": "PROPOSED" },
+  "initialState": "PROPOSED",
   "transitions": [
     {
-      "from": { "value": "PROPOSED" },
-      "to": { "value": "OPEN" },
+      "from": "PROPOSED",
+      "to": "OPEN",
       "eventName": "open",
       "guard": {
         "===": [
-          { "var": "event.agent" },
-          { "var": "state.creator" }
+          {
+            "var": "event.agent"
+          },
+          {
+            "var": "state.creator"
+          }
         ]
       },
       "effect": {
         "merge": [
-          { "var": "state" },
+          {
+            "var": "state"
+          },
           {
             "status": "OPEN",
-            "openedAt": { "var": "$epochProgress" }
+            "openedAt": {
+              "var": "$epochProgress"
+            }
           }
         ]
       },
       "dependencies": []
     },
     {
-      "from": { "value": "PROPOSED" },
-      "to": { "value": "CANCELLED" },
+      "from": "PROPOSED",
+      "to": "CANCELLED",
       "eventName": "cancel",
       "guard": {
         "===": [
-          { "var": "event.agent" },
-          { "var": "state.creator" }
+          {
+            "var": "event.agent"
+          },
+          {
+            "var": "state.creator"
+          }
         ]
       },
       "effect": {
         "merge": [
-          { "var": "state" },
+          {
+            "var": "state"
+          },
           {
             "status": "CANCELLED",
-            "cancelledAt": { "var": "$epochProgress" },
-            "reason": { "var": "event.reason" }
+            "cancelledAt": {
+              "var": "$epochProgress"
+            },
+            "reason": {
+              "var": "event.reason"
+            }
           }
         ]
       },
       "dependencies": []
     },
     {
-      "from": { "value": "OPEN" },
-      "to": { "value": "OPEN" },
+      "from": "OPEN",
+      "to": "OPEN",
       "eventName": "commit",
       "guard": {
         "and": [
-          { ">": [{ "var": "event.amount" }, 0] },
+          {
+            ">": [
+              {
+                "var": "event.amount"
+              },
+              0
+            ]
+          },
           {
             "or": [
-              { "!": [{ "var": "state.deadline" }] },
-              { "<=": [{ "var": "$epochProgress" }, { "var": "state.deadline" }] }
+              {
+                "!": [
+                  {
+                    "var": "state.deadline"
+                  }
+                ]
+              },
+              {
+                "<=": [
+                  {
+                    "var": "$epochProgress"
+                  },
+                  {
+                    "var": "state.deadline"
+                  }
+                ]
+              }
             ]
           }
         ]
       },
       "effect": {
         "merge": [
-          { "var": "state" },
+          {
+            "var": "state"
+          },
           {
             "commitments": {
               "merge": [
-                { "var": "state.commitments" },
-                [{
-                  "agent": { "var": "event.agent" },
-                  "amount": { "var": "event.amount" },
-                  "data": { "var": "event.data" },
-                  "committedAt": { "var": "$epochProgress" }
-                }]
+                {
+                  "var": "state.commitments"
+                },
+                [
+                  {
+                    "agent": {
+                      "var": "event.agent"
+                    },
+                    "amount": {
+                      "var": "event.amount"
+                    },
+                    "data": {
+                      "var": "event.data"
+                    },
+                    "committedAt": {
+                      "var": "$epochProgress"
+                    }
+                  }
+                ]
               ]
             },
             "totalCommitted": {
               "+": [
-                { "var": "state.totalCommitted" },
-                { "var": "event.amount" }
+                {
+                  "var": "state.totalCommitted"
+                },
+                {
+                  "var": "event.amount"
+                }
               ]
             }
           }
@@ -128,55 +186,111 @@
       "dependencies": []
     },
     {
-      "from": { "value": "OPEN" },
-      "to": { "value": "CLOSED" },
+      "from": "OPEN",
+      "to": "CLOSED",
       "eventName": "close",
       "guard": {
         "or": [
-          { "===": [{ "var": "event.agent" }, { "var": "state.creator" }] },
+          {
+            "===": [
+              {
+                "var": "event.agent"
+              },
+              {
+                "var": "state.creator"
+              }
+            ]
+          },
           {
             "and": [
-              { "var": "state.deadline" },
-              { ">=": [{ "var": "$epochProgress" }, { "var": "state.deadline" }] }
+              {
+                "var": "state.deadline"
+              },
+              {
+                ">=": [
+                  {
+                    "var": "$epochProgress"
+                  },
+                  {
+                    "var": "state.deadline"
+                  }
+                ]
+              }
             ]
           }
         ]
       },
       "effect": {
         "merge": [
-          { "var": "state" },
+          {
+            "var": "state"
+          },
           {
             "status": "CLOSED",
-            "closedAt": { "var": "$epochProgress" }
+            "closedAt": {
+              "var": "$epochProgress"
+            }
           }
         ]
       },
       "dependencies": []
     },
     {
-      "from": { "value": "CLOSED" },
-      "to": { "value": "RESOLVING" },
+      "from": "CLOSED",
+      "to": "RESOLVING",
       "eventName": "submit_resolution",
       "guard": {
         "or": [
-          { "in": [{ "var": "event.agent" }, { "var": "state.oracles" }] },
-          { "===": [{ "var": "event.agent" }, { "var": "state.creator" }] }
+          {
+            "in": [
+              {
+                "var": "event.agent"
+              },
+              {
+                "var": "state.oracles"
+              }
+            ]
+          },
+          {
+            "===": [
+              {
+                "var": "event.agent"
+              },
+              {
+                "var": "state.creator"
+              }
+            ]
+          }
         ]
       },
       "effect": {
         "merge": [
-          { "var": "state" },
+          {
+            "var": "state"
+          },
           {
             "status": "RESOLVING",
             "resolutions": {
               "merge": [
-                { "var": "state.resolutions" },
-                [{
-                  "oracle": { "var": "event.agent" },
-                  "outcome": { "var": "event.outcome" },
-                  "proof": { "var": "event.proof" },
-                  "submittedAt": { "var": "$epochProgress" }
-                }]
+                {
+                  "var": "state.resolutions"
+                },
+                [
+                  {
+                    "oracle": {
+                      "var": "event.agent"
+                    },
+                    "outcome": {
+                      "var": "event.outcome"
+                    },
+                    "proof": {
+                      "var": "event.proof"
+                    },
+                    "submittedAt": {
+                      "var": "$epochProgress"
+                    }
+                  }
+                ]
               ]
             }
           }
@@ -185,35 +299,71 @@
       "dependencies": []
     },
     {
-      "from": { "value": "RESOLVING" },
-      "to": { "value": "RESOLVING" },
+      "from": "RESOLVING",
+      "to": "RESOLVING",
       "eventName": "submit_resolution",
       "guard": {
         "and": [
-          { "in": [{ "var": "event.agent" }, { "var": "state.oracles" }] },
           {
-            "!": [{
-              "in": [
-                { "var": "event.agent" },
-                { "map": [{ "var": "state.resolutions" }, { "var": "oracle" }] }
-              ]
-            }]
+            "in": [
+              {
+                "var": "event.agent"
+              },
+              {
+                "var": "state.oracles"
+              }
+            ]
+          },
+          {
+            "!": [
+              {
+                "in": [
+                  {
+                    "var": "event.agent"
+                  },
+                  {
+                    "map": [
+                      {
+                        "var": "state.resolutions"
+                      },
+                      {
+                        "var": "oracle"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
       "effect": {
         "merge": [
-          { "var": "state" },
+          {
+            "var": "state"
+          },
           {
             "resolutions": {
               "merge": [
-                { "var": "state.resolutions" },
-                [{
-                  "oracle": { "var": "event.agent" },
-                  "outcome": { "var": "event.outcome" },
-                  "proof": { "var": "event.proof" },
-                  "submittedAt": { "var": "$epochProgress" }
-                }]
+                {
+                  "var": "state.resolutions"
+                },
+                [
+                  {
+                    "oracle": {
+                      "var": "event.agent"
+                    },
+                    "outcome": {
+                      "var": "event.outcome"
+                    },
+                    "proof": {
+                      "var": "event.proof"
+                    },
+                    "submittedAt": {
+                      "var": "$epochProgress"
+                    }
+                  }
+                ]
               ]
             }
           }
@@ -222,46 +372,101 @@
       "dependencies": []
     },
     {
-      "from": { "value": "RESOLVING" },
-      "to": { "value": "SETTLED" },
+      "from": "RESOLVING",
+      "to": "SETTLED",
       "eventName": "finalize",
       "guard": {
         "or": [
-          { ">=": [{ "size": { "var": "state.resolutions" } }, { "var": "state.quorum" }] },
-          { "===": [{ "var": "state.marketType" }, "crowdfund"] },
-          { "===": [{ "var": "state.marketType" }, "group_buy"] },
-          { "===": [{ "var": "state.marketType" }, "auction"] }
+          {
+            ">=": [
+              {
+                "size": {
+                  "var": "state.resolutions"
+                }
+              },
+              {
+                "var": "state.quorum"
+              }
+            ]
+          },
+          {
+            "===": [
+              {
+                "var": "state.marketType"
+              },
+              "crowdfund"
+            ]
+          },
+          {
+            "===": [
+              {
+                "var": "state.marketType"
+              },
+              "group_buy"
+            ]
+          },
+          {
+            "===": [
+              {
+                "var": "state.marketType"
+              },
+              "auction"
+            ]
+          }
         ]
       },
       "effect": {
         "merge": [
-          { "var": "state" },
+          {
+            "var": "state"
+          },
           {
             "status": "SETTLED",
-            "settledAt": { "var": "$epochProgress" },
-            "finalOutcome": { "var": "event.outcome" },
-            "settlement": { "var": "event.settlement" }
+            "settledAt": {
+              "var": "$epochProgress"
+            },
+            "finalOutcome": {
+              "var": "event.outcome"
+            },
+            "settlement": {
+              "var": "event.settlement"
+            }
           }
         ]
       },
       "dependencies": []
     },
     {
-      "from": { "value": "CLOSED" },
-      "to": { "value": "REFUNDED" },
+      "from": "CLOSED",
+      "to": "REFUNDED",
       "eventName": "refund",
       "guard": {
         "and": [
-          { "var": "state.threshold" },
-          { "<": [{ "var": "state.totalCommitted" }, { "var": "state.threshold" }] }
+          {
+            "var": "state.threshold"
+          },
+          {
+            "<": [
+              {
+                "var": "state.totalCommitted"
+              },
+              {
+                "var": "state.threshold"
+              }
+            ]
+          }
         ]
       },
       "effect": {
         "merge": [
-          { "var": "state" },
+          {
+            "var": "state"
+          },
           {
             "status": "REFUNDED",
-            "refundedAt": { "var": "$epochProgress" },
+            "refundedAt": {
+              "var": "$epochProgress"
+            },
             "reason": "threshold_not_met"
           }
         ]
@@ -269,42 +474,68 @@
       "dependencies": []
     },
     {
-      "from": { "value": "RESOLVING" },
-      "to": { "value": "REFUNDED" },
+      "from": "RESOLVING",
+      "to": "REFUNDED",
       "eventName": "refund",
       "guard": {
         "or": [
-          { "===": [{ "var": "event.agent" }, { "var": "state.creator" }] },
+          {
+            "===": [
+              {
+                "var": "event.agent"
+              },
+              {
+                "var": "state.creator"
+              }
+            ]
+          },
           {
             ">=": [
               {
                 "size": {
                   "filter": [
-                    { "var": "state.resolutions" },
-                    { "===": [{ "var": "outcome" }, "INVALID"] }
+                    {
+                      "var": "state.resolutions"
+                    },
+                    {
+                      "===": [
+                        {
+                          "var": "outcome"
+                        },
+                        "INVALID"
+                      ]
+                    }
                   ]
                 }
               },
-              { "var": "state.quorum" }
+              {
+                "var": "state.quorum"
+              }
             ]
           }
         ]
       },
       "effect": {
         "merge": [
-          { "var": "state" },
+          {
+            "var": "state"
+          },
           {
             "status": "REFUNDED",
-            "refundedAt": { "var": "$epochProgress" },
-            "reason": { "var": "event.reason" }
+            "refundedAt": {
+              "var": "$epochProgress"
+            },
+            "reason": {
+              "var": "event.reason"
+            }
           }
         ]
       },
       "dependencies": []
     },
     {
-      "from": { "value": "SETTLED" },
-      "to": { "value": "SETTLED" },
+      "from": "SETTLED",
+      "to": "SETTLED",
       "eventName": "claim",
       "guard": {
         "and": [
@@ -313,8 +544,19 @@
               {
                 "size": {
                   "filter": [
-                    { "var": "state.commitments" },
-                    { "===": [{ "var": "agent" }, { "var": "event.agent" }] }
+                    {
+                      "var": "state.commitments"
+                    },
+                    {
+                      "===": [
+                        {
+                          "var": "agent"
+                        },
+                        {
+                          "var": "event.agent"
+                        }
+                      ]
+                    }
                   ]
                 }
               },
@@ -322,27 +564,52 @@
             ]
           },
           {
-            "!": [{
-              "in": [
-                { "var": "event.agent" },
-                { "map": [{ "var": "state.claims" }, { "var": "agent" }] }
-              ]
-            }]
+            "!": [
+              {
+                "in": [
+                  {
+                    "var": "event.agent"
+                  },
+                  {
+                    "map": [
+                      {
+                        "var": "state.claims"
+                      },
+                      {
+                        "var": "agent"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
       "effect": {
         "merge": [
-          { "var": "state" },
+          {
+            "var": "state"
+          },
           {
             "claims": {
               "merge": [
-                { "var": "state.claims" },
-                [{
-                  "agent": { "var": "event.agent" },
-                  "amount": { "var": "event.amount" },
-                  "claimedAt": { "var": "$epochProgress" }
-                }]
+                {
+                  "var": "state.claims"
+                },
+                [
+                  {
+                    "agent": {
+                      "var": "event.agent"
+                    },
+                    "amount": {
+                      "var": "event.amount"
+                    },
+                    "claimedAt": {
+                      "var": "$epochProgress"
+                    }
+                  }
+                ]
               ]
             }
           }

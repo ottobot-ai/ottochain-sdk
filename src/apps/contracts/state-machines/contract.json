@@ -12,59 +12,41 @@
   },
   "states": {
     "PROPOSED": {
-      "id": {
-        "value": "PROPOSED"
-      },
+      "id": "PROPOSED",
       "isFinal": false,
       "metadata": null
     },
     "ACTIVE": {
-      "id": {
-        "value": "ACTIVE"
-      },
+      "id": "ACTIVE",
       "isFinal": false,
       "metadata": null
     },
     "COMPLETED": {
-      "id": {
-        "value": "COMPLETED"
-      },
+      "id": "COMPLETED",
       "isFinal": true,
       "metadata": null
     },
     "DISPUTED": {
-      "id": {
-        "value": "DISPUTED"
-      },
+      "id": "DISPUTED",
       "isFinal": false,
       "metadata": null
     },
     "REJECTED": {
-      "id": {
-        "value": "REJECTED"
-      },
+      "id": "REJECTED",
       "isFinal": true,
       "metadata": null
     },
     "CANCELLED": {
-      "id": {
-        "value": "CANCELLED"
-      },
+      "id": "CANCELLED",
       "isFinal": true,
       "metadata": null
     }
   },
-  "initialState": {
-    "value": "PROPOSED"
-  },
+  "initialState": "PROPOSED",
   "transitions": [
     {
-      "from": {
-        "value": "PROPOSED"
-      },
-      "to": {
-        "value": "ACTIVE"
-      },
+      "from": "PROPOSED",
+      "to": "ACTIVE",
       "eventName": "accept",
       "guard": {
         "===": [
@@ -92,12 +74,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "PROPOSED"
-      },
-      "to": {
-        "value": "REJECTED"
-      },
+      "from": "PROPOSED",
+      "to": "REJECTED",
       "eventName": "reject",
       "guard": {
         "===": [
@@ -128,12 +106,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "PROPOSED"
-      },
-      "to": {
-        "value": "CANCELLED"
-      },
+      "from": "PROPOSED",
+      "to": "CANCELLED",
       "eventName": "cancel",
       "guard": {
         "===": [
@@ -161,12 +135,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "ACTIVE"
-      },
-      "to": {
-        "value": "ACTIVE"
-      },
+      "from": "ACTIVE",
+      "to": "ACTIVE",
       "eventName": "submit_completion",
       "guard": {
         "and": [
@@ -249,12 +219,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "ACTIVE"
-      },
-      "to": {
-        "value": "COMPLETED"
-      },
+      "from": "ACTIVE",
+      "to": "COMPLETED",
       "eventName": "finalize",
       "guard": {
         ">=": [
@@ -282,12 +248,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "ACTIVE"
-      },
-      "to": {
-        "value": "DISPUTED"
-      },
+      "from": "ACTIVE",
+      "to": "DISPUTED",
       "eventName": "dispute",
       "guard": {
         "or": [
@@ -335,12 +297,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "DISPUTED"
-      },
-      "to": {
-        "value": "COMPLETED"
-      },
+      "from": "DISPUTED",
+      "to": "COMPLETED",
       "eventName": "resolve",
       "guard": {
         "or": [

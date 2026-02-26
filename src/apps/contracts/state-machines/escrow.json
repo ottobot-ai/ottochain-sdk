@@ -13,73 +13,51 @@
   },
   "states": {
     "CREATED": {
-      "id": {
-        "value": "CREATED"
-      },
+      "id": "CREATED",
       "isFinal": false,
       "metadata": null
     },
     "FUNDED": {
-      "id": {
-        "value": "FUNDED"
-      },
+      "id": "FUNDED",
       "isFinal": false,
       "metadata": null
     },
     "ACTIVE": {
-      "id": {
-        "value": "ACTIVE"
-      },
+      "id": "ACTIVE",
       "isFinal": false,
       "metadata": null
     },
     "RELEASING": {
-      "id": {
-        "value": "RELEASING"
-      },
+      "id": "RELEASING",
       "isFinal": false,
       "metadata": null
     },
     "DISPUTED": {
-      "id": {
-        "value": "DISPUTED"
-      },
+      "id": "DISPUTED",
       "isFinal": false,
       "metadata": null
     },
     "RELEASED": {
-      "id": {
-        "value": "RELEASED"
-      },
+      "id": "RELEASED",
       "isFinal": true,
       "metadata": null
     },
     "REFUNDED": {
-      "id": {
-        "value": "REFUNDED"
-      },
+      "id": "REFUNDED",
       "isFinal": true,
       "metadata": null
     },
     "SPLIT": {
-      "id": {
-        "value": "SPLIT"
-      },
+      "id": "SPLIT",
       "isFinal": true,
       "metadata": null
     }
   },
-  "initialState": {
-    "value": "CREATED"
-  },
+  "initialState": "CREATED",
   "transitions": [
     {
-      "from": {
-        "value": "CREATED"
-      },
-      "to": {
-        "value": "FUNDED"
-      },
+      "from": "CREATED",
+      "to": "FUNDED",
       "eventName": "deposit",
       "guard": {
         "and": [
@@ -123,12 +101,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "FUNDED"
-      },
-      "to": {
-        "value": "ACTIVE"
-      },
+      "from": "FUNDED",
+      "to": "ACTIVE",
       "eventName": "activate",
       "guard": {
         "or": [
@@ -162,12 +136,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "ACTIVE"
-      },
-      "to": {
-        "value": "RELEASING"
-      },
+      "from": "ACTIVE",
+      "to": "RELEASING",
       "eventName": "request_release",
       "guard": {
         "===": [
@@ -215,12 +185,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "RELEASING"
-      },
-      "to": {
-        "value": "RELEASED"
-      },
+      "from": "RELEASING",
+      "to": "RELEASED",
       "eventName": "approve_release",
       "guard": {
         "or": [
@@ -264,12 +230,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "RELEASING"
-      },
-      "to": {
-        "value": "DISPUTED"
-      },
+      "from": "RELEASING",
+      "to": "DISPUTED",
       "eventName": "dispute",
       "guard": {
         "and": [
@@ -330,12 +292,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "DISPUTED"
-      },
-      "to": {
-        "value": "SPLIT"
-      },
+      "from": "DISPUTED",
+      "to": "SPLIT",
       "eventName": "ruling",
       "guard": {
         "var": "event.judicialRuling"
@@ -358,12 +316,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "ACTIVE"
-      },
-      "to": {
-        "value": "REFUNDED"
-      },
+      "from": "ACTIVE",
+      "to": "REFUNDED",
       "eventName": "refund",
       "guard": {
         "or": [

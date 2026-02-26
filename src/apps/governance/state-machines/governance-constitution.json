@@ -6,52 +6,36 @@
   },
   "states": {
     "DRAFT": {
-      "id": {
-        "value": "DRAFT"
-      },
+      "id": "DRAFT",
       "isFinal": false,
       "metadata": null
     },
     "RATIFIED": {
-      "id": {
-        "value": "RATIFIED"
-      },
+      "id": "RATIFIED",
       "isFinal": false,
       "metadata": null
     },
     "AMENDING": {
-      "id": {
-        "value": "AMENDING"
-      },
+      "id": "AMENDING",
       "isFinal": false,
       "metadata": null
     },
     "SUSPENDED": {
-      "id": {
-        "value": "SUSPENDED"
-      },
+      "id": "SUSPENDED",
       "isFinal": false,
       "metadata": null
     },
     "DISSOLVED": {
-      "id": {
-        "value": "DISSOLVED"
-      },
+      "id": "DISSOLVED",
       "isFinal": true,
       "metadata": null
     }
   },
-  "initialState": {
-    "value": "DRAFT"
-  },
+  "initialState": "DRAFT",
   "transitions": [
     {
-      "from": {
-        "value": "DRAFT"
-      },
-      "to": {
-        "value": "RATIFIED"
-      },
+      "from": "DRAFT",
+      "to": "RATIFIED",
       "eventName": "ratify",
       "guard": {
         ">=": [
@@ -81,12 +65,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "DRAFT"
-      },
-      "to": {
-        "value": "DRAFT"
-      },
+      "from": "DRAFT",
+      "to": "DRAFT",
       "eventName": "sign",
       "guard": {
         "and": [
@@ -140,12 +120,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "RATIFIED"
-      },
-      "to": {
-        "value": "AMENDING"
-      },
+      "from": "RATIFIED",
+      "to": "AMENDING",
       "eventName": "propose_amendment",
       "guard": {
         "or": [
@@ -199,12 +175,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "AMENDING"
-      },
-      "to": {
-        "value": "RATIFIED"
-      },
+      "from": "AMENDING",
+      "to": "RATIFIED",
       "eventName": "ratify_amendment",
       "guard": {
         ">=": [
@@ -250,12 +222,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "AMENDING"
-      },
-      "to": {
-        "value": "RATIFIED"
-      },
+      "from": "AMENDING",
+      "to": "RATIFIED",
       "eventName": "reject_amendment",
       "guard": {
         "var": "state.pendingAmendment.rejected"
@@ -286,12 +254,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "RATIFIED"
-      },
-      "to": {
-        "value": "SUSPENDED"
-      },
+      "from": "RATIFIED",
+      "to": "SUSPENDED",
       "eventName": "suspend",
       "guard": {
         "and": [
@@ -332,12 +296,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "SUSPENDED"
-      },
-      "to": {
-        "value": "RATIFIED"
-      },
+      "from": "SUSPENDED",
+      "to": "RATIFIED",
       "eventName": "restore",
       "guard": {
         ">=": [
@@ -365,12 +325,8 @@
       "dependencies": []
     },
     {
-      "from": {
-        "value": "RATIFIED"
-      },
-      "to": {
-        "value": "DISSOLVED"
-      },
+      "from": "RATIFIED",
+      "to": "DISSOLVED",
       "eventName": "dissolve",
       "guard": {
         ">=": [
