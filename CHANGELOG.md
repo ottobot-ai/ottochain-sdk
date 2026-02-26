@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/ottobot-ai/ottochain-sdk/compare/v1.1.0...v1.1.1) (2026-02-26)
+
+
+### Bug Fixes
+
+* publish StateId schema refactor as patch release ([#81](https://github.com/ottobot-ai/ottochain-sdk/issues/81)) ([255a808](https://github.com/ottobot-ai/ottochain-sdk/commit/255a808d84e2427ce35b08a7d7f72bf081a43136))
+
 ## [1.1.0](https://github.com/ottobot-ai/ottochain-sdk/compare/v1.0.3...v1.1.0) (2026-02-26)
 
 
