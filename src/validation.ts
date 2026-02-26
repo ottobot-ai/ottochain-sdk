@@ -182,7 +182,7 @@ export type ValidatedPlatformLink = z.infer<typeof PlatformLinkSchema>;
 /**
  * Schema for contract terms (flexible structure)
  */
-export const ContractTermsSchema = z.record(z.unknown());
+export const ContractTermsSchema = z.record(z.string(), z.unknown());
 
 /**
  * Schema for ProposeContractRequest
