@@ -10,7 +10,7 @@
  * @group apps
  */
 
-import { describe, it, expect, beforeAll, afterAll } from '@jest/testing-library/jest-dom';
+import { describe, it, expect } from '@jest/globals';
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 
@@ -91,6 +91,7 @@ describe('Adding a New App: TDD Implementation Tests', () => {
       expect(existsSync(definitionPath)).toBe(true);
       
       // Import and validate structure
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const definition = require(definitionPath).default || require(definitionPath);
       
       // ASSERT: Required state machine structure
@@ -113,6 +114,7 @@ describe('Adding a New App: TDD Implementation Tests', () => {
 
     it('should have valid transitions with proper guards', () => {
       const definitionPath = join(process.cwd(), `src/apps/${TEST_DOMAIN}/definition.ts`);
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const definition = require(definitionPath).default || require(definitionPath);
       
       const transitions = definition.transitions;
@@ -220,6 +222,7 @@ describe('Adding a New App: TDD Implementation Tests', () => {
   describe('Step 4: SDK Client Methods', () => {
     it('should export lending app from SDK', () => {
       // ASSERT: App is exported from main SDK entry
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { lending } = require('../../src/apps/index');
       expect(lending).toBeDefined();
       
@@ -231,6 +234,7 @@ describe('Adding a New App: TDD Implementation Tests', () => {
     });
 
     it('should implement proposeLoan client method', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { lending } = require('../../src/apps/index');
       
       // Mock fetch for testing
@@ -266,6 +270,7 @@ describe('Adding a New App: TDD Implementation Tests', () => {
     });
 
     it('should implement error handling in client methods', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { lending } = require('../../src/apps/index');
       
       const mockFetch = jest.fn().mockResolvedValue({
@@ -286,6 +291,7 @@ describe('Adding a New App: TDD Implementation Tests', () => {
   describe('Step 5: Traffic Generator Integration', () => {
     it('should have WorkflowDefinition for lending domain', () => {
       // Import traffic generator workflows
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { WORKFLOW_DEFINITIONS } = require('../../packages/traffic-generator/src/workflows');
       
       // ASSERT: Contains lending workflow
@@ -304,6 +310,7 @@ describe('Adding a New App: TDD Implementation Tests', () => {
     });
 
     it('should generate valid initial data', () => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { WORKFLOW_DEFINITIONS } = require('../../packages/traffic-generator/src/workflows');
       const lendingWorkflow = WORKFLOW_DEFINITIONS.find((w: any) => w.type === 'Lending');
       
@@ -328,6 +335,7 @@ describe('Adding a New App: TDD Implementation Tests', () => {
     });
 
     it('should have valid transition definitions', () => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { WORKFLOW_DEFINITIONS } = require('../../packages/traffic-generator/src/workflows');
       const lendingWorkflow = WORKFLOW_DEFINITIONS.find((w: any) => w.type === 'Lending');
       
@@ -399,6 +407,7 @@ describe('Adding a New App: TDD Implementation Tests', () => {
       expect(existsSync(join(process.cwd(), SDK_APP_PATH))).toBe(true);
       
       // ASSERT: SDK can import without errors
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { lending } = require('../../src/apps/index');
       expect(typeof lending.proposeLoan).toBe('function');
       expect(typeof lending.acceptLoan).toBe('function');
@@ -406,6 +415,7 @@ describe('Adding a New App: TDD Implementation Tests', () => {
       expect(typeof lending.listLoans).toBe('function');
       
       // ASSERT: State machine definition is valid JSON Logic
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const definition = require(`../../src/apps/${TEST_DOMAIN}/definition`);
       expect(definition.transitions.every((t: any) => 
         t.guard && (typeof t.guard === 'object')
@@ -416,6 +426,7 @@ describe('Adding a New App: TDD Implementation Tests', () => {
       // Test error boundaries and validation
       
       // Mock invalid inputs
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const invalidLoanData = {
         borrowerAddress: '', // Empty address
         principalAmount: -100, // Negative amount
