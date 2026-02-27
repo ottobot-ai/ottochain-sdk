@@ -20,7 +20,7 @@ import { AttestationType } from '../../generated/ottochain/apps/identity/v1/atte
 export const AGENT_TRANSITIONS: Record<AgentState, readonly string[]> = {
   [AgentState.AGENT_STATE_UNSPECIFIED]: [],
   [AgentState.AGENT_STATE_REGISTERED]: ['activate', 'withdraw'],
-  [AgentState.AGENT_STATE_ACTIVE]: ['challenge', 'withdraw'],
+  [AgentState.AGENT_STATE_ACTIVE]: ['receive_vouch', 'receive_completion', 'receive_violation', 'challenge', 'withdraw'],
   [AgentState.AGENT_STATE_CHALLENGED]: ['uphold_challenge', 'dismiss_challenge'],
   [AgentState.AGENT_STATE_SUSPENDED]: ['begin_probation'],
   [AgentState.AGENT_STATE_PROBATION]: ['complete_probation'],
