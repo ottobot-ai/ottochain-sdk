@@ -1,4 +1,6 @@
 import {
+  createStateMachinePayload,
+  createScriptPayload,
   createTransitionPayload,
   createArchivePayload,
   createInvokeScriptPayload,
@@ -9,6 +11,92 @@ import {
 import { generateKeyPair } from '../wallet.js';
 
 describe('transaction helpers', () => {
+  describe('createStateMachinePayload', () => {
+    it('creates a properly structured create message', () => {
+      const result = createStateMachinePayload({
+        fiberId: 'test-fiber',
+        definition: { states: { CREATED: {} }, initialState: 'CREATED' },
+        initialData: { owner: 'DAG123' },
+      });
+      expect(result).toEqual({
+        CreateStateMachine: {
+          fiberId: 'test-fiber',
+          definition: { states: { CREATED: {} }, initialState: 'CREATED' },
+          initialData: { owner: 'DAG123' },
+        },
+      });
+    });
+
+    it('defaults initialData to empty object', () => {
+      const result = createStateMachinePayload({
+        fiberId: 'f',
+        definition: { states: {} },
+      });
+      expect(result.CreateStateMachine.initialData).toEqual({});
+    });
+
+    it('includes parentFiberId when provided', () => {
+      const result = createStateMachinePayload({
+        fiberId: 'child',
+        definition: {},
+        parentFiberId: 'parent',
+      });
+      expect(result.CreateStateMachine.parentFiberId).toBe('parent');
+    });
+
+    it('omits parentFiberId when not provided', () => {
+      const result = createStateMachinePayload({
+        fiberId: 'f',
+        definition: {},
+      });
+      expect(result.CreateStateMachine).not.toHaveProperty('parentFiberId');
+    });
+  });
+
+  describe('createScriptPayload', () => {
+    it('creates a properly structured script message', () => {
+      const result = createScriptPayload({
+        fiberId: 'script-fiber',
+        scriptProgram: { methods: { inc: { '+': [{ var: 'state.value' }, 1] } } },
+        initialState: { value: 0 },
+        accessControl: { type: 'open' },
+      });
+      expect(result).toEqual({
+        CreateScript: {
+          fiberId: 'script-fiber',
+          scriptProgram: { methods: { inc: { '+': [{ var: 'state.value' }, 1] } } },
+          initialState: { value: 0 },
+          accessControl: { type: 'open' },
+        },
+      });
+    });
+
+    it('defaults accessControl to open', () => {
+      const result = createScriptPayload({
+        fiberId: 'f',
+        scriptProgram: {},
+      });
+      expect(result.CreateScript.accessControl).toEqual({ type: 'open' });
+    });
+
+    it('defaults initialState to null', () => {
+      const result = createScriptPayload({
+        fiberId: 'f',
+        scriptProgram: {},
+      });
+      expect(result.CreateScript.initialState).toBeNull();
+    });
+
+    it('accepts array initialState', () => {
+      const result = createScriptPayload({
+        fiberId: 'f',
+        scriptProgram: {},
+        initialState: [1, 2, 3],
+      });
+      expect(result.CreateScript.initialState).toEqual([1, 2, 3]);
+    });
+  });
+
   describe('createTransitionPayload', () => {
     it('creates a properly structured transition message', () => {
       const result = createTransitionPayload({

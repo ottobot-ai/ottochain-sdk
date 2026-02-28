@@ -9,6 +9,62 @@ import { signDataUpdate } from './sign.js';
 import type { Signed } from './types.js';
 import { getPublicKeyId } from './wallet.js';
 
+// ============================================================================
+// State Machine Operations
+// ============================================================================
+
+/**
+ * Parameters for creating a new state machine fiber
+ */
+export interface CreateStateMachineParams {
+  fiberId: string;
+  definition: Record<string, unknown>;
+  initialData?: Record<string, unknown>;
+  parentFiberId?: string;
+}
+
+/**
+ * A CreateStateMachine message ready for signing
+ */
+export interface CreateStateMachineMessage {
+  CreateStateMachine: {
+    fiberId: string;
+    definition: Record<string, unknown>;
+    initialData: Record<string, unknown>;
+    parentFiberId?: string;
+  };
+}
+
+/**
+ * Create a new state machine fiber payload.
+ *
+ * @param params - State machine creation parameters
+ * @returns A CreateStateMachine message ready for signing
+ *
+ * @example
+ * ```typescript
+ * const create = createStateMachinePayload({
+ *   fiberId: crypto.randomUUID(),
+ *   definition: {
+ *     states: { CREATED: { on: { activate: 'ACTIVE' } }, ACTIVE: {} },
+ *     initialState: 'CREATED',
+ *   },
+ *   initialData: { owner: myAddress },
+ * });
+ * const signed = await signTransaction(create, privateKey);
+ * ```
+ */
+export function createStateMachinePayload(params: CreateStateMachineParams): CreateStateMachineMessage {
+  return {
+    CreateStateMachine: {
+      fiberId: params.fiberId,
+      definition: params.definition,
+      initialData: params.initialData ?? {},
+      ...(params.parentFiberId ? { parentFiberId: params.parentFiberId } : {}),
+    },
+  };
+}
+
 /**
  * Parameters for creating a transition payload
  */
@@ -89,6 +145,66 @@ export function createArchivePayload(params: ArchiveParams): ArchiveStateMachine
     ArchiveStateMachine: {
       fiberId: params.fiberId,
       targetSequenceNumber: params.targetSequenceNumber,
+    },
+  };
+}
+
+// ============================================================================
+// Script Operations
+// ============================================================================
+
+/**
+ * Parameters for creating a new script fiber
+ */
+export interface CreateScriptParams {
+  fiberId: string;
+  scriptProgram: Record<string, unknown>;
+  initialState?: Record<string, unknown> | unknown[];
+  accessControl?: Record<string, unknown>;
+}
+
+/**
+ * A CreateScript message ready for signing
+ */
+export interface CreateScriptMessage {
+  CreateScript: {
+    fiberId: string;
+    scriptProgram: Record<string, unknown>;
+    initialState: Record<string, unknown> | unknown[] | null;
+    accessControl: Record<string, unknown>;
+  };
+}
+
+/**
+ * Create a new script fiber payload.
+ *
+ * Note: `initialState` must be an object or array, NOT a primitive.
+ *
+ * @param params - Script creation parameters
+ * @returns A CreateScript message ready for signing
+ *
+ * @example
+ * ```typescript
+ * const script = createScriptPayload({
+ *   fiberId: crypto.randomUUID(),
+ *   scriptProgram: {
+ *     methods: {
+ *       increment: { "+": [{ var: "state.value" }, 1] },
+ *     },
+ *   },
+ *   initialState: { value: 0 },
+ *   accessControl: { type: 'open' },
+ * });
+ * const signed = await signTransaction(script, privateKey);
+ * ```
+ */
+export function createScriptPayload(params: CreateScriptParams): CreateScriptMessage {
+  return {
+    CreateScript: {
+      fiberId: params.fiberId,
+      scriptProgram: params.scriptProgram,
+      initialState: params.initialState ?? null,
+      accessControl: params.accessControl ?? { type: 'open' },
     },
   };
 }

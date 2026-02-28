@@ -96,7 +96,15 @@ export {
   addTransactionSignature,
   getPublicKeyForRegistration,
 } from './transaction.js';
+export {
+  createStateMachinePayload,
+  createScriptPayload,
+} from './transaction.js';
 export type {
+  CreateStateMachineParams,
+  CreateStateMachineMessage,
+  CreateScriptParams,
+  CreateScriptMessage,
   TransitionParams,
   TransitionStateMachineMessage,
   ArchiveParams,
