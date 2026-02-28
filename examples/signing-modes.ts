@@ -11,10 +11,12 @@ import {
   createTransitionPayload,
   signTransaction,
   HttpClient,
+  MetagraphClient,
 } from '@ottochain/sdk';
 
 // Bridge URL - adjust for your environment
 const BRIDGE_URL = process.env.BRIDGE_URL ?? 'http://localhost:3030';
+const DL1_URLS = (process.env.DL1_URLS ?? 'http://localhost:9400').split(',');
 
 /**
  * Example 1: Server-Signed Mode
@@ -193,6 +195,57 @@ async function selfSignedExample() {
   return registerResponse.fiberId;
 }
 
+
+/**
+ * Example 3: Direct DL1 Submission (No Bridge)
+ *
+ * Self-signed transactions can be submitted directly to DL1 nodes,
+ * bypassing the bridge entirely for transaction submission.
+ * The bridge is still needed for registration metadata.
+ *
+ * This is the most decentralized approach — only the metagraph
+ * nodes need to be reachable.
+ */
+async function directDL1Example() {
+  console.log('\n=== Direct DL1 Submission ===\n');
+
+  // Connect directly to DL1 nodes (no bridge needed for submission)
+  const metagraph = new MetagraphClient({
+    ml0Url: 'http://localhost:9200',
+    dl1Urls: DL1_URLS,
+  });
+
+  // Generate keypair and create a transition payload
+  const keyPair = generateKeyPair();
+  console.log(`1. Generated keypair: ${keyPair.address}`);
+
+  // Assume fiberId from a prior registration
+  const fiberId = 'example-fiber-id';
+
+  const payload = createTransitionPayload({
+    fiberId,
+    eventName: 'activate',
+    payload: {},
+    targetSequenceNumber: 0,
+  });
+
+  // Sign locally
+  const signed = await signTransaction(payload, keyPair.privateKey);
+  console.log('2. Signed transaction locally');
+
+  // Submit directly to DL1 — no bridge involved
+  console.log('3. Submitting directly to DL1...');
+  try {
+    const result = await metagraph.submitData(signed);
+    console.log(`   Hash: ${result.hash}`);
+  } catch (err) {
+    console.log(`   (Expected to fail without running metagraph: ${(err as Error).message})`);
+  }
+
+  console.log('\nNote: Bridge is still needed for registration metadata.');
+  console.log('But transaction submission can go directly to DL1 nodes.');
+}
+
 /**
  * Main entry point
  */
@@ -208,6 +261,9 @@ async function main() {
     // Run self-signed example
     await selfSignedExample();
 
+    // Run direct DL1 example
+    await directDL1Example();
+
     console.log('\n=== Summary ===\n');
     console.log('Server-signed mode:');
     console.log('  - Easier to implement');
@@ -218,6 +274,11 @@ async function main() {
     console.log('  - Full key custody');
     console.log('  - Client signs locally');
     console.log('  - Better for production');
+    console.log('');
+    console.log('Direct DL1 submission:');
+    console.log('  - No bridge dependency for tx submission');
+    console.log('  - Multi-node resilience with Promise.any');
+    console.log('  - Most decentralized approach');
   } catch (error) {
     console.error('Error:', error);
     process.exit(1);

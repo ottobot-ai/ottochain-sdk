@@ -9,6 +9,8 @@
  * @packageDocumentation
  */
 
+import type { Signed } from '../metakit/types.js';
+import { createDataTransactionRequest } from '../metakit/transaction.js';
 import { HttpClient } from '../metakit/network/client.js';
 import { NetworkError } from '../metakit/network/types.js';
 import type {
@@ -86,6 +88,8 @@ export interface MetagraphClientConfig {
   ml0Url: string;
   /** DL1 node base URL for data submission (e.g., 'http://localhost:9400') */
   dl1Url?: string;
+  /** Multiple DL1 node URLs for resilient data submission */
+  dl1Urls?: string[];
   /** Request timeout in milliseconds (default: 30000) */
   timeout?: number;
 }
@@ -116,12 +120,16 @@ export interface MetagraphClientConfig {
 export class MetagraphClient {
   private ml0: HttpClient;
   private dl1?: HttpClient;
+  private dl1Clients: HttpClient[];
 
   constructor(config: MetagraphClientConfig) {
     this.ml0 = new HttpClient(config.ml0Url, config.timeout);
     if (config.dl1Url) {
       this.dl1 = new HttpClient(config.dl1Url, config.timeout);
     }
+    // Build DL1 client pool from dl1Urls (falls back to dl1Url if provided)
+    const urls = config.dl1Urls ?? (config.dl1Url ? [config.dl1Url] : []);
+    this.dl1Clients = urls.map((url) => new HttpClient(url, config.timeout));
   }
 
   // -------------------------------------------------------------------------
@@ -417,5 +425,54 @@ export class MetagraphClient {
       throw new Error('dl1Url is required for postData');
     }
     return this.dl1.post<{ hash: string }>('/data', signedData);
+  }
+
+  /**
+   * Submit a self-signed transaction directly to DL1 nodes.
+   *
+   * Wraps the signed payload in `{ data, fee: null }` format and submits
+   * to one of the configured DL1 nodes. Uses `Promise.any` when multiple
+   * DL1 URLs are configured for resilience.
+   *
+   * @param signed - A `Signed<T>` object from `signTransaction()`
+   * @returns Response containing the data hash
+   * @throws Error if no DL1 URLs are configured or all nodes fail
+   *
+   * @example
+   * ```typescript
+   * const metagraph = new MetagraphClient({
+   *   ml0Url: 'http://localhost:9200',
+   *   dl1Urls: ['http://node1:9400', 'http://node2:9400'],
+   * });
+   * const signed = await signTransaction(payload, privateKey);
+   * await metagraph.submitData(signed);
+   * ```
+   */
+  async submitData<T>(signed: Signed<T>): Promise<{ hash: string }> {
+    if (this.dl1Clients.length === 0) {
+      throw new Error('dl1Url or dl1Urls is required for submitData');
+    }
+    const request = createDataTransactionRequest(signed);
+    if (this.dl1Clients.length === 1) {
+      return this.dl1Clients[0].post<{ hash: string }>('/data', request);
+    }
+    // Try all DL1 nodes concurrently, return first success
+    const errors: Error[] = [];
+    return new Promise<{ hash: string }>((resolve, reject) => {
+      let settled = false;
+      let pending = this.dl1Clients.length;
+      for (const client of this.dl1Clients) {
+        client.post<{ hash: string }>('/data', request).then(
+          (result) => { if (!settled) { settled = true; resolve(result); } },
+          (err) => {
+            errors.push(err instanceof Error ? err : new Error(String(err)));
+            pending--;
+            if (pending === 0 && !settled) {
+              reject(new Error('All DL1 nodes failed: ' + errors.map(e => e.message).join('; ')));
+            }
+          },
+        );
+      }
+    });
   }
 }
