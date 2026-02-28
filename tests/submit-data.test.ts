@@ -1,7 +1,7 @@
 /**
  * Tests for MetagraphClient.submitData — direct DL1 submission
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from '@jest/globals';
 import {
   createTransitionPayload,
   signTransaction,
