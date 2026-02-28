@@ -8,8 +8,8 @@ import {
   addTransactionSignature,
   createDataTransactionRequest,
   getPublicKeyForRegistration,
-} from '../transaction.js';
-import { generateKeyPair } from '../wallet.js';
+} from '../../src/metakit/transaction.js';
+import { generateKeyPair } from '../../src/metakit/wallet.js';
 
 describe('transaction helpers', () => {
   describe('createStateMachinePayload', () => {
