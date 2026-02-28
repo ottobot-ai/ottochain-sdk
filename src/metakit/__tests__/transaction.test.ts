@@ -6,6 +6,7 @@ import {
   createInvokeScriptPayload,
   signTransaction,
   addTransactionSignature,
+  createDataTransactionRequest,
   getPublicKeyForRegistration,
 } from '../transaction.js';
 import { generateKeyPair } from '../wallet.js';
@@ -199,6 +200,23 @@ describe('transaction helpers', () => {
       expect(multiSigned.proofs).toHaveLength(2);
       expect(multiSigned.proofs[0].id).not.toEqual(multiSigned.proofs[1].id);
       expect(multiSigned.value).toEqual(message);
+    });
+  });
+
+  describe('createDataTransactionRequest', () => {
+    it('wraps signed object in DL1 submission format', async () => {
+      const kp = generateKeyPair();
+      const message = createTransitionPayload({
+        fiberId: 'test',
+        eventName: 'activate',
+        targetSequenceNumber: 0,
+      });
+      const signed = await signTransaction(message, kp.privateKey);
+      const request = createDataTransactionRequest(signed);
+      expect(request).toHaveProperty('data');
+      expect(request).toHaveProperty('fee', null);
+      expect(request.data.value).toEqual(message);
+      expect(request.data.proofs).toHaveLength(1);
     });
   });
 

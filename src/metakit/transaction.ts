@@ -297,6 +297,39 @@ export async function signTransaction<T>(
 }
 
 /**
+ * A DataTransactionRequest ready for submission to the DL1 `/data` endpoint.
+ */
+export interface DataTransactionRequest<T> {
+  data: Signed<T>;
+  fee: null;
+}
+
+/**
+ * Wrap a signed transaction in the DataTransactionRequest format
+ * expected by tessellation's DL1 `/data` endpoint.
+ *
+ * @param signed - A signed transaction from signTransaction()
+ * @returns Payload ready for POST to DL1 `/data`
+ *
+ * @example
+ * ```typescript
+ * const transition = createTransitionPayload({ ... });
+ * const signed = await signTransaction(transition, privateKey);
+ * const payload = createDataTransactionRequest(signed);
+ *
+ * // Submit directly to DL1
+ * await fetch('http://dl1-node:9400/data', {
+ *   method: 'POST',
+ *   headers: { 'Content-Type': 'application/json' },
+ *   body: JSON.stringify(payload),
+ * });
+ * ```
+ */
+export function createDataTransactionRequest<T>(signed: Signed<T>): DataTransactionRequest<T> {
+  return { data: signed, fee: null };
+}
+
+/**
  * Add an additional signature to a signed transaction.
  *
  * Use this for multi-signature scenarios where multiple parties

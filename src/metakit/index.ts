@@ -99,12 +99,14 @@ export {
 export {
   createStateMachinePayload,
   createScriptPayload,
+  createDataTransactionRequest,
 } from './transaction.js';
 export type {
   CreateStateMachineParams,
   CreateStateMachineMessage,
   CreateScriptParams,
   CreateScriptMessage,
+  DataTransactionRequest,
   TransitionParams,
   TransitionStateMachineMessage,
   ArchiveParams,
