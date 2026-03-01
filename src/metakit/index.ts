@@ -86,3 +86,31 @@ export type {
   EstimateFeeResponse,
   PostDataResponse,
 } from './network/index.js';
+
+// Transaction helpers for self-signed mode
+export {
+  createTransitionPayload,
+  createArchivePayload,
+  createInvokeScriptPayload,
+  signTransaction,
+  addTransactionSignature,
+  getPublicKeyForRegistration,
+} from './transaction.js';
+export {
+  createStateMachinePayload,
+  createScriptPayload,
+  createDataTransactionRequest,
+} from './transaction.js';
+export type {
+  CreateStateMachineParams,
+  CreateStateMachineMessage,
+  CreateScriptParams,
+  CreateScriptMessage,
+  DataTransactionRequest,
+  TransitionParams,
+  TransitionStateMachineMessage,
+  ArchiveParams,
+  ArchiveStateMachineMessage,
+  InvokeScriptParams,
+  InvokeScriptMessage,
+} from './transaction.js';

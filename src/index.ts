@@ -79,3 +79,7 @@ export * from './errors.js';
 
 // Validation schemas and helpers
 export * from './validation.js';
+
+// Ottochain metagraph client
+export { MetagraphClient } from './ottochain/metagraph-client.js';
+export type { MetagraphClientConfig, Checkpoint, SubscribeOptions, FiberStateCallback, Unsubscribe } from './ottochain/metagraph-client.js';
