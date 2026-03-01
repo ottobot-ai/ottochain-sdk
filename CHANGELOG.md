@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.2.0](https://github.com/ottobot-ai/ottochain-sdk/compare/v1.1.1...v1.2.0) (2026-03-01)
+
+
+### Features
+
+* add transaction helpers for self-signed mode ([#85](https://github.com/ottobot-ai/ottochain-sdk/issues/85)) ([a60f9a2](https://github.com/ottobot-ai/ottochain-sdk/commit/a60f9a216770f647776c7b27d532795d2063ee08))
+
+
+### Bug Fixes
+
+* **ci:** trigger CI on develop-targeting PRs ([#86](https://github.com/ottobot-ai/ottochain-sdk/issues/86)) ([3ae11d4](https://github.com/ottobot-ai/ottochain-sdk/commit/3ae11d483e278228a33a07122851e01c5273f64b))
+
 ## [1.1.1](https://github.com/ottobot-ai/ottochain-sdk/compare/v1.1.0...v1.1.1) (2026-02-26)
 
 
