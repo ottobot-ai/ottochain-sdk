@@ -43,6 +43,60 @@ message InvokeScript {
   int64 target_sequence_number = 4;  // Fiber ordinal
 }
 
+// Create a new delegation credential.
+// The delegator grants a relayer limited signing authority over defined operations.
+// Scope is JSON-encoded to allow flexible per-application extension without proto changes.
+message CreateDelegation {
+  // Unique ID for this delegation (UUID, assigned by the submitter)
+  string delegation_id = 1;
+
+  // Address of the user granting the delegation
+  string delegator_address = 2;
+
+  // Address of the agent/relayer receiving the delegation
+  string relayer_address = 3;
+
+  // Maximum spend allowed (BigInt as string)
+  string spend_limit = 4;
+
+  // DAG to stake as collateral (BigInt as string; "0" if no collateral required)
+  string stake_amount = 5;
+
+  // JSON-encoded scope: allowed operations, target contracts, gas limits etc.
+  string scope = 6;
+
+  // Optional session key identifier for cryptographic delegation
+  optional string session_key = 7;
+
+  // Snapshot ordinal when this delegation should expire
+  int64 expires_at = 8;
+
+  // Delegator's signature authorising the delegation
+  string delegator_signature = 9;
+
+  // Nonce to prevent replay attacks
+  int64 nonce = 10;
+}
+
+// Revoke an existing delegation credential.
+// Can only be submitted by the original delegator.
+message RevokeDelegation {
+  // ID of the delegation to revoke
+  string delegation_id = 1;
+
+  // Address of the delegator (must match recorded delegator_address)
+  string delegator_address = 2;
+
+  // Delegator's signature authorising the revocation
+  string delegator_signature = 3;
+
+  // Nonce for replay protection
+  int64 nonce = 4;
+
+  // Human-readable reason for revocation (optional, stored on-chain)
+  optional string reason = 5;
+}
+
 // Union message type for all OttoChain operations
 message OttochainMessage {
   oneof message {
@@ -51,5 +105,7 @@ message OttochainMessage {
     ArchiveStateMachine archive_state_machine = 3;
     CreateScript create_script = 4;
     InvokeScript invoke_script = 5;
+    CreateDelegation create_delegation = 6;
+    RevokeDelegation revoke_delegation = 7;
   }
 }

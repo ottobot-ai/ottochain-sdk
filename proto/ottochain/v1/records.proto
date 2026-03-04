@@ -56,8 +56,49 @@ message FiberLogEntryList {
   repeated FiberLogEntry entries = 1;
 }
 
+// Delegation credential - on-chain state tracking for a delegated signing relationship.
+// Uses ordinal-based timing (snapshot ordinals) not wall-clock timestamps, matching the
+// metagraph's FiberOrdinal / SnapshotOrdinal conventions. BigInt amounts are string-encoded
+// to avoid IEEE-754 precision loss in JavaScript.
+message DelegationCredential {
+  // Address of the user granting the delegation (DAG address)
+  string delegator_address = 1;
+
+  // Address of the agent/relayer receiving the delegation (DAG address)
+  string relayer_address = 2;
+
+  // Total spend already used under this delegation (BigInt as string, e.g. "1000000000")
+  string spend_used = 3;
+
+  // DAG staked as collateral by the relayer (BigInt as string)
+  string stake_bonded = 4;
+
+  // Maximum spend allowed under this delegation (BigInt as string)
+  string spend_limit = 5;
+
+  // JSON-encoded scope definition: allowed operations, contracts, gas limits etc.
+  string scope = 6;
+
+  // Optional session key identifier used for signing delegated transactions
+  optional string session_key = 7;
+
+  // Snapshot ordinal when this delegation was created
+  int64 created_at = 8;
+
+  // Snapshot ordinal when this delegation expires
+  int64 expires_at = 9;
+
+  // Whether this delegation has been revoked by the delegator
+  bool is_revoked = 10;
+
+  // Snapshot ordinal when revoked (set when is_revoked becomes true)
+  optional int64 revoked_at = 11;
+}
+
 // Calculated state - queryable via ML0 endpoints
 message CalculatedState {
   map<string, StateMachineFiberRecord> state_machines = 1;
   map<string, ScriptFiberRecord> scripts = 2;
+  // Active delegation credentials keyed by delegation ID (UUID string)
+  map<string, DelegationCredential> delegations = 3;
 }
