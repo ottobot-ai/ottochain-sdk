@@ -1,4 +1,4 @@
-import { dropNulls } from '../src/metakit/drop-nulls';
+import { dropNulls } from '../src/ottochain/drop-nulls';
 
 describe('dropNulls', () => {
   it('removes null fields from objects', () => {

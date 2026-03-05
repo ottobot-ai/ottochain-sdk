@@ -8,7 +8,7 @@ import {
   addTransactionSignature,
   createDataTransactionRequest,
   getPublicKeyForRegistration,
-} from '../../src/metakit/transaction.js';
+} from '../../src/ottochain/transaction.js';
 import { generateKeyPair } from '@constellation-network/metagraph-sdk';
 
 describe('transaction helpers', () => {

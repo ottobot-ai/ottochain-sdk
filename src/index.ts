@@ -6,7 +6,7 @@
  * Structure:
  * - `@constellation-network/metagraph-sdk` — Core signing, hashing, encoding, wallet, currency transactions
  * - `@constellation-network/metagraph-sdk/network` — HttpClient, MetagraphClient, NetworkError
- * - `metakit` — OttoChain-specific transaction helpers (state machine payloads, etc.)
+ * - `ottochain` — OttoChain-specific transaction helpers, types, snapshot, and client
  * - `generated` — Protobuf-generated types (source of truth)
  * - `apps/identity` — Agent Identity application types
  * - `apps/contracts` — Contract application types
@@ -54,7 +54,9 @@ export type {
 export * from './types.js';
 
 // ─── OttoChain-specific transaction helpers ───────────────────────────────────
-export * from './metakit/index.js';
+export * from './ottochain/transaction.js';
+export { normalizeCreateStateMachine, normalizeTransitionStateMachine, normalizeArchiveStateMachine, normalizeMessage } from './ottochain/normalize.js';
+export { dropNulls } from './ottochain/drop-nulls.js';
 
 // ─── Generated protobuf types (canonical definitions) ────────────────────────
 export * from './generated/index.js';
