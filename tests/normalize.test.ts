@@ -3,7 +3,7 @@ import {
   normalizeTransitionStateMachine,
   normalizeArchiveStateMachine,
   normalizeMessage,
-} from '../src/metakit/normalize';
+} from '../src/ottochain/normalize';
 
 describe('normalize', () => {
   describe('normalizeCreateStateMachine', () => {

@@ -81,5 +81,41 @@ export type {
 } from './metagraph-client.js';
 export { MetagraphClient } from './metagraph-client.js';
 
+// Transaction helpers (state machine payloads, signing)
+export {
+  createTransitionPayload,
+  createArchivePayload,
+  createInvokeScriptPayload,
+  signTransaction,
+  addTransactionSignature,
+  getPublicKeyForRegistration,
+  createStateMachinePayload,
+  createScriptPayload,
+  createDataTransactionRequest,
+} from './transaction.js';
+
+export type {
+  CreateStateMachineParams,
+  CreateStateMachineMessage,
+  CreateScriptParams,
+  CreateScriptMessage,
+  DataTransactionRequest,
+  TransitionParams,
+  TransitionStateMachineMessage,
+  ArchiveParams,
+  ArchiveStateMachineMessage,
+  InvokeScriptParams,
+  InvokeScriptMessage,
+} from './transaction.js';
+
+// Data utilities
+export {
+  normalizeCreateStateMachine,
+  normalizeTransitionStateMachine,
+  normalizeArchiveStateMachine,
+  normalizeMessage,
+} from './normalize.js';
+export { dropNulls } from './drop-nulls.js';
+
 // Note: Governance and Corporate types are now in src/apps/
 // Import from '@ottochain/sdk/apps' instead
