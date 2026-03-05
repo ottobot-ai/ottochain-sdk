@@ -85,6 +85,23 @@ jobs:
             -f 'client_payload={"component":"sdk","version":"${{ steps.version.outputs.version }}"}'
           echo "✅ Notified deploy repo to bump SDK to v${{ steps.version.outputs.version }}"
 
+      - name: Bump SDK in consumer repos
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.DEPLOY_REPO_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "⚠️ DEPLOY_REPO_TOKEN not set, skipping consumer notifications"
+            exit 0
+          fi
+          VERSION="${{ steps.version.outputs.version }}"
+          for REPO in ottochain-services ottochain-explorer; do
+            gh api repos/ottobot-ai/$REPO/dispatches \
+              -f event_type=sdk-bump \
+              -f "client_payload[version]=$VERSION"
+            echo "✅ Notified $REPO to bump @ottochain/sdk to v$VERSION"
+          done
+
       - name: Summary
         run: |
           echo "## 📦 Publish Complete" >> $GITHUB_STEP_SUMMARY
