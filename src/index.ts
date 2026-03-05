@@ -21,8 +21,8 @@
 
 export * from '@constellation-network/metagraph-sdk';
 
-// Override verify with backward-compatible version that always honors isDataUpdate
-// even when the signed object has a `mode` field.
+// Override verify — package embeds `mode` in signed objects and ignores isDataUpdate
+// when mode is present. Our wrapper strips mode so isDataUpdate always wins.
 export { verify } from './verify.js';
 
 // ─── Network clients ──────────────────────────────────────────────────────────
