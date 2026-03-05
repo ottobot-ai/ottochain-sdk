@@ -5,9 +5,8 @@
  * self-signed mode, where clients sign their own transactions.
  */
 
-import { signDataUpdate } from './sign.js';
-import type { Signed } from './types.js';
-import { getPublicKeyId } from './wallet.js';
+import { signDataUpdate, getPublicKeyId } from '@constellation-network/metagraph-sdk';
+import type { Signed } from '@constellation-network/metagraph-sdk';
 
 // ============================================================================
 // State Machine Operations
