@@ -26,25 +26,29 @@ export * from '@constellation-network/metagraph-sdk';
 export { verify } from './verify.js';
 
 // ─── Network clients ──────────────────────────────────────────────────────────
-// MetagraphClient and HttpClient from the package network subpath
+// Re-export from package network subpath
 
 export {
   MetagraphClient,
   createMetagraphClient,
   HttpClient,
-  CurrencyL1Client,
-  DataL1Client,
-} from './network-clients.js';
+  NetworkError as MetagraphNetworkError,
+} from '@constellation-network/metagraph-sdk/network';
 
 export type {
-  NetworkConfig,
+  MetagraphClientConfig as BaseMetagraphClientConfig,
+  LayerType,
+  ClusterInfo,
+} from '@constellation-network/metagraph-sdk/network';
+
+export type {
   RequestOptions,
   TransactionStatus,
   PendingTransaction,
   PostTransactionResponse,
   EstimateFeeResponse,
   PostDataResponse,
-} from './network-clients.js';
+} from '@constellation-network/metagraph-sdk/network';
 
 // ─── Type aliases for semantic clarity (matches wire format) ──────────────────
 export * from './types.js';
