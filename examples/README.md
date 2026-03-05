@@ -1,122 +1,97 @@
 # OttoChain SDK Examples
 
-This directory contains working examples demonstrating how to use the OttoChain SDK.
+Working examples for the OttoChain SDK, organized by domain.
 
 ## Prerequisites
 
 ```bash
-# Install dependencies
 npm install
-
-# Build the SDK (examples import from source)
 npm run build
 ```
 
-## Running Examples
+## Domain Examples (New)
 
-Each example can be run with `ts-node`:
+Domain-specific examples demonstrate the five OttoChain application domains.
+Each directory contains a README with full type documentation.
+
+| Domain | Example | What it shows |
+|--------|---------|---------------|
+| [identity/](./identity/) | `did-credential-workflow.ts` | DID registration, platform links, attestations, reputation |
+| [contracts/](./contracts/) | `contract-lifecycle.ts` | Propose → accept → complete / reject / dispute |
+| [markets/](./markets/) | `prediction-market.ts` | Binary prediction market, oracle resolution, payout |
+| [governance/](./governance/) | `dao-proposal-vote.ts` | Multisig DAO and token-weighted DAO proposals |
 
 ```bash
-npx ts-node examples/<example-name>.ts
+# Identity: DID + credential workflow
+npx tsx examples/identity/did-credential-workflow.ts
+
+# Contracts: full lifecycle (Path A/B/C)
+npx tsx examples/contracts/contract-lifecycle.ts
+npx tsx examples/contracts/contract-lifecycle.ts --path=B
+
+# Markets: prediction market with oracle
+npx tsx examples/markets/prediction-market.ts
+
+# Governance: DAO proposal + vote
+npx tsx examples/governance/dao-proposal-vote.ts
+npx tsx examples/governance/dao-proposal-vote.ts --type=token
 ```
 
-Or compile first:
+> **Note:** Domain examples submit transactions to a running cluster.
+> Set `METAGRAPH_URL` and `BRIDGE_URL` env vars, or run offline for a
+> dry-run walkthrough.
 
-```bash
-npx tsc examples/*.ts --outDir examples/dist --esModuleInterop
-node examples/dist/<example-name>.js
-```
+---
 
-## Examples Overview
+## Core Examples
 
 ### 1. Agent Registration (`agent-registration.ts`)
 
-Demonstrates how to register an agent identity on the OttoChain network.
+Key pair generation, identity registration, signature submission.
 
 ```bash
 npx ts-node examples/agent-registration.ts
 ```
 
-**What it covers:**
-- Generating a new keypair
-- Creating a registration payload
-- Validating input with Zod schemas
-- Signing the registration
-- Submitting to the network
-
 ### 2. Contract Flow (`contract-flow.ts`)
 
-Shows the complete lifecycle of a contract between two agents.
+Basic contract propose → accept → complete lifecycle.
 
 ```bash
 npx ts-node examples/contract-flow.ts
 ```
 
-**What it covers:**
-- Proposing a contract with terms
-- Accepting a proposed contract
-- Completing a contract with proof
-- Multi-party signing
-
 ### 3. Batch Transactions (`batch-transactions.ts`)
 
-Demonstrates efficient batch signing and multi-signature scenarios.
+Multi-party signing, sequential signing, threshold (2-of-3).
 
 ```bash
 npx ts-node examples/batch-transactions.ts
 ```
 
-**What it covers:**
-- Multi-party signing (all parties at once)
-- Sequential signing (distributed parties)
-- Batch processing multiple transactions
-- Threshold signing (2-of-3)
-- Signature verification
-
 ### 4. Wallet Management (`wallet-management.ts`)
 
-Comprehensive guide to key pair management.
+Key pair generation, import, derivation, validation, backup.
 
 ```bash
 npx ts-node examples/wallet-management.ts
 ```
 
-**What it covers:**
-- Generating new wallets
-- Importing from private key
-- Key derivation (compressed/uncompressed)
-- Validation (quick checks and Zod)
-- Exporting for backup
-- Batch generation
-
 ### 5. Query State (`query-state.ts`)
 
-Shows how to query data from a running metagraph.
+Read Data L1 / Currency L1 endpoints, error handling.
 
 ```bash
-npx ts-node examples/query-state.ts
+METAGRAPH_DATA_URL=http://localhost:9300 npx ts-node examples/query-state.ts
 ```
 
-**What it covers:**
-- Querying Data L1 endpoints
-- Querying Currency L1 endpoints
-- Custom HTTP client configuration
-- Expected response formats
-- Error handling patterns
+---
 
 ## Environment Variables
 
-Some examples can connect to a real metagraph. Set these environment variables:
-
 ```bash
-# Data L1 endpoint (for state queries)
-export METAGRAPH_DATA_URL=http://your-node:9300
-
-# Currency L1 endpoint (for balance/transaction queries)
-export METAGRAPH_CURRENCY_URL=http://your-node:9200
-
-# Or specify when running:
-METAGRAPH_DATA_URL=http://localhost:9300 npx ts-node examples/query-state.ts
+export METAGRAPH_URL=http://localhost:9300   # Data L1 (domain examples)
+export BRIDGE_URL=http://localhost:3030      # Bridge service (state queries)
 ```
 
 ## Common Patterns
@@ -144,43 +119,14 @@ try {
 ```typescript
 import { validate, ProposeContractRequestSchema } from '@ottochain/sdk';
 
-// Throws ValidationError if invalid
 const validatedRequest = validate(ProposeContractRequestSchema, inputData);
-
-// Or use safe parsing
-import { safeParse } from '@ottochain/sdk';
-const result = safeParse(ProposeContractRequestSchema, inputData);
-if (result.success) {
-  console.log(result.data);
-} else {
-  console.log(result.error.message);
-}
 ```
 
 ### Network Requests
 
 ```typescript
-import { DataL1Client, HttpClient } from '@ottochain/sdk';
+import { DataL1Client } from '@ottochain/sdk';
 
-// Use specialized clients
-const dataClient = new DataL1Client('http://localhost:9300');
-await dataClient.postData(signedTransaction);
-
-// Or use generic HTTP client
-const httpClient = new HttpClient('http://localhost:9300', 10000); // 10s timeout
-await httpClient.get('/custom/endpoint');
+const client = new DataL1Client({ baseUrl: 'http://localhost:9300' });
+await client.sendTransaction(signedTx, parent);
 ```
-
-## Tips
-
-1. **Never log private keys** in production code
-2. **Always validate** input before signing
-3. **Handle errors** appropriately - network failures are common
-4. **Use TypeScript** for type safety and better IDE support
-5. **Check transaction status** after submission
-
-## Further Reading
-
-- [API Documentation](../docs/) - Full TypeDoc reference
-- [README](../README.md) - Getting started guide
-- [Source Code](../src/) - Implementation details
