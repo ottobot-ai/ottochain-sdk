@@ -82,8 +82,7 @@ describe('Currency Transactions', () => {
         ordinal: 0,
       };
 
-      await expect(
-        createCurrencyTransaction(
+      expect(() => createCurrencyTransaction(
           {
             destination: 'invalid',
             amount: 100,
@@ -92,7 +91,7 @@ describe('Currency Transactions', () => {
           keyPair.privateKey,
           lastRef
         )
-      ).rejects.toThrow('Invalid destination address');
+      ).toThrow('Invalid destination address');
     });
 
     test('createCurrencyTransaction throws on same source and destination', async () => {
@@ -103,8 +102,7 @@ describe('Currency Transactions', () => {
         ordinal: 0,
       };
 
-      await expect(
-        createCurrencyTransaction(
+      expect(() => createCurrencyTransaction(
           {
             destination: keyPair.address,
             amount: 100,
@@ -113,7 +111,7 @@ describe('Currency Transactions', () => {
           keyPair.privateKey,
           lastRef
         )
-      ).rejects.toThrow('Source and destination addresses cannot be the same');
+      ).toThrow('Source and destination addresses cannot be the same');
     });
 
     test('createCurrencyTransaction throws on amount too small', async () => {
@@ -125,8 +123,7 @@ describe('Currency Transactions', () => {
         ordinal: 0,
       };
 
-      await expect(
-        createCurrencyTransaction(
+      expect(() => createCurrencyTransaction(
           {
             destination: keyPair2.address,
             amount: 0.000000001, // Less than 1e-8
@@ -135,7 +132,7 @@ describe('Currency Transactions', () => {
           keyPair.privateKey,
           lastRef
         )
-      ).rejects.toThrow('Transfer amount must be greater than 1e-8');
+      ).toThrow('Transfer amount must be greater than 1e-8');
     });
 
     test('createCurrencyTransaction throws on negative fee', async () => {
@@ -147,8 +144,7 @@ describe('Currency Transactions', () => {
         ordinal: 0,
       };
 
-      await expect(
-        createCurrencyTransaction(
+      expect(() => createCurrencyTransaction(
           {
             destination: keyPair2.address,
             amount: 100,
@@ -157,7 +153,7 @@ describe('Currency Transactions', () => {
           keyPair.privateKey,
           lastRef
         )
-      ).rejects.toThrow('Fee must be greater than or equal to zero');
+      ).toThrow('Fee must be greater than or equal to zero');
     });
   });
 

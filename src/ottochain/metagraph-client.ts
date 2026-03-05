@@ -9,10 +9,9 @@
  * @packageDocumentation
  */
 
-import type { Signed } from '../metakit/types.js';
-import { createDataTransactionRequest } from '../metakit/transaction.js';
-import { HttpClient } from '../metakit/network/client.js';
-import { NetworkError } from '../metakit/network/types.js';
+import type { Signed } from '@constellation-network/metagraph-sdk';
+import { createDataTransactionRequest } from './transaction.js';
+import { HttpClient, NetworkError } from '@constellation-network/metagraph-sdk/network';
 import type {
   OnChain,
   CalculatedState,

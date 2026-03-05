@@ -5,7 +5,7 @@ import {
   getPublicKeyHex,
   getPublicKeyId,
   getAddress,
-} from '../src/metakit/wallet';
+} from '@constellation-network/metagraph-sdk';
 
 describe('Wallet Tests', () => {
   describe('generateKeyPair', () => {

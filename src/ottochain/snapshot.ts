@@ -10,7 +10,7 @@
  * @packageDocumentation
  */
 
-import { HttpClient } from '../metakit/network/client.js';
+import { HttpClient } from '@constellation-network/metagraph-sdk/network';
 import type { OnChain, EventReceipt, OracleInvocation, FiberLogEntry } from './types.js';
 
 /**

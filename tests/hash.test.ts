@@ -1,4 +1,4 @@
-import { hash, hashBytes, hashData, computeDigest } from '../src/metakit/hash';
+import { hash, hashBytes, hashData, computeDigest } from '@constellation-network/metagraph-sdk';
 
 describe('hash', () => {
   describe('hash()', () => {

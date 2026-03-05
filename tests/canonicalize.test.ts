@@ -1,4 +1,4 @@
-import { canonicalize } from '../src/metakit/canonicalize';
+import { canonicalize } from '@constellation-network/metagraph-sdk';
 
 describe('canonicalize', () => {
   describe('basic functionality', () => {

@@ -9,10 +9,10 @@
  * https://github.com/Constellation-Labs/metakit/blob/main/docs/sig-spec/signature-protocol-developer-guide.md
  */
 
-import { canonicalize } from '../src/metakit/canonicalize';
-import { toBytes } from '../src/metakit/binary';
-import { hashBytes } from '../src/metakit/hash';
-import { verifyHash } from '../src/metakit/verify';
+import { canonicalize } from '@constellation-network/metagraph-sdk';
+import { toBytes } from '@constellation-network/metagraph-sdk';
+import { hashBytes } from '@constellation-network/metagraph-sdk';
+import { verifyHash } from '@constellation-network/metagraph-sdk';
 
 // ── Test vector type ──────────────────────────────────────────────────────────
 

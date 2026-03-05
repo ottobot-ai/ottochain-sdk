@@ -24,12 +24,23 @@ module.exports = {
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
+  // Allow Jest to transform ESM-only packages in node_modules.
+  // @constellation-network/metagraph-sdk uses @noble/curves + @noble/hashes which are
+  // pure-ESM packages. babel-jest transforms them to CJS for the test runner.
+  transformIgnorePatterns: [
+    '/node_modules/(?!(@constellation-network|@noble)/)',
+  ],
   transform: {
     '^.+\\.tsx?$': [
       'ts-jest',
       {
         useESM: false,
+        tsconfig: {
+          moduleResolution: 'node16',
+        },
       },
     ],
+    // Transform ESM node_modules to CJS using babel
+    '^.+\\.m?js$': 'babel-jest',
   },
 };
