@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.0](https://github.com/ottobot-ai/ottochain-sdk/compare/v1.2.0...v1.3.0) (2026-03-05)
+
+
+### Features
+
+* **examples:** add domain-specific workflow examples ([#96](https://github.com/ottobot-ai/ottochain-sdk/issues/96)) ([3f67716](https://github.com/ottobot-ai/ottochain-sdk/commit/3f6771651a021af8d2b7d97eb0ceaf6753d43e41))
+* SDK transaction helpers for client-side signing (self-signed mode) ([#93](https://github.com/ottobot-ai/ottochain-sdk/issues/93)) ([4c9afca](https://github.com/ottobot-ai/ottochain-sdk/commit/4c9afcaf3fe94ce16b1cf21ae0237254a11fde83))
+
 ## [1.2.0](https://github.com/ottobot-ai/ottochain-sdk/compare/v1.1.1...v1.2.0) (2026-03-01)
 
 
