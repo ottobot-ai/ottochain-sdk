@@ -28,6 +28,7 @@ import type { Signed, VerificationResult } from '@constellation-network/metagrap
  */
 export function verify<T>(signed: Signed<T>, isDataUpdate?: boolean): VerificationResult {
   // Strip the mode field so the package's verify() uses the isDataUpdate param instead.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { mode: _mode, ...rest } = signed as Signed<T> & { mode?: string };
   return _verify(rest as Signed<T>, isDataUpdate);
 }
