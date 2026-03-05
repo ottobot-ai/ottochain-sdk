@@ -8,7 +8,11 @@ import {
   getEventReceipts,
   getScriptInvocations,
 } from '../src/ottochain/snapshot';
-// CurrencySnapshotResponse type used via `as any` in tests
+import {
+  getSnapshotOnChainState,
+  getLatestOnChainState,
+  decodeOnChainState,
+} from '../src/ottochain/snapshot';
 
 // Mock HttpClient
 jest.mock('@constellation-network/metagraph-sdk/network', () => {
@@ -114,22 +118,120 @@ describe('MetagraphClient', () => {
     });
   });
 
+  describe('getStateMachineEvents', () => {
+    it('fetches events for a fiber', async () => {
+      const events = [{ eventName: 'create', ordinal: 1 }];
+      mockMl0Get.mockResolvedValue(events);
+      const result = await client.getStateMachineEvents('fiber-1');
+      expect(result).toEqual(events);
+      expect(mockMl0Get).toHaveBeenCalledWith('/data-application/v1/state-machines/fiber-1/events');
+    });
+  });
+
+  describe('getScripts', () => {
+    it('fetches all scripts without filter', async () => {
+      const scripts = { 's1': { status: 'Active' } };
+      mockMl0Get.mockResolvedValue(scripts);
+      const result = await client.getScripts();
+      expect(result).toEqual(scripts);
+      expect(mockMl0Get).toHaveBeenCalledWith('/data-application/v1/oracles');
+    });
+
+    it('fetches scripts with status filter', async () => {
+      mockMl0Get.mockResolvedValue({});
+      await client.getScripts('Active' as any);
+      expect(mockMl0Get).toHaveBeenCalledWith('/data-application/v1/oracles?status=Active');
+    });
+  });
+
+  describe('getScriptInvocations', () => {
+    it('fetches invocations for a script', async () => {
+      const invocations = [{ method: 'eval', result: true }];
+      mockMl0Get.mockResolvedValue(invocations);
+      const result = await client.getScriptInvocations('s1');
+      expect(result).toEqual(invocations);
+      expect(mockMl0Get).toHaveBeenCalledWith('/data-application/v1/oracles/s1/invocations');
+    });
+  });
+
+  describe('getLatestSnapshotOnChainState', () => {
+    it('fetches and decodes latest snapshot on-chain state', async () => {
+      const onChain = { latestLogs: {}, stateMachineFibers: {}, scriptFibers: {} };
+      const jsonBytes = Array.from(new TextEncoder().encode(JSON.stringify(onChain)));
+      mockMl0Get.mockResolvedValue({ value: { dataApplication: { onChainState: jsonBytes } } });
+      const result = await client.getLatestSnapshotOnChainState();
+      expect(result).toEqual(onChain);
+    });
+
+    it('returns null when no dataApplication', async () => {
+      mockMl0Get.mockResolvedValue({ value: {} });
+      const result = await client.getLatestSnapshotOnChainState();
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('getSnapshotOnChainState', () => {
+    it('fetches snapshot by ordinal', async () => {
+      const onChain = { latestLogs: {}, stateMachineFibers: {}, scriptFibers: {} };
+      const jsonBytes = Array.from(new TextEncoder().encode(JSON.stringify(onChain)));
+      mockMl0Get.mockResolvedValue({ value: { dataApplication: { onChainState: jsonBytes } } });
+      const result = await client.getSnapshotOnChainState(42);
+      expect(result).toEqual(onChain);
+      expect(mockMl0Get).toHaveBeenCalledWith('/snapshots/42');
+    });
+  });
+
   describe('postData', () => {
     it('submits data to primary DL1', async () => {
       mockDl1Post.mockResolvedValue({ hash: 'txhash123' });
       const result = await client.postData({ value: 'test', proofs: [] });
       expect(result).toEqual({ hash: 'txhash123' });
     });
+
+    it('throws when no DL1 configured', async () => {
+      const noData = new MetagraphClient({ ml0Url: 'http://localhost:9200' });
+      await expect(noData.postData({ test: true })).rejects.toThrow('dl1Url is required');
+    });
   });
 
   describe('submitData', () => {
-    it('submits signed data wrapped in DataTransactionRequest', async () => {
-      // submitData uses dl1Clients array, not dl1 directly
+    it('submits signed data to single DL1', async () => {
       const mockDl1ClientPost = (client as any).dl1Clients[0]?.post || mockDl1Post;
       mockDl1ClientPost.mockResolvedValue({ hash: 'hash456' });
       const signed = { value: { test: true }, proofs: [{ id: 'abc', signature: 'def' }] };
       const result = await client.submitData(signed);
       expect(result).toEqual({ hash: 'hash456' });
+    });
+
+    it('throws when no DL1 configured', async () => {
+      const noData = new MetagraphClient({ ml0Url: 'http://localhost:9200' });
+      const signed = { value: { test: true }, proofs: [{ id: 'abc', signature: 'def' }] };
+      await expect(noData.submitData(signed)).rejects.toThrow('dl1Url or dl1Urls is required');
+    });
+
+    it('tries all DL1 nodes with multi-URL config', async () => {
+      const multi = new MetagraphClient({
+        ml0Url: 'http://localhost:9200',
+        dl1Urls: ['http://node1:9400', 'http://node2:9400'],
+      });
+      const clients = (multi as any).dl1Clients;
+      clients[0].post.mockRejectedValue(new Error('node1 down'));
+      clients[1].post.mockResolvedValue({ hash: 'from-node2' });
+      const signed = { value: { x: 1 }, proofs: [{ id: 'a', signature: 'b' }] };
+      const result = await multi.submitData(signed);
+      expect(result).toEqual({ hash: 'from-node2' });
+    });
+
+    it('rejects when all DL1 nodes fail', async () => {
+      const multi = new MetagraphClient({
+        ml0Url: 'http://localhost:9200',
+        dl1Urls: ['http://node1:9400', 'http://node2:9400'],
+      });
+      const clients = (multi as any).dl1Clients;
+      clients[0].post.mockRejectedValue(new Error('node1 down'));
+      clients[1].post.mockRejectedValue(new Error('node2 down'));
+      const signed = { value: { x: 1 }, proofs: [{ id: 'a', signature: 'b' }] };
+      await expect(multi.submitData(signed)).rejects.toThrow('All DL1 nodes failed');
     });
   });
 });
@@ -220,6 +322,41 @@ describe('Snapshot utilities', () => {
 
     it('returns empty array for non-existent fiber', () => {
       expect(getScriptInvocations(mockOnChain as any, 'nonexistent')).toEqual([]);
+    });
+  });
+
+  describe('decodeOnChainState', () => {
+    it('decodes UTF-8 bytes to OnChain object', () => {
+      const data = { latestLogs: {}, stateMachineFibers: {} };
+      const bytes = new TextEncoder().encode(JSON.stringify(data));
+      const result = decodeOnChainState(bytes);
+      expect(result).toEqual(data);
+    });
+  });
+
+  describe('getSnapshotOnChainState', () => {
+    it('fetches snapshot by ordinal from standalone function', async () => {
+      const { HttpClient } = require('@constellation-network/metagraph-sdk/network');
+      const onChain = { latestLogs: {}, stateMachineFibers: {} };
+      const jsonBytes = Array.from(new TextEncoder().encode(JSON.stringify(onChain)));
+      HttpClient.mockImplementation(() => ({
+        get: jest.fn().mockResolvedValue({ value: { dataApplication: { onChainState: jsonBytes } } }),
+      }));
+      const result = await getSnapshotOnChainState('http://localhost:9200', 10);
+      expect(result).toEqual(onChain);
+    });
+  });
+
+  describe('getLatestOnChainState', () => {
+    it('fetches latest snapshot from standalone function', async () => {
+      const { HttpClient } = require('@constellation-network/metagraph-sdk/network');
+      const onChain = { latestLogs: {}, scriptFibers: {} };
+      const jsonBytes = Array.from(new TextEncoder().encode(JSON.stringify(onChain)));
+      HttpClient.mockImplementation(() => ({
+        get: jest.fn().mockResolvedValue({ value: { dataApplication: { onChainState: jsonBytes } } }),
+      }));
+      const result = await getLatestOnChainState('http://localhost:9200');
+      expect(result).toEqual(onChain);
     });
   });
 });
