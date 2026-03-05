@@ -183,7 +183,7 @@ describeWithDag4('Integration tests', () => {
 
   describe('Error handling', () => {
     it('should throw on invalid key for batchSign', async () => {
-      await expect(batchSign({ test: 1 }, [])).rejects.toThrow('At least one private key');
+      expect(() => batchSign({ test: 1 }, [])).toThrow('At least one private key');
     });
   });
 });

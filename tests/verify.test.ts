@@ -4,7 +4,7 @@ import {
   signDataUpdate,
   createSignedObject,
   generateKeyPair
-} from '../src/metakit';
+} from '@constellation-network/metagraph-sdk';
 
 describe('verify module', () => {
   describe('verify', () => {

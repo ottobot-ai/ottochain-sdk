@@ -1,4 +1,4 @@
-import { toBytes, encodeDataUpdate } from '../src/metakit/binary';
+import { toBytes, encodeDataUpdate } from '@constellation-network/metagraph-sdk';
 
 describe('binary encoding', () => {
   describe('toBytes()', () => {

@@ -1,10 +1,12 @@
 /**
  * Ottochain SDK
  *
- * Unified SDK combining metakit framework operations with ottochain domain types.
+ * Unified SDK combining @constellation-network/metagraph-sdk with OttoChain domain types.
  *
  * Structure:
- * - `metakit` — Signing, encoding, hashing, and network clients for Constellation metagraphs
+ * - `@constellation-network/metagraph-sdk` — Core signing, hashing, encoding, wallet, currency transactions
+ * - `@constellation-network/metagraph-sdk/network` — HttpClient, MetagraphClient, NetworkError
+ * - `metakit` — OttoChain-specific transaction helpers (state machine payloads, etc.)
  * - `generated` — Protobuf-generated types (source of truth)
  * - `apps/identity` — Agent Identity application types
  * - `apps/contracts` — Contract application types
@@ -14,16 +16,46 @@
  * @packageDocumentation
  */
 
-// Type aliases for semantic clarity (matches wire format)
+// ─── Core metagraph SDK ───────────────────────────────────────────────────────
+// Consumers can also import directly from '@constellation-network/metagraph-sdk'
+
+export * from '@constellation-network/metagraph-sdk';
+
+// Override verify with backward-compatible version that always honors isDataUpdate
+// even when the signed object has a `mode` field.
+export { verify } from './verify.js';
+
+// ─── Network clients ──────────────────────────────────────────────────────────
+// MetagraphClient and HttpClient from the package network subpath
+
+export {
+  MetagraphClient,
+  createMetagraphClient,
+  HttpClient,
+  CurrencyL1Client,
+  DataL1Client,
+} from './network-clients.js';
+
+export type {
+  NetworkConfig,
+  RequestOptions,
+  TransactionStatus,
+  PendingTransaction,
+  PostTransactionResponse,
+  EstimateFeeResponse,
+  PostDataResponse,
+} from './network-clients.js';
+
+// ─── Type aliases for semantic clarity (matches wire format) ──────────────────
 export * from './types.js';
 
-// Metakit utilities (signing, hashing, HTTP client)
+// ─── OttoChain-specific transaction helpers ───────────────────────────────────
 export * from './metakit/index.js';
 
-// Generated protobuf types (canonical definitions)
+// ─── Generated protobuf types (canonical definitions) ────────────────────────
 export * from './generated/index.js';
 
-// Custom error classes
+// ─── Custom error classes ─────────────────────────────────────────────────────
 export {
   OttoChainError,
   NetworkError,
@@ -35,7 +67,7 @@ export {
   wrapError,
 } from './errors.js';
 
-// Validation schemas and helpers
+// ─── Validation schemas and helpers ──────────────────────────────────────────
 export {
   // Schemas
   DagAddressSchema,
@@ -74,12 +106,12 @@ export {
   type ValidatedCompleteContractRequest,
 } from './validation.js';
 
-// Error classes
-export * from './errors.js';
-
-// Validation schemas and helpers
-export * from './validation.js';
-
-// Ottochain metagraph client
-export { MetagraphClient } from './ottochain/metagraph-client.js';
-export type { MetagraphClientConfig, Checkpoint, SubscribeOptions, FiberStateCallback, Unsubscribe } from './ottochain/metagraph-client.js';
+// ─── OttoChain metagraph client ───────────────────────────────────────────────
+export { MetagraphClient as OttoMetagraphClient } from './ottochain/metagraph-client.js';
+export type {
+  MetagraphClientConfig,
+  Checkpoint,
+  SubscribeOptions,
+  FiberStateCallback,
+  Unsubscribe,
+} from './ottochain/metagraph-client.js';

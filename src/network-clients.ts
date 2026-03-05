@@ -1,17 +1,23 @@
 /**
- * Network compat layer for OttoChain SDK
+ * OttoChain network clients — CurrencyL1Client and DataL1Client.
  *
- * Provides HttpClient, NetworkError, CurrencyL1Client, DataL1Client, and NetworkConfig.
- * These are maintained locally (rather than imported from @constellation-network/metagraph-sdk/network)
- * to avoid pulling the full crypto stack into environments that only need HTTP transport.
+ * These clients provide a higher-level API on top of the HttpClient from
+ * @constellation-network/metagraph-sdk/network, tailored for Constellation L1 nodes.
+ *
+ * HttpClient and NetworkError are re-exported from the package for convenience.
  *
  * @packageDocumentation
  */
 
 import type { TransactionReference, CurrencyTransaction, Signed } from '@constellation-network/metagraph-sdk';
+import { HttpClient, NetworkError } from '@constellation-network/metagraph-sdk/network';
+
+export { HttpClient, NetworkError } from '@constellation-network/metagraph-sdk/network';
+export type { MetagraphClient } from '@constellation-network/metagraph-sdk/network';
+export { createMetagraphClient } from '@constellation-network/metagraph-sdk/network';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Network error
+// Shared types
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
@@ -53,105 +59,6 @@ export interface EstimateFeeResponse {
 export interface PostDataResponse {
   hash: string;
 }
-
-/**
- * Network error with HTTP status code and response body.
- * Compatible with @constellation-network/metagraph-sdk/network NetworkError API.
- */
-export class NetworkError extends Error {
-  /** HTTP status code */
-  statusCode?: number;
-  /** Raw response body */
-  response?: string;
-
-  constructor(message: string, statusCode?: number, response?: string) {
-    super(message);
-    this.name = 'NetworkError';
-    this.statusCode = statusCode;
-    this.response = response;
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, this.constructor);
-    }
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// HttpClient — minimal fetch-based HTTP client
-// ─────────────────────────────────────────────────────────────────────────────
-
-const DEFAULT_TIMEOUT = 30_000;
-
-/**
- * Simple HTTP client using native fetch.
- * Mirrors the API of HttpClient from @constellation-network/metagraph-sdk/network.
- */
-export class HttpClient {
-  private baseUrl: string;
-  private defaultTimeout: number;
-
-  constructor(baseUrl: string, timeout: number = DEFAULT_TIMEOUT) {
-    this.baseUrl = baseUrl.replace(/\/$/, '');
-    this.defaultTimeout = timeout;
-  }
-
-  async get<T>(path: string, options: RequestOptions = {}): Promise<T> {
-    return this.request<T>('GET', path, undefined, options);
-  }
-
-  async post<T>(path: string, body?: unknown, options: RequestOptions = {}): Promise<T> {
-    return this.request<T>('POST', path, body, options);
-  }
-
-  private async request<T>(
-    method: string,
-    path: string,
-    body: unknown,
-    options: RequestOptions
-  ): Promise<T> {
-    const url = `${this.baseUrl}${path}`;
-    const timeout = options.timeout ?? this.defaultTimeout;
-
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeout);
-
-    try {
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
-        },
-        body: body !== undefined ? JSON.stringify(body) : undefined,
-        signal: controller.signal,
-      });
-
-      const text = await response.text();
-
-      if (!response.ok) {
-        throw new NetworkError(
-          `HTTP ${response.status} ${response.statusText}: ${url}`,
-          response.status,
-          text
-        );
-      }
-
-      return text ? (JSON.parse(text) as T) : (undefined as unknown as T);
-    } catch (err) {
-      if (err instanceof NetworkError) throw err;
-      const msg = err instanceof Error ? err.message : String(err);
-      if (msg.includes('abort') || msg.includes('signal')) {
-        throw new NetworkError(`Request timed out after ${timeout}ms: ${url}`);
-      }
-      throw new NetworkError(msg);
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// NetworkConfig — OttoChain-specific configuration type
-// ─────────────────────────────────────────────────────────────────────────────
 
 /**
  * Network configuration for connecting to Constellation L1 nodes.

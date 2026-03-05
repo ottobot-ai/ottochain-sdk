@@ -9,7 +9,7 @@ import {
   createDataTransactionRequest,
   getPublicKeyForRegistration,
 } from '../../src/metakit/transaction.js';
-import { generateKeyPair } from '../../src/metakit/wallet.js';
+import { generateKeyPair } from '@constellation-network/metagraph-sdk';
 
 describe('transaction helpers', () => {
   describe('createStateMachinePayload', () => {

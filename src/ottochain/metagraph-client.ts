@@ -11,7 +11,7 @@
 
 import type { Signed } from '@constellation-network/metagraph-sdk';
 import { createDataTransactionRequest } from '../metakit/transaction.js';
-import { HttpClient, NetworkError } from '../metakit/network/index.js';
+import { HttpClient, NetworkError } from '@constellation-network/metagraph-sdk/network';
 import type {
   OnChain,
   CalculatedState,
