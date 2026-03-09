@@ -20,6 +20,7 @@ import {
 } from '../src';
 
 // Check if dag4 is available
+// eslint-disable-next-line no-useless-assignment
 let dag4Available = false;
 try {
   require('@stardust-collective/dag4');

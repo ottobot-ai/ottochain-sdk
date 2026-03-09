@@ -50,6 +50,7 @@ describe('Group 1: Dependency Cleanup', () => {
 describe('Group 2: Dist Artifact Cleanup', () => {
   it('should have no *_pb.js files anywhere under dist/', () => {
     // _pb files are artifacts from removed @bufbuild/protoc-gen-es generator
+    // eslint-disable-next-line no-useless-assignment
     let found: string[] = [];
     try {
       const result = execSync('find dist/ -name "*_pb.js" -o -name "*_pb.d.ts" 2>/dev/null', {
@@ -193,6 +194,7 @@ describe('Group 6: Documentation Presence', () => {
 
   it('should have TODO/migration note for post-PR#89 state machine JSON migration in src/', () => {
     // Find TODO comment about PR #89 migration in src/ directory
+    // eslint-disable-next-line no-useless-assignment
     let found = false;
     try {
       const result = execSync(
