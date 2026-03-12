@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/ottobot-ai/ottochain-sdk/compare/v1.3.0...v1.4.0) (2026-03-11)
+
+
+### Features
+
+* dispatch SDK bump PRs to consumer repos on release ([#103](https://github.com/ottobot-ai/ottochain-sdk/issues/103)) ([ad67192](https://github.com/ottobot-ai/ottochain-sdk/commit/ad67192c220d93a4ad2d440a57aae7cd10f1d52c))
+
 ## [1.3.0](https://github.com/ottobot-ai/ottochain-sdk/compare/v1.2.0...v1.3.0) (2026-03-05)
 
 
