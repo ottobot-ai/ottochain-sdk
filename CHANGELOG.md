@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/ottobot-ai/ottochain-sdk/compare/v1.4.0...v1.4.1) (2026-03-13)
+
+
+### Bug Fixes
+
+* remove pnpm-lock.yaml, add to .gitignore ([#107](https://github.com/ottobot-ai/ottochain-sdk/issues/107)) ([e686ea9](https://github.com/ottobot-ai/ottochain-sdk/commit/e686ea93de6ee21372a8a8a1605d3b6d2e5e25f7))
+
 ## [1.4.0](https://github.com/ottobot-ai/ottochain-sdk/compare/v1.3.0...v1.4.0) (2026-03-11)
 
 
