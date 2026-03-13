@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.2](https://github.com/ottobot-ai/ottochain-sdk/compare/v1.4.1...v1.4.2) (2026-03-13)
+
+
+### Bug Fixes
+
+* **build:** emit proper ESM in dist/esm ([#111](https://github.com/ottobot-ai/ottochain-sdk/issues/111)) ([50bbff1](https://github.com/ottobot-ai/ottochain-sdk/commit/50bbff1da5468393761e6a8af6847c72373fa7fe))
+
 ## [1.4.1](https://github.com/ottobot-ai/ottochain-sdk/compare/v1.4.0...v1.4.1) (2026-03-13)
 
 
