@@ -247,25 +247,25 @@ import { ContractState, Contract } from '@ottochain/sdk/apps/contracts';
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Build
-npm run build
+pnpm run build
 
 # Run tests
-npm test
+pnpm test
 
 # Run tests with coverage
-npm run test:coverage
+pnpm run test:coverage
 
 # Lint
-npm run lint
+pnpm run lint
 
 # Generate documentation
-npm run docs
+pnpm run docs
 
 # Generate protobuf types
-npm run generate
+pnpm run generate
 ```
 
 ## Project Structure

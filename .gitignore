@@ -6,3 +6,6 @@ coverage/
 .env
 *.tsbuildinfo
 dist/
+
+# npm lockfile - this repo uses pnpm
+package-lock.json
