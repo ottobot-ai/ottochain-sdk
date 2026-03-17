@@ -79,7 +79,8 @@
     "generate": "buf generate",
     "lint:proto": "buf lint",
     "docs": "typedoc",
-    "docs:watch": "typedoc --watch"
+    "docs:watch": "typedoc --watch",
+    "prepare": "npm run build"
   },
   "keywords": [
     "ottochain",
