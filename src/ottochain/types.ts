@@ -215,7 +215,9 @@ export interface CreateStateMachine {
   fiberId: string;
   definition: StateMachineDefinition;
   initialData: JsonLogicValue;
-  parentFiberId?: string;
+  parentFiberId?: string | null;
+  /** Optional set of DAG addresses authorized to sign transitions (multi-party signing). */
+  participants?: string[] | null;
 }
 
 /**

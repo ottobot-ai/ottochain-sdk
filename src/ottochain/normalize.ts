@@ -75,6 +75,7 @@ function normalizeDefinition(def: Record<string, unknown>): Record<string, unkno
  * - definition.transitions[*].actions
  * - definition.transitions[*].metadata
  * - parentFiberId
+ * - participants (Optional Set[Address] for multi-party signing)
  *
  * @example
  * ```typescript
@@ -83,7 +84,7 @@ function normalizeDefinition(def: Record<string, unknown>): Record<string, unkno
  *   definition: { states: { INIT: { id: { value: 'INIT' }, isFinal: false } }, ... },
  *   initialData: {}
  * });
- * // message now has parentFiberId: null, definition.metadata: null, etc.
+ * // message now has parentFiberId: null, participants: null, definition.metadata: null, etc.
  * ```
  */
 export function normalizeCreateStateMachine(msg: Record<string, unknown>): Record<string, unknown> {
@@ -92,6 +93,7 @@ export function normalizeCreateStateMachine(msg: Record<string, unknown>): Recor
     definition: normalizeDefinition(msg.definition as Record<string, unknown>),
     initialData: msg.initialData ?? {},
     parentFiberId: msg.parentFiberId ?? null,
+    participants: msg.participants ?? null,
   };
 }
 
