@@ -74,19 +74,6 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true  # Don't fail if already published
 
-      - name: Notify deploy repo
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ secrets.DEPLOY_REPO_TOKEN }}
-        run: |
-          if [ -z "$GH_TOKEN" ]; then
-            echo "⚠️ DEPLOY_REPO_TOKEN not set, skipping deploy notification"
-            exit 0
-          fi
-          gh api repos/ottobot-ai/ottochain-deploy/dispatches \
-            -f event_type=version-bump \
-            -f 'client_payload={"component":"sdk","version":"${{ steps.version.outputs.version }}"}'
-          echo "✅ Notified deploy repo to bump SDK to v${{ steps.version.outputs.version }}"
 
       - name: Bump SDK in consumer repos
         continue-on-error: true
