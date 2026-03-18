@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.5.0](https://github.com/ottobot-ai/ottochain-sdk/compare/v1.4.2...v1.5.0) (2026-03-18)
+
+
+### Features
+
+* **normalize:** add participants to CreateStateMachine wire format ([#122](https://github.com/ottobot-ai/ottochain-sdk/issues/122)) ([032a1ca](https://github.com/ottobot-ai/ottochain-sdk/commit/032a1ca1bff829ffcc83fdcd1c915209f098f52d))
+
+
+### Bug Fixes
+
+* add prepare script so dist/ builds on GitHub install ([#120](https://github.com/ottobot-ai/ottochain-sdk/issues/120)) ([ab2a897](https://github.com/ottobot-ai/ottochain-sdk/commit/ab2a8977c24ee00352ba7306b1b72f567adc91fb))
+* **normalize:** use effect+dependencies fields in normalizeTransition ([#124](https://github.com/ottobot-ai/ottochain-sdk/issues/124)) ([94296d4](https://github.com/ottobot-ai/ottochain-sdk/commit/94296d4413856bff88eb7092d2cc9c6b03b7e5b6))
+
 ## [1.4.2](https://github.com/ottobot-ai/ottochain-sdk/compare/v1.4.1...v1.4.2) (2026-03-13)
 
 
