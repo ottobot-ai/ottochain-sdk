@@ -38,7 +38,16 @@ describe('normalize', () => {
         definition: {
           states: { INIT: { id: 'INIT', isFinal: true, metadata: { key: 'val' } } },
           initialState: 'INIT',
-          transitions: [{ from: 'A', eventName: 'go', to: 'B', guard: 'someGuard', actions: ['act1'], metadata: { m: 1 } }],
+          transitions: [
+            {
+              from: 'A',
+              to: 'B',
+              eventName: 'go',
+              guard: { '==': [1, 1] },
+              effect: { merge: [{ var: 'state' }, { updated: true }] },
+              dependencies: ['uuid-1', 'uuid-2'],
+            },
+          ],
           metadata: { def: true },
         },
         initialData: {},
@@ -48,9 +57,26 @@ describe('normalize', () => {
       expect(result.parentFiberId).toBe('parent-123');
       expect((result.definition as any).metadata).toEqual({ def: true });
       const transition = ((result.definition as any).transitions as any[])[0];
-      expect(transition.guard).toBe('someGuard');
-      expect(transition.actions).toEqual(['act1']);
-      expect(transition.metadata).toEqual({ m: 1 });
+      expect(transition.guard).toEqual({ '==': [1, 1] });
+      expect(transition.effect).toEqual({ merge: [{ var: 'state' }, { updated: true }] });
+      expect(transition.dependencies).toEqual(['uuid-1', 'uuid-2']);
+    });
+
+    it('defaults transition dependencies to empty array', () => {
+      const result = normalizeCreateStateMachine({
+        fiberId: 'test-fiber',
+        definition: {
+          states: { INIT: { id: 'INIT', isFinal: false } },
+          initialState: 'INIT',
+          transitions: [
+            { from: 'A', to: 'B', eventName: 'go', guard: { '==': [1, 1] }, effect: { var: 'state' } },
+          ],
+        },
+        initialData: {},
+      });
+
+      const transition = ((result.definition as any).transitions as any[])[0];
+      expect(transition.dependencies).toEqual([]);
     });
 
     it('defaults initialData to empty object', () => {
