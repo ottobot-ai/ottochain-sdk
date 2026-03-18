@@ -31,15 +31,26 @@ function normalizeState(state: Record<string, unknown>): Record<string, unknown>
 
 /**
  * Normalize a Transition object for wire format
+ *
+ * Scala Transition schema:
+ *   from: StateId (required)
+ *   to: StateId (required)
+ *   eventName: String (required)
+ *   guard: JsonLogicExpression (required)
+ *   effect: JsonLogicExpression (required)
+ *   dependencies: Set[UUID] = Set.empty
+ *
+ * `dependencies` serializes as `[]` when empty (default). Both `guard`
+ * and `effect` are required non-optional fields.
  */
 function normalizeTransition(t: Record<string, unknown>): Record<string, unknown> {
   return {
     from: t.from,
-    eventName: t.eventName,
     to: t.to,
-    guard: t.guard ?? null,
-    actions: t.actions ?? null,
-    metadata: t.metadata ?? null,
+    eventName: t.eventName,
+    guard: t.guard,
+    effect: t.effect,
+    dependencies: t.dependencies ?? [],
   };
 }
 
@@ -68,14 +79,12 @@ function normalizeDefinition(def: Record<string, unknown>): Record<string, unkno
 /**
  * Normalize a CreateStateMachine message for wire format
  *
- * Ensures all Option fields are explicit null:
- * - definition.metadata
- * - definition.states[*].metadata
- * - definition.transitions[*].guard
- * - definition.transitions[*].actions
- * - definition.transitions[*].metadata
- * - parentFiberId
- * - participants (Optional Set[Address] for multi-party signing)
+ * Ensures all Option/default fields are explicit in wire format:
+ * - definition.metadata → null when absent
+ * - definition.states[*].metadata → null when absent
+ * - definition.transitions[*].dependencies → [] when absent
+ * - parentFiberId → null when absent
+ * - participants → null when absent (Optional Set[Address] for multi-party signing)
  *
  * @example
  * ```typescript
