@@ -182,7 +182,11 @@ class RevocationWebSocketClient {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000; // Start with 1 second
-  private isConnected = false;
+  private _isConnected = false;
+
+  get connected(): boolean {
+    return this._isConnected;
+  }
 
   constructor(url: string, eventEmitter: RevocationEventEmitter) {
     this.url = url;
@@ -195,7 +199,7 @@ class RevocationWebSocketClient {
       
       this.ws.onopen = () => {
         console.log('Connected to revocation event stream');
-        this.isConnected = true;
+        this._isConnected = true;
         this.reconnectAttempts = 0;
         this.reconnectDelay = 1000;
         this.eventEmitter.emit('connected', {});
@@ -212,7 +216,7 @@ class RevocationWebSocketClient {
 
       this.ws.onclose = () => {
         console.log('Revocation event stream disconnected');
-        this.isConnected = false;
+        this._isConnected = false;
         this.eventEmitter.emit('disconnected', {});
         this.attemptReconnect();
       };
@@ -265,7 +269,7 @@ class RevocationWebSocketClient {
       this.ws.close();
       this.ws = null;
     }
-    this.isConnected = false;
+    this._isConnected = false;
   }
 
   getConnectionState(): 'CONNECTED' | 'DISCONNECTED' | 'CONNECTING' {
@@ -413,7 +417,7 @@ export class RevocationClient {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const data = await response.json() as any;
       
       return {
         delegationId,
@@ -509,7 +513,7 @@ export class RevocationClient {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const data = await response.json() as any;
       const results = new Map<string, RevocationStatus>();
 
       for (const item of data.results || []) {
@@ -553,7 +557,7 @@ export class RevocationClient {
         throw new Error(`Emergency revocation failed: HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const data = await response.json() as any;
       
       // Invalidate cache
       if (this.cache) {
@@ -583,7 +587,7 @@ export class RevocationClient {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const data = await response.json() as any;
       
       return {
         totalRevocations: data.totalRevocations || 0,

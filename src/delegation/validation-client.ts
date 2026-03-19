@@ -167,7 +167,7 @@ export class DelegationValidationClient {
     try {
       const response = await fetch(`${this.config.bridgeEndpoint}/delegation/${delegationId}`, {
         method: 'GET',
-        timeout: this.config.timeout,
+        signal: typeof AbortSignal !== "undefined" && this.config.timeout ? AbortSignal.timeout(this.config.timeout) : undefined,
         headers: {
           'Accept': 'application/json'
         }
@@ -180,7 +180,7 @@ export class DelegationValidationClient {
         throw new Error(`Failed to fetch delegation info: ${response.status} ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const data = await response.json() as any;
       const delegationInfo = data.delegation;
 
       // Cache for 5 minutes
@@ -331,7 +331,7 @@ export class DelegationValidationClient {
     try {
       const response = await fetch(`${this.config.bridgeEndpoint}/delegation/validate`, {
         method: 'POST',
-        timeout: this.config.timeout,
+        signal: typeof AbortSignal !== "undefined" && this.config.timeout ? AbortSignal.timeout(this.config.timeout) : undefined,
         headers: {
           'Content-Type': 'application/json'
         },
@@ -353,7 +353,7 @@ export class DelegationValidationClient {
       }
 
       // Parse error response
-      const errorData = await response.json();
+      const errorData = await response.json() as any;
       return [{
         type: this.mapRemoteErrorType(errorData.errorType),
         message: errorData.error || 'Remote validation failed',
@@ -430,7 +430,7 @@ export class DelegationValidationClient {
     try {
       const response = await fetch(`${this.config.bridgeEndpoint}/delegation/submit`, {
         method: 'POST',
-        timeout: this.config.timeout,
+        signal: typeof AbortSignal !== "undefined" && this.config.timeout ? AbortSignal.timeout(this.config.timeout) : undefined,
         headers: {
           'Content-Type': 'application/json'
         },
@@ -443,7 +443,7 @@ export class DelegationValidationClient {
         })
       });
 
-      const data = await response.json();
+      const data = await response.json() as any;
 
       if (response.ok) {
         return {
@@ -484,7 +484,7 @@ export class DelegationValidationClient {
     let activeEntries = 0;
     let expiredEntries = 0;
 
-    for (const [key, value] of this.cache.entries()) {
+    for (const value of this.cache.values()) {
       if (value.expiresAt > now) {
         activeEntries++;
       } else {

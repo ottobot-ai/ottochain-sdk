@@ -105,7 +105,7 @@ class DelegationValidationClient {
         try {
             const response = await fetch(`${this.config.bridgeEndpoint}/delegation/${delegationId}`, {
                 method: 'GET',
-                timeout: this.config.timeout,
+                signal: typeof AbortSignal !== "undefined" && this.config.timeout ? AbortSignal.timeout(this.config.timeout) : undefined,
                 headers: {
                     'Accept': 'application/json'
                 }
@@ -249,7 +249,7 @@ class DelegationValidationClient {
         try {
             const response = await fetch(`${this.config.bridgeEndpoint}/delegation/validate`, {
                 method: 'POST',
-                timeout: this.config.timeout,
+                signal: typeof AbortSignal !== "undefined" && this.config.timeout ? AbortSignal.timeout(this.config.timeout) : undefined,
                 headers: {
                     'Content-Type': 'application/json'
                 },
@@ -326,7 +326,7 @@ class DelegationValidationClient {
         try {
             const response = await fetch(`${this.config.bridgeEndpoint}/delegation/submit`, {
                 method: 'POST',
-                timeout: this.config.timeout,
+                signal: typeof AbortSignal !== "undefined" && this.config.timeout ? AbortSignal.timeout(this.config.timeout) : undefined,
                 headers: {
                     'Content-Type': 'application/json'
                 },
@@ -376,7 +376,7 @@ class DelegationValidationClient {
         const now = Date.now();
         let activeEntries = 0;
         let expiredEntries = 0;
-        for (const [key, value] of this.cache.entries()) {
+        for (const value of this.cache.values()) {
             if (value.expiresAt > now) {
                 activeEntries++;
             }

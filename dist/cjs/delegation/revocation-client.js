@@ -89,12 +89,15 @@ class RevocationCache {
  * WebSocket client for real-time revocation events
  */
 class RevocationWebSocketClient {
+    get connected() {
+        return this._isConnected;
+    }
     constructor(url, eventEmitter) {
         this.ws = null;
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 5;
         this.reconnectDelay = 1000; // Start with 1 second
-        this.isConnected = false;
+        this._isConnected = false;
         this.url = url;
         this.eventEmitter = eventEmitter;
     }
@@ -103,7 +106,7 @@ class RevocationWebSocketClient {
             this.ws = new WebSocket(this.url);
             this.ws.onopen = () => {
                 console.log('Connected to revocation event stream');
-                this.isConnected = true;
+                this._isConnected = true;
                 this.reconnectAttempts = 0;
                 this.reconnectDelay = 1000;
                 this.eventEmitter.emit('connected', {});
@@ -119,7 +122,7 @@ class RevocationWebSocketClient {
             };
             this.ws.onclose = () => {
                 console.log('Revocation event stream disconnected');
-                this.isConnected = false;
+                this._isConnected = false;
                 this.eventEmitter.emit('disconnected', {});
                 this.attemptReconnect();
             };
@@ -164,7 +167,7 @@ class RevocationWebSocketClient {
             this.ws.close();
             this.ws = null;
         }
-        this.isConnected = false;
+        this._isConnected = false;
     }
     getConnectionState() {
         if (!this.ws)

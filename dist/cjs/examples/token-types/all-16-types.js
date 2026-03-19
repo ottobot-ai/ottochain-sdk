@@ -29,10 +29,10 @@ exports.UserAccountIdentifierExample = {
         metadata: {
             email,
             accountType: 'standard',
-            createdDate: new Date().toISOString(),
+            createdDate: Date.now(),
         },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
         createdBy: 'identity-producer-001',
     }),
     // Cannot transfer user identifiers
@@ -69,8 +69,8 @@ exports.EducationalDegreeExample = {
             gpa: 3.75,
             majorField: 'Computer Science',
         },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
         createdBy: 'university-producer-001',
         validator: 'education-validator-001',
         proofs: {
@@ -84,8 +84,7 @@ exports.EducationalDegreeExample = {
     // Cannot be duplicated (non-replicable) 
     // Cryptographically verifiable with university signature
     verifyDegree: async (token) => {
-        const config = (0, token_types_js_1.getTokenBehaviorConfig)(token_types_js_1.TokenBehaviorType.TERV_0001_PERSONAL_CERTIFICATE);
-        // Verify university signature and accreditation
+        // Verify university signature and accreditation (config lookup available via getTokenBehaviorConfig)
         return token.proofs?.['university_signature'] !== undefined;
     },
     useCases: [
@@ -114,11 +113,11 @@ exports.SocialBadgeExample = {
         metadata: {
             achievement,
             badgeType: 'community_contribution',
-            earnedDate: new Date().toISOString(),
+            earnedDate: Date.now(),
             category: 'social_engagement',
         },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
         createdBy: 'social-producer-001',
     }),
     // Badge stays with user (non-transferable)
@@ -129,8 +128,8 @@ exports.SocialBadgeExample = {
         ...originalToken,
         id: `badge-${newUserId}-${originalToken.metadata.achievement}`,
         owner: `user-${newUserId}`,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
     }),
     useCases: [
         'Social media badges',
@@ -160,12 +159,12 @@ exports.DigitalArtNFTExample = {
             artist: artistId,
             description: 'Original digital artwork',
             imageURI: 'ipfs://Qm...',
-            creationDate: new Date().toISOString(),
+            creationDate: Date.now(),
             edition: '1/1',
             medium: 'Digital Art',
         },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
         createdBy: `artist-producer-${artistId}`,
         validator: 'art-validator-001',
         proofs: {
@@ -184,7 +183,7 @@ exports.DigitalArtNFTExample = {
             operation: token_types_js_1.TokenOperation.TRANSFER,
             initiator: token.owner,
             parameters: { to: newOwner },
-            timestamp: new Date().toISOString(),
+            timestamp: Date.now(),
             producers: {},
             validators: {},
             environment: {},
@@ -196,7 +195,7 @@ exports.DigitalArtNFTExample = {
         return {
             ...token,
             owner: newOwner,
-            updatedAt: new Date().toISOString(),
+            updatedAt: Date.now(),
         };
     },
     useCases: [
@@ -229,8 +228,8 @@ exports.GameItemExample = {
             effects: ['+50 health', '+20 mana'],
             gameContext: 'rpg_adventure',
         },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
         createdBy: 'game-producer-001',
         validator: 'game-validator-001',
         proofs: {
@@ -248,7 +247,7 @@ exports.GameItemExample = {
             operation: token_types_js_1.TokenOperation.CONSUME,
             initiator: token.owner,
             parameters: { gameContext },
-            timestamp: new Date().toISOString(),
+            timestamp: Date.now(),
             producers: {},
             validators: {},
             environment: {},
@@ -261,10 +260,10 @@ exports.GameItemExample = {
             ...token,
             currentState: token_types_js_1.TokenState.CONSUMED,
             balance: 0,
-            updatedAt: new Date().toISOString(),
+            updatedAt: Date.now(),
             metadata: {
                 ...token.metadata,
-                consumedAt: new Date().toISOString(),
+                consumedAt: Date.now(),
                 consumptionContext: gameContext,
             },
         };
@@ -300,8 +299,8 @@ exports.DigitalCurrencyExample = {
             maxSupply: initialSupply * 2,
             mintingPolicy: 'controlled',
         },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
         createdBy: 'currency-producer-001',
         validator: 'central-bank-validator-001',
         proofs: {
@@ -320,7 +319,7 @@ exports.DigitalCurrencyExample = {
             operation: token_types_js_1.TokenOperation.TRANSFER,
             initiator: from,
             parameters: { to, amount },
-            timestamp: new Date().toISOString(),
+            timestamp: Date.now(),
             producers: {},
             validators: {},
             environment: {},
@@ -332,14 +331,14 @@ exports.DigitalCurrencyExample = {
         // In real implementation, this would handle balance updates across accounts
         return {
             ...token,
-            updatedAt: new Date().toISOString(),
+            updatedAt: Date.now(),
             metadata: {
                 ...token.metadata,
                 lastTransaction: {
                     from,
                     to,
                     amount,
-                    timestamp: new Date().toISOString(),
+                    timestamp: Date.now(),
                 },
             },
         };
@@ -353,14 +352,14 @@ exports.DigitalCurrencyExample = {
         return {
             ...token,
             balance: newBalance,
-            updatedAt: new Date().toISOString(),
+            updatedAt: Date.now(),
             metadata: {
                 ...token.metadata,
                 totalSupply: newBalance,
                 lastMint: {
                     amount,
                     recipient,
-                    timestamp: new Date().toISOString(),
+                    timestamp: Date.now(),
                 },
             },
         };
@@ -419,10 +418,10 @@ exports.TokenConversionExample = {
                 convertedFrom: utilityToken.id,
                 gameContext,
                 conversionRate: 1.0,
-                convertedAt: new Date().toISOString(),
+                convertedAt: Date.now(),
             },
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
             createdBy: 'conversion-producer-001',
         };
         return gameToken;
@@ -446,10 +445,10 @@ exports.TokenCompositionExample = {
                     type: t.behaviorType,
                     contribution: t.balance,
                 })),
-                compositionDate: new Date().toISOString(),
+                compositionDate: Date.now(),
             },
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
             createdBy: 'composition-producer-001',
         };
         return composite;
@@ -511,7 +510,7 @@ async function demonstrateTokenLifecycle() {
             operation: token_types_js_1.TokenOperation.TRANSFER,
             initiator: userAccount.owner,
             parameters: { to: 'someone-else' },
-            timestamp: new Date().toISOString(),
+            timestamp: Date.now(),
             producers: {},
             validators: {},
             environment: {},

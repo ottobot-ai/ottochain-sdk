@@ -10,10 +10,10 @@ import {
   DelegationHelpers,
   DelegationScope,
   Intent,
-  DelegationStatus,
   DELEGATION_CONSTANTS,
   DelegationError,
 } from '../delegation/index.js';
+import { IntentStatus } from '../generated/ottochain/apps/delegation/v1/intents.js';
 
 // Mock addresses and keys for examples
 const USER_ADDRESS = 'dag_user123_example_address_for_demonstration';
@@ -182,7 +182,7 @@ export async function createAndSignIntent() {
       expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
       intentNonce: 1,
       userSignature: '', // Will be filled by signIntent
-      status: 'INTENT_STATUS_PENDING',
+      status: IntentStatus.INTENT_STATUS_PENDING,
     };
 
     console.log('Intent to sign:', JSON.stringify({
@@ -454,17 +454,6 @@ export async function runAllDelegationExamples() {
 
   console.log('✨ All examples completed!');
 }
-
-// Export individual examples for selective running
-export {
-  createBasicSessionKey,
-  createMarketOperationsDelegation,
-  createAndSignIntent,
-  manageDelegations,
-  advancedDelegationScopes,
-  errorHandlingExample,
-  batchOperationsExample,
-};
 
 // If running directly
 if (require.main === module) {
