@@ -108,23 +108,37 @@ export function normalizeCreateStateMachine(msg: Record<string, unknown>): Recor
 
 /**
  * Normalize a TransitionStateMachine message for wire format
+ *
+ * Scala TransitionStateMachine schema:
+ *   fiberId: UUID (required)
+ *   eventName: String (required)
+ *   payload: JsonLogicValue (required)
+ *   targetSequenceNumber: FiberOrdinal (required)
+ *
+ * All fields are required — no Option types, so no null normalization needed.
  */
 export function normalizeTransitionStateMachine(msg: Record<string, unknown>): Record<string, unknown> {
   return {
     fiberId: msg.fiberId,
     eventName: msg.eventName,
-    eventData: msg.eventData ?? null,
-    fiberOrdinal: msg.fiberOrdinal,
+    payload: msg.payload,
+    targetSequenceNumber: msg.targetSequenceNumber,
   };
 }
 
 /**
  * Normalize an ArchiveStateMachine message for wire format
+ *
+ * Scala ArchiveStateMachine schema:
+ *   fiberId: UUID (required)
+ *   targetSequenceNumber: FiberOrdinal (required)
+ *
+ * All fields are required — no Option types, so no null normalization needed.
  */
 export function normalizeArchiveStateMachine(msg: Record<string, unknown>): Record<string, unknown> {
   return {
     fiberId: msg.fiberId,
-    reason: msg.reason ?? null,
+    targetSequenceNumber: msg.targetSequenceNumber,
   };
 }
 

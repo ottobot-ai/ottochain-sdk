@@ -89,40 +89,42 @@ describe('normalize', () => {
   });
 
   describe('normalizeTransitionStateMachine', () => {
-    it('adds null for missing eventData', () => {
+    it('passes through all required fields', () => {
       const result = normalizeTransitionStateMachine({
         fiberId: 'f1',
         eventName: 'go',
-        fiberOrdinal: 5,
+        payload: { amount: 100 },
+        targetSequenceNumber: 5,
       });
       expect(result).toEqual({
         fiberId: 'f1',
         eventName: 'go',
-        eventData: null,
-        fiberOrdinal: 5,
+        payload: { amount: 100 },
+        targetSequenceNumber: 5,
       });
     });
 
-    it('preserves provided eventData', () => {
+    it('preserves empty object payload', () => {
       const result = normalizeTransitionStateMachine({
         fiberId: 'f1',
         eventName: 'go',
-        eventData: { amount: 100 },
-        fiberOrdinal: 5,
+        payload: {},
+        targetSequenceNumber: 5,
       });
-      expect(result.eventData).toEqual({ amount: 100 });
+      expect(result.payload).toEqual({});
     });
   });
 
   describe('normalizeArchiveStateMachine', () => {
-    it('adds null for missing reason', () => {
-      const result = normalizeArchiveStateMachine({ fiberId: 'f1' });
-      expect(result).toEqual({ fiberId: 'f1', reason: null });
-    });
-
-    it('preserves provided reason', () => {
-      const result = normalizeArchiveStateMachine({ fiberId: 'f1', reason: 'completed' });
-      expect(result.reason).toBe('completed');
+    it('passes through all required fields', () => {
+      const result = normalizeArchiveStateMachine({
+        fiberId: 'f1',
+        targetSequenceNumber: 3,
+      });
+      expect(result).toEqual({
+        fiberId: 'f1',
+        targetSequenceNumber: 3,
+      });
     });
   });
 
@@ -142,18 +144,19 @@ describe('normalize', () => {
 
     it('normalizes TransitionStateMachine wrapper', () => {
       const result = normalizeMessage({
-        TransitionStateMachine: { fiberId: 'f1', eventName: 'go', fiberOrdinal: 1 },
+        TransitionStateMachine: { fiberId: 'f1', eventName: 'go', payload: {}, targetSequenceNumber: 1 },
       });
       expect(result).toHaveProperty('TransitionStateMachine');
-      expect((result.TransitionStateMachine as any).eventData).toBeNull();
+      expect((result.TransitionStateMachine as any).payload).toEqual({});
+      expect((result.TransitionStateMachine as any).targetSequenceNumber).toBe(1);
     });
 
     it('normalizes ArchiveStateMachine wrapper', () => {
       const result = normalizeMessage({
-        ArchiveStateMachine: { fiberId: 'f1' },
+        ArchiveStateMachine: { fiberId: 'f1', targetSequenceNumber: 2 },
       });
       expect(result).toHaveProperty('ArchiveStateMachine');
-      expect((result.ArchiveStateMachine as any).reason).toBeNull();
+      expect((result.ArchiveStateMachine as any).targetSequenceNumber).toBe(2);
     });
 
     it('passes through unknown message types unchanged', () => {
