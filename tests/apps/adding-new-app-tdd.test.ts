@@ -353,7 +353,7 @@ describe('Adding a New App: TDD Implementation Tests', () => {
       
       const repayTransition = transitions.find((t: any) => t.event === 'repay');
       expect(repayTransition).toBeDefined();
-      expect(repayTransition.payloadFn).toBeTypeOf('function');
+      expect(typeof repayTransition.payloadFn).toBe('function');
     });
   });
 
@@ -427,7 +427,7 @@ describe('Adding a New App: TDD Implementation Tests', () => {
       
       // Mock invalid inputs
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const invalidLoanData = {
+      const _invalidLoanData = {
         borrowerAddress: '', // Empty address
         principalAmount: -100, // Negative amount
         interestRateBps: 10001 // Invalid rate > 100%

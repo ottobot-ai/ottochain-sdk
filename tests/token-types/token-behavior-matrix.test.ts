@@ -129,8 +129,8 @@ describe('16-Type Token Behavior Matrix', () => {
         owner: 'user-001',
         balance: 1,
         metadata: {},
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
         createdBy: 'test-producer',
       };
       
@@ -144,7 +144,7 @@ describe('16-Type Token Behavior Matrix', () => {
         operation: TokenOperation.TRANSFER,
         initiator: 'user-001',
         parameters: { to: 'user-002', amount: 1 },
-        timestamp: new Date().toISOString(),
+        timestamp: Date.now(),
         producers: {},
         validators: {},
         environment: {},
@@ -176,8 +176,8 @@ describe('16-Type Token Behavior Matrix', () => {
         owner: 'player-001',
         balance: 1,
         metadata: {},
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
         createdBy: 'game-producer',
       };
       
@@ -191,7 +191,7 @@ describe('16-Type Token Behavior Matrix', () => {
         operation: TokenOperation.CONSUME,
         initiator: 'player-001',
         parameters: {},
-        timestamp: new Date().toISOString(),
+        timestamp: Date.now(),
         producers: {},
         validators: {},
         environment: {},
@@ -223,8 +223,8 @@ describe('16-Type Token Behavior Matrix', () => {
         owner: 'treasury-001',
         balance: 1000000,
         metadata: {},
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
         createdBy: 'currency-producer',
       };
       
@@ -238,7 +238,7 @@ describe('16-Type Token Behavior Matrix', () => {
         operation: TokenOperation.DUPLICATE,
         initiator: 'treasury-001',
         parameters: { amount: 1000 },
-        timestamp: new Date().toISOString(),
+        timestamp: Date.now(),
         producers: {},
         validators: {},
         environment: {},
@@ -270,8 +270,8 @@ describe('16-Type Token Behavior Matrix', () => {
         owner: 'student-001',
         balance: 1,
         metadata: {},
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
         createdBy: 'university-producer',
         proofs: {
           'signature': 'valid_signature',
@@ -289,7 +289,7 @@ describe('16-Type Token Behavior Matrix', () => {
         operation: TokenOperation.VERIFY,
         initiator: 'verifier-001',
         parameters: {},
-        timestamp: new Date().toISOString(),
+        timestamp: Date.now(),
         producers: {},
         validators: {},
         environment: {},
@@ -324,7 +324,7 @@ describe('16-Type Token Behavior Matrix', () => {
         owner: 'user-001',
         balance: 1,
         metadata: {},
-        createdAt: new Date().toISOString(),
+        createdAt: Date.now(),
         updatedAt: new Date(Date.now() - 30000).toISOString(), // 30 seconds ago
         createdBy: 'test-producer',
       };
@@ -334,7 +334,7 @@ describe('16-Type Token Behavior Matrix', () => {
         operation: TokenOperation.CREATE,
         initiator: 'user-001',
         parameters: {},
-        timestamp: new Date().toISOString(),
+        timestamp: Date.now(),
         producers: {},
         validators: {},
         environment: {},
@@ -365,8 +365,8 @@ describe('16-Type Token Behavior Matrix', () => {
         owner: 'user-001',
         balance: 1000,
         metadata: {},
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
         createdBy: 'currency-producer',
       };
       
@@ -379,7 +379,7 @@ describe('16-Type Token Behavior Matrix', () => {
           operation: TokenOperation.TRANSFER,
           initiator: 'user-001',
           parameters: { amount: config.validationConstraints.minTransferAmount - 1 },
-          timestamp: new Date().toISOString(),
+          timestamp: Date.now(),
           producers: {},
           validators: {},
           environment: {},
@@ -402,7 +402,7 @@ describe('16-Type Token Behavior Matrix', () => {
           operation: TokenOperation.TRANSFER,
           initiator: 'user-001',
           parameters: { amount: config.validationConstraints.maxTransferAmount + 1 },
-          timestamp: new Date().toISOString(),
+          timestamp: Date.now(),
           producers: {},
           validators: {},
           environment: {},
@@ -557,8 +557,8 @@ describe('16-Type Token Behavior Matrix', () => {
         owner: 'user-001',
         balance: 1,
         metadata: {},
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
         createdBy: 'test-producer',
       };
       
@@ -567,7 +567,7 @@ describe('16-Type Token Behavior Matrix', () => {
         operation: TokenOperation.TRANSFER,
         initiator: 'user-001',
         parameters: {},
-        timestamp: new Date().toISOString(),
+        timestamp: Date.now(),
         producers: {},
         validators: {},
         environment: {},
@@ -606,8 +606,8 @@ describe('Integration with Producer-Validator Framework', () => {
       owner: 'user-001',
       balance: 1000,
       metadata: {},
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
       createdBy: 'currency-producer-001',
     };
     

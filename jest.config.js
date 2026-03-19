@@ -44,6 +44,8 @@ module.exports = {
         useESM: false,
         tsconfig: {
           moduleResolution: 'node16',
+          noUnusedLocals: false,
+          noUnusedParameters: false,
         },
       },
     ],

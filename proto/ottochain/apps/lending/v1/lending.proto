@@ -1,0 +1,16 @@
+syntax = "proto3";
+package ottochain.apps.lending.v1;
+
+message ProposeLoan {
+  string borrower_address = 1;
+  int64 principal_amount = 2;
+  int32 interest_rate_bps = 3;
+  int64 due_at_ordinal = 4;
+}
+
+message LoanEvent {
+  string loan_id = 1;
+  string event_type = 2;
+  int64 amount = 3;
+  string actor = 4;
+}
