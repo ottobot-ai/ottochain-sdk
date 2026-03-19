@@ -325,7 +325,7 @@ describe('16-Type Token Behavior Matrix', () => {
         balance: 1,
         metadata: {},
         createdAt: Date.now(),
-        updatedAt: new Date(Date.now() - 30000).toISOString(), // 30 seconds ago
+        updatedAt: Date.now() - 30000, // 30 seconds ago
         createdBy: 'test-producer',
       };
       
