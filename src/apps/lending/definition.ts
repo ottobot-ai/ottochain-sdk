@@ -15,7 +15,8 @@ const definition = {
       from: { value: 'proposed' },
       to: { value: 'active' },
       eventName: 'accept',
-      guard: { '===': [{ var: 'event.actor' }, { var: 'fiber.data.lenderAddress' }] },
+      guard: { '===': [{ var: 'proofs.0.address' }, { var: 'state.lenderAddress' }] },
+      effect: { merge: { status: 'active', lenderAddress: { var: 'proofs.0.address' } } },
     },
     {
       from: { value: 'active' },

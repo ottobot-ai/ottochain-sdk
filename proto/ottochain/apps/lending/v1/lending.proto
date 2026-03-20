@@ -3,6 +3,26 @@ package ottochain.apps.lending.v1;
 
 option java_package = "xyz.ottochain.apps.lending.v1";
 option java_multiple_files = true;
+option java_outer_classname = "LendingProto";
+
+enum LoanStatus {
+  LOAN_STATUS_UNSPECIFIED = 0;
+  LOAN_STATUS_PROPOSED = 1;
+  LOAN_STATUS_ACTIVE = 2;
+  LOAN_STATUS_REPAID = 3;
+  LOAN_STATUS_DEFAULTED = 4;
+}
+
+message LoanRecord {
+  string loan_id = 1;
+  string borrower_address = 2;
+  string lender_address = 3;
+  int64 principal_amount = 4;
+  int32 interest_rate_bps = 5;
+  int64 due_at_ordinal = 6;
+  LoanStatus status = 7;
+  int64 created_at_ordinal = 8;
+}
 
 message ProposeLoan {
   string borrower_address = 1;

@@ -140,7 +140,7 @@ describe('Adding a New App: TDD Implementation Tests', () => {
 
   describe('Step 3: Bridge Routes', () => {
     it('should have bridge route files with proper structure', async () => {
-      // ARRANGE: Expected route files
+      // ARRANGE: Expected route files (live in SDK's own packages/bridge)
       const routeFiles = [
         `packages/bridge/src/routes/${TEST_DOMAIN}/index.ts`,
         `packages/bridge/src/routes/${TEST_DOMAIN}/propose.ts`,
@@ -151,7 +151,7 @@ describe('Adding a New App: TDD Implementation Tests', () => {
       
       for (const routeFile of routeFiles) {
         // ACT & ASSERT: Route files exist
-        expect(existsSync(join(process.cwd(), '..', 'ottochain-services', routeFile))).toBe(true);
+        expect(existsSync(join(process.cwd(), routeFile))).toBe(true);
       }
     });
 
@@ -357,7 +357,12 @@ describe('Adding a New App: TDD Implementation Tests', () => {
     });
   });
 
-  describe('Step 6: E2E Test Integration', () => {
+  // Step 6 checks the sibling ottochain repo — only runs in full monorepo environment
+  const ottochainRoot = join(process.cwd(), '..', 'ottochain');
+  const hasOttochainSibling = existsSync(ottochainRoot);
+  const describeE2E = hasOttochainSibling ? describe : describe.skip;
+
+  describeE2E('Step 6: E2E Test Integration', () => {
     it('should have E2E test example files', () => {
       const exampleFiles = [
         'e2e-test/examples/lending/definition.json',
@@ -368,13 +373,13 @@ describe('Adding a New App: TDD Implementation Tests', () => {
       ];
       
       for (const file of exampleFiles) {
-        const fullPath = join(process.cwd(), '..', 'ottochain', file);
+        const fullPath = join(ottochainRoot, file);
         expect(existsSync(fullPath)).toBe(true);
       }
     });
 
     it('should have valid E2E test flow definition', () => {
-      const examplePath = join(process.cwd(), '..', 'ottochain', 'e2e-test/examples/lending/example.json');
+      const examplePath = join(ottochainRoot, 'e2e-test/examples/lending/example.json');
       const example = JSON.parse(readFileSync(examplePath, 'utf8'));
       
       // ASSERT: Valid structure
