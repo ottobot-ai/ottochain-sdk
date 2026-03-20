@@ -283,10 +283,8 @@ export class MetagraphClient {
     const intervalMs      = options?.pollIntervalMs ?? 2000;
     const onError         = options?.onError ?? ((e: Error) => console.warn('[subscribeFiberState]', e));
     const fireImmediately = options?.fireImmediately ?? true;
-    if (fireImmediately === false) {
-      // Warn: if the fiber never exists, the callback will never fire (seqNum stays null, no change detected).
-      console.warn('[subscribeFiberState] fireImmediately=false: callback will never fire if the fiber does not exist.');
-    }
+    // Note: when fireImmediately=false and the fiber never exists, the callback will never fire
+    // (seqNum stays null so no change is detected). Documented in JSDoc; no runtime warning needed.
 
     let previous:  StateMachineFiberRecord | null = null;
     let lastSeqNum: number | null                 = null;
