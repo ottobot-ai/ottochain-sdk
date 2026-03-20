@@ -70,7 +70,7 @@ export interface WireTransition {
   from: WireStateId;
   to: WireStateId;
   eventName: string;
-  guard: unknown | null;
+  guard: unknown;
   effect: unknown | null;
   dependencies?: string[];
 }

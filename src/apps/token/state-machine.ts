@@ -36,7 +36,7 @@ const GOVERNANCE_GUARD = { var: 'delegation.isAuthorized' };
 const EXPIRY_GUARD     = { '<': [{ var: '$ordinal' }, { var: 'state.expiresAtOrdinal' }] };
 const SPLIT_GUARD      = { '<=': [{ var: 'event.amount' }, { var: 'state.balance' }] };
 
-function transferGuard(g: boolean, e: boolean): unknown | null {
+function transferGuard(g: boolean, e: boolean): unknown {
   if (g && e) return { and: [GOVERNANCE_GUARD, EXPIRY_GUARD] };
   if (g)      return GOVERNANCE_GUARD;
   if (e)      return EXPIRY_GUARD;
@@ -45,7 +45,7 @@ function transferGuard(g: boolean, e: boolean): unknown | null {
 
 // ── Transition builders ────────────────────────────────────────────────────
 
-function tx(from: string, to: string, eventName: string, guard: unknown | null): WireTransition {
+function tx(from: string, to: string, eventName: string, guard: unknown): WireTransition {
   return { from: sid(from), to: sid(to), eventName, guard, effect: null };
 }
 
