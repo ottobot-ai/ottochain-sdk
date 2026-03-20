@@ -40,7 +40,7 @@ export {
 // State Machine JSON Definitions
 // ---------------------------------------------------------------------------
 
-import marketUniversalDef from './state-machines/market-universal.json';
+import { marketUniversalDef } from './state-machines/index.js';
 
 export type MarketDefinitionType = 'Universal';
 

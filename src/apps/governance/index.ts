@@ -53,18 +53,20 @@ export {
 } from '../../generated/ottochain/apps/governance/v1/governance.js';
 
 // ---------------------------------------------------------------------------
-// State Machine JSON Definitions
+// State Machine Definitions (generated from JSON at build time)
 // ---------------------------------------------------------------------------
 
-import daoMultisigDef from './state-machines/dao-multisig.json';
-import daoSingleDef from './state-machines/dao-single.json';
-import daoThresholdDef from './state-machines/dao-threshold.json';
-import daoTokenDef from './state-machines/dao-token.json';
-import govLegislatureDef from './state-machines/governance-legislature.json';
-import govExecutiveDef from './state-machines/governance-executive.json';
-import govJudiciaryDef from './state-machines/governance-judiciary.json';
-import govConstitutionDef from './state-machines/governance-constitution.json';
-import govSimpleDef from './state-machines/governance-simple.json';
+import {
+  daoMultisigDef,
+  daoSingleDef,
+  daoThresholdDef,
+  daoTokenDef,
+  govLegislatureDef,
+  govExecutiveDef,
+  govJudiciaryDef,
+  govConstitutionDef,
+  govSimpleDef,
+} from './state-machines/index.js';
 
 export type DAODefinitionType = 'Single' | 'Multisig' | 'Threshold' | 'Token';
 export type GovernanceDefinitionType = 'Legislature' | 'Executive' | 'Judiciary' | 'Constitution' | 'Simple';
