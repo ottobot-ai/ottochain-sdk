@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.6.0](https://github.com/ottobot-ai/ottochain-sdk/compare/v1.5.0...v1.6.0) (2026-03-20)
+
+
+### Features
+
+* export OTTOCHAIN_MESSAGE_TYPES for runtime validation ([#129](https://github.com/ottobot-ai/ottochain-sdk/issues/129)) ([c14ab90](https://github.com/ottobot-ai/ottochain-sdk/commit/c14ab90c4d2761dae37a51bebf5c0612d428b50e))
+
+
+### Bug Fixes
+
+* inline JSON state machines at build time for Node 20+ ESM compat ([#127](https://github.com/ottobot-ai/ottochain-sdk/issues/127)) ([eff51a8](https://github.com/ottobot-ai/ottochain-sdk/commit/eff51a8b5f2ec00f415f7116c46e202d6808df54))
+* **normalize:** use correct field names for TransitionStateMachine and ArchiveStateMachine ([#126](https://github.com/ottobot-ai/ottochain-sdk/issues/126)) ([022c71a](https://github.com/ottobot-ai/ottochain-sdk/commit/022c71a32f94c7d5a5f381256d1d763cc28fb8eb))
+
 ## [1.5.0](https://github.com/ottobot-ai/ottochain-sdk/compare/v1.4.2...v1.5.0) (2026-03-18)
 
 
