@@ -12,6 +12,7 @@
  * - Integration with bridge API
  */
 
+import { randomBytes } from 'crypto';
 import { 
   Delegation, 
   SessionKey, 
@@ -354,11 +355,11 @@ export class DelegationClient {
   // Private helper methods
 
   private generateDelegationId(): string {
-    return `del_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `del_${Date.now()}_${randomBytes(6).toString('hex')}`;
   }
 
   private generateSessionKeyId(): string {
-    return `sk_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `sk_${Date.now()}_${randomBytes(6).toString('hex')}`;
   }
 
   private async signIntentWithSessionKey(intent: Intent, sessionKeyPrivateKey: string): Promise<Intent> {
