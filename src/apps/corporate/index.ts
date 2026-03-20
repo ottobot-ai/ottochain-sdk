@@ -72,19 +72,21 @@ export {
 } from '../../generated/ottochain/apps/corporate/v1/corporate.js';
 
 // ---------------------------------------------------------------------------
-// State Machine JSON Definitions
+// State Machine Definitions (generated from JSON at build time)
 // ---------------------------------------------------------------------------
 
-import corporateEntityDef from './state-machines/corporate-entity.json';
-import corporateBoardDef from './state-machines/corporate-board.json';
-import corporateShareholdersDef from './state-machines/corporate-shareholders.json';
-import corporateOfficersDef from './state-machines/corporate-officers.json';
-import corporateSecuritiesDef from './state-machines/corporate-securities.json';
-import corporateComplianceDef from './state-machines/corporate-compliance.json';
-import corporateBylawsDef from './state-machines/corporate-bylaws.json';
-import corporateCommitteeDef from './state-machines/corporate-committee.json';
-import corporateProxyDef from './state-machines/corporate-proxy.json';
-import corporateResolutionDef from './state-machines/corporate-resolution.json';
+import {
+  corporateEntityDef,
+  corporateBoardDef,
+  corporateShareholdersDef,
+  corporateOfficersDef,
+  corporateSecuritiesDef,
+  corporateComplianceDef,
+  corporateBylawsDef,
+  corporateCommitteeDef,
+  corporateProxyDef,
+  corporateResolutionDef,
+} from './state-machines/index.js';
 
 export type CorporateDefinitionType =
   | 'Entity'

@@ -67,7 +67,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "npm run build:cjs && npm run build:esm && npm run build:types && npm run build:fixup",
+    "build": "npm run prebuild && npm run build:cjs && npm run build:esm && npm run build:types && npm run build:fixup",
     "build:fixup": "echo '{\"type\":\"module\"}' > dist/esm/package.json && echo '{\"type\":\"commonjs\"}' > dist/cjs/package.json",
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "build:esm": "tsc -p tsconfig.esm.json",
@@ -80,7 +80,8 @@
     "lint:proto": "buf lint",
     "docs": "typedoc",
     "docs:watch": "typedoc --watch",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "prebuild": "node scripts/inline-json.mjs"
   },
   "keywords": [
     "ottochain",

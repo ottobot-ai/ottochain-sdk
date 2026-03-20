@@ -67,10 +67,10 @@ export const DEFAULT_REPUTATION_CONFIG = {
 } as const;
 
 // ---------------------------------------------------------------------------
-// State Machine JSON Definition
+// State Machine Definition (generated from JSON at build time)
 // ---------------------------------------------------------------------------
 
-import agentIdentityDef from './state-machines/agent-identity.json';
+import { agentIdentityDef } from './state-machines/index.js';
 
 /**
  * Get the agent identity state machine definition.

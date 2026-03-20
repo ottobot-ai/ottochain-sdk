@@ -39,7 +39,7 @@ export {
 // State Machine JSON Definitions
 // ---------------------------------------------------------------------------
 
-import oracleDef from './state-machines/oracle.json';
+import { oracleDef } from './state-machines/index.js';
 
 export type OracleDefinitionType = 'Oracle';
 

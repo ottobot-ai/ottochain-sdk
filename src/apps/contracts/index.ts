@@ -33,11 +33,10 @@ export {
 } from '../../generated/ottochain/apps/contracts/v1/contract.js';
 
 // ---------------------------------------------------------------------------
-// State Machine JSON Definitions
+// State Machine Definitions (generated from JSON at build time)
 // ---------------------------------------------------------------------------
 
-import contractDef from './state-machines/contract.json';
-import escrowDef from './state-machines/escrow.json';
+import { contractDef, escrowDef } from './state-machines/index.js';
 
 export type ContractDefinitionType = 'Contract' | 'Escrow';
 
