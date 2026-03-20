@@ -233,13 +233,13 @@ export declare const TransferParamsSchema: z.ZodObject<{
     amount: z.ZodNumber;
     fee: z.ZodDefault<z.ZodOptional<z.ZodNumber>>;
 }, "strip", z.ZodTypeAny, {
-    from: string;
     amount: number;
+    from: string;
     to: string;
     fee: number;
 }, {
-    from: string;
     amount: number;
+    from: string;
     to: string;
     fee?: number | undefined;
 }>;
