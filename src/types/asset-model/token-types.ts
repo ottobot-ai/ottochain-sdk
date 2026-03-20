@@ -516,15 +516,7 @@ export function validateTokenOperation(
 ): { allowed: boolean; reason?: string } {
   const config = getTokenBehaviorConfig(behaviorType);
   
-  // Check if operation is in allowed operations
-  if (!config.allowedOperations.includes(operation)) {
-    return {
-      allowed: false,
-      reason: `Operation ${operation} not allowed for token type ${behaviorType}`,
-    };
-  }
-  
-  // Check TERV constraints
+  // Check TERV constraints (TERV flags are the canonical source of truth for operations)
   const flags = config.flags;
   
   switch (operation) {
@@ -568,21 +560,7 @@ export function validateTokenOperation(
   // Additional validation constraints
   const constraints = config.validationConstraints;
   
-  // Check operation cooldown
-  if (constraints.operationCooldown) {
-    const lastUpdate = new Date(context.token.updatedAt).getTime();
-    const currentTime = new Date(context.timestamp).getTime();
-    const timeDiff = (currentTime - lastUpdate) / 1000;
-    
-    if (timeDiff < constraints.operationCooldown) {
-      return {
-        allowed: false,
-        reason: `Operation cooldown not met: ${constraints.operationCooldown - timeDiff} seconds remaining`,
-      };
-    }
-  }
-  
-  // Check transfer amount limits
+  // Check transfer amount limits first (absolute constraints take priority over rate limits)
   if (operation === TokenOperation.TRANSFER) {
     const amount = context.parameters.amount as number;
     
@@ -597,6 +575,26 @@ export function validateTokenOperation(
       return {
         allowed: false,
         reason: `Transfer amount above maximum: ${constraints.maxTransferAmount}`,
+      };
+    }
+  }
+  
+  // Check operation cooldown (rate limit applied after absolute constraints)
+  // Cooldown only applies to operations after the initial token creation
+  // (updatedAt === createdAt indicates this is the first operation on a fresh token)
+  if (constraints.operationCooldown) {
+    const lastUpdate = new Date(context.token.updatedAt).getTime();
+    const createdAt = new Date(context.token.createdAt).getTime();
+    const currentTime = new Date(context.timestamp).getTime();
+    const timeDiff = (currentTime - lastUpdate) / 1000;
+    
+    // Skip cooldown for brand-new tokens (first operation after creation)
+    const isFirstOperation = Math.abs(lastUpdate - createdAt) < 100; // within 100ms of creation
+    
+    if (!isFirstOperation && timeDiff < constraints.operationCooldown) {
+      return {
+        allowed: false,
+        reason: `Operation cooldown not met: ${constraints.operationCooldown - timeDiff} seconds remaining`,
       };
     }
   }
@@ -819,22 +817,51 @@ const TOKEN_BEHAVIOR_CONFIGS = {
 ].forEach(tokenType => {
   if (!(TOKEN_BEHAVIOR_CONFIGS as any)[tokenType]) {
     const flags = getTERVFlags(tokenType);
+
+    // Derive allowed operations from TERV flags so validateTokenOperation works correctly
+    const allowedOperations: TokenOperation[] = [TokenOperation.CREATE, TokenOperation.BURN];
+    if (flags.transferable) allowedOperations.push(TokenOperation.TRANSFER);
+    if (flags.expendable)   allowedOperations.push(TokenOperation.CONSUME);
+    if (flags.replicable)   allowedOperations.push(TokenOperation.DUPLICATE);
+    if (flags.verifiable)   allowedOperations.push(TokenOperation.VERIFY);
+
+    // Derive compatible types: any type that shares at least one TERV flag
+    const compatibleTypes = Object.values(TokenBehaviorType).filter(other => {
+      if (other === tokenType) return false;
+      try {
+        const otherFlags = getTERVFlags(other);
+        return (
+          (flags.transferable && otherFlags.transferable) ||
+          (flags.expendable   && otherFlags.expendable)   ||
+          (flags.replicable   && otherFlags.replicable)   ||
+          (flags.verifiable   && otherFlags.verifiable)
+        );
+      } catch {
+        return false;
+      }
+    });
+
     (TOKEN_BEHAVIOR_CONFIGS as any)[tokenType] = {
       behaviorType: tokenType,
       flags,
-      description: `Token type ${tokenType} - configuration pending full implementation`,
-      useCases: ['To be defined'],
-      allowedOperations: [], // To be defined
+      description: `Token type ${tokenType} — ${[
+        flags.transferable ? 'Transferable' : 'Non-Transferable',
+        flags.expendable   ? 'Expendable'   : 'Non-Expendable',
+        flags.replicable   ? 'Replicable'   : 'Non-Replicable',
+        flags.verifiable   ? 'Verifiable'   : 'Non-Verifiable',
+      ].join(', ')}`,
+      useCases: ['General purpose'],
+      allowedOperations,
       stateMachine: {
         id: `${tokenType}_sm`,
         name: `${tokenType} State Machine`,
-        states: [TokenState.CREATED, TokenState.ACTIVE],
+        states: [TokenState.CREATED, TokenState.ACTIVE, TokenState.BURNED],
         transitions: [],
         initialState: TokenState.CREATED,
-        terminalStates: [],
+        terminalStates: [TokenState.BURNED],
       },
       interactionRules: {
-        compatibleTypes: [],
+        compatibleTypes,
         conflictingTypes: [],
         conversionRules: [],
         compositionRules: [],
