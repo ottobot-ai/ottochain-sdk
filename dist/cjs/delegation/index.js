@@ -1,0 +1,111 @@
+"use strict";
+/**
+ * OttoChain SDK Delegation Module
+ *
+ * Complete delegation management system for OttoChain agents and users.
+ * Provides session key delegation, intent signing, and transaction validation.
+ *
+ * @example
+ * ```typescript
+ * import { DelegationClient, DelegationHelpers } from '@ottochain/sdk/delegation';
+ *
+ * const client = new DelegationClient({
+ *   bridgeUrl: 'https://bridge.ottochain.xyz',
+ *   enableValidation: true,
+ *   enableRevocationMonitoring: true,
+ * });
+ *
+ * // Create a session key delegation
+ * const scope = DelegationHelpers.createTransferScope('1000', '5000');
+ * const delegation = await client.createSessionKey(
+ *   userAddress,
+ *   { delegateAddress: agentAddress, scope },
+ *   userSignature,
+ *   nonce
+ * );
+ *
+ * // Sign an intent
+ * const intent = await client.signIntent(
+ *   userAddress,
+ *   { delegationId: delegation.delegationId, intent: myIntent },
+ *   sessionKeyPrivateKey
+ * );
+ * ```
+ */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.SessionKeyError = exports.RevocationError = exports.DelegationScopeError = exports.DelegationError = exports.DELEGATION_CONSTANTS = exports.DelegationHelpers = exports.DelegationClient = void 0;
+// Main delegation client (note: uses optional validation/revocation clients)
+var delegation_client_js_1 = require("./delegation-client.js");
+Object.defineProperty(exports, "DelegationClient", { enumerable: true, get: function () { return delegation_client_js_1.DelegationClient; } });
+Object.defineProperty(exports, "DelegationHelpers", { enumerable: true, get: function () { return delegation_client_js_1.DelegationHelpers; } });
+/**
+ * Delegation utilities and constants
+ */
+exports.DELEGATION_CONSTANTS = {
+    // Maximum delegation duration (24 hours in milliseconds)
+    MAX_DELEGATION_DURATION_MS: 24 * 60 * 60 * 1000,
+    // Default delegation duration (1 hour in milliseconds)
+    DEFAULT_DELEGATION_DURATION_MS: 60 * 60 * 1000,
+    // Maximum session key lifetime
+    MAX_SESSION_KEY_LIFETIME_MS: 24 * 60 * 60 * 1000,
+    // Default validation timeout
+    DEFAULT_VALIDATION_TIMEOUT_MS: 30 * 1000,
+    // Default revocation cache TTL
+    DEFAULT_REVOCATION_CACHE_TTL_MS: 60 * 1000,
+    // Common operation types
+    OPERATIONS: {
+        TRANSFER: 'transfer',
+        CREATE_MARKET: 'create_market',
+        PLACE_BET: 'place_bet',
+        CLAIM_WINNINGS: 'claim_winnings',
+        VOTE: 'vote',
+        DELEGATE_VOTE: 'delegate_vote',
+        CREATE_PROPOSAL: 'create_proposal',
+        SIGN_INTENT: 'sign_intent',
+    },
+    // Validation error messages
+    VALIDATION_ERRORS: {
+        DELEGATION_NOT_FOUND: 'Delegation not found',
+        DELEGATION_EXPIRED: 'Delegation has expired',
+        DELEGATION_REVOKED: 'Delegation has been revoked',
+        SCOPE_VIOLATION: 'Operation not allowed by delegation scope',
+        SPENDING_LIMIT_EXCEEDED: 'Transaction exceeds spending limits',
+        REPUTATION_TOO_LOW: 'Delegate reputation below minimum requirement',
+        INVALID_SIGNATURE: 'Invalid signature provided',
+        SESSION_KEY_EXPIRED: 'Session key has expired',
+        SESSION_KEY_INACTIVE: 'Session key is not active',
+    },
+};
+/**
+ * Delegation error classes for structured error handling
+ */
+class DelegationError extends Error {
+    constructor(message, code, details) {
+        super(message);
+        this.code = code;
+        this.details = details;
+        this.name = 'DelegationError';
+    }
+}
+exports.DelegationError = DelegationError;
+class DelegationScopeError extends DelegationError {
+    constructor(message, details) {
+        super(message, 'SCOPE_VIOLATION', details);
+        this.name = 'DelegationScopeError';
+    }
+}
+exports.DelegationScopeError = DelegationScopeError;
+class RevocationError extends DelegationError {
+    constructor(message, details) {
+        super(message, 'DELEGATION_REVOKED', details);
+        this.name = 'RevocationError';
+    }
+}
+exports.RevocationError = RevocationError;
+class SessionKeyError extends DelegationError {
+    constructor(message, details) {
+        super(message, 'SESSION_KEY_EXPIRED', details);
+        this.name = 'SessionKeyError';
+    }
+}
+exports.SessionKeyError = SessionKeyError;
