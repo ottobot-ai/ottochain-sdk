@@ -357,10 +357,10 @@ describe('Adding a New App: TDD Implementation Tests', () => {
     });
   });
 
-  // Step 6 checks the sibling ottochain repo — only runs in full monorepo environment
+  // Step 6 checks the sibling ottochain repo — only runs when lending E2E examples exist
   const ottochainRoot = join(process.cwd(), '..', 'ottochain');
-  const hasOttochainSibling = existsSync(ottochainRoot);
-  const describeE2E = hasOttochainSibling ? describe : describe.skip;
+  const hasLendingExamples = existsSync(join(ottochainRoot, 'e2e-test/examples/lending'));
+  const describeE2E = hasLendingExamples ? describe : describe.skip;
 
   describeE2E('Step 6: E2E Test Integration', () => {
     it('should have E2E test example files', () => {

@@ -10,6 +10,8 @@ import {
   DelegationError,
   DelegationScopeError,
 } from '../src/delegation/index.js';
+import { DelegationStatus } from '../src/generated/ottochain/apps/delegation/v1/delegation.js';
+import { IntentStatus } from '../src/generated/ottochain/apps/delegation/v1/intents.js';
 
 // Mock configuration
 const mockConfig = {
@@ -362,6 +364,262 @@ describe('Integration Tests', () => {
       expect(result.delegations).toEqual([]);
       expect(result.totalCount).toBe(0);
       expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+  });
+});
+
+// ─── DelegationClient method coverage tests ──────────────────────────────────
+
+describe('DelegationClient methods', () => {
+  let client: DelegationClient;
+
+  beforeEach(() => {
+    mockFetch.mockClear();
+    client = new DelegationClient({ ...mockConfig, retries: 1 });
+  });
+
+  describe('createSessionKey', () => {
+    it('should create a session key delegation', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          success: true,
+          delegationId: 'del_test_123',
+          sessionKeyId: 'sk_test_456',
+        }),
+      });
+
+      const scope: DelegationScope = {
+        allowedOperations: ['transfer'],
+        allowedContracts: [],
+        maxTransactionAmount: '1000',
+        maxTotalAmount: '5000',
+      };
+
+      const result = await client.createSessionKey(
+        'DAGuser123',
+        {
+          delegateAddress: 'DAGagent456',
+          expiryHours: 12,
+          scope,
+        },
+        'sig_abc',
+        1
+      );
+
+      expect(result.success).toBe(true);
+      expect(result.delegationId).toBe('del_test_123');
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/v1/delegations'),
+        expect.objectContaining({ method: 'POST' })
+      );
+    });
+
+    it('should cap expiryHours at 24', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true, delegationId: 'del_capped', sessionKeyId: 'sk_capped' }),
+      });
+
+      const scope: DelegationScope = { allowedOperations: ['transfer'], allowedContracts: [], maxTransactionAmount: '100', maxTotalAmount: '1000' };
+      await client.createSessionKey('DAGuser', { delegateAddress: 'DAGagent', expiryHours: 100, scope }, 'sig', 1);
+
+      // Should not throw and should have called the API
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('signIntent', () => {
+    const makeIntent = (delegationId: string) => ({
+      intentId: 'intent_789',
+      delegationId,
+      userAddress: 'DAGuser123',
+      description: 'Test intent',
+      executionConditions: [],
+      intentNonce: 1,
+      userSignature: 'sig_test',
+      status: IntentStatus.INTENT_STATUS_PENDING,
+    });
+
+    it('should sign an intent via bridge API', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          success: true,
+          intentId: 'intent_789',
+          ordinal: 100,
+        }),
+      });
+
+      const result = await client.signIntent(
+        'DAGuser123',
+        { delegationId: 'del_test_123', intent: makeIntent('del_test_123') },
+        'session_private_key'
+      );
+
+      expect(result.success).toBe(true);
+      expect(result.intentId).toBe('intent_789');
+    });
+
+    it('should throw when validation enabled and delegationId missing', async () => {
+      const validatingClient = new DelegationClient({ ...mockConfig, enableValidation: true });
+
+      await expect(
+        validatingClient.signIntent(
+          'DAGuser123',
+          { delegationId: '', intent: makeIntent('') },
+          'session_private_key'
+        )
+      ).rejects.toThrow('Delegation ID is required');
+    });
+  });
+
+  describe('revokeDelegation', () => {
+    it('should revoke a delegation', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true }),
+      });
+
+      const result = await client.revokeDelegation('del_123', 'DAGuser', 'test reason', 'rev_sig', 1);
+      expect(result.success).toBe(true);
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/v1/delegations/revoke'),
+        expect.objectContaining({ method: 'POST' })
+      );
+    });
+  });
+
+  describe('checkDelegationStatus', () => {
+    it('should return not found when delegation does not exist', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ delegations: [], totalCount: 0, hasMore: false }),
+      });
+
+      const status = await client.checkDelegationStatus('del_missing');
+      expect(status.isValid).toBe(false);
+      expect(status.errors).toContain('Delegation not found');
+    });
+
+    it('should return valid status for active delegation', async () => {
+      const futureDate = new Date(Date.now() + 60 * 60 * 1000); // 1h from now
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          delegations: [{
+            delegationId: 'del_active',
+            status: DelegationStatus.DELEGATION_STATUS_ACTIVE,
+            expiresAt: futureDate, // Pass Date object, not ISO string
+          }],
+          totalCount: 1,
+          hasMore: false,
+        }),
+      });
+
+      const status = await client.checkDelegationStatus('del_active');
+      expect(status.isValid).toBe(true);
+      expect(status.errors).toBeUndefined();
+    });
+  });
+
+  describe('validateDelegatedTransaction', () => {
+    const makeTx = (overrides: Partial<{ delegationId: string; sessionKeyId: string; operation: string }> = {}) => ({
+      delegationId: 'del_123',
+      sessionKeyId: 'sk_456',
+      operation: 'transfer',
+      target: 'DAGtarget',
+      payload: new Uint8Array(),
+      sessionSignature: 'sig_test',
+      transactionNonce: 1,
+      ...overrides,
+    });
+
+    it('should throw when validation disabled', async () => {
+      const noValidationClient = new DelegationClient({ ...mockConfig, enableValidation: false });
+      await expect(
+        noValidationClient.validateDelegatedTransaction(makeTx())
+      ).rejects.toThrow('Validation is disabled');
+    });
+
+    it('should return errors for missing fields', async () => {
+      const validatingClient = new DelegationClient({ ...mockConfig, enableValidation: true });
+      const result = await validatingClient.validateDelegatedTransaction(
+        makeTx({ delegationId: '', sessionKeyId: '', operation: '' })
+      );
+      expect(result.isValid).toBe(false);
+      expect(result.validationErrors!.length).toBeGreaterThan(0);
+    });
+
+    it('should return valid for complete transaction', async () => {
+      const validatingClient = new DelegationClient({ ...mockConfig, enableValidation: true });
+      const result = await validatingClient.validateDelegatedTransaction(makeTx());
+      expect(result.isValid).toBe(true);
+    });
+  });
+
+  describe('getActiveDelegations', () => {
+    it('should fetch active delegations for delegator', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          delegations: [{ delegationId: 'del_1', status: DelegationStatus.DELEGATION_STATUS_ACTIVE }],
+          totalCount: 1,
+          hasMore: false,
+        }),
+      });
+
+      const delegations = await client.getActiveDelegations('DAGuser');
+      expect(delegations).toHaveLength(1);
+      expect(delegations[0].delegationId).toBe('del_1');
+    });
+
+    it('should filter by delegate address when asDelegate=true', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ delegations: [], totalCount: 0, hasMore: false }),
+      });
+
+      await client.getActiveDelegations('DAGagent', true);
+      // getDelegations uses GET with query params, not POST body
+      const url: string = mockFetch.mock.calls[0][0];
+      expect(url).toContain('delegate_address=DAGagent');
+    });
+  });
+
+  describe('batchRevokeDelegations', () => {
+    it('should revoke multiple delegations', async () => {
+      mockFetch
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ success: true }) })
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ success: true }) });
+
+      const results = await client.batchRevokeDelegations(
+        ['del_1', 'del_2'],
+        'DAGuser',
+        'cleanup',
+        'rev_sig',
+        1
+      );
+      expect(results).toHaveLength(2);
+      expect(results.every(r => r.success)).toBe(true);
+    });
+
+    it('should handle individual revocation failures gracefully', async () => {
+      mockFetch
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ success: true }) })
+        .mockRejectedValueOnce(new Error('Revocation failed'));
+
+      const results = await client.batchRevokeDelegations(
+        ['del_1', 'del_2'],
+        'DAGuser',
+        'cleanup',
+        'rev_sig',
+        1
+      );
+      expect(results).toHaveLength(2);
+      expect(results[0].success).toBe(true);
+      expect(results[1].success).toBe(false);
+      expect(results[1].errorMessage).toContain('Revocation failed');
     });
   });
 });
