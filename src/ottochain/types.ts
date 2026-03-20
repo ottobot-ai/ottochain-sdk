@@ -268,3 +268,20 @@ export type OttochainMessage =
   | { ArchiveStateMachine: ArchiveStateMachine }
   | { CreateScript: CreateScript }
   | { InvokeScript: InvokeScript };
+
+/**
+ * Names of all valid OttochainMessage types.
+ * Use this for runtime validation (e.g., in API routes).
+ */
+export const OTTOCHAIN_MESSAGE_TYPES = [
+  'CreateStateMachine',
+  'TransitionStateMachine',
+  'ArchiveStateMachine',
+  'CreateScript',
+  'InvokeScript',
+] as const;
+
+/**
+ * Type representing valid message type names.
+ */
+export type OttochainMessageType = (typeof OTTOCHAIN_MESSAGE_TYPES)[number];

@@ -57,7 +57,11 @@ export type {
   CreateScript,
   InvokeScript,
   OttochainMessage,
+  OttochainMessageType,
 } from './types.js';
+
+// Runtime message type validation
+export { OTTOCHAIN_MESSAGE_TYPES } from './types.js';
 
 // Snapshot decoder
 export type { CurrencySnapshotResponse } from './snapshot.js';
