@@ -1,0 +1,103 @@
+{
+  "metadata": {
+    "name": "GovernanceUniversal",
+    "description": "Minimal governance state machine - extend for custom use cases",
+    "version": "1.0.0"
+  },
+  "states": {
+    "ACTIVE": {
+      "id": "ACTIVE",
+      "isFinal": false,
+      "metadata": null
+    },
+    "VOTING": {
+      "id": "VOTING",
+      "isFinal": false,
+      "metadata": null
+    },
+    "DISSOLVED": {
+      "id": "DISSOLVED",
+      "isFinal": true,
+      "metadata": null
+    }
+  },
+  "initialState": "ACTIVE",
+  "transitions": [
+    {
+      "from": "ACTIVE",
+      "to": "VOTING",
+      "eventName": "propose",
+      "guard": { "==": [1, 1] },
+      "effect": {
+        "merge": [
+          { "var": "state" },
+          {
+            "status": "VOTING",
+            "proposal": { "var": "event.proposal" },
+            "proposedAt": { "var": "$timestamp" },
+            "votes": {}
+          }
+        ]
+      },
+      "dependencies": []
+    },
+    {
+      "from": "VOTING",
+      "to": "VOTING",
+      "eventName": "vote",
+      "guard": { "==": [1, 1] },
+      "effect": {
+        "merge": [
+          { "var": "state" },
+          {
+            "votes": {
+              "merge": [
+                { "var": "state.votes" },
+                {
+                  "__key": { "var": "event.agent" },
+                  "__value": { "var": "event.vote" }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "dependencies": []
+    },
+    {
+      "from": "VOTING",
+      "to": "ACTIVE",
+      "eventName": "finalize",
+      "guard": { "==": [1, 1] },
+      "effect": {
+        "merge": [
+          { "var": "state" },
+          {
+            "status": "ACTIVE",
+            "lastProposal": { "var": "state.proposal" },
+            "lastResult": { "var": "event.result" },
+            "proposal": null,
+            "votes": null
+          }
+        ]
+      },
+      "dependencies": []
+    },
+    {
+      "from": "ACTIVE",
+      "to": "DISSOLVED",
+      "eventName": "dissolve",
+      "guard": { "==": [1, 1] },
+      "effect": {
+        "merge": [
+          { "var": "state" },
+          {
+            "status": "DISSOLVED",
+            "dissolvedAt": { "var": "$timestamp" }
+          }
+        ]
+      },
+      "dependencies": []
+    }
+  ]
+}

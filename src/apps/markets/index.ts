@@ -1,7 +1,7 @@
 /**
  * Markets Application
  *
- * Types and utilities for prediction markets on OttoChain.
+ * Types and utilities for markets on OttoChain: predictions, auctions, crowdfunding, group buys.
  *
  * @example
  * ```typescript
@@ -9,10 +9,12 @@
  *   MarketType,
  *   MarketState,
  *   Market,
- *   getMarketDefinition
+ *   getMarketDefinition,
+ *   MARKETS_DEFINITIONS
  * } from '@ottochain/sdk/apps/markets';
  *
- * const marketDef = getMarketDefinition();
+ * const predictionDef = getMarketDefinition('prediction');
+ * const auctionDef = getMarketDefinition('auction');
  * ```
  *
  * @packageDocumentation
@@ -37,20 +39,40 @@ export {
 } from '../../generated/ottochain/apps/markets/v1/market.js';
 
 // ---------------------------------------------------------------------------
-// State Machine JSON Definitions
+// State Machine Definitions (generated from JSON at build time)
 // ---------------------------------------------------------------------------
 
-import { marketUniversalDef } from './state-machines/index.js';
+import {
+  marketUniversalDef,
+  marketPredictionDef,
+  marketAuctionDef,
+  marketCrowdfundDef,
+  marketGroupBuyDef,
+} from './state-machines/index.js';
 
-export type MarketDefinitionType = 'Universal';
-
-export const MARKET_DEFINITIONS: Record<MarketDefinitionType, unknown> = {
-  Universal: marketUniversalDef,
+export {
+  marketUniversalDef,
+  marketPredictionDef,
+  marketAuctionDef,
+  marketCrowdfundDef,
+  marketGroupBuyDef,
 };
 
+/** All market state machine definitions */
+export const MARKETS_DEFINITIONS = {
+  universal: marketUniversalDef,
+  prediction: marketPredictionDef,
+  auction: marketAuctionDef,
+  crowdfund: marketCrowdfundDef,
+  groupBuy: marketGroupBuyDef,
+} as const;
+
+export type MarketDefType = keyof typeof MARKETS_DEFINITIONS;
+
 /**
- * Get the market state machine definition.
+ * Get a market state machine definition by type.
+ * @param type - 'universal' | 'prediction' | 'auction' | 'crowdfund' | 'groupBuy' (default: 'universal')
  */
-export function getMarketDefinition(type: MarketDefinitionType = 'Universal'): unknown {
-  return MARKET_DEFINITIONS[type];
+export function getMarketDefinition(type: MarketDefType = 'universal'): unknown {
+  return MARKETS_DEFINITIONS[type];
 }

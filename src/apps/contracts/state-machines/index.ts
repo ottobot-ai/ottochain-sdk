@@ -3,10 +3,10 @@
  * DO NOT EDIT - regenerate with: npm run prebuild
  */
 
-export const contractDef = {
+export const contractAgreementDef = {
   "metadata": {
-    "name": "Contract",
-    "description": "Agreement between two agents with completion attestation and dispute resolution",
+    "name": "ContractAgreement",
+    "description": "Two-party agreement with mutual completion attestation and dispute resolution",
     "version": "1.0.0",
     "crossReferences": {
       "proposerIdentityId": "Links to proposer's AgentIdentity fiber",
@@ -356,10 +356,10 @@ export const contractDef = {
   ]
 } as const;
 
-export const escrowDef = {
+export const contractEscrowDef = {
   "metadata": {
-    "name": "Escrow",
-    "description": "Asset custody during multi-party transactions with conditional release",
+    "name": "ContractEscrow",
+    "description": "Asset custody with conditional release, dispute resolution, and split payments",
     "version": "1.0.0",
     "crossReferences": {
       "contractId": "Links to Contract SM that created this escrow",
@@ -701,6 +701,139 @@ export const escrowDef = {
           },
           {
             "refundedAt": {
+              "var": "$timestamp"
+            }
+          }
+        ]
+      },
+      "dependencies": []
+    }
+  ]
+} as const;
+
+export const contractUniversalDef = {
+  "metadata": {
+    "name": "ContractUniversal",
+    "description": "Minimal contract state machine - extend for custom use cases",
+    "version": "1.0.0"
+  },
+  "states": {
+    "PROPOSED": {
+      "id": "PROPOSED",
+      "isFinal": false,
+      "metadata": null
+    },
+    "ACTIVE": {
+      "id": "ACTIVE",
+      "isFinal": false,
+      "metadata": null
+    },
+    "COMPLETED": {
+      "id": "COMPLETED",
+      "isFinal": true,
+      "metadata": null
+    },
+    "CANCELLED": {
+      "id": "CANCELLED",
+      "isFinal": true,
+      "metadata": null
+    }
+  },
+  "initialState": "PROPOSED",
+  "transitions": [
+    {
+      "from": "PROPOSED",
+      "to": "ACTIVE",
+      "eventName": "accept",
+      "guard": {
+        "==": [
+          1,
+          1
+        ]
+      },
+      "effect": {
+        "merge": [
+          {
+            "var": "state"
+          },
+          {
+            "status": "ACTIVE",
+            "acceptedAt": {
+              "var": "$timestamp"
+            }
+          }
+        ]
+      },
+      "dependencies": []
+    },
+    {
+      "from": "PROPOSED",
+      "to": "CANCELLED",
+      "eventName": "cancel",
+      "guard": {
+        "==": [
+          1,
+          1
+        ]
+      },
+      "effect": {
+        "merge": [
+          {
+            "var": "state"
+          },
+          {
+            "status": "CANCELLED",
+            "cancelledAt": {
+              "var": "$timestamp"
+            }
+          }
+        ]
+      },
+      "dependencies": []
+    },
+    {
+      "from": "ACTIVE",
+      "to": "COMPLETED",
+      "eventName": "complete",
+      "guard": {
+        "==": [
+          1,
+          1
+        ]
+      },
+      "effect": {
+        "merge": [
+          {
+            "var": "state"
+          },
+          {
+            "status": "COMPLETED",
+            "completedAt": {
+              "var": "$timestamp"
+            }
+          }
+        ]
+      },
+      "dependencies": []
+    },
+    {
+      "from": "ACTIVE",
+      "to": "CANCELLED",
+      "eventName": "cancel",
+      "guard": {
+        "==": [
+          1,
+          1
+        ]
+      },
+      "effect": {
+        "merge": [
+          {
+            "var": "state"
+          },
+          {
+            "status": "CANCELLED",
+            "cancelledAt": {
               "var": "$timestamp"
             }
           }

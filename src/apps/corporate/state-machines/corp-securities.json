@@ -1,6 +1,6 @@
 {
   "$schema": "https://ottochain.dev/schemas/state-machine-v1.json",
-  "name": "corporate-securities",
+  "name": "CorpSecurities",
   "version": "1.0.0",
   "category": "corporate-governance",
   "description": "Securities state machine tracking the lifecycle of equity from authorization through issuance, transfer, and retirement. Manages stock certificates, book entry positions, and restricted securities.",

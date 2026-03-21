@@ -1,6 +1,6 @@
 {
   "$schema": "https://ottochain.dev/schemas/state-machine-v1.json",
-  "name": "corporate-entity",
+  "name": "CorpEntity",
   "version": "1.0.0",
   "category": "corporate-governance",
   "description": "Master corporate record tracking the lifecycle of a business entity from incorporation through dissolution. Manages legal identity, share structure, and corporate status.",

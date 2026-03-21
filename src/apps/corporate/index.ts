@@ -9,11 +9,12 @@
  *   EntityType,
  *   EntityState,
  *   CorporateEntity,
- *   getCorporateDefinition
+ *   getCorporateDefinition,
+ *   CORPORATE_DEFINITIONS
  * } from '@ottochain/sdk/apps/corporate';
  *
- * const entityDef = getCorporateDefinition('Entity');
- * const boardDef = getCorporateDefinition('Board');
+ * const entityDef = getCorporateDefinition('entity');
+ * const boardDef = getCorporateDefinition('board');
  * ```
  *
  * @packageDocumentation
@@ -76,50 +77,33 @@ export {
 // ---------------------------------------------------------------------------
 
 import {
-  corporateEntityDef,
-  corporateBoardDef,
-  corporateShareholdersDef,
-  corporateOfficersDef,
-  corporateSecuritiesDef,
-  corporateComplianceDef,
-  corporateBylawsDef,
-  corporateCommitteeDef,
-  corporateProxyDef,
-  corporateResolutionDef,
+  corpEntityDef,
+  corpBoardDef,
+  corpShareholdersDef,
+  corpSecuritiesDef,
 } from './state-machines/index.js';
 
-export type CorporateDefinitionType =
-  | 'Entity'
-  | 'Board'
-  | 'Shareholders'
-  | 'Officers'
-  | 'Securities'
-  | 'Compliance'
-  | 'Bylaws'
-  | 'Committee'
-  | 'Proxy'
-  | 'Resolution';
-
-export const CORPORATE_DEFINITIONS: Record<CorporateDefinitionType, unknown> = {
-  Entity: corporateEntityDef,
-  Board: corporateBoardDef,
-  Shareholders: corporateShareholdersDef,
-  Officers: corporateOfficersDef,
-  Securities: corporateSecuritiesDef,
-  Compliance: corporateComplianceDef,
-  Bylaws: corporateBylawsDef,
-  Committee: corporateCommitteeDef,
-  Proxy: corporateProxyDef,
-  Resolution: corporateResolutionDef,
+export {
+  corpEntityDef,
+  corpBoardDef,
+  corpShareholdersDef,
+  corpSecuritiesDef,
 };
 
+/** All corporate state machine definitions */
+export const CORPORATE_DEFINITIONS = {
+  entity: corpEntityDef,
+  board: corpBoardDef,
+  shareholders: corpShareholdersDef,
+  securities: corpSecuritiesDef,
+} as const;
+
+export type CorporateType = keyof typeof CORPORATE_DEFINITIONS;
+
 /**
- * Get the state machine definition for a corporate type.
+ * Get a corporate state machine definition by type.
+ * @param type - 'entity' | 'board' | 'shareholders' | 'securities'
  */
-export function getCorporateDefinition(type: CorporateDefinitionType): unknown {
-  const def = CORPORATE_DEFINITIONS[type];
-  if (!def) {
-    throw new Error(`Unknown corporate type: ${type}`);
-  }
-  return def;
+export function getCorporateDefinition(type: CorporateType): unknown {
+  return CORPORATE_DEFINITIONS[type];
 }

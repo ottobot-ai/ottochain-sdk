@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "name": "Contract",
-    "description": "Agreement between two agents with completion attestation and dispute resolution",
+    "name": "ContractAgreement",
+    "description": "Two-party agreement with mutual completion attestation and dispute resolution",
     "version": "1.0.0",
     "crossReferences": {
       "proposerIdentityId": "Links to proposer's AgentIdentity fiber",

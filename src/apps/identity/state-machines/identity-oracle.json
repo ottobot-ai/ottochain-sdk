@@ -1,12 +1,7 @@
-/**
- * Auto-generated from JSON state machine definitions.
- * DO NOT EDIT - regenerate with: npm run prebuild
- */
-
-export const oracleDef = {
+{
   "metadata": {
-    "name": "Oracle",
-    "description": "Oracle registration, reputation, and slashing state machine",
+    "name": "IdentityOracle",
+    "description": "Oracle identity with staking, attestations, reputation, and slashing mechanics",
     "version": "1.0.0"
   },
   "states": {
@@ -410,4 +405,4 @@ export const oracleDef = {
       "dependencies": []
     }
   ]
-} as const;
+}
