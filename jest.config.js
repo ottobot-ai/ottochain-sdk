@@ -5,7 +5,11 @@ module.exports = {
   roots: ['<rootDir>/tests'],
   testMatch: ['**/*.test.ts'],
   moduleFileExtensions: ['ts', 'js', 'json'],
-  collectCoverageFrom: ['src/**/*.ts', '!src/generated/**'],
+  collectCoverageFrom: [
+    'src/**/*.ts',
+    '!src/generated/**',
+    '!src/**/index.ts', // Exclude barrel files (re-exports don't need coverage)
+  ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
   coverageThreshold: {
