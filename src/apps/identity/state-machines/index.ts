@@ -4,41 +4,219 @@
  */
 
 export const identityAgentDef = {
+  "$schema": "https://ottochain.ai/schemas/fiber-app-v1.json",
   "metadata": {
     "name": "IdentityAgent",
-    "description": "Standard agent identity with reputation tracking, vouching, and lifecycle management",
-    "version": "1.0.0"
+    "app": "identity",
+    "type": "agent",
+    "version": "1.0.0",
+    "description": "Standard agent identity with reputation tracking, vouching, and lifecycle management"
+  },
+  "createSchema": {
+    "required": [
+      "owner",
+      "displayName"
+    ],
+    "properties": {
+      "owner": {
+        "type": "address",
+        "description": "Agent owner DAG address",
+        "immutable": true
+      },
+      "displayName": {
+        "type": "string",
+        "maxLength": 64,
+        "description": "Human-readable agent name"
+      },
+      "bio": {
+        "type": "string",
+        "maxLength": 256,
+        "default": ""
+      },
+      "avatar": {
+        "type": "uri",
+        "default": null
+      },
+      "platforms": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/PlatformLink"
+        },
+        "default": []
+      }
+    }
+  },
+  "stateSchema": {
+    "properties": {
+      "owner": {
+        "type": "address",
+        "immutable": true
+      },
+      "displayName": {
+        "type": "string"
+      },
+      "bio": {
+        "type": "string"
+      },
+      "avatar": {
+        "type": "uri"
+      },
+      "platforms": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/PlatformLink"
+        }
+      },
+      "status": {
+        "type": "string",
+        "enum": [
+          "REGISTERED",
+          "ACTIVE",
+          "CHALLENGED",
+          "SUSPENDED",
+          "PROBATION",
+          "WITHDRAWN"
+        ],
+        "computed": true
+      },
+      "reputation": {
+        "type": "integer",
+        "default": 10,
+        "computed": true
+      },
+      "activatedAt": {
+        "type": "timestamp",
+        "computed": true
+      },
+      "suspendedAt": {
+        "type": "timestamp",
+        "computed": true
+      },
+      "probationStartedAt": {
+        "type": "timestamp",
+        "computed": true
+      },
+      "challengedBy": {
+        "type": "address",
+        "computed": true
+      }
+    }
+  },
+  "eventSchemas": {
+    "activate": {
+      "description": "Activate a registered agent"
+    },
+    "receive_vouch": {
+      "description": "Receive a vouch from another agent",
+      "required": [
+        "from"
+      ],
+      "properties": {
+        "from": {
+          "type": "address",
+          "description": "Address of vouching agent"
+        },
+        "weight": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "default": 1
+        }
+      }
+    },
+    "receive_completion": {
+      "description": "Receive completion attestation from a fiber"
+    },
+    "challenge": {
+      "description": "Challenge an active agent's behavior",
+      "required": [
+        "challenger",
+        "reason"
+      ],
+      "properties": {
+        "challenger": {
+          "type": "address"
+        },
+        "reason": {
+          "type": "string",
+          "maxLength": 512
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "uri"
+          }
+        }
+      }
+    },
+    "dismiss_challenge": {
+      "description": "Dismiss an active challenge"
+    },
+    "uphold_challenge": {
+      "description": "Uphold a challenge, suspending the agent"
+    },
+    "begin_probation": {
+      "description": "Move suspended agent to probation"
+    },
+    "complete_probation": {
+      "description": "Complete probation, reactivating the agent"
+    },
+    "withdraw": {
+      "description": "Permanently withdraw the agent"
+    }
+  },
+  "definitions": {
+    "PlatformLink": {
+      "type": "object",
+      "required": [
+        "platform",
+        "handle"
+      ],
+      "properties": {
+        "platform": {
+          "type": "string",
+          "enum": [
+            "twitter",
+            "github",
+            "discord",
+            "telegram",
+            "moltbook"
+          ]
+        },
+        "handle": {
+          "type": "string"
+        },
+        "verified": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    }
   },
   "states": {
     "REGISTERED": {
       "id": "REGISTERED",
-      "isFinal": false,
-      "metadata": null
+      "isFinal": false
     },
     "ACTIVE": {
       "id": "ACTIVE",
-      "isFinal": false,
-      "metadata": null
+      "isFinal": false
     },
     "CHALLENGED": {
       "id": "CHALLENGED",
-      "isFinal": false,
-      "metadata": null
+      "isFinal": false
     },
     "SUSPENDED": {
       "id": "SUSPENDED",
-      "isFinal": false,
-      "metadata": null
+      "isFinal": false
     },
     "PROBATION": {
       "id": "PROBATION",
-      "isFinal": false,
-      "metadata": null
+      "isFinal": false
     },
     "WITHDRAWN": {
       "id": "WITHDRAWN",
-      "isFinal": true,
-      "metadata": null
+      "isFinal": true
     }
   },
   "initialState": "REGISTERED",
@@ -251,6 +429,28 @@ export const identityAgentDef = {
     },
     {
       "from": "ACTIVE",
+      "to": "WITHDRAWN",
+      "eventName": "withdraw",
+      "guard": {
+        "==": [
+          1,
+          1
+        ]
+      },
+      "effect": {
+        "merge": [
+          {
+            "var": "state"
+          },
+          {
+            "status": "WITHDRAWN"
+          }
+        ]
+      },
+      "dependencies": []
+    },
+    {
+      "from": "REGISTERED",
       "to": "WITHDRAWN",
       "eventName": "withdraw",
       "guard": {

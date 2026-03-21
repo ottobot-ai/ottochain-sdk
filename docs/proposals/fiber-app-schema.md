@@ -372,20 +372,13 @@ scripts/
 └── inline-json.mjs (existing)
 ```
 
-## Open Questions
+## Decisions
 
-1. **Should `instanceSchema` include all state fields or just creation inputs?**
-   - Option A: Creation inputs only (status, timestamps computed)
-   - Option B: Full state shape (useful for indexer/explorer)
-   - Recommendation: Both — `createSchema` + `stateSchema`
+1. **Schema structure:** Both `createSchema` (user inputs) and `stateSchema` (full state including computed fields). Generator produces types for both.
 
-2. **How to handle cross-fiber references (dependencies)?**
-   - Current: `dependencies: Set[UUID]` in transitions
-   - Need: Schema for referenced fiber types?
+2. **Cross-fiber dependencies:** No type constraints. `dependencies: Set[UUID]` remains untyped — any fiber can reference any other fiber.
 
-3. **Versioning strategy?**
-   - Do we support multiple versions of same app type?
-   - How do migrations work?
+3. **Versioning:** Versions coexist independently. `identity-agent@1.0` and `identity-agent@2.0` are separate definitions. Migration strategy TBD later.
 
 ## Acceptance Criteria
 
