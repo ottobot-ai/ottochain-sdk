@@ -291,7 +291,7 @@ export function toProtoDefinition<T extends FiberAppDefinition>(
 
   // Pass metadata through unchanged - it's an optional unstructured object
   if (def.metadata) {
-    protoDef.metadata = def.metadata as Record<string, unknown>;
+    protoDef.metadata = def.metadata as unknown as Record<string, unknown>;
   }
 
   return protoDef;
