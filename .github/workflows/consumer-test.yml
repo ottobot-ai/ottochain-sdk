@@ -115,7 +115,9 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: pnpm/action-setup@v4
-        # Uses version from packageManager field in consumer repo's package.json
+        with:
+          version: 10
+        # Explorer repo doesn't yet have packageManager in package.json; pin explicitly
 
       - uses: actions/setup-node@v6
         with:
