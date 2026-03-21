@@ -1,18 +1,24 @@
 import {
   getIdentityDefinition,
-  AGENT_TRANSITIONS,
+  IDENTITY_TRANSITIONS,
   ATTESTATION_DELTAS,
   canTransition,
   getReputationDelta,
   DEFAULT_REPUTATION_CONFIG,
-  AgentState,
+  IdentityState,
   AttestationType,
 } from '../src/apps/identity';
 
 describe('Identity module', () => {
   describe('getIdentityDefinition', () => {
-    it('returns the agent identity state machine definition', () => {
+    it('returns the agent identity state machine definition by default', () => {
       const def = getIdentityDefinition();
+      expect(def).toBeDefined();
+      expect(typeof def).toBe('object');
+    });
+
+    it('returns oracle definition when requested', () => {
+      const def = getIdentityDefinition('oracle');
       expect(def).toBeDefined();
       expect(typeof def).toBe('object');
     });
@@ -37,10 +43,10 @@ describe('Identity module', () => {
     });
   });
 
-  describe('AGENT_TRANSITIONS', () => {
+  describe('IDENTITY_TRANSITIONS', () => {
     it('is defined and non-empty', () => {
-      expect(AGENT_TRANSITIONS).toBeDefined();
-      expect(typeof AGENT_TRANSITIONS).toBe('object');
+      expect(IDENTITY_TRANSITIONS).toBeDefined();
+      expect(typeof IDENTITY_TRANSITIONS).toBe('object');
     });
   });
 
@@ -53,15 +59,15 @@ describe('Identity module', () => {
 
   describe('canTransition', () => {
     it('returns true for valid transition', () => {
-      expect(canTransition(AgentState.AGENT_STATE_REGISTERED, 'activate')).toBe(true);
+      expect(canTransition(IdentityState.IDENTITY_STATE_REGISTERED, 'activate')).toBe(true);
     });
 
     it('returns false for invalid transition', () => {
-      expect(canTransition(AgentState.AGENT_STATE_WITHDRAWN, 'activate')).toBe(false);
+      expect(canTransition(IdentityState.IDENTITY_STATE_WITHDRAWN, 'activate')).toBe(false);
     });
 
     it('returns false for terminal state', () => {
-      expect(canTransition(AgentState.AGENT_STATE_WITHDRAWN, 'any_event')).toBe(false);
+      expect(canTransition(IdentityState.IDENTITY_STATE_WITHDRAWN, 'any_event')).toBe(false);
     });
   });
 

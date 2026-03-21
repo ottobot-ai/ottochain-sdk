@@ -1,17 +1,18 @@
 /**
- * Agent Identity Application
+ * Identity Application
  *
- * Types and utilities for the Agent Identity system on OttoChain.
+ * Types and utilities for the Identity system on OttoChain.
+ * Includes agents, oracles, and services.
  *
  * @example
  * ```typescript
  * import {
- *   AgentState,
- *   AgentIdentity,
+ *   IdentityState,
+ *   IdentityType,
  *   getIdentityDefinition
  * } from '@ottochain/sdk/apps/identity';
  *
- * const identityDef = getIdentityDefinition();
+ * const oracleDef = getIdentityDefinition('oracle');
  * ```
  *
  * @packageDocumentation
@@ -19,16 +20,27 @@
 
 // Re-export generated protobuf types (source of truth)
 export {
-  AgentState,
+  IdentityType,
+  IdentityState,
   Platform,
   PlatformLink,
-  AgentIdentity,
-  AgentIdentityDefinition,
-  agentStateFromJSON,
-  agentStateToJSON,
+  Reputation,
+  PenaltyEvent,
+  Identity,
+  RegisterIdentityRequest,
+  ActivateIdentityRequest,
+  UpdateStakeRequest,
+  ChallengeIdentityRequest,
+  PenalizeIdentityRequest,
+  WithdrawIdentityRequest,
+  IdentityDefinition,
+  identityTypeFromJSON,
+  identityTypeToJSON,
+  identityStateFromJSON,
+  identityStateToJSON,
   platformFromJSON,
   platformToJSON,
-} from '../../generated/ottochain/apps/identity/v1/agent.js';
+} from '../../generated/ottochain/apps/identity/v1/identity.js';
 
 export {
   AttestationType,
@@ -43,8 +55,10 @@ export {
 
 // Re-export constants and utilities
 export {
-  AGENT_TRANSITIONS,
+  IDENTITY_TRANSITIONS,
+  AGENT_TRANSITIONS, // Legacy alias
   ATTESTATION_DELTAS,
+  IDENTITY_TYPE_NAMES,
   canTransition,
   getReputationDelta,
 } from './constants.js';
@@ -54,7 +68,7 @@ export {
 // ---------------------------------------------------------------------------
 
 /**
- * Default reputation configuration for agent identity
+ * Default reputation configuration for identities
  */
 export const DEFAULT_REPUTATION_CONFIG = {
   baseReputation: 10,
@@ -64,6 +78,16 @@ export const DEFAULT_REPUTATION_CONFIG = {
   behavioralDelta: 3,
   minReputation: 0,
   challengeThreshold: 5,
+} as const;
+
+/**
+ * Default oracle configuration
+ */
+export const DEFAULT_ORACLE_CONFIG = {
+  minStake: 100,
+  slashCooldownEpochs: 7,
+  accuracyThreshold: 70,
+  maxDisputeRate: 30,
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -85,12 +109,12 @@ export const IDENTITY_DEFINITIONS = {
   oracle: identityOracleDef,
 } as const;
 
-export type IdentityType = keyof typeof IDENTITY_DEFINITIONS;
+export type IdentityDefType = keyof typeof IDENTITY_DEFINITIONS;
 
 /**
  * Get an identity state machine definition by type.
  * @param type - 'universal' | 'agent' | 'oracle' (default: 'agent')
  */
-export function getIdentityDefinition(type: IdentityType = 'agent'): unknown {
+export function getIdentityDefinition(type: IdentityDefType = 'agent'): unknown {
   return IDENTITY_DEFINITIONS[type];
 }

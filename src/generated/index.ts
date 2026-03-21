@@ -52,12 +52,21 @@ export {
 
 // App: Identity
 export {
-  AgentState,
+  IdentityType,
+  IdentityState,
   Platform,
   PlatformLink,
-  AgentIdentity,
-  AgentIdentityDefinition,
-} from './ottochain/apps/identity/v1/agent.js';
+  Reputation,
+  PenaltyEvent,
+  Identity,
+  RegisterIdentityRequest,
+  ActivateIdentityRequest,
+  UpdateStakeRequest,
+  ChallengeIdentityRequest,
+  PenalizeIdentityRequest,
+  WithdrawIdentityRequest,
+  IdentityDefinition,
+} from './ottochain/apps/identity/v1/identity.js';
 
 export {
   AttestationType,
@@ -94,20 +103,7 @@ export {
   MarketDefinition,
 } from './ottochain/apps/markets/v1/market.js';
 
-// App: Oracles
-export {
-  OracleState,
-  OracleReputation,
-  SlashingEvent,
-  Oracle,
-  RegisterOracleRequest,
-  ActivateOracleRequest,
-  AddStakeRequest,
-  WithdrawStakeRequest,
-  SlashOracleRequest,
-  WithdrawOracleRequest,
-  OracleDefinition,
-} from './ottochain/apps/identity/v1/oracle.js';
+// Note: Oracle types merged into Identity (IdentityType.ORACLE)
 
 // App: Governance
 export {

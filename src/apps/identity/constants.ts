@@ -1,12 +1,12 @@
 /**
  * Identity Constants
  *
- * State machine transitions and configuration constants for agent identity.
+ * State machine transitions and configuration constants for identities.
  *
  * @packageDocumentation
  */
 
-import { AgentState } from '../../generated/ottochain/apps/identity/v1/agent.js';
+import { IdentityState, IdentityType } from '../../generated/ottochain/apps/identity/v1/identity.js';
 import { AttestationType } from '../../generated/ottochain/apps/identity/v1/attestation.js';
 
 // ---------------------------------------------------------------------------
@@ -14,19 +14,24 @@ import { AttestationType } from '../../generated/ottochain/apps/identity/v1/atte
 // ---------------------------------------------------------------------------
 
 /**
- * Valid transitions for each agent state.
+ * Valid transitions for each identity state.
  * Maps current state to allowed event names.
  */
-export const AGENT_TRANSITIONS: Record<AgentState, readonly string[]> = {
-  [AgentState.AGENT_STATE_UNSPECIFIED]: [],
-  [AgentState.AGENT_STATE_REGISTERED]: ['activate', 'withdraw'],
-  [AgentState.AGENT_STATE_ACTIVE]: ['challenge', 'withdraw'],
-  [AgentState.AGENT_STATE_CHALLENGED]: ['uphold_challenge', 'dismiss_challenge'],
-  [AgentState.AGENT_STATE_SUSPENDED]: ['begin_probation'],
-  [AgentState.AGENT_STATE_PROBATION]: ['complete_probation'],
-  [AgentState.AGENT_STATE_WITHDRAWN]: [], // Terminal state
-  [AgentState.UNRECOGNIZED]: [],
+export const IDENTITY_TRANSITIONS: Record<IdentityState, readonly string[]> = {
+  [IdentityState.IDENTITY_STATE_UNSPECIFIED]: [],
+  [IdentityState.IDENTITY_STATE_UNREGISTERED]: ['register'],
+  [IdentityState.IDENTITY_STATE_REGISTERED]: ['activate', 'withdraw'],
+  [IdentityState.IDENTITY_STATE_ACTIVE]: ['challenge', 'deactivate', 'withdraw', 'penalize'],
+  [IdentityState.IDENTITY_STATE_INACTIVE]: ['activate', 'withdraw'],
+  [IdentityState.IDENTITY_STATE_CHALLENGED]: ['uphold_challenge', 'dismiss_challenge'],
+  [IdentityState.IDENTITY_STATE_SUSPENDED]: ['begin_probation', 'withdraw'],
+  [IdentityState.IDENTITY_STATE_PROBATION]: ['complete_probation'],
+  [IdentityState.IDENTITY_STATE_WITHDRAWN]: [], // Terminal state
+  [IdentityState.UNRECOGNIZED]: [],
 };
+
+// Legacy alias for backward compatibility
+export const AGENT_TRANSITIONS = IDENTITY_TRANSITIONS;
 
 // ---------------------------------------------------------------------------
 // Reputation Configuration
@@ -48,8 +53,8 @@ export const ATTESTATION_DELTAS: Record<AttestationType, number> = {
 /**
  * Check if a transition is valid for the given state.
  */
-export function canTransition(state: AgentState, event: string): boolean {
-  return AGENT_TRANSITIONS[state]?.includes(event) ?? false;
+export function canTransition(state: IdentityState, event: string): boolean {
+  return IDENTITY_TRANSITIONS[state]?.includes(event) ?? false;
 }
 
 /**
@@ -58,3 +63,14 @@ export function canTransition(state: AgentState, event: string): boolean {
 export function getReputationDelta(type: AttestationType): number {
   return ATTESTATION_DELTAS[type] ?? 0;
 }
+
+/**
+ * Identity type display names
+ */
+export const IDENTITY_TYPE_NAMES: Record<IdentityType, string> = {
+  [IdentityType.IDENTITY_TYPE_UNSPECIFIED]: 'Unknown',
+  [IdentityType.IDENTITY_TYPE_AGENT]: 'Agent',
+  [IdentityType.IDENTITY_TYPE_ORACLE]: 'Oracle',
+  [IdentityType.IDENTITY_TYPE_SERVICE]: 'Service',
+  [IdentityType.UNRECOGNIZED]: 'Unknown',
+};

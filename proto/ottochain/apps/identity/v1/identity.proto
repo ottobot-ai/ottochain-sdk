@@ -1,0 +1,135 @@
+syntax = "proto3";
+
+package ottochain.apps.identity.v1;
+
+import "ottochain/v1/common.proto";
+import "google/protobuf/timestamp.proto";
+
+// Type of identity
+enum IdentityType {
+  IDENTITY_TYPE_UNSPECIFIED = 0;
+  IDENTITY_TYPE_AGENT = 1;      // General agent identity
+  IDENTITY_TYPE_ORACLE = 2;     // Oracle service provider
+  IDENTITY_TYPE_SERVICE = 3;    // Automated service identity
+}
+
+// Identity lifecycle states (shared across all identity types)
+enum IdentityState {
+  IDENTITY_STATE_UNSPECIFIED = 0;
+  IDENTITY_STATE_UNREGISTERED = 1;  // Not yet registered (oracle initial)
+  IDENTITY_STATE_REGISTERED = 2;    // Registered, awaiting activation
+  IDENTITY_STATE_ACTIVE = 3;        // Active and participating
+  IDENTITY_STATE_INACTIVE = 4;      // Temporarily inactive
+  IDENTITY_STATE_CHALLENGED = 5;    // Under dispute/challenge
+  IDENTITY_STATE_SUSPENDED = 6;     // Penalized (slashed for oracles)
+  IDENTITY_STATE_PROBATION = 7;     // Recovering from suspension
+  IDENTITY_STATE_WITHDRAWN = 8;     // Voluntarily exited (terminal)
+}
+
+// Platform where identity is linked
+enum Platform {
+  PLATFORM_UNSPECIFIED = 0;
+  PLATFORM_DISCORD = 1;
+  PLATFORM_TELEGRAM = 2;
+  PLATFORM_TWITTER = 3;
+  PLATFORM_GITHUB = 4;
+  PLATFORM_CUSTOM = 5;
+}
+
+// Platform identity link
+message PlatformLink {
+  Platform platform = 1;
+  string platform_user_id = 2;
+  string platform_username = 3;
+  google.protobuf.Timestamp linked_at = 4;
+  bool verified = 5;
+}
+
+// Reputation metrics (extended for oracles)
+message Reputation {
+  int32 score = 1;                    // Overall reputation score
+  int32 accuracy_percentage = 2;      // Accuracy for oracles (0-100)
+  int32 total_interactions = 3;       // Total interactions/resolutions
+  int32 disputes_won = 4;             // Disputes resolved favorably
+  int32 disputes_lost = 5;            // Disputes resolved against
+}
+
+// Record of a penalty/slashing event
+message PenaltyEvent {
+  string reason = 1;                           // Description of infraction
+  int64 amount = 2;                            // Amount penalized
+  string context_id = 3;                       // Market/contract where infraction occurred
+  google.protobuf.Timestamp timestamp = 4;     // When penalty occurred
+}
+
+// Universal identity container
+message Identity {
+  string id = 1;                               // Unique identifier
+  IdentityType identity_type = 2;              // Type of identity
+  string address = 3;                          // DAG address
+  string public_key = 4;                       // Public key
+  string display_name = 5;                     // Human-readable name
+  IdentityState state = 6;                     // Current state
+  Reputation reputation = 7;                   // Reputation metrics
+  repeated PlatformLink platform_links = 8;   // Social links (agents)
+  int64 stake = 9;                             // Staked amount (oracles)
+  repeated string domains = 10;                // Expertise domains (oracles)
+  repeated PenaltyEvent penalty_history = 11;  // Slashing/penalty history
+  google.protobuf.Timestamp created_at = 12;   // Creation timestamp
+  google.protobuf.Timestamp updated_at = 13;   // Last update timestamp
+}
+
+// Register a new identity
+message RegisterIdentityRequest {
+  IdentityType identity_type = 1;
+  string address = 2;
+  string display_name = 3;
+  int64 initial_stake = 4;           // For oracles
+  repeated string domains = 5;        // For oracles
+}
+
+// Activate a registered identity
+message ActivateIdentityRequest {
+  string identity_id = 1;
+  string address = 2;
+}
+
+// Update identity stake
+message UpdateStakeRequest {
+  string identity_id = 1;
+  string address = 2;
+  int64 amount = 3;                  // Positive to add, negative to withdraw
+}
+
+// Challenge an identity
+message ChallengeIdentityRequest {
+  string identity_id = 1;
+  string challenger = 2;
+  string reason = 3;
+  string evidence = 4;
+}
+
+// Penalize/slash an identity
+message PenalizeIdentityRequest {
+  string identity_id = 1;
+  string context_id = 2;             // Market/contract context
+  string reason = 3;
+  int64 amount = 4;
+}
+
+// Withdraw identity from service
+message WithdrawIdentityRequest {
+  string identity_id = 1;
+  string address = 2;
+}
+
+// Identity state machine definition
+message IdentityDefinition {
+  IdentityType identity_type = 1;
+  int32 initial_reputation = 2;           // Default starting reputation
+  int64 min_stake = 3;                    // Minimum stake to activate (oracles)
+  int32 activation_threshold = 4;         // Min rep to activate
+  int32 suspension_duration_epochs = 5;   // How long suspension lasts
+  int32 accuracy_threshold = 6;           // Min accuracy to remain active (oracles)
+  int32 max_dispute_rate = 7;             // Max dispute rate before auto-penalty
+}

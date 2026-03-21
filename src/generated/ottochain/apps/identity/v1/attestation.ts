@@ -7,7 +7,7 @@
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { Timestamp } from "../../../../google/protobuf/timestamp.js";
-import { Platform, platformFromJSON, platformToJSON, platformToNumber } from "./agent.js";
+import { Platform, platformFromJSON, platformToJSON, platformToNumber } from "./identity.js";
 
 export const protobufPackage = "ottochain.apps.identity.v1";
 

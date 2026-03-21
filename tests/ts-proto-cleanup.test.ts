@@ -100,11 +100,11 @@ describe('Group 3: Generated Export Path', () => {
     expect(content).toContain('CreateStateMachine');
   });
 
-  it('./generated export should resolve AgentIdentity (check dist/esm/generated/index.js)', () => {
+  it('./generated export should resolve Identity types (check dist/esm/generated/index.js)', () => {
     const indexPath = join(ROOT, 'dist/esm/generated/index.js');
     expect(existsSync(indexPath)).toBe(true);
     const content = readFileSync(indexPath, 'utf8');
-    expect(content).toContain('AgentIdentity');
+    expect(content).toContain('IdentityState');
   });
 });
 

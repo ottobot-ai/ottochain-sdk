@@ -1,23 +1,23 @@
 import {
-  AgentState,
+  IdentityState,
   AttestationType,
-  AGENT_TRANSITIONS,
+  IDENTITY_TRANSITIONS,
   ATTESTATION_DELTAS,
   canTransition,
   getReputationDelta,
 } from '../src/apps/identity/index.js';
 
 describe('Identity Constants', () => {
-  describe('AGENT_TRANSITIONS', () => {
+  describe('IDENTITY_TRANSITIONS', () => {
     it('should define transitions for all states', () => {
-      expect(AGENT_TRANSITIONS[AgentState.AGENT_STATE_REGISTERED]).toContain('activate');
-      expect(AGENT_TRANSITIONS[AgentState.AGENT_STATE_REGISTERED]).toContain('withdraw');
-      expect(AGENT_TRANSITIONS[AgentState.AGENT_STATE_ACTIVE]).toContain('challenge');
-      expect(AGENT_TRANSITIONS[AgentState.AGENT_STATE_WITHDRAWN]).toEqual([]);
+      expect(IDENTITY_TRANSITIONS[IdentityState.IDENTITY_STATE_REGISTERED]).toContain('activate');
+      expect(IDENTITY_TRANSITIONS[IdentityState.IDENTITY_STATE_REGISTERED]).toContain('withdraw');
+      expect(IDENTITY_TRANSITIONS[IdentityState.IDENTITY_STATE_ACTIVE]).toContain('challenge');
+      expect(IDENTITY_TRANSITIONS[IdentityState.IDENTITY_STATE_WITHDRAWN]).toEqual([]);
     });
 
     it('should not allow transitions from terminal state', () => {
-      expect(AGENT_TRANSITIONS[AgentState.AGENT_STATE_WITHDRAWN]).toHaveLength(0);
+      expect(IDENTITY_TRANSITIONS[IdentityState.IDENTITY_STATE_WITHDRAWN]).toHaveLength(0);
     });
   });
 
@@ -36,13 +36,13 @@ describe('Identity Constants', () => {
 
   describe('canTransition', () => {
     it('should return true for valid transitions', () => {
-      expect(canTransition(AgentState.AGENT_STATE_REGISTERED, 'activate')).toBe(true);
-      expect(canTransition(AgentState.AGENT_STATE_ACTIVE, 'challenge')).toBe(true);
+      expect(canTransition(IdentityState.IDENTITY_STATE_REGISTERED, 'activate')).toBe(true);
+      expect(canTransition(IdentityState.IDENTITY_STATE_ACTIVE, 'challenge')).toBe(true);
     });
 
     it('should return false for invalid transitions', () => {
-      expect(canTransition(AgentState.AGENT_STATE_WITHDRAWN, 'activate')).toBe(false);
-      expect(canTransition(AgentState.AGENT_STATE_REGISTERED, 'suspend')).toBe(false);
+      expect(canTransition(IdentityState.IDENTITY_STATE_WITHDRAWN, 'activate')).toBe(false);
+      expect(canTransition(IdentityState.IDENTITY_STATE_REGISTERED, 'suspend')).toBe(false);
     });
   });
 
