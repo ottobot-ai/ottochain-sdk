@@ -116,14 +116,9 @@ describe('Contracts App Integration', () => {
       // in both the JSON and TypeScript versions
       
       // Example: Test that guard conditions produce identical results
-      const sampleState = {
-        proposer: 'alice',
-        counterparty: 'bob',
-        completions: []
-      };
-      const sampleEvent = {
-        agent: 'bob'
-      };
+      // (Actual JSON Logic evaluation would be needed to validate guard behavior)
+      // sampleState: { proposer: 'alice', counterparty: 'bob', completions: [] }
+      // sampleEvent: { agent: 'bob' }
 
       // The JSON Logic should evaluate identically in both versions
       // (This test would need actual JSON Logic evaluation to validate)
