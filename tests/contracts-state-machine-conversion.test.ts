@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck — TDD scaffolding: tests access future fields not yet on the type
 /**
  * TDD Tests for Contracts State Machine Conversion
