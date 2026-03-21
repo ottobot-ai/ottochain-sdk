@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0](https://github.com/ottobot-ai/ottochain-sdk/compare/v1.6.0...v2.0.0) (2026-03-21)
+
+
+### ⚠ BREAKING CHANGES
+
+* State machine renames and API changes
+
+### Code Refactoring
+
+* overhaul fiber apps - universal + specialized pattern ([#130](https://github.com/ottobot-ai/ottochain-sdk/issues/130)) ([6dfeff6](https://github.com/ottobot-ai/ottochain-sdk/commit/6dfeff684d279525969240bf1b6982a5c18c4f8e))
+
 ## [1.6.0](https://github.com/ottobot-ai/ottochain-sdk/compare/v1.5.0...v1.6.0) (2026-03-20)
 
 
