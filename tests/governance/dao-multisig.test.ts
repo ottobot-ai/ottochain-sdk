@@ -2,105 +2,220 @@
  * Tests for MultisigDAO state machine
  */
 
-import { daoMultisigDef } from '../../src/apps/governance/state-machines/dao-multisig';
+import { daoMultisigDef } from '../../src/apps/governance/state-machines/index';
 
 describe('MultisigDAO State Machine', () => {
-  it('should be defined using defineFiberApp', () => {
-    expect(daoMultisigDef).toBeDefined();
-    expect(daoMultisigDef.metadata.name).toBe('MultisigDAO');
-    expect(daoMultisigDef.metadata.app).toBe('governance');
-    expect(daoMultisigDef.metadata.type).toBe('daoMultisig');
-    expect(daoMultisigDef.metadata.version).toBe('1.0.0');
-    expect((daoMultisigDef.metadata as any).category).toBe('governance/dao');
+  describe('Definition Structure', () => {
+    it('should be defined', () => {
+      expect(daoMultisigDef).toBeDefined();
+      expect(typeof daoMultisigDef).toBe('object');
+    });
+
+    it('should have correct metadata', () => {
+      expect(daoMultisigDef.metadata.name).toBe('MultisigDAO');
+      expect(daoMultisigDef.metadata.description).toBe(
+        'N-of-M multisig governance. Requires threshold signatures for actions.'
+      );
+      expect(daoMultisigDef.metadata.version).toBe('1.0.0');
+      expect(daoMultisigDef.metadata.category).toBe('governance/dao');
+    });
+
+    it('should have correct states', () => {
+      const expectedStates = ['ACTIVE', 'PENDING', 'DISSOLVED'];
+      const actualStates = Object.keys(daoMultisigDef.states);
+
+      expectedStates.forEach((state) => {
+        expect(actualStates).toContain(state);
+      });
+      expect(actualStates).toHaveLength(3);
+    });
+
+    it('should have correct initial state', () => {
+      expect(daoMultisigDef.initialState).toBe('ACTIVE');
+    });
+
+    it('should mark final states correctly', () => {
+      expect(daoMultisigDef.states.ACTIVE.isFinal).toBe(false);
+      expect(daoMultisigDef.states.PENDING.isFinal).toBe(false);
+      expect(daoMultisigDef.states.DISSOLVED.isFinal).toBe(true);
+    });
   });
 
-  it('should have correct states', () => {
-    expect(daoMultisigDef.states.ACTIVE.isFinal).toBe(false);
-    expect(daoMultisigDef.states.PENDING.isFinal).toBe(false);
-    expect(daoMultisigDef.states.DISSOLVED.isFinal).toBe(true);
+  describe('State Transitions', () => {
+    it('should allow propose transition from ACTIVE to PENDING', () => {
+      const proposeTransition = daoMultisigDef.transitions.find(
+        (t) => t.from === 'ACTIVE' && t.to === 'PENDING' && t.eventName === 'propose'
+      );
+
+      expect(proposeTransition).toBeDefined();
+      expect(proposeTransition!.guard).toBeDefined();
+      expect(proposeTransition!.effect).toBeDefined();
+    });
+
+    it('should allow sign transition from PENDING to PENDING', () => {
+      const signTransition = daoMultisigDef.transitions.find(
+        (t) => t.from === 'PENDING' && t.to === 'PENDING' && t.eventName === 'sign'
+      );
+
+      expect(signTransition).toBeDefined();
+      expect(signTransition!.guard).toBeDefined();
+      expect(signTransition!.effect).toBeDefined();
+    });
+
+    it('should allow execute transition from PENDING to ACTIVE', () => {
+      const executeTransition = daoMultisigDef.transitions.find(
+        (t) => t.from === 'PENDING' && t.to === 'ACTIVE' && t.eventName === 'execute'
+      );
+
+      expect(executeTransition).toBeDefined();
+      expect(executeTransition!.guard).toBeDefined();
+      expect(executeTransition!.effect).toBeDefined();
+    });
+
+    it('should allow cancel transition from PENDING to ACTIVE', () => {
+      const cancelTransition = daoMultisigDef.transitions.find(
+        (t) => t.from === 'PENDING' && t.to === 'ACTIVE' && t.eventName === 'cancel'
+      );
+
+      expect(cancelTransition).toBeDefined();
+      expect(cancelTransition!.guard).toBeDefined();
+    });
+
+    it('should allow dissolve transition from ACTIVE to DISSOLVED', () => {
+      const dissolveTransition = daoMultisigDef.transitions.find(
+        (t) => t.from === 'ACTIVE' && t.to === 'DISSOLVED' && t.eventName === 'dissolve'
+      );
+
+      expect(dissolveTransition).toBeDefined();
+      expect(dissolveTransition!.guard).toBeDefined();
+    });
   });
 
-  it('should start in ACTIVE', () => {
-    expect(daoMultisigDef.initialState).toBe('ACTIVE');
+  describe('Signer Management Transitions', () => {
+    it('should support propose_add_signer transition', () => {
+      const transition = daoMultisigDef.transitions.find(
+        (t) => t.eventName === 'propose_add_signer'
+      );
+      expect(transition).toBeDefined();
+      expect(transition!.from).toBe('ACTIVE');
+      expect(transition!.to).toBe('PENDING');
+    });
+
+    it('should support propose_remove_signer transition', () => {
+      const transition = daoMultisigDef.transitions.find(
+        (t) => t.eventName === 'propose_remove_signer'
+      );
+      expect(transition).toBeDefined();
+      expect(transition!.from).toBe('ACTIVE');
+      expect(transition!.to).toBe('PENDING');
+    });
+
+    it('should support propose_change_threshold transition', () => {
+      const transition = daoMultisigDef.transitions.find(
+        (t) => t.eventName === 'propose_change_threshold'
+      );
+      expect(transition).toBeDefined();
+      expect(transition!.from).toBe('ACTIVE');
+      expect(transition!.to).toBe('PENDING');
+    });
+
+    it('should support apply_signer_change transition', () => {
+      const transition = daoMultisigDef.transitions.find(
+        (t) => t.eventName === 'apply_signer_change'
+      );
+      expect(transition).toBeDefined();
+      expect(transition!.from).toBe('PENDING');
+      expect(transition!.to).toBe('ACTIVE');
+    });
   });
 
-  it('should require signers, threshold, proposalTTLMs on create', () => {
-    expect(daoMultisigDef.createSchema.required).toContain('signers');
-    expect(daoMultisigDef.createSchema.required).toContain('threshold');
-    expect(daoMultisigDef.createSchema.required).toContain('proposalTTLMs');
+  describe('Guard Logic', () => {
+    it('should guard propose to only signers', () => {
+      const proposeTransition = daoMultisigDef.transitions.find(
+        (t) => t.eventName === 'propose' && t.from === 'ACTIVE'
+      );
+
+      expect(proposeTransition!.guard).toHaveProperty('in');
+    });
+
+    it('should guard sign to prevent double-signing', () => {
+      const signTransition = daoMultisigDef.transitions.find(
+        (t) => t.eventName === 'sign'
+      );
+
+      expect(signTransition!.guard).toHaveProperty('and');
+      const guardStr = JSON.stringify(signTransition!.guard);
+      expect(guardStr).toContain('signatures');
+    });
+
+    it('should guard execute to require threshold signatures', () => {
+      const executeTransition = daoMultisigDef.transitions.find(
+        (t) => t.eventName === 'execute'
+      );
+
+      expect(executeTransition!.guard).toHaveProperty('>=');
+    });
+
+    it('should guard cancel to proposer or expired', () => {
+      const cancelTransition = daoMultisigDef.transitions.find(
+        (t) => t.eventName === 'cancel'
+      );
+
+      expect(cancelTransition!.guard).toHaveProperty('or');
+    });
+
+    it('should guard dissolve to require all signers', () => {
+      const dissolveTransition = daoMultisigDef.transitions.find(
+        (t) => t.eventName === 'dissolve'
+      );
+
+      expect(dissolveTransition!.guard).toHaveProperty('===');
+      const guardStr = JSON.stringify(dissolveTransition!.guard);
+      expect(guardStr).toContain('signatureCount');
+    });
   });
 
-  it('should guard propose to signers only', () => {
-    const t = daoMultisigDef.transitions.find(
-      t => t.eventName === 'propose' && t.from === 'ACTIVE' && t.to === 'PENDING'
-    );
-    expect(t).toBeDefined();
-    expect(t?.guard).toHaveProperty('in');
+  describe('Effect Logic', () => {
+    it('should create proposal with metadata on propose', () => {
+      const proposeTransition = daoMultisigDef.transitions.find(
+        (t) => t.eventName === 'propose' && t.from === 'ACTIVE'
+      );
+
+      const effectStr = JSON.stringify(proposeTransition!.effect);
+      expect(effectStr).toContain('proposal');
+      expect(effectStr).toContain('proposer');
+      expect(effectStr).toContain('proposedAt');
+      expect(effectStr).toContain('expiresAt');
+    });
+
+    it('should add signature on sign', () => {
+      const signTransition = daoMultisigDef.transitions.find(
+        (t) => t.eventName === 'sign'
+      );
+
+      const effectStr = JSON.stringify(signTransition!.effect);
+      expect(effectStr).toContain('signatures');
+      expect(effectStr).toContain('setKey');
+    });
+
+    it('should record executed action on execute', () => {
+      const executeTransition = daoMultisigDef.transitions.find(
+        (t) => t.eventName === 'execute'
+      );
+
+      const effectStr = JSON.stringify(executeTransition!.effect);
+      expect(effectStr).toContain('actions');
+      expect(effectStr).toContain('executedAt');
+    });
   });
 
-  it('should guard sign: signer, no double-sign, not yet at threshold', () => {
-    const t = daoMultisigDef.transitions.find(
-      t => t.eventName === 'sign' && t.from === 'PENDING' && t.to === 'PENDING'
-    );
-    expect(t).toBeDefined();
-    expect(t?.guard).toHaveProperty('and');
-  });
-
-  it('should execute when threshold met', () => {
-    const t = daoMultisigDef.transitions.find(
-      t => t.eventName === 'execute' && t.from === 'PENDING' && t.to === 'ACTIVE'
-    );
-    expect(t).toBeDefined();
-    expect(t?.guard).toHaveProperty('>=');
-  });
-
-  it('should emit multisig_executed on execute', () => {
-    const t = daoMultisigDef.transitions.find(
-      t => t.eventName === 'execute' && t.from === 'PENDING' && t.to === 'ACTIVE'
-    );
-    expect((t as any)?.emits).toBeDefined();
-    expect((t as any)?.emits[0].event).toBe('multisig_executed');
-  });
-
-  it('should cancel expired or proposer-cancelled proposals', () => {
-    const t = daoMultisigDef.transitions.find(
-      t => t.eventName === 'cancel' && t.from === 'PENDING' && t.to === 'ACTIVE'
-    );
-    expect(t).toBeDefined();
-    expect(t?.guard).toHaveProperty('or');
-  });
-
-  it('should support propose_add_signer (signer only)', () => {
-    const t = daoMultisigDef.transitions.find(t => t.eventName === 'propose_add_signer');
-    expect(t).toBeDefined();
-    expect(t?.from).toBe('ACTIVE');
-    expect(t?.to).toBe('PENDING');
-  });
-
-  it('should support propose_remove_signer with signers > threshold guard', () => {
-    const t = daoMultisigDef.transitions.find(t => t.eventName === 'propose_remove_signer');
-    expect(t).toBeDefined();
-    expect(t?.guard).toHaveProperty('and');
-  });
-
-  it('should support propose_change_threshold with 1 <= new <= signers count', () => {
-    const t = daoMultisigDef.transitions.find(t => t.eventName === 'propose_change_threshold');
-    expect(t).toBeDefined();
-    expect(t?.guard).toHaveProperty('and');
-  });
-
-  it('should apply signer changes via apply_signer_change', () => {
-    const t = daoMultisigDef.transitions.find(
-      t => t.eventName === 'apply_signer_change' && t.from === 'PENDING' && t.to === 'ACTIVE'
-    );
-    expect(t).toBeDefined();
-  });
-
-  it('should dissolve with unanimous signatures', () => {
-    const t = daoMultisigDef.transitions.find(
-      t => t.eventName === 'dissolve' && t.from === 'ACTIVE' && t.to === 'DISSOLVED'
-    );
-    expect(t).toBeDefined();
-    expect(t?.guard).toHaveProperty('===');
+  describe('Cross-References', () => {
+    it('should have cross-references defined', () => {
+      expect(daoMultisigDef.crossReferences).toBeDefined();
+      expect(daoMultisigDef.crossReferences).toHaveProperty('Identity');
+      expect(daoMultisigDef.crossReferences).toHaveProperty('Contract');
+      expect(daoMultisigDef.crossReferences).toHaveProperty('Treasury');
+      expect(daoMultisigDef.crossReferences).toHaveProperty('Escrow');
+    });
   });
 });

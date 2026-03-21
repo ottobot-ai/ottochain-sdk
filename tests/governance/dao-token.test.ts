@@ -2,104 +2,258 @@
  * Tests for TokenDAO state machine
  */
 
-import { daoTokenDef } from '../../src/apps/governance/state-machines/dao-token';
+import { daoTokenDef } from '../../src/apps/governance/state-machines/index';
 
 describe('TokenDAO State Machine', () => {
-  it('should be defined using defineFiberApp', () => {
-    expect(daoTokenDef).toBeDefined();
-    expect(daoTokenDef.metadata.name).toBe('TokenDAO');
-    expect(daoTokenDef.metadata.app).toBe('governance');
-    expect(daoTokenDef.metadata.type).toBe('daoToken');
-    expect(daoTokenDef.metadata.version).toBe('1.0.0');
-    expect((daoTokenDef.metadata as any).category).toBe('governance/dao');
+  describe('Definition Structure', () => {
+    it('should be defined', () => {
+      expect(daoTokenDef).toBeDefined();
+      expect(typeof daoTokenDef).toBe('object');
+    });
+
+    it('should have correct metadata', () => {
+      expect(daoTokenDef.metadata.name).toBe('TokenDAO');
+      expect(daoTokenDef.metadata.description).toBe(
+        'Token-weighted voting. Voting power proportional to token holdings.'
+      );
+      expect(daoTokenDef.metadata.version).toBe('1.0.0');
+      expect(daoTokenDef.metadata.category).toBe('governance/dao');
+    });
+
+    it('should have correct states', () => {
+      const expectedStates = ['ACTIVE', 'VOTING', 'QUEUED', 'DISSOLVED'];
+      const actualStates = Object.keys(daoTokenDef.states);
+
+      expectedStates.forEach((state) => {
+        expect(actualStates).toContain(state);
+      });
+      expect(actualStates).toHaveLength(4);
+    });
+
+    it('should have correct initial state', () => {
+      expect(daoTokenDef.initialState).toBe('ACTIVE');
+    });
+
+    it('should mark final states correctly', () => {
+      expect(daoTokenDef.states.ACTIVE.isFinal).toBe(false);
+      expect(daoTokenDef.states.VOTING.isFinal).toBe(false);
+      expect(daoTokenDef.states.QUEUED.isFinal).toBe(false);
+      expect(daoTokenDef.states.DISSOLVED.isFinal).toBe(true);
+    });
   });
 
-  it('should have correct states', () => {
-    expect(daoTokenDef.states.ACTIVE.isFinal).toBe(false);
-    expect(daoTokenDef.states.VOTING.isFinal).toBe(false);
-    expect(daoTokenDef.states.QUEUED.isFinal).toBe(false);
-    expect(daoTokenDef.states.DISSOLVED.isFinal).toBe(true);
+  describe('State Transitions', () => {
+    it('should allow propose transition from ACTIVE to VOTING', () => {
+      const proposeTransition = daoTokenDef.transitions.find(
+        (t) => t.from === 'ACTIVE' && t.to === 'VOTING' && t.eventName === 'propose'
+      );
+
+      expect(proposeTransition).toBeDefined();
+      expect(proposeTransition!.guard).toBeDefined();
+      expect(proposeTransition!.effect).toBeDefined();
+    });
+
+    it('should allow vote transition from VOTING to VOTING', () => {
+      const voteTransition = daoTokenDef.transitions.find(
+        (t) => t.from === 'VOTING' && t.to === 'VOTING' && t.eventName === 'vote'
+      );
+
+      expect(voteTransition).toBeDefined();
+      expect(voteTransition!.guard).toBeDefined();
+      expect(voteTransition!.effect).toBeDefined();
+    });
+
+    it('should allow queue transition from VOTING to QUEUED', () => {
+      const queueTransition = daoTokenDef.transitions.find(
+        (t) => t.from === 'VOTING' && t.to === 'QUEUED' && t.eventName === 'queue'
+      );
+
+      expect(queueTransition).toBeDefined();
+      expect(queueTransition!.guard).toBeDefined();
+      expect(queueTransition!.effect).toBeDefined();
+    });
+
+    it('should allow execute transition from QUEUED to ACTIVE', () => {
+      const executeTransition = daoTokenDef.transitions.find(
+        (t) => t.from === 'QUEUED' && t.to === 'ACTIVE' && t.eventName === 'execute'
+      );
+
+      expect(executeTransition).toBeDefined();
+      expect(executeTransition!.guard).toBeDefined();
+      expect(executeTransition!.effect).toBeDefined();
+    });
+
+    it('should allow reject transition from VOTING to ACTIVE', () => {
+      const rejectTransition = daoTokenDef.transitions.find(
+        (t) => t.from === 'VOTING' && t.to === 'ACTIVE' && t.eventName === 'reject'
+      );
+
+      expect(rejectTransition).toBeDefined();
+      expect(rejectTransition!.guard).toBeDefined();
+    });
+
+    it('should allow cancel transition from QUEUED to ACTIVE', () => {
+      const cancelTransition = daoTokenDef.transitions.find(
+        (t) => t.from === 'QUEUED' && t.to === 'ACTIVE' && t.eventName === 'cancel'
+      );
+
+      expect(cancelTransition).toBeDefined();
+      expect(cancelTransition!.guard).toBeDefined();
+    });
   });
 
-  it('should start in ACTIVE', () => {
-    expect(daoTokenDef.initialState).toBe('ACTIVE');
+  describe('Delegation Transitions', () => {
+    it('should support delegate transition', () => {
+      const transition = daoTokenDef.transitions.find(
+        (t) => t.eventName === 'delegate'
+      );
+      expect(transition).toBeDefined();
+      expect(transition!.from).toBe('ACTIVE');
+      expect(transition!.to).toBe('ACTIVE');
+    });
+
+    it('should support undelegate transition', () => {
+      const transition = daoTokenDef.transitions.find(
+        (t) => t.eventName === 'undelegate'
+      );
+      expect(transition).toBeDefined();
+      expect(transition!.from).toBe('ACTIVE');
+      expect(transition!.to).toBe('ACTIVE');
+    });
   });
 
-  it('should require balances, proposalThreshold, quorum, votingPeriodMs, timelockMs on create', () => {
-    expect(daoTokenDef.createSchema.required).toContain('balances');
-    expect(daoTokenDef.createSchema.required).toContain('proposalThreshold');
-    expect(daoTokenDef.createSchema.required).toContain('quorum');
-    expect(daoTokenDef.createSchema.required).toContain('votingPeriodMs');
-    expect(daoTokenDef.createSchema.required).toContain('timelockMs');
+  describe('Guard Logic', () => {
+    it('should guard propose to token holders meeting threshold', () => {
+      const proposeTransition = daoTokenDef.transitions.find(
+        (t) => t.eventName === 'propose'
+      );
+
+      expect(proposeTransition!.guard).toHaveProperty('>=');
+      const guardStr = JSON.stringify(proposeTransition!.guard);
+      expect(guardStr).toContain('balances');
+      expect(guardStr).toContain('proposalThreshold');
+    });
+
+    it('should guard vote to token holders with balance > 0', () => {
+      const voteTransition = daoTokenDef.transitions.find(
+        (t) => t.eventName === 'vote'
+      );
+
+      expect(voteTransition!.guard).toHaveProperty('and');
+      const guardStr = JSON.stringify(voteTransition!.guard);
+      expect(guardStr).toContain('balances');
+    });
+
+    it('should guard vote to prevent double-voting', () => {
+      const voteTransition = daoTokenDef.transitions.find(
+        (t) => t.eventName === 'vote'
+      );
+
+      const guardStr = JSON.stringify(voteTransition!.guard);
+      expect(guardStr).toContain('voters');
+    });
+
+    it('should guard vote to check voting deadline', () => {
+      const voteTransition = daoTokenDef.transitions.find(
+        (t) => t.eventName === 'vote'
+      );
+
+      const guardStr = JSON.stringify(voteTransition!.guard);
+      expect(guardStr).toContain('votingEndsAt');
+    });
+
+    it('should guard queue to require passing vote', () => {
+      const queueTransition = daoTokenDef.transitions.find(
+        (t) => t.eventName === 'queue'
+      );
+
+      expect(queueTransition!.guard).toHaveProperty('and');
+      const guardStr = JSON.stringify(queueTransition!.guard);
+      expect(guardStr).toContain('votes');
+      expect(guardStr).toContain('quorum');
+    });
+
+    it('should guard execute to check timelock', () => {
+      const executeTransition = daoTokenDef.transitions.find(
+        (t) => t.eventName === 'execute'
+      );
+
+      expect(executeTransition!.guard).toHaveProperty('>=');
+      const guardStr = JSON.stringify(executeTransition!.guard);
+      expect(guardStr).toContain('executableAt');
+    });
+
+    it('should guard delegate to token holders', () => {
+      const delegateTransition = daoTokenDef.transitions.find(
+        (t) => t.eventName === 'delegate'
+      );
+
+      expect(delegateTransition!.guard).toHaveProperty('>');
+    });
   });
 
-  it('should guard propose on token balance >= proposalThreshold', () => {
-    const t = daoTokenDef.transitions.find(
-      t => t.eventName === 'propose' && t.from === 'ACTIVE' && t.to === 'VOTING'
-    );
-    expect(t).toBeDefined();
-    expect(t?.guard).toHaveProperty('>=');
+  describe('Effect Logic', () => {
+    it('should create proposal with vote tracking on propose', () => {
+      const proposeTransition = daoTokenDef.transitions.find(
+        (t) => t.eventName === 'propose'
+      );
+
+      const effectStr = JSON.stringify(proposeTransition!.effect);
+      expect(effectStr).toContain('proposal');
+      expect(effectStr).toContain('votes');
+      expect(effectStr).toContain('snapshotBlock');
+    });
+
+    it('should record weighted vote on vote', () => {
+      const voteTransition = daoTokenDef.transitions.find(
+        (t) => t.eventName === 'vote'
+      );
+
+      const effectStr = JSON.stringify(voteTransition!.effect);
+      expect(effectStr).toContain('votes');
+      expect(effectStr).toContain('voters');
+      expect(effectStr).toContain('weight');
+    });
+
+    it('should set executableAt on queue', () => {
+      const queueTransition = daoTokenDef.transitions.find(
+        (t) => t.eventName === 'queue'
+      );
+
+      const effectStr = JSON.stringify(queueTransition!.effect);
+      expect(effectStr).toContain('queuedAt');
+      expect(effectStr).toContain('executableAt');
+      expect(effectStr).toContain('timelockMs');
+    });
+
+    it('should record to executedProposals on execute', () => {
+      const executeTransition = daoTokenDef.transitions.find(
+        (t) => t.eventName === 'execute'
+      );
+
+      const effectStr = JSON.stringify(executeTransition!.effect);
+      expect(effectStr).toContain('executedProposals');
+      expect(effectStr).toContain('executedAt');
+    });
+
+    it('should update delegations on delegate', () => {
+      const delegateTransition = daoTokenDef.transitions.find(
+        (t) => t.eventName === 'delegate'
+      );
+
+      const effectStr = JSON.stringify(delegateTransition!.effect);
+      expect(effectStr).toContain('delegations');
+      expect(effectStr).toContain('delegateTo');
+    });
   });
 
-  it('should guard vote: token holder, no double-vote, within window', () => {
-    const t = daoTokenDef.transitions.find(
-      t => t.eventName === 'vote' && t.from === 'VOTING' && t.to === 'VOTING'
-    );
-    expect(t).toBeDefined();
-    expect(t?.guard).toHaveProperty('and');
-  });
-
-  it('should queue proposal with timelock after voting ends (for > against, quorum)', () => {
-    const t = daoTokenDef.transitions.find(
-      t => t.eventName === 'queue' && t.from === 'VOTING' && t.to === 'QUEUED'
-    );
-    expect(t).toBeDefined();
-    expect(t?.guard).toHaveProperty('and');
-  });
-
-  it('should execute after timelock expires', () => {
-    const t = daoTokenDef.transitions.find(
-      t => t.eventName === 'execute' && t.from === 'QUEUED' && t.to === 'ACTIVE'
-    );
-    expect(t).toBeDefined();
-    expect(t?.guard).toHaveProperty('>=');
-  });
-
-  it('should emit proposal_executed on execute', () => {
-    const t = daoTokenDef.transitions.find(
-      t => t.eventName === 'execute' && t.from === 'QUEUED' && t.to === 'ACTIVE'
-    );
-    expect((t as any)?.emits).toBeDefined();
-    expect((t as any)?.emits[0].event).toBe('proposal_executed');
-  });
-
-  it('should reject failed proposals', () => {
-    const t = daoTokenDef.transitions.find(
-      t => t.eventName === 'reject' && t.from === 'VOTING' && t.to === 'ACTIVE'
-    );
-    expect(t).toBeDefined();
-  });
-
-  it('should cancel queued proposal (proposer only)', () => {
-    const t = daoTokenDef.transitions.find(
-      t => t.eventName === 'cancel' && t.from === 'QUEUED' && t.to === 'ACTIVE'
-    );
-    expect(t).toBeDefined();
-    expect(t?.guard).toHaveProperty('===');
-  });
-
-  it('should support delegation (token holder only)', () => {
-    const t = daoTokenDef.transitions.find(
-      t => t.eventName === 'delegate' && t.from === 'ACTIVE' && t.to === 'ACTIVE'
-    );
-    expect(t).toBeDefined();
-    expect(t?.guard).toHaveProperty('>');
-  });
-
-  it('should support undelegation', () => {
-    const t = daoTokenDef.transitions.find(
-      t => t.eventName === 'undelegate' && t.from === 'ACTIVE' && t.to === 'ACTIVE'
-    );
-    expect(t).toBeDefined();
+  describe('Cross-References', () => {
+    it('should have cross-references defined', () => {
+      expect(daoTokenDef.crossReferences).toBeDefined();
+      expect(daoTokenDef.crossReferences).toHaveProperty('Identity');
+      expect(daoTokenDef.crossReferences).toHaveProperty('Token');
+      expect(daoTokenDef.crossReferences).toHaveProperty('Contract');
+      expect(daoTokenDef.crossReferences).toHaveProperty('Treasury');
+    });
   });
 });

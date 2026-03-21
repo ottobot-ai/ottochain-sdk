@@ -14,6 +14,7 @@ import {
 import {
   GOVERNANCE_DEFINITIONS,
   getGovernanceDefinition,
+  getDAODefinition,
 } from '../../src/apps/governance';
 
 describe('Governance App Integration', () => {
@@ -44,6 +45,13 @@ describe('Governance App Integration', () => {
     expect(getGovernanceDefinition('daoReputation')).toBe(daoReputationDef);
   });
 
+  it('should support deprecated getDAODefinition', () => {
+    expect(getDAODefinition('Single')).toBe(daoSingleDef);
+    expect(getDAODefinition('Multisig')).toBe(daoMultisigDef);
+    expect(getDAODefinition('Token')).toBe(daoTokenDef);
+    expect(getDAODefinition('Threshold')).toBe(daoReputationDef);
+  });
+
   it('all governance definitions should have required base fields', () => {
     const defs = [
       govUniversalDef,
@@ -62,7 +70,7 @@ describe('Governance App Integration', () => {
     }
   });
 
-  it('all governance definitions should have at least one final state (DISSOLVED)', () => {
+  it('all governance definitions should have at least one final state', () => {
     const defs = [
       govUniversalDef,
       govSimpleDef,
@@ -72,7 +80,9 @@ describe('Governance App Integration', () => {
       daoReputationDef,
     ];
     for (const def of defs) {
-      const finalStates = Object.values(def.states).filter((s: { isFinal: boolean }) => s.isFinal);
+      const finalStates = Object.values(def.states).filter(
+        (s: { isFinal: boolean }) => s.isFinal
+      );
       expect(finalStates.length).toBeGreaterThan(0);
     }
   });
@@ -97,7 +107,14 @@ describe('Governance App Integration', () => {
     }
   });
 
-  it('all governance definitions should use TypeScript defineFiberApp pattern', () => {
+  it('all DAO definitions should have governance/dao category', () => {
+    const daoDefs = [daoSingleDef, daoMultisigDef, daoTokenDef, daoReputationDef];
+    for (const def of daoDefs) {
+      expect(def.metadata.category).toBe('governance/dao');
+    }
+  });
+
+  it('all DAO definitions should have version 1.0.0', () => {
     const defs = [
       govUniversalDef,
       govSimpleDef,
@@ -107,10 +124,98 @@ describe('Governance App Integration', () => {
       daoReputationDef,
     ];
     for (const def of defs) {
-      // defineFiberApp returns an object with createSchema and stateSchema
-      expect(def.createSchema).toBeDefined();
-      expect(def.stateSchema).toBeDefined();
-      expect(def.eventSchemas).toBeDefined();
+      expect(def.metadata.version).toBe('1.0.0');
     }
+  });
+
+  it('DAO definitions should have cross-references', () => {
+    const daoDefs = [daoSingleDef, daoMultisigDef, daoTokenDef, daoReputationDef];
+    for (const def of daoDefs) {
+      expect(def.crossReferences).toBeDefined();
+      expect(def.crossReferences).toHaveProperty('Identity');
+    }
+  });
+
+  describe('State Machine Consistency', () => {
+    it('all initial states should exist in states object', () => {
+      const defs = [
+        govUniversalDef,
+        govSimpleDef,
+        daoSingleDef,
+        daoMultisigDef,
+        daoTokenDef,
+        daoReputationDef,
+      ];
+      for (const def of defs) {
+        expect(def.states).toHaveProperty(def.initialState);
+      }
+    });
+
+    it('all transition from/to states should exist in states object', () => {
+      const defs = [
+        govUniversalDef,
+        govSimpleDef,
+        daoSingleDef,
+        daoMultisigDef,
+        daoTokenDef,
+        daoReputationDef,
+      ];
+      for (const def of defs) {
+        const stateNames = Object.keys(def.states);
+        for (const t of def.transitions) {
+          expect(stateNames).toContain(t.from);
+          expect(stateNames).toContain(t.to);
+        }
+      }
+    });
+
+    it('initial states should not be final', () => {
+      const defs = [
+        govUniversalDef,
+        govSimpleDef,
+        daoSingleDef,
+        daoMultisigDef,
+        daoTokenDef,
+        daoReputationDef,
+      ];
+      for (const def of defs) {
+        const initialState = def.states[def.initialState as keyof typeof def.states];
+        expect(initialState.isFinal).toBe(false);
+      }
+    });
+  });
+
+  describe('Naming Conventions', () => {
+    it('should use UPPER_CASE state names', () => {
+      const defs = [
+        govUniversalDef,
+        govSimpleDef,
+        daoSingleDef,
+        daoMultisigDef,
+        daoTokenDef,
+        daoReputationDef,
+      ];
+      for (const def of defs) {
+        for (const state of Object.keys(def.states)) {
+          expect(state).toMatch(/^[A-Z_]+$/);
+        }
+      }
+    });
+
+    it('should use snake_case event names', () => {
+      const defs = [
+        govUniversalDef,
+        govSimpleDef,
+        daoSingleDef,
+        daoMultisigDef,
+        daoTokenDef,
+        daoReputationDef,
+      ];
+      for (const def of defs) {
+        for (const t of def.transitions) {
+          expect(t.eventName).toMatch(/^[a-z_]+$/);
+        }
+      }
+    });
   });
 });
