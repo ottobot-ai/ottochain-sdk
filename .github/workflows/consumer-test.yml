@@ -67,8 +67,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: pnpm/action-setup@v4
-        with:
-          version: 10
+        # Uses version from packageManager field in consumer repo's package.json
 
       - uses: actions/setup-node@v6
         with:
@@ -116,8 +115,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: pnpm/action-setup@v4
-        with:
-          version: 10
+        # Uses version from packageManager field in consumer repo's package.json
 
       - uses: actions/setup-node@v6
         with:
