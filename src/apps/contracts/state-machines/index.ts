@@ -4,842 +4,1001 @@
  */
 
 export const contractAgreementDef = {
-  "metadata": {
-    "name": "ContractAgreement",
-    "description": "Two-party agreement with mutual completion attestation and dispute resolution",
-    "version": "1.0.0",
-    "crossReferences": {
-      "proposerIdentityId": "Links to proposer's AgentIdentity fiber",
-      "counterpartyIdentityId": "Links to counterparty's AgentIdentity fiber",
-      "escrowId": "Links to Escrow if payment is escrowed",
-      "arbitrationPoolId": "Links to ArbitrationPool for dispute resolution"
-    }
+  metadata: {
+    name: "ContractAgreement",
+    description:
+      "Two-party agreement with mutual completion attestation and dispute resolution",
+    version: "1.0.0",
+    app: "contracts",
+    type: "agreement",
+    crossReferences: {
+      proposerIdentityId: "Links to proposer's AgentIdentity fiber",
+      counterpartyIdentityId: "Links to counterparty's AgentIdentity fiber",
+      escrowId: "Links to Escrow if payment is escrowed",
+      arbitrationPoolId: "Links to ArbitrationPool for dispute resolution",
+    },
   },
-  "states": {
-    "PROPOSED": {
-      "id": "PROPOSED",
-      "isFinal": false,
-      "metadata": null
+  createSchema: {
+    required: ["proposer", "counterparty"],
+    properties: {
+      proposer: {
+        type: "address",
+        description: "DAG address of the proposer",
+        immutable: true,
+      },
+      counterparty: {
+        type: "address",
+        description: "DAG address of the counterparty",
+        immutable: true,
+      },
     },
-    "ACTIVE": {
-      "id": "ACTIVE",
-      "isFinal": false,
-      "metadata": null
-    },
-    "COMPLETED": {
-      "id": "COMPLETED",
-      "isFinal": true,
-      "metadata": null
-    },
-    "DISPUTED": {
-      "id": "DISPUTED",
-      "isFinal": false,
-      "metadata": null
-    },
-    "REJECTED": {
-      "id": "REJECTED",
-      "isFinal": true,
-      "metadata": null
-    },
-    "CANCELLED": {
-      "id": "CANCELLED",
-      "isFinal": true,
-      "metadata": null
-    }
   },
-  "initialState": "PROPOSED",
-  "transitions": [
+  stateSchema: {
+    properties: {
+      status: {
+        type: "string",
+      },
+      proposer: {
+        type: "address",
+      },
+      counterparty: {
+        type: "address",
+      },
+      completions: {
+        type: "array",
+      },
+    },
+  },
+  eventSchemas: {
+    accept: {},
+    reject: {},
+    cancel: {},
+    submit_completion: {},
+    finalize: {},
+    dispute: {},
+    resolve: {},
+  },
+  states: {
+    PROPOSED: {
+      id: "PROPOSED",
+      isFinal: false,
+      metadata: null,
+    },
+    ACTIVE: {
+      id: "ACTIVE",
+      isFinal: false,
+      metadata: null,
+    },
+    COMPLETED: {
+      id: "COMPLETED",
+      isFinal: true,
+      metadata: null,
+    },
+    DISPUTED: {
+      id: "DISPUTED",
+      isFinal: false,
+      metadata: null,
+    },
+    REJECTED: {
+      id: "REJECTED",
+      isFinal: true,
+      metadata: null,
+    },
+    CANCELLED: {
+      id: "CANCELLED",
+      isFinal: true,
+      metadata: null,
+    },
+  },
+  initialState: "PROPOSED",
+  transitions: [
     {
-      "from": "PROPOSED",
-      "to": "ACTIVE",
-      "eventName": "accept",
-      "guard": {
+      from: "PROPOSED",
+      to: "ACTIVE",
+      eventName: "accept",
+      guard: {
         "===": [
           {
-            "var": "event.agent"
+            var: "event.agent",
           },
           {
-            "var": "state.counterparty"
-          }
-        ]
+            var: "state.counterparty",
+          },
+        ],
       },
-      "effect": {
-        "merge": [
+      effect: {
+        merge: [
           {
-            "var": "state"
+            var: "state",
           },
           {
-            "status": "ACTIVE",
-            "acceptedAt": {
-              "var": "$timestamp"
-            }
-          }
-        ]
-      },
-      "dependencies": []
-    },
-    {
-      "from": "PROPOSED",
-      "to": "REJECTED",
-      "eventName": "reject",
-      "guard": {
-        "===": [
-          {
-            "var": "event.agent"
-          },
-          {
-            "var": "state.counterparty"
-          }
-        ]
-      },
-      "effect": {
-        "merge": [
-          {
-            "var": "state"
-          },
-          {
-            "status": "REJECTED",
-            "rejectedAt": {
-              "var": "$timestamp"
+            status: "ACTIVE",
+            acceptedAt: {
+              var: "$timestamp",
             },
-            "rejectReason": {
-              "var": "event.reason"
-            }
-          }
-        ]
+          },
+        ],
       },
-      "dependencies": []
+      dependencies: [],
     },
     {
-      "from": "PROPOSED",
-      "to": "CANCELLED",
-      "eventName": "cancel",
-      "guard": {
+      from: "PROPOSED",
+      to: "REJECTED",
+      eventName: "reject",
+      guard: {
         "===": [
           {
-            "var": "event.agent"
+            var: "event.agent",
           },
           {
-            "var": "state.proposer"
-          }
-        ]
+            var: "state.counterparty",
+          },
+        ],
       },
-      "effect": {
-        "merge": [
+      effect: {
+        merge: [
           {
-            "var": "state"
+            var: "state",
           },
           {
-            "status": "CANCELLED",
-            "cancelledAt": {
-              "var": "$timestamp"
-            }
-          }
-        ]
+            status: "REJECTED",
+            rejectedAt: {
+              var: "$timestamp",
+            },
+            rejectReason: {
+              var: "event.reason",
+            },
+          },
+        ],
       },
-      "dependencies": []
+      dependencies: [],
     },
     {
-      "from": "ACTIVE",
-      "to": "ACTIVE",
-      "eventName": "submit_completion",
-      "guard": {
-        "and": [
+      from: "PROPOSED",
+      to: "CANCELLED",
+      eventName: "cancel",
+      guard: {
+        "===": [
           {
-            "or": [
+            var: "event.agent",
+          },
+          {
+            var: "state.proposer",
+          },
+        ],
+      },
+      effect: {
+        merge: [
+          {
+            var: "state",
+          },
+          {
+            status: "CANCELLED",
+            cancelledAt: {
+              var: "$timestamp",
+            },
+          },
+        ],
+      },
+      dependencies: [],
+    },
+    {
+      from: "ACTIVE",
+      to: "ACTIVE",
+      eventName: "submit_completion",
+      guard: {
+        and: [
+          {
+            or: [
               {
                 "===": [
                   {
-                    "var": "event.agent"
+                    var: "event.agent",
                   },
                   {
-                    "var": "state.proposer"
-                  }
-                ]
+                    var: "state.proposer",
+                  },
+                ],
               },
               {
                 "===": [
                   {
-                    "var": "event.agent"
+                    var: "event.agent",
                   },
                   {
-                    "var": "state.counterparty"
-                  }
-                ]
-              }
-            ]
+                    var: "state.counterparty",
+                  },
+                ],
+              },
+            ],
           },
           {
             "!": [
               {
-                "in": [
+                in: [
                   {
-                    "var": "event.agent"
+                    var: "event.agent",
                   },
                   {
-                    "map": [
+                    map: [
                       {
-                        "var": "state.completions"
+                        var: "state.completions",
                       },
                       {
-                        "var": "agent"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
+                        var: "agent",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
       },
-      "effect": {
-        "merge": [
+      effect: {
+        merge: [
           {
-            "var": "state"
+            var: "state",
           },
           {
-            "completions": {
-              "cat": [
+            completions: {
+              cat: [
                 {
-                  "var": "state.completions"
+                  var: "state.completions",
                 },
                 [
                   {
-                    "agent": {
-                      "var": "event.agent"
+                    agent: {
+                      var: "event.agent",
                     },
-                    "proof": {
-                      "var": "event.proof"
+                    proof: {
+                      var: "event.proof",
                     },
-                    "submittedAt": {
-                      "var": "$timestamp"
-                    }
-                  }
-                ]
-              ]
-            }
-          }
-        ]
+                    submittedAt: {
+                      var: "$timestamp",
+                    },
+                  },
+                ],
+              ],
+            },
+          },
+        ],
       },
-      "dependencies": []
+      dependencies: [],
     },
     {
-      "from": "ACTIVE",
-      "to": "COMPLETED",
-      "eventName": "finalize",
-      "guard": {
+      from: "ACTIVE",
+      to: "COMPLETED",
+      eventName: "finalize",
+      guard: {
         ">=": [
           {
-            "size": {
-              "var": "state.completions"
-            }
+            size: {
+              var: "state.completions",
+            },
           },
-          2
-        ]
+          2,
+        ],
       },
-      "effect": {
-        "merge": [
+      effect: {
+        merge: [
           {
-            "var": "state"
+            var: "state",
           },
           {
-            "status": "COMPLETED",
-            "completedAt": {
-              "var": "$timestamp"
-            }
-          }
-        ]
+            status: "COMPLETED",
+            completedAt: {
+              var: "$timestamp",
+            },
+          },
+        ],
       },
-      "dependencies": []
+      dependencies: [],
     },
     {
-      "from": "ACTIVE",
-      "to": "DISPUTED",
-      "eventName": "dispute",
-      "guard": {
-        "or": [
+      from: "ACTIVE",
+      to: "DISPUTED",
+      eventName: "dispute",
+      guard: {
+        or: [
           {
             "===": [
               {
-                "var": "event.agent"
+                var: "event.agent",
               },
               {
-                "var": "state.proposer"
-              }
-            ]
+                var: "state.proposer",
+              },
+            ],
           },
           {
             "===": [
               {
-                "var": "event.agent"
+                var: "event.agent",
               },
               {
-                "var": "state.counterparty"
-              }
-            ]
-          }
-        ]
+                var: "state.counterparty",
+              },
+            ],
+          },
+        ],
       },
-      "effect": {
-        "merge": [
+      effect: {
+        merge: [
           {
-            "var": "state"
+            var: "state",
           },
           {
-            "status": "DISPUTED",
-            "disputedAt": {
-              "var": "$timestamp"
+            status: "DISPUTED",
+            disputedAt: {
+              var: "$timestamp",
             },
-            "disputeReason": {
-              "var": "event.reason"
+            disputeReason: {
+              var: "event.reason",
             },
-            "disputedBy": {
-              "var": "event.agent"
-            }
-          }
-        ]
+            disputedBy: {
+              var: "event.agent",
+            },
+          },
+        ],
       },
-      "dependencies": []
+      dependencies: [],
     },
     {
-      "from": "DISPUTED",
-      "to": "COMPLETED",
-      "eventName": "resolve",
-      "guard": {
-        "or": [
+      from: "DISPUTED",
+      to: "COMPLETED",
+      eventName: "resolve",
+      guard: {
+        or: [
           {
-            "var": "event.judicialRuling"
+            var: "event.judicialRuling",
           },
           {
-            "and": [
+            and: [
               {
                 "===": [
                   {
-                    "var": "event.proposerApproves"
+                    var: "event.proposerApproves",
                   },
-                  true
-                ]
+                  true,
+                ],
               },
               {
                 "===": [
                   {
-                    "var": "event.counterpartyApproves"
+                    var: "event.counterpartyApproves",
                   },
-                  true
-                ]
-              }
-            ]
-          }
-        ]
+                  true,
+                ],
+              },
+            ],
+          },
+        ],
       },
-      "effect": {
-        "merge": [
+      effect: {
+        merge: [
           {
-            "var": "state"
+            var: "state",
           },
           {
-            "status": "COMPLETED",
-            "resolvedAt": {
-              "var": "$timestamp"
+            status: "COMPLETED",
+            resolvedAt: {
+              var: "$timestamp",
             },
-            "resolution": {
-              "var": "event.resolution"
+            resolution: {
+              var: "event.resolution",
             },
-            "rulingId": {
-              "var": "event.rulingId"
-            }
-          }
-        ]
+            rulingId: {
+              var: "event.rulingId",
+            },
+          },
+        ],
       },
-      "dependencies": []
-    }
-  ]
+      dependencies: [],
+    },
+    {
+      from: "ACTIVE",
+      to: "CANCELLED",
+      eventName: "cancel",
+      guard: {
+        or: [
+          {
+            "===": [
+              {
+                var: "event.agent",
+              },
+              {
+                var: "state.proposer",
+              },
+            ],
+          },
+          {
+            "===": [
+              {
+                var: "event.agent",
+              },
+              {
+                var: "state.counterparty",
+              },
+            ],
+          },
+        ],
+      },
+      effect: {
+        merge: [
+          {
+            var: "state",
+          },
+          {
+            status: "CANCELLED",
+            cancelledAt: {
+              var: "$timestamp",
+            },
+          },
+        ],
+      },
+      dependencies: [],
+    },
+  ],
 } as const;
 
 export const contractEscrowDef = {
-  "metadata": {
-    "name": "ContractEscrow",
-    "description": "Asset custody with conditional release, dispute resolution, and split payments",
-    "version": "1.0.0",
-    "crossReferences": {
-      "contractId": "Links to Contract SM that created this escrow",
-      "marketId": "Links to Market SM for market-based escrow",
-      "insuranceId": "Links to Insurance SM for protected escrow",
-      "arbitrationPoolId": "Links to ArbitrationPool for dispute resolution",
-      "treasuryId": "Links to Treasury for fee collection"
-    }
+  metadata: {
+    name: "ContractEscrow",
+    description:
+      "Asset custody with conditional release, dispute resolution, and split payments",
+    version: "1.0.0",
+    app: "contracts",
+    type: "escrow",
+    crossReferences: {
+      contractId: "Links to Contract SM that created this escrow",
+      marketId: "Links to Market SM for market-based escrow",
+      insuranceId: "Links to Insurance SM for protected escrow",
+      arbitrationPoolId: "Links to ArbitrationPool for dispute resolution",
+      treasuryId: "Links to Treasury for fee collection",
+    },
   },
-  "states": {
-    "CREATED": {
-      "id": "CREATED",
-      "isFinal": false,
-      "metadata": null
+  createSchema: {
+    required: ["depositor", "beneficiary", "requiredAmount"],
+    properties: {
+      depositor: {
+        type: "address",
+        description: "DAG address of the depositor",
+      },
+      beneficiary: {
+        type: "address",
+        description: "DAG address of the beneficiary",
+      },
+      requiredAmount: {
+        type: "number",
+        minimum: 0,
+        description: "Required escrow amount",
+      },
     },
-    "FUNDED": {
-      "id": "FUNDED",
-      "isFinal": false,
-      "metadata": null
-    },
-    "ACTIVE": {
-      "id": "ACTIVE",
-      "isFinal": false,
-      "metadata": null
-    },
-    "RELEASING": {
-      "id": "RELEASING",
-      "isFinal": false,
-      "metadata": null
-    },
-    "DISPUTED": {
-      "id": "DISPUTED",
-      "isFinal": false,
-      "metadata": null
-    },
-    "RELEASED": {
-      "id": "RELEASED",
-      "isFinal": true,
-      "metadata": null
-    },
-    "REFUNDED": {
-      "id": "REFUNDED",
-      "isFinal": true,
-      "metadata": null
-    },
-    "SPLIT": {
-      "id": "SPLIT",
-      "isFinal": true,
-      "metadata": null
-    }
   },
-  "initialState": "CREATED",
-  "transitions": [
+  stateSchema: {
+    properties: {
+      balance: {
+        type: "number",
+      },
+      releaseRequest: {
+        type: "object",
+      },
+    },
+  },
+  eventSchemas: {
+    deposit: {},
+    activate: {},
+    request_release: {},
+    approve_release: {},
+    dispute: {},
+    ruling: {},
+    refund: {},
+  },
+  states: {
+    CREATED: {
+      id: "CREATED",
+      isFinal: false,
+      metadata: null,
+    },
+    FUNDED: {
+      id: "FUNDED",
+      isFinal: false,
+      metadata: null,
+    },
+    ACTIVE: {
+      id: "ACTIVE",
+      isFinal: false,
+      metadata: null,
+    },
+    RELEASING: {
+      id: "RELEASING",
+      isFinal: false,
+      metadata: null,
+    },
+    DISPUTED: {
+      id: "DISPUTED",
+      isFinal: false,
+      metadata: null,
+    },
+    RELEASED: {
+      id: "RELEASED",
+      isFinal: true,
+      metadata: null,
+    },
+    REFUNDED: {
+      id: "REFUNDED",
+      isFinal: true,
+      metadata: null,
+    },
+    SPLIT: {
+      id: "SPLIT",
+      isFinal: true,
+      metadata: null,
+    },
+  },
+  initialState: "CREATED",
+  transitions: [
     {
-      "from": "CREATED",
-      "to": "FUNDED",
-      "eventName": "deposit",
-      "guard": {
-        "and": [
+      from: "CREATED",
+      to: "FUNDED",
+      eventName: "deposit",
+      guard: {
+        and: [
           {
             "===": [
               {
-                "var": "event.agent"
+                var: "event.agent",
               },
               {
-                "var": "state.depositor"
-              }
-            ]
+                var: "state.depositor",
+              },
+            ],
           },
           {
             ">=": [
               {
-                "var": "event.amount"
+                var: "event.amount",
               },
               {
-                "var": "state.requiredAmount"
-              }
-            ]
-          }
-        ]
+                var: "state.requiredAmount",
+              },
+            ],
+          },
+        ],
       },
-      "effect": {
-        "merge": [
+      effect: {
+        merge: [
           {
-            "var": "state"
+            var: "state",
           },
           {
-            "balance": {
-              "var": "event.amount"
+            balance: {
+              var: "event.amount",
             },
-            "fundedAt": {
-              "var": "$timestamp"
-            }
-          }
-        ]
+            fundedAt: {
+              var: "$timestamp",
+            },
+          },
+        ],
       },
-      "dependencies": []
+      dependencies: [],
     },
     {
-      "from": "FUNDED",
-      "to": "ACTIVE",
-      "eventName": "activate",
-      "guard": {
-        "or": [
+      from: "FUNDED",
+      to: "ACTIVE",
+      eventName: "activate",
+      guard: {
+        or: [
           {
             "===": [
               {
-                "var": "event.agent"
+                var: "event.agent",
               },
               {
-                "var": "state.beneficiary"
-              }
-            ]
+                var: "state.beneficiary",
+              },
+            ],
           },
           {
-            "var": "state.autoActivate"
-          }
-        ]
+            var: "state.autoActivate",
+          },
+        ],
       },
-      "effect": {
-        "merge": [
+      effect: {
+        merge: [
           {
-            "var": "state"
+            var: "state",
           },
           {
-            "activatedAt": {
-              "var": "$timestamp"
-            }
-          }
-        ]
+            activatedAt: {
+              var: "$timestamp",
+            },
+          },
+        ],
       },
-      "dependencies": []
+      dependencies: [],
     },
     {
-      "from": "ACTIVE",
-      "to": "RELEASING",
-      "eventName": "request_release",
-      "guard": {
+      from: "ACTIVE",
+      to: "RELEASING",
+      eventName: "request_release",
+      guard: {
         "===": [
           {
-            "var": "event.agent"
+            var: "event.agent",
           },
           {
-            "var": "state.beneficiary"
-          }
-        ]
+            var: "state.beneficiary",
+          },
+        ],
       },
-      "effect": {
-        "merge": [
+      effect: {
+        merge: [
           {
-            "var": "state"
+            var: "state",
           },
           {
-            "releaseRequest": {
-              "requestedBy": {
-                "var": "event.agent"
+            releaseRequest: {
+              requestedBy: {
+                var: "event.agent",
               },
-              "amount": {
-                "var": "event.amount"
+              amount: {
+                var: "event.amount",
               },
-              "reason": {
-                "var": "event.reason"
+              reason: {
+                var: "event.reason",
               },
-              "requestedAt": {
-                "var": "$timestamp"
-              }
+              requestedAt: {
+                var: "$timestamp",
+              },
             },
-            "releaseDeadline": {
+            releaseDeadline: {
               "+": [
                 {
-                  "var": "$timestamp"
+                  var: "$timestamp",
                 },
                 {
-                  "var": "state.releaseWindowMs"
-                }
-              ]
-            }
-          }
-        ]
+                  var: "state.releaseWindowMs",
+                },
+              ],
+            },
+          },
+        ],
       },
-      "dependencies": []
+      dependencies: [],
     },
     {
-      "from": "RELEASING",
-      "to": "RELEASED",
-      "eventName": "approve_release",
-      "guard": {
-        "or": [
+      from: "RELEASING",
+      to: "RELEASED",
+      eventName: "approve_release",
+      guard: {
+        or: [
           {
             "===": [
               {
-                "var": "event.agent"
+                var: "event.agent",
               },
               {
-                "var": "state.depositor"
-              }
-            ]
+                var: "state.depositor",
+              },
+            ],
           },
           {
             ">=": [
               {
-                "var": "$timestamp"
+                var: "$timestamp",
               },
               {
-                "var": "state.releaseDeadline"
-              }
-            ]
-          }
-        ]
+                var: "state.releaseDeadline",
+              },
+            ],
+          },
+        ],
       },
-      "effect": {
-        "merge": [
+      effect: {
+        merge: [
           {
-            "var": "state"
+            var: "state",
           },
           {
-            "releasedAt": {
-              "var": "$timestamp"
+            releasedAt: {
+              var: "$timestamp",
             },
-            "releasedTo": {
-              "var": "state.beneficiary"
-            }
-          }
-        ]
+            releasedTo: {
+              var: "state.beneficiary",
+            },
+          },
+        ],
       },
-      "dependencies": []
+      dependencies: [],
     },
     {
-      "from": "RELEASING",
-      "to": "DISPUTED",
-      "eventName": "dispute",
-      "guard": {
-        "and": [
+      from: "RELEASING",
+      to: "DISPUTED",
+      eventName: "dispute",
+      guard: {
+        and: [
           {
             "===": [
               {
-                "var": "event.agent"
+                var: "event.agent",
               },
               {
-                "var": "state.depositor"
-              }
-            ]
+                var: "state.depositor",
+              },
+            ],
           },
           {
             "<": [
               {
-                "var": "$timestamp"
+                var: "$timestamp",
               },
               {
-                "var": "state.releaseDeadline"
-              }
-            ]
-          }
-        ]
+                var: "state.releaseDeadline",
+              },
+            ],
+          },
+        ],
       },
-      "effect": {
-        "merge": [
+      effect: {
+        merge: [
           {
-            "var": "state"
+            var: "state",
           },
           {
-            "disputedAt": {
-              "var": "$timestamp"
-            }
-          }
-        ]
-      },
-      "spawns": {
-        "sm": "Judiciary",
-        "initialData": {
-          "caseType": "escrow_dispute",
-          "plaintiff": {
-            "var": "state.depositor"
-          },
-          "defendant": {
-            "var": "state.beneficiary"
-          },
-          "claim": {
-            "escrowId": {
-              "var": "fiberId"
+            disputedAt: {
+              var: "$timestamp",
             },
-            "amount": {
-              "var": "state.balance"
-            }
-          }
-        }
+          },
+        ],
       },
-      "dependencies": []
+      spawns: {
+        sm: "Judiciary",
+        initialData: {
+          caseType: "escrow_dispute",
+          plaintiff: {
+            var: "state.depositor",
+          },
+          defendant: {
+            var: "state.beneficiary",
+          },
+          claim: {
+            escrowId: {
+              var: "fiberId",
+            },
+            amount: {
+              var: "state.balance",
+            },
+          },
+        },
+      },
+      dependencies: [],
     },
     {
-      "from": "DISPUTED",
-      "to": "SPLIT",
-      "eventName": "ruling",
-      "guard": {
-        "var": "event.judicialRuling"
+      from: "DISPUTED",
+      to: "SPLIT",
+      eventName: "ruling",
+      guard: {
+        var: "event.judicialRuling",
       },
-      "effect": {
-        "merge": [
+      effect: {
+        merge: [
           {
-            "var": "state"
+            var: "state",
           },
           {
-            "splits": {
-              "var": "event.splits"
+            splits: {
+              var: "event.splits",
             },
-            "rulingId": {
-              "var": "event.rulingId"
-            }
-          }
-        ]
+            rulingId: {
+              var: "event.rulingId",
+            },
+          },
+        ],
       },
-      "dependencies": []
+      dependencies: [],
     },
     {
-      "from": "ACTIVE",
-      "to": "REFUNDED",
-      "eventName": "refund",
-      "guard": {
-        "or": [
+      from: "ACTIVE",
+      to: "REFUNDED",
+      eventName: "refund",
+      guard: {
+        or: [
           {
-            "var": "event.mutualConsent"
+            var: "event.mutualConsent",
           },
           {
             ">=": [
               {
-                "var": "$timestamp"
+                var: "$timestamp",
               },
               {
-                "var": "state.expiresAt"
-              }
-            ]
-          }
-        ]
+                var: "state.expiresAt",
+              },
+            ],
+          },
+        ],
       },
-      "effect": {
-        "merge": [
+      effect: {
+        merge: [
           {
-            "var": "state"
+            var: "state",
           },
           {
-            "refundedAt": {
-              "var": "$timestamp"
-            }
-          }
-        ]
+            refundedAt: {
+              var: "$timestamp",
+            },
+          },
+        ],
       },
-      "dependencies": []
-    }
-  ]
+      dependencies: [],
+    },
+    {
+      from: "CREATED",
+      to: "REFUNDED",
+      eventName: "cancel",
+      guard: {
+        "===": [
+          {
+            var: "event.agent",
+          },
+          {
+            var: "state.depositor",
+          },
+        ],
+      },
+      effect: {
+        merge: [
+          {
+            var: "state",
+          },
+          {
+            refundedAt: {
+              var: "$timestamp",
+            },
+          },
+        ],
+      },
+      dependencies: [],
+    },
+  ],
 } as const;
 
 export const contractUniversalDef = {
-  "metadata": {
-    "name": "ContractUniversal",
-    "description": "Minimal contract state machine - extend for custom use cases",
-    "version": "1.0.0"
+  metadata: {
+    name: "ContractUniversal",
+    description: "Minimal contract state machine - extend for custom use cases",
+    version: "1.0.0",
+    app: "contracts",
+    type: "universal",
   },
-  "states": {
-    "PROPOSED": {
-      "id": "PROPOSED",
-      "isFinal": false,
-      "metadata": null
-    },
-    "ACTIVE": {
-      "id": "ACTIVE",
-      "isFinal": false,
-      "metadata": null
-    },
-    "COMPLETED": {
-      "id": "COMPLETED",
-      "isFinal": true,
-      "metadata": null
-    },
-    "CANCELLED": {
-      "id": "CANCELLED",
-      "isFinal": true,
-      "metadata": null
-    }
+  createSchema: {
+    properties: {},
   },
-  "initialState": "PROPOSED",
-  "transitions": [
-    {
-      "from": "PROPOSED",
-      "to": "ACTIVE",
-      "eventName": "accept",
-      "guard": {
-        "==": [
-          1,
-          1
-        ]
+  stateSchema: {
+    properties: {
+      status: {
+        type: "string",
       },
-      "effect": {
-        "merge": [
+    },
+  },
+  eventSchemas: {
+    accept: {},
+    cancel: {},
+    complete: {},
+  },
+  states: {
+    PROPOSED: {
+      id: "PROPOSED",
+      isFinal: false,
+      metadata: null,
+    },
+    ACTIVE: {
+      id: "ACTIVE",
+      isFinal: false,
+      metadata: null,
+    },
+    COMPLETED: {
+      id: "COMPLETED",
+      isFinal: true,
+      metadata: null,
+    },
+    CANCELLED: {
+      id: "CANCELLED",
+      isFinal: true,
+      metadata: null,
+    },
+  },
+  initialState: "PROPOSED",
+  transitions: [
+    {
+      from: "PROPOSED",
+      to: "ACTIVE",
+      eventName: "accept",
+      guard: {
+        "==": [1, 1],
+      },
+      effect: {
+        merge: [
           {
-            "var": "state"
+            var: "state",
           },
           {
-            "status": "ACTIVE",
-            "acceptedAt": {
-              "var": "$timestamp"
-            }
-          }
-        ]
+            status: "ACTIVE",
+            acceptedAt: {
+              var: "$timestamp",
+            },
+          },
+        ],
       },
-      "dependencies": []
+      dependencies: [],
     },
     {
-      "from": "PROPOSED",
-      "to": "CANCELLED",
-      "eventName": "cancel",
-      "guard": {
-        "==": [
-          1,
-          1
-        ]
+      from: "PROPOSED",
+      to: "CANCELLED",
+      eventName: "cancel",
+      guard: {
+        "==": [1, 1],
       },
-      "effect": {
-        "merge": [
+      effect: {
+        merge: [
           {
-            "var": "state"
+            var: "state",
           },
           {
-            "status": "CANCELLED",
-            "cancelledAt": {
-              "var": "$timestamp"
-            }
-          }
-        ]
+            status: "CANCELLED",
+            cancelledAt: {
+              var: "$timestamp",
+            },
+          },
+        ],
       },
-      "dependencies": []
+      dependencies: [],
     },
     {
-      "from": "ACTIVE",
-      "to": "COMPLETED",
-      "eventName": "complete",
-      "guard": {
-        "==": [
-          1,
-          1
-        ]
+      from: "ACTIVE",
+      to: "COMPLETED",
+      eventName: "complete",
+      guard: {
+        "==": [1, 1],
       },
-      "effect": {
-        "merge": [
+      effect: {
+        merge: [
           {
-            "var": "state"
+            var: "state",
           },
           {
-            "status": "COMPLETED",
-            "completedAt": {
-              "var": "$timestamp"
-            }
-          }
-        ]
+            status: "COMPLETED",
+            completedAt: {
+              var: "$timestamp",
+            },
+          },
+        ],
       },
-      "dependencies": []
+      dependencies: [],
     },
     {
-      "from": "ACTIVE",
-      "to": "CANCELLED",
-      "eventName": "cancel",
-      "guard": {
-        "==": [
-          1,
-          1
-        ]
+      from: "ACTIVE",
+      to: "CANCELLED",
+      eventName: "cancel",
+      guard: {
+        "==": [1, 1],
       },
-      "effect": {
-        "merge": [
+      effect: {
+        merge: [
           {
-            "var": "state"
+            var: "state",
           },
           {
-            "status": "CANCELLED",
-            "cancelledAt": {
-              "var": "$timestamp"
-            }
-          }
-        ]
+            status: "CANCELLED",
+            cancelledAt: {
+              var: "$timestamp",
+            },
+          },
+        ],
       },
-      "dependencies": []
-    }
-  ]
+      dependencies: [],
+    },
+  ],
 } as const;

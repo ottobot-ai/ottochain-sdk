@@ -2,7 +2,22 @@
   "metadata": {
     "name": "ContractUniversal",
     "description": "Minimal contract state machine - extend for custom use cases",
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "app": "contracts",
+    "type": "universal"
+  },
+  "createSchema": {
+    "properties": {}
+  },
+  "stateSchema": {
+    "properties": {
+      "status": { "type": "string" }
+    }
+  },
+  "eventSchemas": {
+    "accept": {},
+    "cancel": {},
+    "complete": {}
   },
   "states": {
     "PROPOSED": {

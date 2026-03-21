@@ -36,7 +36,7 @@ export {
   marketTypeToJSON,
   marketStateFromJSON,
   marketStateToJSON,
-} from '../../generated/ottochain/apps/markets/v1/market.js';
+} from "../../generated/ottochain/apps/markets/v1/market.js";
 
 // ---------------------------------------------------------------------------
 // State Machine Definitions (generated from JSON at build time)
@@ -48,7 +48,7 @@ import {
   marketAuctionDef,
   marketCrowdfundDef,
   marketGroupBuyDef,
-} from './state-machines/index.js';
+} from "./state-machines/index.js";
 
 export {
   marketUniversalDef,
@@ -73,6 +73,8 @@ export type MarketDefType = keyof typeof MARKETS_DEFINITIONS;
  * Get a market state machine definition by type.
  * @param type - 'universal' | 'prediction' | 'auction' | 'crowdfund' | 'groupBuy' (default: 'universal')
  */
-export function getMarketDefinition(type: MarketDefType = 'universal'): unknown {
+export function getMarketDefinition(
+  type: MarketDefType = "universal",
+): unknown {
   return MARKETS_DEFINITIONS[type];
 }

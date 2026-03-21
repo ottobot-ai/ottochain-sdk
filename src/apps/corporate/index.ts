@@ -70,7 +70,7 @@ export {
   boardMeetingTypeToJSON,
   resolutionStatusFromJSON,
   resolutionStatusToJSON,
-} from '../../generated/ottochain/apps/corporate/v1/corporate.js';
+} from "../../generated/ottochain/apps/corporate/v1/corporate.js";
 
 // ---------------------------------------------------------------------------
 // State Machine Definitions (generated from JSON at build time)
@@ -81,14 +81,9 @@ import {
   corpBoardDef,
   corpShareholdersDef,
   corpSecuritiesDef,
-} from './state-machines/index.js';
+} from "./state-machines/index.js";
 
-export {
-  corpEntityDef,
-  corpBoardDef,
-  corpShareholdersDef,
-  corpSecuritiesDef,
-};
+export { corpEntityDef, corpBoardDef, corpShareholdersDef, corpSecuritiesDef };
 
 /** All corporate state machine definitions */
 export const CORPORATE_DEFINITIONS = {

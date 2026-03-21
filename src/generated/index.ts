@@ -50,14 +50,27 @@ export {
   CalculatedState,
 } from './ottochain/v1/records.js';
 
-// App: Identity
+// App: Identity (unified in v2.1)
 export {
-  AgentState,
+  IdentityType,
+  IdentityState,
   Platform,
   PlatformLink,
-  AgentIdentity,
-  AgentIdentityDefinition,
-} from './ottochain/apps/identity/v1/agent.js';
+  Reputation,
+  PenaltyEvent,
+  Identity,
+  RegisterIdentityRequest,
+  ActivateIdentityRequest,
+  LinkPlatformRequest,
+  ChallengeIdentityRequest,
+  AddStakeRequest,
+  WithdrawIdentityRequest,
+  IdentityDefinition,
+} from './ottochain/apps/identity/v1/identity.js';
+
+// Legacy aliases for backward compatibility
+export { IdentityState as AgentState } from './ottochain/apps/identity/v1/identity.js';
+export { IdentityState as OracleState } from './ottochain/apps/identity/v1/identity.js';
 
 export {
   AttestationType,
@@ -94,20 +107,9 @@ export {
   MarketDefinition,
 } from './ottochain/apps/markets/v1/market.js';
 
-// App: Oracles
-export {
-  OracleState,
-  OracleReputation,
-  SlashingEvent,
-  Oracle,
-  RegisterOracleRequest,
-  ActivateOracleRequest,
-  AddStakeRequest,
-  WithdrawStakeRequest,
-  SlashOracleRequest,
-  WithdrawOracleRequest,
-  OracleDefinition,
-} from './ottochain/apps/oracles/v1/oracle.js';
+// App: Oracles - REMOVED in v2.1 (absorbed into identity)
+// OracleState is now an alias for IdentityState (see above)
+// Oracle-specific messages moved to identity.proto
 
 // App: Governance
 export {
