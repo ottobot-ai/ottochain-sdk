@@ -21,7 +21,7 @@ describe('toProtoDefinition', () => {
     const proto = toProtoDefinition(contractAgreementDef);
 
     expect(Object.keys(proto.states).length).toBeGreaterThan(0);
-    for (const [_key, state] of Object.entries(proto.states)) {
+    for (const state of Object.values(proto.states)) {
       expect(state).toHaveProperty('id');
       expect(state).toHaveProperty('isFinal');
       expect(typeof state.id).toBe('string');
