@@ -67,6 +67,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: pnpm/action-setup@v4
+        with:
+          version: 10
 
       - uses: actions/setup-node@v6
         with:
@@ -81,7 +83,7 @@ jobs:
         run: |
           TARBALL=$(ls *.tgz)
           echo "Installing $TARBALL"
-          # Update root package.json
+          # Update root package.json to use tarball
           npm pkg set "dependencies.@ottochain/sdk"="file:./$TARBALL"
           # Update workspace packages
           for pkg in packages/bridge packages/traffic-generator; do
@@ -89,6 +91,8 @@ jobs:
               (cd "$pkg" && npm pkg set "dependencies.@ottochain/sdk"="file:../../$TARBALL" 2>/dev/null || true)
             fi
           done
+          # Clear pnpm store to avoid esbuild version conflicts
+          pnpm store prune || true
           pnpm install --no-frozen-lockfile
 
       - name: Build
@@ -112,6 +116,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: pnpm/action-setup@v4
+        with:
+          version: 10
 
       - uses: actions/setup-node@v6
         with:
@@ -127,6 +133,7 @@ jobs:
           TARBALL=$(ls *.tgz)
           echo "Installing $TARBALL"
           npm pkg set "dependencies.@ottochain/sdk"="file:./$TARBALL"
+          pnpm store prune || true
           pnpm install --no-frozen-lockfile
 
       - name: Build
