@@ -59,8 +59,8 @@ export {
 // ---------------------------------------------------------------------------
 
 import {
-  govUniversalDef,
-  govSimpleDef,
+  governanceUniversalDef,
+  governanceSimpleDef,
   daoSingleDef,
   daoMultisigDef,
   daoTokenDef,
@@ -68,8 +68,8 @@ import {
 } from './state-machines/index.js';
 
 export {
-  govUniversalDef,
-  govSimpleDef,
+  governanceUniversalDef,
+  governanceSimpleDef,
   daoSingleDef,
   daoMultisigDef,
   daoTokenDef,
@@ -78,8 +78,8 @@ export {
 
 /** All governance state machine definitions */
 export const GOVERNANCE_DEFINITIONS = {
-  universal: govUniversalDef,
-  simple: govSimpleDef,
+  universal: governanceUniversalDef,
+  simple: governanceSimpleDef,
   daoSingle: daoSingleDef,
   daoMultisig: daoMultisigDef,
   daoToken: daoTokenDef,
