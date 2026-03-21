@@ -11,12 +11,13 @@ export const daoMultisigDef = defineFiberApp({
     version: '1.0.0',
     description: 'N-of-M multisig governance. Requires threshold signatures for actions.',
     category: 'governance/dao',
-    crossReferences: {
-      Identity: 'signer verification',
-      Contract: 'action execution targets',
-      Treasury: 'fund management',
-      Escrow: 'controlled release',
-    },
+  },
+
+  crossReferences: {
+    Identity: 'signer verification',
+    Contract: 'action execution targets',
+    Treasury: 'fund management',
+    Escrow: 'controlled release',
   },
 
   createSchema: {

@@ -11,11 +11,12 @@ export const daoSingleDef = defineFiberApp({
     version: '1.0.0',
     description: 'Single owner controls all actions. Simplest governance model.',
     category: 'governance/dao',
-    crossReferences: {
-      Identity: 'owner registration',
-      Contract: 'action execution targets',
-      Treasury: 'fund management',
-    },
+  },
+
+  crossReferences: {
+    Identity: 'owner registration',
+    Contract: 'action execution targets',
+    Treasury: 'fund management',
   },
 
   createSchema: {

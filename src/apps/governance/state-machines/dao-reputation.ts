@@ -11,11 +11,12 @@ export const daoReputationDef = defineFiberApp({
     version: '1.0.0',
     description: 'Reputation-based governance. Minimum reputation required for participation.',
     category: 'governance/dao',
-    crossReferences: {
-      Identity: 'member verification',
-      Reputation: 'threshold checks',
-      Contract: 'action execution',
-    },
+  },
+
+  crossReferences: {
+    Identity: 'member verification',
+    Reputation: 'threshold checks',
+    Contract: 'action execution',
   },
 
   createSchema: {

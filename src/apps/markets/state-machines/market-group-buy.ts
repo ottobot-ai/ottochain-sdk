@@ -10,10 +10,11 @@ export const marketGroupBuyDef = defineFiberApp({
     type: 'groupBuy',
     version: '1.0.0',
     description: 'Collective purchasing with quantity thresholds and tiered pricing',
-    crossReferences: {
-      vendorIdentityId: "Links to vendor's IdentityAgent",
-      escrowId: 'Links to ContractEscrow for payment custody',
-    },
+  },
+
+  crossReferences: {
+    vendorIdentityId: "Links to vendor's IdentityAgent",
+    escrowId: 'Links to ContractEscrow for payment custody',
   },
 
   createSchema: {

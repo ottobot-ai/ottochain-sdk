@@ -245,7 +245,7 @@ describe('Contract Escrow State Machine', () => {
 
   describe('Cross-References', () => {
     it('should preserve cross-reference metadata', () => {
-      const crossRefs = contractEscrowDef.metadata.crossReferences;
+      const crossRefs = contractEscrowDef.crossReferences;
       
       expect(crossRefs).toHaveProperty('contractId');
       expect(crossRefs).toHaveProperty('marketId');

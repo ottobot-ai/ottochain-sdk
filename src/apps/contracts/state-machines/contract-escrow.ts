@@ -1,1 +1,286 @@
-export { contractEscrowDef } from './index.js';
+import { defineFiberApp } from '../../../schema/fiber-app.js';
+
+/**
+ * Asset custody with conditional release, dispute resolution, and split payments.
+ */
+export const contractEscrowDef = defineFiberApp({
+  metadata: {
+    name: 'ContractEscrow',
+    app: 'contracts',
+    type: 'escrow',
+    version: '1.0.0',
+    description: 'Asset custody with conditional release, dispute resolution, and split payments',
+  },
+
+  createSchema: {
+    required: ['depositor', 'beneficiary', 'requiredAmount'] as const,
+    properties: {
+      depositor: {
+        type: 'address',
+        description: 'DAG address of the depositor',
+      },
+      beneficiary: {
+        type: 'address',
+        description: 'DAG address of the beneficiary',
+      },
+      requiredAmount: {
+        type: 'number',
+        minimum: 0,
+        description: 'Required escrow amount',
+      },
+      releaseWindowMs: {
+        type: 'integer',
+        description: 'Time window for dispute before auto-release',
+        nullable: true,
+      },
+      expiresAt: {
+        type: 'integer',
+        description: 'Timestamp when escrow expires',
+        nullable: true,
+      },
+      autoActivate: {
+        type: 'boolean',
+        description: 'Whether to auto-activate on funding',
+        nullable: true,
+      },
+    },
+  },
+
+  stateSchema: {
+    properties: {
+      depositor: { type: 'address' },
+      beneficiary: { type: 'address' },
+      requiredAmount: { type: 'number' },
+      balance: { type: 'number' },
+      fundedAt: { type: 'integer', nullable: true },
+      activatedAt: { type: 'integer', nullable: true },
+      releaseRequest: { type: 'object', nullable: true },
+      releaseDeadline: { type: 'integer', nullable: true },
+      releasedAt: { type: 'integer', nullable: true },
+      releasedTo: { type: 'address', nullable: true },
+      disputedAt: { type: 'integer', nullable: true },
+      refundedAt: { type: 'integer', nullable: true },
+      splits: { type: 'array', nullable: true },
+      rulingId: { type: 'string', nullable: true },
+      releaseWindowMs: { type: 'integer', nullable: true },
+      expiresAt: { type: 'integer', nullable: true },
+      autoActivate: { type: 'boolean', nullable: true },
+    },
+  },
+
+  eventSchemas: {
+    deposit: {
+      properties: {
+        amount: { type: 'number' },
+      },
+    },
+    activate: {},
+    request_release: {
+      properties: {
+        amount: { type: 'number' },
+        reason: { type: 'string', nullable: true },
+      },
+    },
+    approve_release: {},
+    dispute: {},
+    ruling: {
+      properties: {
+        judicialRuling: { type: 'boolean' },
+        splits: { type: 'array' },
+        rulingId: { type: 'string' },
+      },
+    },
+    refund: {
+      properties: {
+        mutualConsent: { type: 'boolean', nullable: true },
+      },
+    },
+    cancel: {},
+  },
+
+  states: {
+    CREATED: { id: 'CREATED', isFinal: false, metadata: null },
+    FUNDED: { id: 'FUNDED', isFinal: false, metadata: null },
+    ACTIVE: { id: 'ACTIVE', isFinal: false, metadata: null },
+    RELEASING: { id: 'RELEASING', isFinal: false, metadata: null },
+    DISPUTED: { id: 'DISPUTED', isFinal: false, metadata: null },
+    RELEASED: { id: 'RELEASED', isFinal: true, metadata: null },
+    REFUNDED: { id: 'REFUNDED', isFinal: true, metadata: null },
+    SPLIT: { id: 'SPLIT', isFinal: true, metadata: null },
+  },
+
+  initialState: 'CREATED',
+
+  transitions: [
+    {
+      from: 'CREATED',
+      to: 'FUNDED',
+      eventName: 'deposit',
+      guard: {
+        and: [
+          { '===': [{ var: 'event.agent' }, { var: 'state.depositor' }] },
+          { '>=': [{ var: 'event.amount' }, { var: 'state.requiredAmount' }] },
+        ],
+      },
+      effect: {
+        merge: [
+          { var: 'state' },
+          { balance: { var: 'event.amount' }, fundedAt: { var: '$timestamp' } },
+        ],
+      },
+      dependencies: [],
+    },
+    {
+      from: 'FUNDED',
+      to: 'ACTIVE',
+      eventName: 'activate',
+      guard: {
+        or: [
+          { '===': [{ var: 'event.agent' }, { var: 'state.beneficiary' }] },
+          { var: 'state.autoActivate' },
+        ],
+      },
+      effect: {
+        merge: [{ var: 'state' }, { activatedAt: { var: '$timestamp' } }],
+      },
+      dependencies: [],
+    },
+    {
+      from: 'ACTIVE',
+      to: 'RELEASING',
+      eventName: 'request_release',
+      guard: { '===': [{ var: 'event.agent' }, { var: 'state.beneficiary' }] },
+      effect: {
+        merge: [
+          { var: 'state' },
+          {
+            releaseRequest: {
+              requestedBy: { var: 'event.agent' },
+              amount: { var: 'event.amount' },
+              reason: { var: 'event.reason' },
+              requestedAt: { var: '$timestamp' },
+            },
+            releaseDeadline: {
+              '+': [{ var: '$timestamp' }, { var: 'state.releaseWindowMs' }],
+            },
+          },
+        ],
+      },
+      dependencies: [],
+    },
+    {
+      from: 'RELEASING',
+      to: 'RELEASED',
+      eventName: 'approve_release',
+      guard: {
+        or: [
+          { '===': [{ var: 'event.agent' }, { var: 'state.depositor' }] },
+          { '>=': [{ var: '$timestamp' }, { var: 'state.releaseDeadline' }] },
+        ],
+      },
+      effect: {
+        merge: [
+          { var: 'state' },
+          {
+            releasedAt: { var: '$timestamp' },
+            releasedTo: { var: 'state.beneficiary' },
+          },
+        ],
+      },
+      dependencies: [],
+    },
+    {
+      from: 'RELEASING',
+      to: 'DISPUTED',
+      eventName: 'dispute',
+      guard: {
+        and: [
+          { '===': [{ var: 'event.agent' }, { var: 'state.depositor' }] },
+          { '<': [{ var: '$timestamp' }, { var: 'state.releaseDeadline' }] },
+        ],
+      },
+      effect: {
+        merge: [{ var: 'state' }, { disputedAt: { var: '$timestamp' } }],
+      },
+      spawns: {
+        sm: 'Judiciary',
+        initialData: {
+          caseType: 'escrow_dispute',
+          plaintiff: { var: 'state.depositor' },
+          defendant: { var: 'state.beneficiary' },
+          claim: {
+            escrowId: { var: 'fiberId' },
+            amount: { var: 'state.balance' },
+          },
+        },
+      },
+      dependencies: [],
+    },
+    {
+      from: 'DISPUTED',
+      to: 'SPLIT',
+      eventName: 'ruling',
+      guard: { var: 'event.judicialRuling' },
+      effect: {
+        merge: [
+          { var: 'state' },
+          { splits: { var: 'event.splits' }, rulingId: { var: 'event.rulingId' } },
+        ],
+      },
+      dependencies: [],
+    },
+    {
+      from: 'ACTIVE',
+      to: 'REFUNDED',
+      eventName: 'refund',
+      guard: {
+        or: [
+          { var: 'event.mutualConsent' },
+          { '>=': [{ var: '$timestamp' }, { var: 'state.expiresAt' }] },
+        ],
+      },
+      effect: {
+        merge: [{ var: 'state' }, { refundedAt: { var: '$timestamp' } }],
+      },
+      dependencies: [],
+    },
+    {
+      from: 'CREATED',
+      to: 'REFUNDED',
+      eventName: 'cancel',
+      guard: { '===': [{ var: 'event.agent' }, { var: 'state.depositor' }] },
+      effect: {
+        merge: [{ var: 'state' }, { refundedAt: { var: '$timestamp' } }],
+      },
+      dependencies: [],
+    },
+  ],
+
+  crossReferences: {
+    contractId: {
+      machine: 'contract-agreement',
+      field: 'contractId',
+      description: 'Links to Contract SM that created this escrow',
+    },
+    marketId: {
+      machine: 'market-universal',
+      field: 'marketId',
+      description: 'Links to Market SM for market-based escrow',
+    },
+    insuranceId: {
+      machine: 'insurance',
+      field: 'insuranceId',
+      description: 'Links to Insurance SM for protected escrow',
+    },
+    arbitrationPoolId: {
+      machine: 'arbitration-pool',
+      field: 'arbitrationPoolId',
+      description: 'Links to ArbitrationPool for dispute resolution',
+    },
+    treasuryId: {
+      machine: 'treasury',
+      field: 'treasuryId',
+      description: 'Links to Treasury for fee collection',
+    },
+  },
+});

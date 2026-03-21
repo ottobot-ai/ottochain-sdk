@@ -14,9 +14,9 @@ describe('MarketPrediction State Machine', () => {
   });
 
   it('should have crossReferences', () => {
-    expect(marketPredictionDef.metadata.crossReferences).toBeDefined();
-    expect(marketPredictionDef.metadata.crossReferences).toHaveProperty('oracleId');
-    expect(marketPredictionDef.metadata.crossReferences).toHaveProperty('creatorIdentityId');
+    expect(marketPredictionDef.crossReferences).toBeDefined();
+    expect(marketPredictionDef.crossReferences).toHaveProperty('oracleId');
+    expect(marketPredictionDef.crossReferences).toHaveProperty('creatorIdentityId');
   });
 
   it('should have correct states', () => {

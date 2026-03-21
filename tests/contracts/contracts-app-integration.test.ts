@@ -68,10 +68,10 @@ describe('Contracts App Integration', () => {
   describe('Cross-Reference Integrity', () => {
     it('should maintain consistent cross-references between contract types', () => {
       // Agreement contracts should reference escrow
-      expect(contractAgreementDef.metadata.crossReferences).toHaveProperty('escrowId');
+      expect(contractAgreementDef.crossReferences).toHaveProperty('escrowId');
       
       // Escrow should reference contracts
-      expect(contractEscrowDef.metadata.crossReferences).toHaveProperty('contractId');
+      expect(contractEscrowDef.crossReferences).toHaveProperty('contractId');
     });
 
     it('should use consistent state naming patterns', () => {

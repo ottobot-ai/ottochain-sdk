@@ -23,7 +23,7 @@ export type SchemaFieldType =
   | 'array';
 
 export interface SchemaField {
-  type: SchemaFieldType;
+  type?: SchemaFieldType;  // Optional when using $ref
   description?: string;
   default?: unknown;
   
@@ -34,22 +34,30 @@ export interface SchemaField {
   maximum?: number;
   enum?: readonly string[];
   pattern?: string;
+  format?: string;       // e.g., 'date-time', 'email', 'uri'
+  nullable?: boolean;    // Allow null values
   
   // Annotations
   immutable?: boolean;  // Cannot change after creation
   computed?: boolean;   // Managed by effects, not user-settable
   indexed?: boolean;    // Hint for indexer
   
+  // JSON Schema references
+  $ref?: string;         // Reference to a definition
+  
   // Nested types
   items?: SchemaField | { $ref: string };
   properties?: Record<string, SchemaField>;
   required?: readonly string[];
+  additionalProperties?: boolean | SchemaField;
 }
 
 export interface SchemaDefinition {
   type: 'object';
+  description?: string;
   required?: readonly string[];
   properties: Record<string, SchemaField>;
+  nullable?: boolean;
 }
 
 // =============================================================================
@@ -69,10 +77,23 @@ export interface EventSchema {
 export interface StateDefinition {
   id: string;
   isFinal: boolean;
+  description?: string;
   metadata?: Record<string, unknown> | null;
 }
 
 export type JsonLogicRule = Record<string, unknown>;
+
+export interface EmitSpec {
+  event: string;
+  to?: string;
+  payload?: JsonLogicRule;
+}
+
+export interface DependencySpec {
+  machine: string;
+  instanceRef: JsonLogicRule;
+  requiredState?: string;
+}
 
 export interface Transition<TState extends string = string, TEvent extends string = string> {
   from: TState;
@@ -80,7 +101,8 @@ export interface Transition<TState extends string = string, TEvent extends strin
   eventName: TEvent;
   guard?: JsonLogicRule;
   effect?: JsonLogicRule;
-  dependencies?: readonly string[];
+  dependencies?: readonly (string | DependencySpec)[];
+  emits?: readonly (string | EmitSpec)[];  // Event names emitted by this transition
 }
 
 // =============================================================================
@@ -93,6 +115,17 @@ export interface FiberAppMetadata {
   type: string;
   version: string;
   description?: string;
+  category?: string;
+}
+
+export interface CrossReferenceSpec {
+  machine: string;
+  description: string;
+  foreignKey?: string;
+}
+
+export interface CrossReferences {
+  [key: string]: string | CrossReferenceSpec;
 }
 
 export interface FiberAppDefinition<
@@ -100,6 +133,9 @@ export interface FiberAppDefinition<
   TEvent extends string = string
 > {
   metadata: FiberAppMetadata;
+  
+  /** Cross-references to other fiber types */
+  crossReferences?: CrossReferences;
   
   /** Schema for fiber creation inputs (user-provided) */
   createSchema?: {

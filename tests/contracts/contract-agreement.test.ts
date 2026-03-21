@@ -193,7 +193,7 @@ describe('Contract Agreement State Machine', () => {
 
   describe('Cross-References', () => {
     it('should preserve cross-reference metadata', () => {
-      const crossRefs = contractAgreementDef.metadata.crossReferences;
+      const crossRefs = contractAgreementDef.crossReferences;
       
       expect(crossRefs).toHaveProperty('proposerIdentityId');
       expect(crossRefs).toHaveProperty('counterpartyIdentityId');

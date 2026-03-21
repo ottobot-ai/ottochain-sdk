@@ -11,10 +11,11 @@ export const marketPredictionDef = defineFiberApp({
     version: '1.0.0',
     description:
       'Binary or multi-outcome prediction market with oracle resolution and position staking',
-    crossReferences: {
-      oracleId: "Links to IdentityOracle that resolves the outcome",
-      creatorIdentityId: "Links to creator's IdentityAgent",
-    },
+  },
+
+  crossReferences: {
+    oracleId: 'Links to IdentityOracle that resolves the outcome',
+    creatorIdentityId: "Links to creator's IdentityAgent",
   },
 
   createSchema: {

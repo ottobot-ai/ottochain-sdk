@@ -10,10 +10,11 @@ export const marketAuctionDef = defineFiberApp({
     type: 'auction',
     version: '1.0.0',
     description: 'Auction market supporting English, Dutch, and sealed-bid variants',
-    crossReferences: {
-      sellerIdentityId: "Links to seller's IdentityAgent",
-      escrowId: 'Links to ContractEscrow for asset custody',
-    },
+  },
+
+  crossReferences: {
+    sellerIdentityId: "Links to seller's IdentityAgent",
+    escrowId: 'Links to ContractEscrow for asset custody',
   },
 
   createSchema: {

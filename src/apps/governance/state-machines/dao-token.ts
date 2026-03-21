@@ -11,12 +11,13 @@ export const daoTokenDef = defineFiberApp({
     version: '1.0.0',
     description: 'Token-weighted voting. Voting power proportional to token holdings.',
     category: 'governance/dao',
-    crossReferences: {
-      Identity: 'voter verification',
-      Token: 'balance snapshots',
-      Contract: 'action execution',
-      Treasury: 'fund management',
-    },
+  },
+
+  crossReferences: {
+    Identity: 'voter verification',
+    Token: 'balance snapshots',
+    Contract: 'action execution',
+    Treasury: 'fund management',
   },
 
   createSchema: {

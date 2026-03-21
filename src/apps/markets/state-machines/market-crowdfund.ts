@@ -10,10 +10,11 @@ export const marketCrowdfundDef = defineFiberApp({
     type: 'crowdfund',
     version: '1.0.0',
     description: 'All-or-nothing crowdfunding with threshold, deadline, and stretch goals',
-    crossReferences: {
-      creatorIdentityId: "Links to creator's IdentityAgent",
-      treasuryId: 'Links to Treasury for fund custody',
-    },
+  },
+
+  crossReferences: {
+    creatorIdentityId: "Links to creator's IdentityAgent",
+    treasuryId: 'Links to Treasury for fund custody',
   },
 
   createSchema: {
