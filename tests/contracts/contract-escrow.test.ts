@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck — tests access guard properties dynamically
 import { contractEscrowDef } from '../../src/apps/contracts/state-machines/contract-escrow.js';
 
 describe('Contract Escrow State Machine', () => {

@@ -8,12 +8,57 @@ export const contractAgreementDef = {
     "name": "ContractAgreement",
     "description": "Two-party agreement with mutual completion attestation and dispute resolution",
     "version": "1.0.0",
+    "app": "contracts",
+    "type": "agreement",
     "crossReferences": {
       "proposerIdentityId": "Links to proposer's AgentIdentity fiber",
       "counterpartyIdentityId": "Links to counterparty's AgentIdentity fiber",
       "escrowId": "Links to Escrow if payment is escrowed",
       "arbitrationPoolId": "Links to ArbitrationPool for dispute resolution"
     }
+  },
+  "createSchema": {
+    "required": [
+      "proposer",
+      "counterparty"
+    ],
+    "properties": {
+      "proposer": {
+        "type": "address",
+        "description": "DAG address of the proposer",
+        "immutable": true
+      },
+      "counterparty": {
+        "type": "address",
+        "description": "DAG address of the counterparty",
+        "immutable": true
+      }
+    }
+  },
+  "stateSchema": {
+    "properties": {
+      "status": {
+        "type": "string"
+      },
+      "proposer": {
+        "type": "address"
+      },
+      "counterparty": {
+        "type": "address"
+      },
+      "completions": {
+        "type": "array"
+      }
+    }
+  },
+  "eventSchemas": {
+    "accept": {},
+    "reject": {},
+    "cancel": {},
+    "submit_completion": {},
+    "finalize": {},
+    "dispute": {},
+    "resolve": {}
   },
   "states": {
     "PROPOSED": {
@@ -352,6 +397,49 @@ export const contractAgreementDef = {
         ]
       },
       "dependencies": []
+    },
+    {
+      "from": "ACTIVE",
+      "to": "CANCELLED",
+      "eventName": "cancel",
+      "guard": {
+        "or": [
+          {
+            "===": [
+              {
+                "var": "event.agent"
+              },
+              {
+                "var": "state.proposer"
+              }
+            ]
+          },
+          {
+            "===": [
+              {
+                "var": "event.agent"
+              },
+              {
+                "var": "state.counterparty"
+              }
+            ]
+          }
+        ]
+      },
+      "effect": {
+        "merge": [
+          {
+            "var": "state"
+          },
+          {
+            "status": "CANCELLED",
+            "cancelledAt": {
+              "var": "$timestamp"
+            }
+          }
+        ]
+      },
+      "dependencies": []
     }
   ]
 } as const;
@@ -361,6 +449,8 @@ export const contractEscrowDef = {
     "name": "ContractEscrow",
     "description": "Asset custody with conditional release, dispute resolution, and split payments",
     "version": "1.0.0",
+    "app": "contracts",
+    "type": "escrow",
     "crossReferences": {
       "contractId": "Links to Contract SM that created this escrow",
       "marketId": "Links to Market SM for market-based escrow",
@@ -368,6 +458,47 @@ export const contractEscrowDef = {
       "arbitrationPoolId": "Links to ArbitrationPool for dispute resolution",
       "treasuryId": "Links to Treasury for fee collection"
     }
+  },
+  "createSchema": {
+    "required": [
+      "depositor",
+      "beneficiary",
+      "requiredAmount"
+    ],
+    "properties": {
+      "depositor": {
+        "type": "address",
+        "description": "DAG address of the depositor"
+      },
+      "beneficiary": {
+        "type": "address",
+        "description": "DAG address of the beneficiary"
+      },
+      "requiredAmount": {
+        "type": "number",
+        "minimum": 0,
+        "description": "Required escrow amount"
+      }
+    }
+  },
+  "stateSchema": {
+    "properties": {
+      "balance": {
+        "type": "number"
+      },
+      "releaseRequest": {
+        "type": "object"
+      }
+    }
+  },
+  "eventSchemas": {
+    "deposit": {},
+    "activate": {},
+    "request_release": {},
+    "approve_release": {},
+    "dispute": {},
+    "ruling": {},
+    "refund": {}
   },
   "states": {
     "CREATED": {
@@ -707,6 +838,34 @@ export const contractEscrowDef = {
         ]
       },
       "dependencies": []
+    },
+    {
+      "from": "CREATED",
+      "to": "REFUNDED",
+      "eventName": "cancel",
+      "guard": {
+        "===": [
+          {
+            "var": "event.agent"
+          },
+          {
+            "var": "state.depositor"
+          }
+        ]
+      },
+      "effect": {
+        "merge": [
+          {
+            "var": "state"
+          },
+          {
+            "refundedAt": {
+              "var": "$timestamp"
+            }
+          }
+        ]
+      },
+      "dependencies": []
     }
   ]
 } as const;
@@ -715,7 +874,24 @@ export const contractUniversalDef = {
   "metadata": {
     "name": "ContractUniversal",
     "description": "Minimal contract state machine - extend for custom use cases",
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "app": "contracts",
+    "type": "universal"
+  },
+  "createSchema": {
+    "properties": {}
+  },
+  "stateSchema": {
+    "properties": {
+      "status": {
+        "type": "string"
+      }
+    }
+  },
+  "eventSchemas": {
+    "accept": {},
+    "cancel": {},
+    "complete": {}
   },
   "states": {
     "PROPOSED": {

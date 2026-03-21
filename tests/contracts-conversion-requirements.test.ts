@@ -181,7 +181,7 @@ describe('Contracts Conversion Requirements', () => {
       expect(contractAgreementDef.metadata).toBeDefined();
       expect(contractAgreementDef.createSchema).toBeDefined();
       expect(contractAgreementDef.stateSchema).toBeDefined();
-      expect(contractAgreementDef.events).toBeDefined();
+      expect(contractAgreementDef.eventSchemas).toBeDefined();
     });
 
     it('should have proper TypeScript typing from defineFiberApp', () => {
