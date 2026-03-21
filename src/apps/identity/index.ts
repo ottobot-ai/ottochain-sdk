@@ -19,16 +19,30 @@
 
 // Re-export generated protobuf types (source of truth)
 export {
-  AgentState,
+  IdentityType,
+  IdentityState,
   Platform,
   PlatformLink,
-  AgentIdentity,
-  AgentIdentityDefinition,
-  agentStateFromJSON,
-  agentStateToJSON,
+  Reputation,
+  PenaltyEvent,
+  Identity,
+  RegisterIdentityRequest,
+  ActivateIdentityRequest,
+  LinkPlatformRequest,
+  ChallengeIdentityRequest,
+  AddStakeRequest,
+  WithdrawIdentityRequest,
+  IdentityDefinition,
+  identityTypeFromJSON,
+  identityTypeToJSON,
+  identityStateFromJSON,
+  identityStateToJSON,
   platformFromJSON,
   platformToJSON,
-} from '../../generated/ottochain/apps/identity/v1/agent.js';
+} from "../../generated/ottochain/apps/identity/v1/identity.js";
+
+// Legacy aliases for backward compatibility
+export { IdentityState as AgentState } from "../../generated/ottochain/apps/identity/v1/identity.js";
 
 export {
   AttestationType,
@@ -39,15 +53,16 @@ export {
   ReputationConfig,
   attestationTypeFromJSON,
   attestationTypeToJSON,
-} from '../../generated/ottochain/apps/identity/v1/attestation.js';
+} from "../../generated/ottochain/apps/identity/v1/attestation.js";
 
 // Re-export constants and utilities
 export {
+  IDENTITY_TRANSITIONS,
   AGENT_TRANSITIONS,
   ATTESTATION_DELTAS,
   canTransition,
   getReputationDelta,
-} from './constants.js';
+} from "./constants.js";
 
 // ---------------------------------------------------------------------------
 // Configuration Defaults
@@ -74,7 +89,7 @@ import {
   identityUniversalDef,
   identityAgentDef,
   identityOracleDef,
-} from './state-machines/index.js';
+} from "./state-machines/index.js";
 
 export { identityUniversalDef, identityAgentDef, identityOracleDef };
 
@@ -85,12 +100,14 @@ export const IDENTITY_DEFINITIONS = {
   oracle: identityOracleDef,
 } as const;
 
-export type IdentityType = keyof typeof IDENTITY_DEFINITIONS;
+export type IdentityDefType = keyof typeof IDENTITY_DEFINITIONS;
 
 /**
  * Get an identity state machine definition by type.
  * @param type - 'universal' | 'agent' | 'oracle' (default: 'agent')
  */
-export function getIdentityDefinition(type: IdentityType = 'agent'): unknown {
+export function getIdentityDefinition(
+  type: IdentityDefType = "agent",
+): unknown {
   return IDENTITY_DEFINITIONS[type];
 }

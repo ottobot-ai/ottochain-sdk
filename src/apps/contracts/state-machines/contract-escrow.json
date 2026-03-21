@@ -3,6 +3,8 @@
     "name": "ContractEscrow",
     "description": "Asset custody with conditional release, dispute resolution, and split payments",
     "version": "1.0.0",
+    "app": "contracts",
+    "type": "escrow",
     "crossReferences": {
       "contractId": "Links to Contract SM that created this escrow",
       "marketId": "Links to Market SM for market-based escrow",
@@ -10,6 +12,39 @@
       "arbitrationPoolId": "Links to ArbitrationPool for dispute resolution",
       "treasuryId": "Links to Treasury for fee collection"
     }
+  },
+  "createSchema": {
+    "required": ["depositor", "beneficiary", "requiredAmount"],
+    "properties": {
+      "depositor": {
+        "type": "address",
+        "description": "DAG address of the depositor"
+      },
+      "beneficiary": {
+        "type": "address",
+        "description": "DAG address of the beneficiary"
+      },
+      "requiredAmount": {
+        "type": "number",
+        "minimum": 0,
+        "description": "Required escrow amount"
+      }
+    }
+  },
+  "stateSchema": {
+    "properties": {
+      "balance": { "type": "number" },
+      "releaseRequest": { "type": "object" }
+    }
+  },
+  "eventSchemas": {
+    "deposit": {},
+    "activate": {},
+    "request_release": {},
+    "approve_release": {},
+    "dispute": {},
+    "ruling": {},
+    "refund": {}
   },
   "states": {
     "CREATED": {
@@ -333,6 +368,34 @@
                 "var": "state.expiresAt"
               }
             ]
+          }
+        ]
+      },
+      "effect": {
+        "merge": [
+          {
+            "var": "state"
+          },
+          {
+            "refundedAt": {
+              "var": "$timestamp"
+            }
+          }
+        ]
+      },
+      "dependencies": []
+    },
+    {
+      "from": "CREATED",
+      "to": "REFUNDED",
+      "eventName": "cancel",
+      "guard": {
+        "===": [
+          {
+            "var": "event.agent"
+          },
+          {
+            "var": "state.depositor"
           }
         ]
       },

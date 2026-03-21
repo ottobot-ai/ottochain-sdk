@@ -3,7 +3,7 @@ syntax = "proto3";
 package ottochain.apps.identity.v1;
 
 import "ottochain/v1/common.proto";
-import "ottochain/apps/identity/v1/agent.proto";
+import "ottochain/apps/identity/v1/identity.proto";
 import "google/protobuf/timestamp.proto";
 
 // Types of attestations that affect reputation
