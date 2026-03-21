@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.2](https://github.com/ottobot-ai/ottochain-sdk/compare/v2.2.1...v2.2.2) (2026-03-21)
+
+
+### Bug Fixes
+
+* export FiberAppDefinition types and fix getter return types ([#142](https://github.com/ottobot-ai/ottochain-sdk/issues/142)) ([71b147d](https://github.com/ottobot-ai/ottochain-sdk/commit/71b147d4ff06db1daf11470a587a2c284be70a54))
+
 ## [2.2.1](https://github.com/ottobot-ai/ottochain-sdk/compare/v2.2.0...v2.2.1) (2026-03-21)
 
 
