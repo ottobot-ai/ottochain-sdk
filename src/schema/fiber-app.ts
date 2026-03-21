@@ -232,3 +232,68 @@ export function isFinalState<T extends FiberAppDefinition>(
 export function toJSON<T extends FiberAppDefinition>(def: T): object {
   return JSON.parse(JSON.stringify(def));
 }
+
+/**
+ * Proto-compatible state machine definition for metagraph submission.
+ * Matches StateMachineDefinition from ottochain/v1/fiber.proto
+ */
+export interface ProtoStateMachineDefinition {
+  states: Record<string, { id: string; isFinal: boolean }>;
+  initialState: string;
+  transitions: Array<{
+    from: string;
+    to: string;
+    eventName: string;
+    guard?: unknown;
+    effect?: unknown;
+    dependencies?: unknown[];
+    emits?: unknown[];
+  }>;
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Extract proto-compatible StateMachineDefinition from a FiberAppDefinition.
+ * Use this when submitting to the metagraph.
+ * 
+ * @example
+ * ```ts
+ * const def = getContractDefinition('agreement');
+ * const protoDef = toProtoDefinition(def);
+ * // Submit protoDef to metagraph
+ * ```
+ */
+export function toProtoDefinition<T extends FiberAppDefinition>(
+  def: T
+): ProtoStateMachineDefinition {
+  // Extract only the proto-compatible fields
+  const protoDef: ProtoStateMachineDefinition = {
+    states: {},
+    initialState: def.initialState,
+    transitions: def.transitions.map(t => ({
+      from: t.from,
+      to: t.to,
+      eventName: t.eventName,
+      ...(t.guard && { guard: t.guard }),
+      ...(t.effect && { effect: t.effect }),
+      ...(t.dependencies?.length && { dependencies: [...t.dependencies] as unknown[] }),
+      ...(t.emits?.length && { emits: [...t.emits] as unknown[] }),
+    })),
+  };
+
+  // Copy states (only id and isFinal)
+  for (const [key, state] of Object.entries(def.states)) {
+    protoDef.states[key] = {
+      id: state.id,
+      isFinal: state.isFinal,
+    };
+  }
+
+  // Include metadata but strip SDK-only fields (crossReferences is informational)
+  if (def.metadata) {
+    const { crossReferences, ...protoMetadata } = def.metadata;
+    protoDef.metadata = protoMetadata as Record<string, unknown>;
+  }
+
+  return protoDef;
+}
