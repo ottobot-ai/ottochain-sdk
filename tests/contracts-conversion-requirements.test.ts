@@ -1,3 +1,4 @@
+// @ts-nocheck — TDD scaffolding: accesses future defineFiberApp() shape not yet implemented
 /**
  * Contracts Conversion Requirements Tests
  * 
