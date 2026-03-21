@@ -107,7 +107,7 @@ export {
   SlashOracleRequest,
   WithdrawOracleRequest,
   OracleDefinition,
-} from './ottochain/apps/oracles/v1/oracle.js';
+} from './ottochain/apps/identity/v1/oracle.js';
 
 // App: Governance
 export {

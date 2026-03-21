@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package ottochain.apps.oracles.v1;
+package ottochain.apps.identity.v1;
 
 import "ottochain/v1/common.proto";
 import "google/protobuf/timestamp.proto";

@@ -279,3 +279,14 @@ After SDK is clean:
 - [ ] James reviewed structure
 - [ ] James approved Phase 1 scope
 - [ ] Explicit agreement on what "done" looks like before implementation
+## Future Work - Oracle Pools
+
+Research Emurgo's Oracle pool proposal for decentralized oracle networks:
+- Pool formation and stake-weighted selection
+- Aggregation strategies (median, threshold signatures)
+- Slashing conditions for misbehavior
+- Fee distribution models
+
+Reference: identity-oracle.json as base, extend with pool mechanics.
+
+Added: 2026-03-20T20:28:25-05:00
