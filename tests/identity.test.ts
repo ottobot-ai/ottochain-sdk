@@ -5,7 +5,7 @@ import {
   canTransition,
   getReputationDelta,
   DEFAULT_REPUTATION_CONFIG,
-  AgentState,
+  IdentityState,
   AttestationType,
 } from '../src/apps/identity';
 
@@ -23,6 +23,12 @@ describe('Identity module', () => {
       expect(def).toHaveProperty('initialState');
       expect(def).toHaveProperty('transitions');
     });
+
+    it('returns oracle definition when requested', () => {
+      const def = getIdentityDefinition('oracle') as any;
+      expect(def).toBeDefined();
+      expect(def.metadata.name).toBe('IdentityOracle');
+    });
   });
 
   describe('DEFAULT_REPUTATION_CONFIG', () => {
@@ -37,7 +43,7 @@ describe('Identity module', () => {
     });
   });
 
-  describe('AGENT_TRANSITIONS', () => {
+  describe('AGENT_TRANSITIONS (legacy alias)', () => {
     it('is defined and non-empty', () => {
       expect(AGENT_TRANSITIONS).toBeDefined();
       expect(typeof AGENT_TRANSITIONS).toBe('object');
@@ -52,16 +58,20 @@ describe('Identity module', () => {
   });
 
   describe('canTransition', () => {
-    it('returns true for valid transition', () => {
-      expect(canTransition(AgentState.AGENT_STATE_REGISTERED, 'activate')).toBe(true);
+    it('returns true for valid transition from registered', () => {
+      expect(canTransition(IdentityState.IDENTITY_STATE_REGISTERED, 'activate')).toBe(true);
     });
 
     it('returns false for invalid transition', () => {
-      expect(canTransition(AgentState.AGENT_STATE_WITHDRAWN, 'activate')).toBe(false);
+      expect(canTransition(IdentityState.IDENTITY_STATE_WITHDRAWN, 'activate')).toBe(false);
     });
 
     it('returns false for terminal state', () => {
-      expect(canTransition(AgentState.AGENT_STATE_WITHDRAWN, 'any_event')).toBe(false);
+      expect(canTransition(IdentityState.IDENTITY_STATE_WITHDRAWN, 'any_event')).toBe(false);
+    });
+
+    it('returns true for oracle reactivation from slashed', () => {
+      expect(canTransition(IdentityState.IDENTITY_STATE_SLASHED, 'reactivate')).toBe(true);
     });
   });
 

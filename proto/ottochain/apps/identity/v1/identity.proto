@@ -1,0 +1,138 @@
+syntax = "proto3";
+
+package ottochain.apps.identity.v1;
+
+import "ottochain/v1/common.proto";
+import "google/protobuf/timestamp.proto";
+
+// Identity type - determines which state machine variant applies
+enum IdentityType {
+  IDENTITY_TYPE_UNSPECIFIED = 0;
+  IDENTITY_TYPE_AGENT = 1;     // AI agent identity
+  IDENTITY_TYPE_ORACLE = 2;    // Oracle service identity
+  IDENTITY_TYPE_SERVICE = 3;   // Generic service identity
+}
+
+// Unified identity lifecycle states
+// Shared across all identity types with type-specific transitions
+enum IdentityState {
+  IDENTITY_STATE_UNSPECIFIED = 0;
+  IDENTITY_STATE_UNREGISTERED = 1;  // Not yet registered (oracle initial)
+  IDENTITY_STATE_REGISTERED = 2;    // Registered, pending activation
+  IDENTITY_STATE_ACTIVE = 3;        // Active and participating
+  IDENTITY_STATE_CHALLENGED = 4;    // Under dispute (agent-specific)
+  IDENTITY_STATE_SUSPENDED = 5;     // Temporarily suspended
+  IDENTITY_STATE_PROBATION = 6;     // Recovering from suspension
+  IDENTITY_STATE_SLASHED = 7;       // Penalized (oracle-specific)
+  IDENTITY_STATE_INACTIVE = 8;      // Voluntarily inactive but can reactivate
+  IDENTITY_STATE_WITHDRAWN = 9;     // Terminal - exited permanently
+}
+
+// Platform where identity is linked
+enum Platform {
+  PLATFORM_UNSPECIFIED = 0;
+  PLATFORM_DISCORD = 1;
+  PLATFORM_TELEGRAM = 2;
+  PLATFORM_TWITTER = 3;
+  PLATFORM_GITHUB = 4;
+  PLATFORM_CUSTOM = 5;
+}
+
+// Platform identity link
+message PlatformLink {
+  Platform platform = 1;
+  string platform_user_id = 2;
+  string platform_username = 3;
+  google.protobuf.Timestamp linked_at = 4;
+  bool verified = 5;
+}
+
+// Reputation metrics (unified for all identity types)
+message Reputation {
+  int32 score = 1;                 // Overall reputation score
+  int32 accuracy = 2;              // Accuracy percentage (oracles)
+  int32 total_actions = 3;         // Total actions/resolutions
+  int32 disputes_won = 4;
+  int32 disputes_lost = 5;
+}
+
+// Record of a penalty event (slashing, suspension, etc.)
+message PenaltyEvent {
+  string reason = 1;
+  int64 amount = 2;                        // Amount slashed (if applicable)
+  string context_id = 3;                   // Market/contract where infraction occurred
+  google.protobuf.Timestamp timestamp = 4;
+}
+
+// Unified identity on-chain state
+message Identity {
+  string id = 1;
+  string address = 2;
+  string public_key = 3;
+  string display_name = 4;
+  IdentityType identity_type = 5;
+  IdentityState state = 6;
+  Reputation reputation = 7;
+  int64 stake = 8;                         // Staked amount (oracles/services)
+  repeated string domains = 9;             // Expertise domains (oracles)
+  repeated PlatformLink platform_links = 10;
+  repeated PenaltyEvent penalty_history = 11;
+  google.protobuf.Timestamp created_at = 12;
+  google.protobuf.Timestamp updated_at = 13;
+}
+
+// ============================================================================
+// Request Messages
+// ============================================================================
+
+message RegisterIdentityRequest {
+  IdentityType identity_type = 1;
+  string address = 2;
+  string display_name = 3;
+  int64 initial_stake = 4;         // For oracles/services
+  repeated string domains = 5;     // For oracles
+}
+
+message ActivateIdentityRequest {
+  string identity_id = 1;
+  string address = 2;
+}
+
+message LinkPlatformRequest {
+  string identity_id = 1;
+  Platform platform = 2;
+  string platform_user_id = 3;
+  string platform_username = 4;
+}
+
+message ChallengeIdentityRequest {
+  string identity_id = 1;
+  string challenger_address = 2;
+  string reason = 3;
+}
+
+message AddStakeRequest {
+  string identity_id = 1;
+  string address = 2;
+  int64 amount = 3;
+}
+
+message WithdrawIdentityRequest {
+  string identity_id = 1;
+  string address = 2;
+}
+
+// ============================================================================
+// State Machine Definition
+// ============================================================================
+
+message IdentityDefinition {
+  // Configuration for identity state machine
+  IdentityType identity_type = 1;
+  int32 initial_reputation = 2;        // Default starting reputation
+  int32 activation_threshold = 3;      // Min rep/stake to activate
+  int64 min_stake = 4;                 // Min stake for oracles/services
+  int32 suspension_duration_epochs = 5;
+  int32 slash_cooldown_epochs = 6;
+  int32 accuracy_threshold = 7;        // Min accuracy for oracles
+}
