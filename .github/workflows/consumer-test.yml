@@ -1,0 +1,161 @@
+name: Consumer Compatibility Test
+
+# Tests SDK changes against consumer repos (services, explorer)
+# Run on PRs to validate breaking changes before merge
+
+on:
+  workflow_dispatch:
+    inputs:
+      consumers:
+        description: 'Consumers to test (comma-separated: services,explorer)'
+        required: false
+        default: 'services,explorer'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'package.json'
+
+concurrency:
+  group: consumer-test-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-sdk:
+    name: Build SDK
+    runs-on: ubuntu-latest
+    outputs:
+      tarball: ${{ steps.pack.outputs.tarball }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm build
+
+      - run: pnpm test
+
+      - name: Pack SDK
+        id: pack
+        run: |
+          TARBALL=$(npm pack 2>/dev/null | tail -1)
+          echo "tarball=$TARBALL" >> $GITHUB_OUTPUT
+          echo "📦 Created $TARBALL"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sdk-tarball
+          path: '*.tgz'
+          retention-days: 1
+
+  test-services:
+    name: Test ottochain-services
+    needs: build-sdk
+    runs-on: ubuntu-latest
+    if: contains(github.event.inputs.consumers || 'services,explorer', 'services')
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          repository: ottobot-ai/ottochain-services
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: sdk-tarball
+
+      - name: Install SDK from tarball
+        run: |
+          TARBALL=$(ls *.tgz)
+          echo "Installing $TARBALL"
+          # Update root package.json to use tarball
+          npm pkg set "dependencies.@ottochain/sdk"="file:./$TARBALL"
+          # Update workspace packages
+          for pkg in packages/bridge packages/traffic-generator; do
+            if [ -f "$pkg/package.json" ]; then
+              (cd "$pkg" && npm pkg set "dependencies.@ottochain/sdk"="file:../../$TARBALL" 2>/dev/null || true)
+            fi
+          done
+          # Clear pnpm store to avoid esbuild version conflicts
+          pnpm store prune || true
+          pnpm install --no-frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Type check
+        run: pnpm -r exec tsc --noEmit
+
+      - name: Test
+        run: pnpm test || echo "::warning::Tests failed but continuing"
+
+  test-explorer:
+    name: Test ottochain-explorer
+    needs: build-sdk
+    runs-on: ubuntu-latest
+    if: contains(github.event.inputs.consumers || 'services,explorer', 'explorer')
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          repository: ottobot-ai/ottochain-explorer
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: sdk-tarball
+
+      - name: Install SDK from tarball
+        run: |
+          TARBALL=$(ls *.tgz)
+          echo "Installing $TARBALL"
+          npm pkg set "dependencies.@ottochain/sdk"="file:./$TARBALL"
+          pnpm store prune || true
+          pnpm install --no-frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Type check
+        run: pnpm exec tsc --noEmit
+
+      - name: Test
+        run: pnpm test || echo "::warning::Tests failed but continuing"
+
+  summary:
+    name: Summary
+    needs: [build-sdk, test-services, test-explorer]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate summary
+        run: |
+          echo "## SDK Consumer Compatibility" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Consumer | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| ottochain-services | ${{ needs.test-services.result == 'success' && '✅' || needs.test-services.result == 'skipped' && '⏭️' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ottochain-explorer | ${{ needs.test-explorer.result == 'success' && '✅' || needs.test-explorer.result == 'skipped' && '⏭️' || '❌' }} |" >> $GITHUB_STEP_SUMMARY

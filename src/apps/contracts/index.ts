@@ -9,10 +9,11 @@
  *   ContractState,
  *   Contract,
  *   getContractDefinition,
- *   getEscrowDefinition
+ *   CONTRACTS_DEFINITIONS
  * } from '@ottochain/sdk/apps/contracts';
  *
- * const contractDef = getContractDefinition();
+ * const agreementDef = getContractDefinition('agreement');
+ * const escrowDef = getContractDefinition('escrow');
  * ```
  *
  * @packageDocumentation
@@ -36,25 +37,32 @@ export {
 // State Machine Definitions (generated from JSON at build time)
 // ---------------------------------------------------------------------------
 
-import { contractDef, escrowDef } from './state-machines/index.js';
+import {
+  contractUniversalDef,
+  contractAgreementDef,
+  contractEscrowDef,
+} from './state-machines/index.js';
 
-export type ContractDefinitionType = 'Contract' | 'Escrow';
+export { contractUniversalDef, contractAgreementDef, contractEscrowDef };
 
-export const CONTRACT_DEFINITIONS: Record<ContractDefinitionType, unknown> = {
-  Contract: contractDef,
-  Escrow: escrowDef,
-};
+/** All contract state machine definitions */
+export const CONTRACTS_DEFINITIONS = {
+  universal: contractUniversalDef,
+  agreement: contractAgreementDef,
+  escrow: contractEscrowDef,
+} as const;
+
+export type ContractType = keyof typeof CONTRACTS_DEFINITIONS;
 
 /**
- * Get the contract state machine definition.
+ * Get a contract state machine definition by type.
+ * @param type - 'universal' | 'agreement' | 'escrow' (default: 'agreement')
  */
-export function getContractDefinition(): unknown {
-  return contractDef;
+export function getContractDefinition(type: ContractType = 'agreement'): unknown {
+  return CONTRACTS_DEFINITIONS[type];
 }
 
-/**
- * Get the escrow state machine definition.
- */
+/** @deprecated Use getContractDefinition('escrow') */
 export function getEscrowDefinition(): unknown {
-  return escrowDef;
+  return contractEscrowDef;
 }

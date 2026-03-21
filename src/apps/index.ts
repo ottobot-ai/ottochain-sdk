@@ -3,22 +3,25 @@
  *
  * Application-specific types and utilities for OttoChain SDK.
  *
+ * Each app provides:
+ * - Universal state machine (minimal, extensible)
+ * - Specialized state machines (opinionated defaults)
+ * - getXxxDefinition() helper to retrieve definitions
+ *
  * @example
  * ```typescript
- * import { identity, contracts, markets, oracles, governance } from '@ottochain/sdk/apps';
+ * import { identity, contracts, markets, governance, corporate } from '@ottochain/sdk/apps';
  *
- * // Use identity types
- * const { AgentState } = identity;
+ * // Get identity definitions
+ * const agentDef = identity.getIdentityDefinition('agent');
+ * const oracleDef = identity.getIdentityDefinition('oracle');
  *
- * // Check oracle reputation
- * const state = oracles.OracleState.ACTIVE;
+ * // Get market definitions
+ * const predictionDef = markets.getMarketDefinition('prediction');
+ * const auctionDef = markets.getMarketDefinition('auction');
  *
- * // Create a multisig DAO
- * const dao = governance.createMultisigState({
- *   name: 'Treasury',
- *   signers: ['DAG...', 'DAG...', 'DAG...'],
- *   threshold: 2
- * });
+ * // Get DAO definitions
+ * const multisigDef = governance.getGovernanceDefinition('daoMultisig');
  * ```
  *
  * @packageDocumentation
@@ -28,6 +31,5 @@
 export * as identity from './identity/index.js';
 export * as contracts from './contracts/index.js';
 export * as markets from './markets/index.js';
-export * as oracles from './oracles/index.js';
 export * as governance from './governance/index.js';
 export * as corporate from './corporate/index.js';

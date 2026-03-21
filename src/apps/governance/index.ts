@@ -9,10 +9,12 @@
  *   DAOType,
  *   DAOStatus,
  *   MultisigDAO,
- *   getDAODefinition
+ *   getGovernanceDefinition,
+ *   GOVERNANCE_DEFINITIONS
  * } from '@ottochain/sdk/apps/governance';
  *
- * const multisigDef = getDAODefinition('Multisig');
+ * const multisigDef = getGovernanceDefinition('daoMultisig');
+ * const simpleDef = getGovernanceDefinition('simple');
  * ```
  *
  * @packageDocumentation
@@ -57,55 +59,52 @@ export {
 // ---------------------------------------------------------------------------
 
 import {
-  daoMultisigDef,
-  daoSingleDef,
-  daoThresholdDef,
-  daoTokenDef,
-  govLegislatureDef,
-  govExecutiveDef,
-  govJudiciaryDef,
-  govConstitutionDef,
+  govUniversalDef,
   govSimpleDef,
+  daoSingleDef,
+  daoMultisigDef,
+  daoTokenDef,
+  daoReputationDef,
 } from './state-machines/index.js';
 
-export type DAODefinitionType = 'Single' | 'Multisig' | 'Threshold' | 'Token';
-export type GovernanceDefinitionType = 'Legislature' | 'Executive' | 'Judiciary' | 'Constitution' | 'Simple';
-
-export const DAO_DEFINITIONS: Record<DAODefinitionType, unknown> = {
-  Single: daoSingleDef,
-  Multisig: daoMultisigDef,
-  Threshold: daoThresholdDef,
-  Token: daoTokenDef,
+export {
+  govUniversalDef,
+  govSimpleDef,
+  daoSingleDef,
+  daoMultisigDef,
+  daoTokenDef,
+  daoReputationDef,
 };
 
-export const GOVERNANCE_DEFINITIONS: Record<GovernanceDefinitionType, unknown> = {
-  Legislature: govLegislatureDef,
-  Executive: govExecutiveDef,
-  Judiciary: govJudiciaryDef,
-  Constitution: govConstitutionDef,
-  Simple: govSimpleDef,
-};
+/** All governance state machine definitions */
+export const GOVERNANCE_DEFINITIONS = {
+  universal: govUniversalDef,
+  simple: govSimpleDef,
+  daoSingle: daoSingleDef,
+  daoMultisig: daoMultisigDef,
+  daoToken: daoTokenDef,
+  daoReputation: daoReputationDef,
+} as const;
+
+export type GovernanceType = keyof typeof GOVERNANCE_DEFINITIONS;
 
 /**
- * Get the state machine definition for a DAO type.
+ * Get a governance state machine definition by type.
+ * @param type - 'universal' | 'simple' | 'daoSingle' | 'daoMultisig' | 'daoToken' | 'daoReputation'
  */
-export function getDAODefinition(daoType: DAODefinitionType): unknown {
-  const def = DAO_DEFINITIONS[daoType];
-  if (!def) {
-    throw new Error(`Unknown DAO type: ${daoType}`);
-  }
-  return def;
+export function getGovernanceDefinition(type: GovernanceType): unknown {
+  return GOVERNANCE_DEFINITIONS[type];
 }
 
-/**
- * Get the state machine definition for a governance type.
- */
-export function getGovernanceDefinition(governanceType: GovernanceDefinitionType): unknown {
-  const def = GOVERNANCE_DEFINITIONS[governanceType];
-  if (!def) {
-    throw new Error(`Unknown governance type: ${governanceType}`);
-  }
-  return def;
+/** @deprecated Use getGovernanceDefinition('daoSingle' | 'daoMultisig' | 'daoToken' | 'daoReputation') */
+export function getDAODefinition(daoType: 'Single' | 'Multisig' | 'Threshold' | 'Token'): unknown {
+  const map: Record<string, GovernanceType> = {
+    Single: 'daoSingle',
+    Multisig: 'daoMultisig',
+    Threshold: 'daoReputation',
+    Token: 'daoToken',
+  };
+  return GOVERNANCE_DEFINITIONS[map[daoType]];
 }
 
 // ---------------------------------------------------------------------------

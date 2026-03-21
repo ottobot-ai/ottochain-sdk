@@ -67,16 +67,30 @@ export const DEFAULT_REPUTATION_CONFIG = {
 } as const;
 
 // ---------------------------------------------------------------------------
-// State Machine Definition (generated from JSON at build time)
+// State Machine Definitions (generated from JSON at build time)
 // ---------------------------------------------------------------------------
 
-import { agentIdentityDef } from './state-machines/index.js';
+import {
+  identityUniversalDef,
+  identityAgentDef,
+  identityOracleDef,
+} from './state-machines/index.js';
+
+export { identityUniversalDef, identityAgentDef, identityOracleDef };
+
+/** All identity state machine definitions */
+export const IDENTITY_DEFINITIONS = {
+  universal: identityUniversalDef,
+  agent: identityAgentDef,
+  oracle: identityOracleDef,
+} as const;
+
+export type IdentityType = keyof typeof IDENTITY_DEFINITIONS;
 
 /**
- * Get the agent identity state machine definition.
- *
- * @returns The state machine definition JSON for AgentIdentity
+ * Get an identity state machine definition by type.
+ * @param type - 'universal' | 'agent' | 'oracle' (default: 'agent')
  */
-export function getIdentityDefinition(): unknown {
-  return agentIdentityDef;
+export function getIdentityDefinition(type: IdentityType = 'agent'): unknown {
+  return IDENTITY_DEFINITIONS[type];
 }

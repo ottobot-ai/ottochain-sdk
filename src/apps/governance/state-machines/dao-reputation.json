@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "name": "ThresholdDAO",
-    "description": "Reputation-threshold governance. Minimum reputation required for participation.",
+    "name": "DAOReputation",
+    "description": "Reputation-based governance. Minimum reputation required for participation.",
     "version": "1.0.0",
     "category": "governance/dao"
   },

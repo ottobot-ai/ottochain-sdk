@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "name": "Escrow",
-    "description": "Asset custody during multi-party transactions with conditional release",
+    "name": "ContractEscrow",
+    "description": "Asset custody with conditional release, dispute resolution, and split payments",
     "version": "1.0.0",
     "crossReferences": {
       "contractId": "Links to Contract SM that created this escrow",

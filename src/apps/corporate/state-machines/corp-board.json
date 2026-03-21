@@ -1,6 +1,6 @@
 {
   "$schema": "https://ottochain.dev/schemas/state-machine-v1.json",
-  "name": "corporate-board",
+  "name": "CorpBoard",
   "version": "1.0.0",
   "category": "corporate-governance",
   "description": "Board of directors state machine managing director seats, meetings, quorum, and formal board actions. Supports staggered boards with classified directors.",

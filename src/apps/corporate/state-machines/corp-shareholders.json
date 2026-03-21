@@ -1,6 +1,6 @@
 {
   "$schema": "https://ottochain.dev/schemas/state-machine-v1.json",
-  "name": "corporate-shareholders",
+  "name": "CorpShareholders",
   "version": "1.0.0",
   "category": "corporate-governance",
   "description": "Shareholder meeting state machine managing annual/special meetings, record dates, proxy periods, voting, and certification of results. Supports multiple share classes and cumulative voting.",

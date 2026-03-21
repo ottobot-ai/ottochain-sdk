@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "name": "AgentIdentity",
-    "description": "Decentralized agent identity with reputation tracking and lifecycle management",
+    "name": "IdentityAgent",
+    "description": "Standard agent identity with reputation tracking, vouching, and lifecycle management",
     "version": "1.0.0"
   },
   "states": {
