@@ -103,7 +103,7 @@ describe('Contracts State Machine Conversion', () => {
     });
 
     it('should have event schemas for all transition events', () => {
-      const events = contractAgreementDef.events;
+      const events = contractAgreementDef.eventSchemas;
       expect(events).toBeDefined();
       expect(events.accept).toBeDefined();
       expect(events.reject).toBeDefined();

@@ -3,12 +3,46 @@
     "name": "ContractAgreement",
     "description": "Two-party agreement with mutual completion attestation and dispute resolution",
     "version": "1.0.0",
+    "app": "contracts",
+    "type": "agreement",
     "crossReferences": {
       "proposerIdentityId": "Links to proposer's AgentIdentity fiber",
       "counterpartyIdentityId": "Links to counterparty's AgentIdentity fiber",
       "escrowId": "Links to Escrow if payment is escrowed",
       "arbitrationPoolId": "Links to ArbitrationPool for dispute resolution"
     }
+  },
+  "createSchema": {
+    "required": ["proposer", "counterparty"],
+    "properties": {
+      "proposer": {
+        "type": "address",
+        "description": "DAG address of the proposer",
+        "immutable": true
+      },
+      "counterparty": {
+        "type": "address",
+        "description": "DAG address of the counterparty",
+        "immutable": true
+      }
+    }
+  },
+  "stateSchema": {
+    "properties": {
+      "status": { "type": "string" },
+      "proposer": { "type": "address" },
+      "counterparty": { "type": "address" },
+      "completions": { "type": "array" }
+    }
+  },
+  "eventSchemas": {
+    "accept": {},
+    "reject": {},
+    "cancel": {},
+    "submit_completion": {},
+    "finalize": {},
+    "dispute": {},
+    "resolve": {}
   },
   "states": {
     "PROPOSED": {
@@ -342,6 +376,49 @@
             },
             "rulingId": {
               "var": "event.rulingId"
+            }
+          }
+        ]
+      },
+      "dependencies": []
+    },
+    {
+      "from": "ACTIVE",
+      "to": "CANCELLED",
+      "eventName": "cancel",
+      "guard": {
+        "or": [
+          {
+            "===": [
+              {
+                "var": "event.agent"
+              },
+              {
+                "var": "state.proposer"
+              }
+            ]
+          },
+          {
+            "===": [
+              {
+                "var": "event.agent"
+              },
+              {
+                "var": "state.counterparty"
+              }
+            ]
+          }
+        ]
+      },
+      "effect": {
+        "merge": [
+          {
+            "var": "state"
+          },
+          {
+            "status": "CANCELLED",
+            "cancelledAt": {
+              "var": "$timestamp"
             }
           }
         ]

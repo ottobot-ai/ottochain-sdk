@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck — tests access guard properties dynamically
 import { contractAgreementDef } from '../../src/apps/contracts/state-machines/contract-agreement.js';
 
 describe('Contract Agreement State Machine', () => {
