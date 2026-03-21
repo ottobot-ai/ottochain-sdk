@@ -121,3 +121,6 @@ export type {
   FiberStateCallback,
   Unsubscribe,
 } from './ottochain/metagraph-client.js';
+
+// Proto definition helper
+export { toProtoDefinition, type ProtoStateMachineDefinition } from './schema/fiber-app.js';
