@@ -1,0 +1,667 @@
+{
+  "metadata": {
+    "name": "MultisigDAO",
+    "description": "N-of-M multisig governance. Requires threshold signatures for actions.",
+    "version": "1.0.0",
+    "category": "governance/dao"
+  },
+  "states": {
+    "ACTIVE": {
+      "id": "ACTIVE",
+      "isFinal": false,
+      "metadata": null
+    },
+    "PENDING": {
+      "id": "PENDING",
+      "isFinal": false,
+      "metadata": null
+    },
+    "DISSOLVED": {
+      "id": "DISSOLVED",
+      "isFinal": true,
+      "metadata": null
+    }
+  },
+  "initialState": "ACTIVE",
+  "transitions": [
+    {
+      "from": "ACTIVE",
+      "to": "PENDING",
+      "eventName": "propose",
+      "guard": {
+        "in": [
+          {
+            "var": "event.agent"
+          },
+          {
+            "var": "state.signers"
+          }
+        ]
+      },
+      "effect": {
+        "merge": [
+          {
+            "var": "state"
+          },
+          {
+            "proposal": {
+              "id": {
+                "var": "event.proposalId"
+              },
+              "actionType": {
+                "var": "event.actionType"
+              },
+              "payload": {
+                "var": "event.payload"
+              },
+              "proposer": {
+                "var": "event.agent"
+              },
+              "proposedAt": {
+                "var": "$timestamp"
+              },
+              "expiresAt": {
+                "+": [
+                  {
+                    "var": "$timestamp"
+                  },
+                  {
+                    "var": "state.proposalTTLMs"
+                  }
+                ]
+              }
+            },
+            "signatures": {
+              "setKey": [
+                {},
+                {
+                  "var": "event.agent"
+                },
+                {
+                  "var": "$timestamp"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "dependencies": []
+    },
+    {
+      "from": "PENDING",
+      "to": "PENDING",
+      "eventName": "sign",
+      "guard": {
+        "and": [
+          {
+            "in": [
+              {
+                "var": "event.agent"
+              },
+              {
+                "var": "state.signers"
+              }
+            ]
+          },
+          {
+            "!": [
+              {
+                "getKey": [
+                  {
+                    "var": "state.signatures"
+                  },
+                  {
+                    "var": "event.agent"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "<": [
+              {
+                "size": {
+                  "var": "state.signatures"
+                }
+              },
+              {
+                "var": "state.threshold"
+              }
+            ]
+          }
+        ]
+      },
+      "effect": {
+        "merge": [
+          {
+            "var": "state"
+          },
+          {
+            "signatures": {
+              "setKey": [
+                {
+                  "var": "state.signatures"
+                },
+                {
+                  "var": "event.agent"
+                },
+                {
+                  "var": "$timestamp"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "dependencies": []
+    },
+    {
+      "from": "PENDING",
+      "to": "ACTIVE",
+      "eventName": "execute",
+      "guard": {
+        ">=": [
+          {
+            "size": {
+              "var": "state.signatures"
+            }
+          },
+          {
+            "var": "state.threshold"
+          }
+        ]
+      },
+      "effect": {
+        "merge": [
+          {
+            "var": "state"
+          },
+          {
+            "actions": {
+              "cat": [
+                {
+                  "var": "state.actions"
+                },
+                [
+                  {
+                    "id": {
+                      "var": "state.proposal.id"
+                    },
+                    "type": {
+                      "var": "state.proposal.actionType"
+                    },
+                    "payload": {
+                      "var": "state.proposal.payload"
+                    },
+                    "signatures": {
+                      "var": "state.signatures"
+                    },
+                    "executedAt": {
+                      "var": "$timestamp"
+                    }
+                  }
+                ]
+              ]
+            },
+            "proposal": null,
+            "signatures": {}
+          }
+        ]
+      },
+      "emits": [
+        {
+          "event": "multisig_executed",
+          "to": "external"
+        }
+      ],
+      "dependencies": []
+    },
+    {
+      "from": "PENDING",
+      "to": "ACTIVE",
+      "eventName": "cancel",
+      "guard": {
+        "or": [
+          {
+            ">": [
+              {
+                "var": "$timestamp"
+              },
+              {
+                "var": "state.proposal.expiresAt"
+              }
+            ]
+          },
+          {
+            "===": [
+              {
+                "var": "event.agent"
+              },
+              {
+                "var": "state.proposal.proposer"
+              }
+            ]
+          }
+        ]
+      },
+      "effect": {
+        "merge": [
+          {
+            "var": "state"
+          },
+          {
+            "cancelledProposals": {
+              "cat": [
+                {
+                  "var": "state.cancelledProposals"
+                },
+                [
+                  {
+                    "merge": [
+                      {
+                        "var": "state.proposal"
+                      },
+                      {
+                        "cancelledAt": {
+                          "var": "$timestamp"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              ]
+            },
+            "proposal": null,
+            "signatures": {}
+          }
+        ]
+      },
+      "dependencies": []
+    },
+    {
+      "from": "ACTIVE",
+      "to": "PENDING",
+      "eventName": "propose_add_signer",
+      "guard": {
+        "in": [
+          {
+            "var": "event.agent"
+          },
+          {
+            "var": "state.signers"
+          }
+        ]
+      },
+      "effect": {
+        "merge": [
+          {
+            "var": "state"
+          },
+          {
+            "proposal": {
+              "id": {
+                "var": "event.proposalId"
+              },
+              "actionType": "add_signer",
+              "payload": {
+                "newSigner": {
+                  "var": "event.newSigner"
+                }
+              },
+              "proposer": {
+                "var": "event.agent"
+              },
+              "proposedAt": {
+                "var": "$timestamp"
+              },
+              "expiresAt": {
+                "+": [
+                  {
+                    "var": "$timestamp"
+                  },
+                  {
+                    "var": "state.proposalTTLMs"
+                  }
+                ]
+              }
+            },
+            "signatures": {
+              "setKey": [
+                {},
+                {
+                  "var": "event.agent"
+                },
+                {
+                  "var": "$timestamp"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "dependencies": []
+    },
+    {
+      "from": "ACTIVE",
+      "to": "PENDING",
+      "eventName": "propose_remove_signer",
+      "guard": {
+        "and": [
+          {
+            "in": [
+              {
+                "var": "event.agent"
+              },
+              {
+                "var": "state.signers"
+              }
+            ]
+          },
+          {
+            ">": [
+              {
+                "size": {
+                  "var": "state.signers"
+                }
+              },
+              {
+                "var": "state.threshold"
+              }
+            ]
+          }
+        ]
+      },
+      "effect": {
+        "merge": [
+          {
+            "var": "state"
+          },
+          {
+            "proposal": {
+              "id": {
+                "var": "event.proposalId"
+              },
+              "actionType": "remove_signer",
+              "payload": {
+                "removeSigner": {
+                  "var": "event.removeSigner"
+                }
+              },
+              "proposer": {
+                "var": "event.agent"
+              },
+              "proposedAt": {
+                "var": "$timestamp"
+              },
+              "expiresAt": {
+                "+": [
+                  {
+                    "var": "$timestamp"
+                  },
+                  {
+                    "var": "state.proposalTTLMs"
+                  }
+                ]
+              }
+            },
+            "signatures": {
+              "setKey": [
+                {},
+                {
+                  "var": "event.agent"
+                },
+                {
+                  "var": "$timestamp"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "dependencies": []
+    },
+    {
+      "from": "ACTIVE",
+      "to": "PENDING",
+      "eventName": "propose_change_threshold",
+      "guard": {
+        "and": [
+          {
+            "in": [
+              {
+                "var": "event.agent"
+              },
+              {
+                "var": "state.signers"
+              }
+            ]
+          },
+          {
+            ">=": [
+              {
+                "var": "event.newThreshold"
+              },
+              1
+            ]
+          },
+          {
+            "<=": [
+              {
+                "var": "event.newThreshold"
+              },
+              {
+                "size": {
+                  "var": "state.signers"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "effect": {
+        "merge": [
+          {
+            "var": "state"
+          },
+          {
+            "proposal": {
+              "id": {
+                "var": "event.proposalId"
+              },
+              "actionType": "change_threshold",
+              "payload": {
+                "newThreshold": {
+                  "var": "event.newThreshold"
+                }
+              },
+              "proposer": {
+                "var": "event.agent"
+              },
+              "proposedAt": {
+                "var": "$timestamp"
+              },
+              "expiresAt": {
+                "+": [
+                  {
+                    "var": "$timestamp"
+                  },
+                  {
+                    "var": "state.proposalTTLMs"
+                  }
+                ]
+              }
+            },
+            "signatures": {
+              "setKey": [
+                {},
+                {
+                  "var": "event.agent"
+                },
+                {
+                  "var": "$timestamp"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "dependencies": []
+    },
+    {
+      "from": "PENDING",
+      "to": "ACTIVE",
+      "eventName": "apply_signer_change",
+      "guard": {
+        "and": [
+          {
+            ">=": [
+              {
+                "size": {
+                  "var": "state.signatures"
+                }
+              },
+              {
+                "var": "state.threshold"
+              }
+            ]
+          },
+          {
+            "in": [
+              {
+                "var": "state.proposal.actionType"
+              },
+              [
+                "add_signer",
+                "remove_signer",
+                "change_threshold"
+              ]
+            ]
+          }
+        ]
+      },
+      "effect": {
+        "if": [
+          {
+            "===": [
+              {
+                "var": "state.proposal.actionType"
+              },
+              "add_signer"
+            ]
+          },
+          {
+            "merge": [
+              {
+                "var": "state"
+              },
+              {
+                "signers": {
+                  "cat": [
+                    {
+                      "var": "state.signers"
+                    },
+                    [
+                      {
+                        "var": "state.proposal.payload.newSigner"
+                      }
+                    ]
+                  ]
+                },
+                "proposal": null,
+                "signatures": {}
+              }
+            ]
+          },
+          {
+            "===": [
+              {
+                "var": "state.proposal.actionType"
+              },
+              "remove_signer"
+            ]
+          },
+          {
+            "merge": [
+              {
+                "var": "state"
+              },
+              {
+                "signers": {
+                  "filter": [
+                    {
+                      "var": "state.signers"
+                    },
+                    {
+                      "!==": [
+                        {
+                          "var": ""
+                        },
+                        {
+                          "var": "state.proposal.payload.removeSigner"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "proposal": null,
+                "signatures": {}
+              }
+            ]
+          },
+          {
+            "merge": [
+              {
+                "var": "state"
+              },
+              {
+                "threshold": {
+                  "var": "state.proposal.payload.newThreshold"
+                },
+                "proposal": null,
+                "signatures": {}
+              }
+            ]
+          }
+        ]
+      },
+      "dependencies": []
+    },
+    {
+      "from": "ACTIVE",
+      "to": "DISSOLVED",
+      "eventName": "dissolve",
+      "guard": {
+        "===": [
+          {
+            "var": "event.signatureCount"
+          },
+          {
+            "size": {
+              "var": "state.signers"
+            }
+          }
+        ]
+      },
+      "effect": {
+        "merge": [
+          {
+            "var": "state"
+          },
+          {
+            "dissolvedAt": {
+              "var": "$timestamp"
+            },
+            "status": "DISSOLVED"
+          }
+        ]
+      },
+      "dependencies": []
+    }
+  ],
+  "crossReferences": {
+    "Identity": "signer verification",
+    "Contract": "action execution targets",
+    "Treasury": "fund management",
+    "Escrow": "controlled release"
+  }
+}
