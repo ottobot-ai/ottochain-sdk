@@ -289,11 +289,9 @@ export function toProtoDefinition<T extends FiberAppDefinition>(
     };
   }
 
-  // Include metadata but strip SDK-only fields (crossReferences is informational)
+  // Pass metadata through unchanged - it's an optional unstructured object
   if (def.metadata) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { crossReferences, ...protoMetadata } = def.metadata;
-    protoDef.metadata = protoMetadata as Record<string, unknown>;
+    protoDef.metadata = def.metadata as Record<string, unknown>;
   }
 
   return protoDef;
