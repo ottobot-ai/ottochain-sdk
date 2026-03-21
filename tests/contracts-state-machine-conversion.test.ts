@@ -246,19 +246,25 @@ describe('Contracts State Machine Conversion', () => {
   });
 
   describe('Cross-References', () => {
-    it('should preserve crossReferences metadata from JSON', () => {
+    it('should preserve crossReferences metadata with full object structure', () => {
       expect(contractAgreementDef.metadata.crossReferences).toBeDefined();
-      expect(contractAgreementDef.metadata.crossReferences.proposerIdentityId).toBe(
-        'Links to proposer\'s AgentIdentity fiber'
-      );
-      expect(contractAgreementDef.metadata.crossReferences.escrowId).toBe(
-        'Links to Escrow if payment is escrowed'
-      );
+      expect(contractAgreementDef.metadata.crossReferences.proposerIdentityId).toEqual({
+        machine: 'identity-agent',
+        field: 'proposer',
+        description: "Links to proposer's AgentIdentity fiber",
+      });
+      expect(contractAgreementDef.metadata.crossReferences.escrowId).toEqual({
+        machine: 'contract-escrow',
+        field: 'escrowId',
+        description: 'Links to Escrow if payment is escrowed',
+      });
       
       expect(contractEscrowDef.metadata.crossReferences).toBeDefined();
-      expect(contractEscrowDef.metadata.crossReferences.contractId).toBe(
-        'Links to Contract SM that created this escrow'
-      );
+      expect(contractEscrowDef.metadata.crossReferences.contractId).toEqual({
+        machine: 'contract-agreement',
+        field: 'contractId',
+        description: 'Links to Contract SM that created this escrow',
+      });
     });
   });
 

@@ -79,22 +79,59 @@ describe('Contracts Conversion Requirements', () => {
       const crossRefs = contractAgreementDef.metadata.crossReferences;
       expect(crossRefs).toBeDefined();
       
-      // Exact strings from JSON must be preserved
-      expect(crossRefs.proposerIdentityId).toBe('Links to proposer\'s AgentIdentity fiber');
-      expect(crossRefs.counterpartyIdentityId).toBe('Links to counterparty\'s AgentIdentity fiber');
-      expect(crossRefs.escrowId).toBe('Links to Escrow if payment is escrowed');
-      expect(crossRefs.arbitrationPoolId).toBe('Links to ArbitrationPool for dispute resolution');
+      // Cross-references are now full objects with machine, field, and description
+      expect(crossRefs.proposerIdentityId).toEqual({
+        machine: 'identity-agent',
+        field: 'proposer',
+        description: "Links to proposer's AgentIdentity fiber",
+      });
+      expect(crossRefs.counterpartyIdentityId).toEqual({
+        machine: 'identity-agent',
+        field: 'counterparty',
+        description: "Links to counterparty's AgentIdentity fiber",
+      });
+      expect(crossRefs.escrowId).toEqual({
+        machine: 'contract-escrow',
+        field: 'escrowId',
+        description: 'Links to Escrow if payment is escrowed',
+      });
+      expect(crossRefs.arbitrationPoolId).toEqual({
+        machine: 'arbitration-pool',
+        field: 'arbitrationPoolId',
+        description: 'Links to ArbitrationPool for dispute resolution',
+      });
     });
 
     it('should preserve all ContractEscrow cross-references', () => {
       const crossRefs = contractEscrowDef.metadata.crossReferences;
       expect(crossRefs).toBeDefined();
       
-      expect(crossRefs.contractId).toBe('Links to Contract SM that created this escrow');
-      expect(crossRefs.marketId).toBe('Links to Market SM for market-based escrow');
-      expect(crossRefs.insuranceId).toBe('Links to Insurance SM for protected escrow');
-      expect(crossRefs.arbitrationPoolId).toBe('Links to ArbitrationPool for dispute resolution');
-      expect(crossRefs.treasuryId).toBe('Links to Treasury for fee collection');
+      // Cross-references are now full objects with machine, field, and description
+      expect(crossRefs.contractId).toEqual({
+        machine: 'contract-agreement',
+        field: 'contractId',
+        description: 'Links to Contract SM that created this escrow',
+      });
+      expect(crossRefs.marketId).toEqual({
+        machine: 'market-universal',
+        field: 'marketId',
+        description: 'Links to Market SM for market-based escrow',
+      });
+      expect(crossRefs.insuranceId).toEqual({
+        machine: 'insurance',
+        field: 'insuranceId',
+        description: 'Links to Insurance SM for protected escrow',
+      });
+      expect(crossRefs.arbitrationPoolId).toEqual({
+        machine: 'arbitration-pool',
+        field: 'arbitrationPoolId',
+        description: 'Links to ArbitrationPool for dispute resolution',
+      });
+      expect(crossRefs.treasuryId).toEqual({
+        machine: 'treasury',
+        field: 'treasuryId',
+        description: 'Links to Treasury for fee collection',
+      });
     });
 
     it('should have no cross-references for ContractUniversal (minimal)', () => {
