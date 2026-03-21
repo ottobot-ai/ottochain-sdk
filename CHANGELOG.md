@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.1](https://github.com/ottobot-ai/ottochain-sdk/compare/v2.2.0...v2.2.1) (2026-03-21)
+
+
+### Bug Fixes
+
+* export toProtoDefinition from main index ([#140](https://github.com/ottobot-ai/ottochain-sdk/issues/140)) ([a08d4a4](https://github.com/ottobot-ai/ottochain-sdk/commit/a08d4a42fcc40054cd3aaf6dddbee8d5dac33b66))
+
 ## [2.2.0](https://github.com/ottobot-ai/ottochain-sdk/compare/v2.1.0...v2.2.0) (2026-03-21)
 
 
