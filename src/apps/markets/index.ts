@@ -49,6 +49,7 @@ import {
   marketCrowdfundDef,
   marketGroupBuyDef,
 } from "./state-machines/index.js";
+import type { FiberAppDefinition } from "../../schema/fiber-app.js";
 
 export {
   marketUniversalDef,
@@ -75,6 +76,6 @@ export type MarketDefType = keyof typeof MARKETS_DEFINITIONS;
  */
 export function getMarketDefinition(
   type: MarketDefType = "universal",
-): unknown {
+): FiberAppDefinition {
   return MARKETS_DEFINITIONS[type];
 }

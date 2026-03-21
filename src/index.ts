@@ -123,4 +123,12 @@ export type {
 } from './ottochain/metagraph-client.js';
 
 // Proto definition helper
-export { toProtoDefinition, type ProtoStateMachineDefinition } from './schema/fiber-app.js';
+export {
+  toProtoDefinition,
+  defineFiberApp,
+  type ProtoStateMachineDefinition,
+  type FiberAppDefinition,
+  type FiberAppMetadata,
+  type StateDefinition,
+  type Transition,
+} from './schema/fiber-app.js';
