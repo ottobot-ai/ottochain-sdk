@@ -1,15 +1,15 @@
-import { defineFiberApp } from '../../../schema/fiber-app.js';
+import { defineFiberApp } from "../../../schema/fiber-app.js";
 
 /**
  * Minimal market state machine - extend for custom use cases.
  */
 export const marketUniversalDef = defineFiberApp({
   metadata: {
-    name: 'MarketUniversal',
-    app: 'markets',
-    type: 'universal',
-    version: '1.0.0',
-    description: 'Minimal market state machine - extend for custom use cases',
+    name: "MarketUniversal",
+    app: "markets",
+    type: "universal",
+    version: "1.0.0",
+    description: "Minimal market state machine - extend for custom use cases",
   },
 
   createSchema: {
@@ -18,72 +18,72 @@ export const marketUniversalDef = defineFiberApp({
 
   stateSchema: {
     properties: {
-      status: { type: 'string' },
-      totalCommitted: { type: 'number', computed: true },
+      status: { type: "string" },
+      totalCommitted: { type: "number", computed: true },
     },
   },
 
   eventSchemas: {
-    open: { description: 'Open the market for participation' },
-    cancel: { description: 'Cancel the market' },
+    open: { description: "Open the market for participation" },
+    cancel: { description: "Cancel the market" },
     commit: {
-      description: 'Commit funds to the market',
+      description: "Commit funds to the market",
       properties: {
-        amount: { type: 'number', minimum: 0 },
+        amount: { type: "number", minimum: 0 },
       },
     },
-    close: { description: 'Close the market to new commits' },
-    settle: { description: 'Settle the market' },
+    close: { description: "Close the market to new commits" },
+    settle: { description: "Settle the market" },
   },
 
   states: {
-    PROPOSED: { id: 'PROPOSED', isFinal: false, metadata: null },
-    OPEN: { id: 'OPEN', isFinal: false, metadata: null },
-    CLOSED: { id: 'CLOSED', isFinal: false, metadata: null },
-    SETTLED: { id: 'SETTLED', isFinal: true, metadata: null },
-    CANCELLED: { id: 'CANCELLED', isFinal: true, metadata: null },
+    PROPOSED: { id: "PROPOSED", isFinal: false, metadata: null },
+    OPEN: { id: "OPEN", isFinal: false, metadata: null },
+    CLOSED: { id: "CLOSED", isFinal: false, metadata: null },
+    SETTLED: { id: "SETTLED", isFinal: true, metadata: null },
+    CANCELLED: { id: "CANCELLED", isFinal: true, metadata: null },
   },
 
-  initialState: 'PROPOSED',
+  initialState: "PROPOSED",
 
   transitions: [
     {
-      from: 'PROPOSED',
-      to: 'OPEN',
-      eventName: 'open',
-      guard: { '==': [1, 1] },
+      from: "PROPOSED",
+      to: "OPEN",
+      eventName: "open",
+      guard: { "==": [1, 1] },
       effect: {
         merge: [
-          { var: 'state' },
-          { status: 'OPEN', openedAt: { var: '$timestamp' } },
+          { var: "state" },
+          { status: "OPEN", openedAt: { var: "$timestamp" } },
         ],
       },
       dependencies: [],
     },
     {
-      from: 'PROPOSED',
-      to: 'CANCELLED',
-      eventName: 'cancel',
-      guard: { '==': [1, 1] },
+      from: "PROPOSED",
+      to: "CANCELLED",
+      eventName: "cancel",
+      guard: { "==": [1, 1] },
       effect: {
         merge: [
-          { var: 'state' },
-          { status: 'CANCELLED', cancelledAt: { var: '$timestamp' } },
+          { var: "state" },
+          { status: "CANCELLED", cancelledAt: { var: "$timestamp" } },
         ],
       },
       dependencies: [],
     },
     {
-      from: 'OPEN',
-      to: 'OPEN',
-      eventName: 'commit',
-      guard: { '>': [{ var: 'event.amount' }, 0] },
+      from: "OPEN",
+      to: "OPEN",
+      eventName: "commit",
+      guard: { ">": [{ var: "event.amount" }, 0] },
       effect: {
         merge: [
-          { var: 'state' },
+          { var: "state" },
           {
             totalCommitted: {
-              '+': [{ var: 'state.totalCommitted' }, { var: 'event.amount' }],
+              "+": [{ var: "state.totalCommitted" }, { var: "event.amount" }],
             },
           },
         ],
@@ -91,40 +91,40 @@ export const marketUniversalDef = defineFiberApp({
       dependencies: [],
     },
     {
-      from: 'OPEN',
-      to: 'CLOSED',
-      eventName: 'close',
-      guard: { '==': [1, 1] },
+      from: "OPEN",
+      to: "CLOSED",
+      eventName: "close",
+      guard: { "==": [1, 1] },
       effect: {
         merge: [
-          { var: 'state' },
-          { status: 'CLOSED', closedAt: { var: '$timestamp' } },
+          { var: "state" },
+          { status: "CLOSED", closedAt: { var: "$timestamp" } },
         ],
       },
       dependencies: [],
     },
     {
-      from: 'CLOSED',
-      to: 'SETTLED',
-      eventName: 'settle',
-      guard: { '==': [1, 1] },
+      from: "CLOSED",
+      to: "SETTLED",
+      eventName: "settle",
+      guard: { "==": [1, 1] },
       effect: {
         merge: [
-          { var: 'state' },
-          { status: 'SETTLED', settledAt: { var: '$timestamp' } },
+          { var: "state" },
+          { status: "SETTLED", settledAt: { var: "$timestamp" } },
         ],
       },
       dependencies: [],
     },
     {
-      from: 'CLOSED',
-      to: 'CANCELLED',
-      eventName: 'cancel',
-      guard: { '==': [1, 1] },
+      from: "CLOSED",
+      to: "CANCELLED",
+      eventName: "cancel",
+      guard: { "==": [1, 1] },
       effect: {
         merge: [
-          { var: 'state' },
-          { status: 'CANCELLED', cancelledAt: { var: '$timestamp' } },
+          { var: "state" },
+          { status: "CANCELLED", cancelledAt: { var: "$timestamp" } },
         ],
       },
       dependencies: [],

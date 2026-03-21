@@ -131,8 +131,8 @@ describe('Governance App Integration', () => {
   it('DAO definitions should have cross-references', () => {
     const daoDefs = [daoSingleDef, daoMultisigDef, daoTokenDef, daoReputationDef];
     for (const def of daoDefs) {
-      expect(def.crossReferences).toBeDefined();
-      expect(def.crossReferences).toHaveProperty('Identity');
+      expect(def.metadata.crossReferences).toBeDefined();
+      expect(def.metadata.crossReferences).toHaveProperty('Identity');
     }
   });
 

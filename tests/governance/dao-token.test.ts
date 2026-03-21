@@ -249,11 +249,11 @@ describe('TokenDAO State Machine', () => {
 
   describe('Cross-References', () => {
     it('should have cross-references defined', () => {
-      expect(daoTokenDef.crossReferences).toBeDefined();
-      expect(daoTokenDef.crossReferences).toHaveProperty('Identity');
-      expect(daoTokenDef.crossReferences).toHaveProperty('Token');
-      expect(daoTokenDef.crossReferences).toHaveProperty('Contract');
-      expect(daoTokenDef.crossReferences).toHaveProperty('Treasury');
+      expect(daoTokenDef.metadata.crossReferences).toBeDefined();
+      expect(daoTokenDef.metadata.crossReferences).toHaveProperty('Identity');
+      expect(daoTokenDef.metadata.crossReferences).toHaveProperty('Token');
+      expect(daoTokenDef.metadata.crossReferences).toHaveProperty('Contract');
+      expect(daoTokenDef.metadata.crossReferences).toHaveProperty('Treasury');
     });
   });
 });

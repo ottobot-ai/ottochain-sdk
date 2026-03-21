@@ -211,11 +211,11 @@ describe('MultisigDAO State Machine', () => {
 
   describe('Cross-References', () => {
     it('should have cross-references defined', () => {
-      expect(daoMultisigDef.crossReferences).toBeDefined();
-      expect(daoMultisigDef.crossReferences).toHaveProperty('Identity');
-      expect(daoMultisigDef.crossReferences).toHaveProperty('Contract');
-      expect(daoMultisigDef.crossReferences).toHaveProperty('Treasury');
-      expect(daoMultisigDef.crossReferences).toHaveProperty('Escrow');
+      expect(daoMultisigDef.metadata.crossReferences).toBeDefined();
+      expect(daoMultisigDef.metadata.crossReferences).toHaveProperty('Identity');
+      expect(daoMultisigDef.metadata.crossReferences).toHaveProperty('Contract');
+      expect(daoMultisigDef.metadata.crossReferences).toHaveProperty('Treasury');
+      expect(daoMultisigDef.metadata.crossReferences).toHaveProperty('Escrow');
     });
   });
 });

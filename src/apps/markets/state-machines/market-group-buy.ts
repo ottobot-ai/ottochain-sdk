@@ -1,119 +1,143 @@
-import { defineFiberApp } from '../../../schema/fiber-app.js';
+import { defineFiberApp } from "../../../schema/fiber-app.js";
 
 /**
  * Collective purchasing with quantity thresholds and tiered pricing.
  */
 export const marketGroupBuyDef = defineFiberApp({
   metadata: {
-    name: 'MarketGroupBuy',
-    app: 'markets',
-    type: 'groupBuy',
-    version: '1.0.0',
-    description: 'Collective purchasing with quantity thresholds and tiered pricing',
-  },
-
-  crossReferences: {
-    vendorIdentityId: "Links to vendor's IdentityAgent",
-    escrowId: 'Links to ContractEscrow for payment custody',
+    name: "MarketGroupBuy",
+    app: "markets",
+    type: "groupBuy",
+    version: "1.0.0",
+    description:
+      "Collective purchasing with quantity thresholds and tiered pricing",
+    crossReferences: {
+      vendorIdentityId: "Links to vendor's IdentityAgent",
+      escrowId: "Links to ContractEscrow for payment custody",
+    },
   },
 
   createSchema: {
-    required: ['organizer', 'minQuantity', 'deadline'] as const,
+    required: ["organizer", "minQuantity", "deadline"] as const,
     properties: {
-      organizer: { type: 'address', description: 'DAG address of group buy organizer', immutable: true },
-      minQuantity: { type: 'number', minimum: 1, description: 'Minimum quantity to proceed', immutable: true },
-      deadline: { type: 'timestamp', description: 'Order deadline', immutable: true },
-      vendor: { type: 'address', description: 'DAG address of the vendor' },
-      maxPerBuyer: { type: 'number', minimum: 1, description: 'Max quantity per buyer' },
-      priceTiers: { type: 'array', description: 'Quantity-based pricing tiers' },
+      organizer: {
+        type: "address",
+        description: "DAG address of group buy organizer",
+        immutable: true,
+      },
+      minQuantity: {
+        type: "number",
+        minimum: 1,
+        description: "Minimum quantity to proceed",
+        immutable: true,
+      },
+      deadline: {
+        type: "timestamp",
+        description: "Order deadline",
+        immutable: true,
+      },
+      vendor: { type: "address", description: "DAG address of the vendor" },
+      maxPerBuyer: {
+        type: "number",
+        minimum: 1,
+        description: "Max quantity per buyer",
+      },
+      priceTiers: {
+        type: "array",
+        description: "Quantity-based pricing tiers",
+      },
     },
   },
 
   stateSchema: {
     properties: {
-      status: { type: 'string', computed: true },
-      organizer: { type: 'address', immutable: true },
-      vendor: { type: 'address' },
-      minQuantity: { type: 'number', immutable: true },
-      maxPerBuyer: { type: 'number' },
-      deadline: { type: 'timestamp', immutable: true },
-      priceTiers: { type: 'array' },
-      orders: { type: 'array', computed: true },
-      totalQuantity: { type: 'number', computed: true },
-      currentTier: { type: 'number', computed: true },
-      refundsClaimed: { type: 'array', computed: true },
+      status: { type: "string", computed: true },
+      organizer: { type: "address", immutable: true },
+      vendor: { type: "address" },
+      minQuantity: { type: "number", immutable: true },
+      maxPerBuyer: { type: "number" },
+      deadline: { type: "timestamp", immutable: true },
+      priceTiers: { type: "array" },
+      orders: { type: "array", computed: true },
+      totalQuantity: { type: "number", computed: true },
+      currentTier: { type: "number", computed: true },
+      refundsClaimed: { type: "array", computed: true },
     },
   },
 
   eventSchemas: {
-    open: { description: 'Open the group buy for orders' },
-    cancel: { description: 'Cancel the group buy' },
+    open: { description: "Open the group buy for orders" },
+    cancel: { description: "Cancel the group buy" },
     order: {
-      description: 'Place an order',
-      required: ['quantity'] as const,
+      description: "Place an order",
+      required: ["quantity"] as const,
       properties: {
-        quantity: { type: 'number', minimum: 1 },
-        shippingInfo: { type: 'object' },
+        quantity: { type: "number", minimum: 1 },
+        shippingInfo: { type: "object" },
       },
     },
-    check_threshold: { description: 'Check if minimum threshold reached' },
-    finalize: { description: 'Finalize after deadline' },
-    fulfill: { description: 'Mark group buy as fulfilled by vendor/organizer' },
-    claim_refund: { description: 'Claim refund if threshold not met' },
+    check_threshold: { description: "Check if minimum threshold reached" },
+    finalize: { description: "Finalize after deadline" },
+    fulfill: { description: "Mark group buy as fulfilled by vendor/organizer" },
+    claim_refund: { description: "Claim refund if threshold not met" },
   },
 
   states: {
     PROPOSED: {
-      id: 'PROPOSED',
+      id: "PROPOSED",
       isFinal: false,
-      metadata: { description: 'Group buy created but not yet open' },
+      metadata: { description: "Group buy created but not yet open" },
     },
     OPEN: {
-      id: 'OPEN',
+      id: "OPEN",
       isFinal: false,
-      metadata: { description: 'Accepting orders' },
+      metadata: { description: "Accepting orders" },
     },
     THRESHOLD_MET: {
-      id: 'THRESHOLD_MET',
+      id: "THRESHOLD_MET",
       isFinal: false,
-      metadata: { description: 'Minimum quantity reached, continuing for better tier' },
+      metadata: {
+        description: "Minimum quantity reached, continuing for better tier",
+      },
     },
     PROCESSING: {
-      id: 'PROCESSING',
+      id: "PROCESSING",
       isFinal: false,
-      metadata: { description: 'Order placed with vendor, awaiting fulfillment' },
+      metadata: {
+        description: "Order placed with vendor, awaiting fulfillment",
+      },
     },
     FULFILLED: {
-      id: 'FULFILLED',
+      id: "FULFILLED",
       isFinal: true,
-      metadata: { description: 'All items delivered to buyers' },
+      metadata: { description: "All items delivered to buyers" },
     },
     REFUNDED: {
-      id: 'REFUNDED',
+      id: "REFUNDED",
       isFinal: true,
-      metadata: { description: 'Threshold not met, all orders refunded' },
+      metadata: { description: "Threshold not met, all orders refunded" },
     },
     CANCELLED: {
-      id: 'CANCELLED',
+      id: "CANCELLED",
       isFinal: true,
-      metadata: { description: 'Group buy cancelled' },
+      metadata: { description: "Group buy cancelled" },
     },
   },
 
-  initialState: 'PROPOSED',
+  initialState: "PROPOSED",
 
   transitions: [
     {
-      from: 'PROPOSED',
-      to: 'OPEN',
-      eventName: 'open',
-      guard: { '===': [{ var: 'event.agent' }, { var: 'state.organizer' }] },
+      from: "PROPOSED",
+      to: "OPEN",
+      eventName: "open",
+      guard: { "===": [{ var: "event.agent" }, { var: "state.organizer" }] },
       effect: {
         merge: [
-          { var: 'state' },
+          { var: "state" },
           {
-            status: 'OPEN',
-            openedAt: { var: '$timestamp' },
+            status: "OPEN",
+            openedAt: { var: "$timestamp" },
             orders: [],
             totalQuantity: 0,
             currentTier: 0,
@@ -123,76 +147,87 @@ export const marketGroupBuyDef = defineFiberApp({
       dependencies: [],
     },
     {
-      from: 'PROPOSED',
-      to: 'CANCELLED',
-      eventName: 'cancel',
-      guard: { '===': [{ var: 'event.agent' }, { var: 'state.organizer' }] },
+      from: "PROPOSED",
+      to: "CANCELLED",
+      eventName: "cancel",
+      guard: { "===": [{ var: "event.agent" }, { var: "state.organizer" }] },
       effect: {
         merge: [
-          { var: 'state' },
-          { status: 'CANCELLED', cancelledAt: { var: '$timestamp' } },
+          { var: "state" },
+          { status: "CANCELLED", cancelledAt: { var: "$timestamp" } },
         ],
       },
       dependencies: [],
     },
     {
-      from: 'OPEN',
-      to: 'OPEN',
-      eventName: 'order',
+      from: "OPEN",
+      to: "OPEN",
+      eventName: "order",
       guard: {
         and: [
-          { '>': [{ var: 'event.quantity' }, 0] },
+          { ">": [{ var: "event.quantity" }, 0] },
           {
             or: [
-              { '!': [{ var: 'state.maxPerBuyer' }] },
-              { '<=': [{ var: 'event.quantity' }, { var: 'state.maxPerBuyer' }] },
+              { "!": [{ var: "state.maxPerBuyer" }] },
+              {
+                "<=": [{ var: "event.quantity" }, { var: "state.maxPerBuyer" }],
+              },
             ],
           },
-          { '<=': [{ var: '$timestamp' }, { var: 'state.deadline' }] },
+          { "<=": [{ var: "$timestamp" }, { var: "state.deadline" }] },
         ],
       },
       effect: {
         merge: [
-          { var: 'state' },
+          { var: "state" },
           {
             orders: {
               cat: [
-                { var: 'state.orders' },
+                { var: "state.orders" },
                 [
                   {
-                    buyer: { var: 'event.agent' },
-                    quantity: { var: 'event.quantity' },
-                    shippingInfo: { var: 'event.shippingInfo' },
-                    orderedAt: { var: '$timestamp' },
+                    buyer: { var: "event.agent" },
+                    quantity: { var: "event.quantity" },
+                    shippingInfo: { var: "event.shippingInfo" },
+                    orderedAt: { var: "$timestamp" },
                   },
                 ],
               ],
             },
-            totalQuantity: { '+': [{ var: 'state.totalQuantity' }, { var: 'event.quantity' }] },
+            totalQuantity: {
+              "+": [{ var: "state.totalQuantity" }, { var: "event.quantity" }],
+            },
           },
         ],
       },
       dependencies: [],
     },
     {
-      from: 'OPEN',
-      to: 'THRESHOLD_MET',
-      eventName: 'check_threshold',
-      guard: { '>=': [{ var: 'state.totalQuantity' }, { var: 'state.minQuantity' }] },
+      from: "OPEN",
+      to: "THRESHOLD_MET",
+      eventName: "check_threshold",
+      guard: {
+        ">=": [{ var: "state.totalQuantity" }, { var: "state.minQuantity" }],
+      },
       effect: {
         merge: [
-          { var: 'state' },
+          { var: "state" },
           {
-            status: 'THRESHOLD_MET',
-            thresholdMetAt: { var: '$timestamp' },
+            status: "THRESHOLD_MET",
+            thresholdMetAt: { var: "$timestamp" },
             currentTier: {
               reduce: [
-                { var: 'state.priceTiers' },
+                { var: "state.priceTiers" },
                 {
                   if: [
-                    { '<=': [{ var: 'current.minQuantity' }, { var: 'state.totalQuantity' }] },
-                    { var: 'current.tier' },
-                    { var: 'accumulator' },
+                    {
+                      "<=": [
+                        { var: "current.minQuantity" },
+                        { var: "state.totalQuantity" },
+                      ],
+                    },
+                    { var: "current.tier" },
+                    { var: "accumulator" },
                   ],
                 },
                 0,
@@ -204,49 +239,56 @@ export const marketGroupBuyDef = defineFiberApp({
       dependencies: [],
     },
     {
-      from: 'THRESHOLD_MET',
-      to: 'THRESHOLD_MET',
-      eventName: 'order',
+      from: "THRESHOLD_MET",
+      to: "THRESHOLD_MET",
+      eventName: "order",
       guard: {
         and: [
-          { '>': [{ var: 'event.quantity' }, 0] },
-          { '<=': [{ var: '$timestamp' }, { var: 'state.deadline' }] },
+          { ">": [{ var: "event.quantity" }, 0] },
+          { "<=": [{ var: "$timestamp" }, { var: "state.deadline" }] },
         ],
       },
       effect: {
         merge: [
-          { var: 'state' },
+          { var: "state" },
           {
             orders: {
               cat: [
-                { var: 'state.orders' },
+                { var: "state.orders" },
                 [
                   {
-                    buyer: { var: 'event.agent' },
-                    quantity: { var: 'event.quantity' },
-                    shippingInfo: { var: 'event.shippingInfo' },
-                    orderedAt: { var: '$timestamp' },
+                    buyer: { var: "event.agent" },
+                    quantity: { var: "event.quantity" },
+                    shippingInfo: { var: "event.shippingInfo" },
+                    orderedAt: { var: "$timestamp" },
                   },
                 ],
               ],
             },
-            totalQuantity: { '+': [{ var: 'state.totalQuantity' }, { var: 'event.quantity' }] },
+            totalQuantity: {
+              "+": [{ var: "state.totalQuantity" }, { var: "event.quantity" }],
+            },
             currentTier: {
               reduce: [
-                { var: 'state.priceTiers' },
+                { var: "state.priceTiers" },
                 {
                   if: [
                     {
-                      '<=': [
-                        { var: 'current.minQuantity' },
-                        { '+': [{ var: 'state.totalQuantity' }, { var: 'event.quantity' }] },
+                      "<=": [
+                        { var: "current.minQuantity" },
+                        {
+                          "+": [
+                            { var: "state.totalQuantity" },
+                            { var: "event.quantity" },
+                          ],
+                        },
                       ],
                     },
-                    { var: 'current.tier' },
-                    { var: 'accumulator' },
+                    { var: "current.tier" },
+                    { var: "accumulator" },
                   ],
                 },
-                { var: 'state.currentTier' },
+                { var: "state.currentTier" },
               ],
             },
           },
@@ -255,20 +297,24 @@ export const marketGroupBuyDef = defineFiberApp({
       dependencies: [],
     },
     {
-      from: 'THRESHOLD_MET',
-      to: 'PROCESSING',
-      eventName: 'finalize',
-      guard: { '>=': [{ var: '$timestamp' }, { var: 'state.deadline' }] },
+      from: "THRESHOLD_MET",
+      to: "PROCESSING",
+      eventName: "finalize",
+      guard: { ">=": [{ var: "$timestamp" }, { var: "state.deadline" }] },
       effect: {
         merge: [
-          { var: 'state' },
+          { var: "state" },
           {
-            status: 'PROCESSING',
-            finalizedAt: { var: '$timestamp' },
-            finalTier: { var: 'state.currentTier' },
+            status: "PROCESSING",
+            finalizedAt: { var: "$timestamp" },
+            finalTier: { var: "state.currentTier" },
             finalPricePerUnit: {
               var: {
-                cat: ['state.priceTiers.', { var: 'state.currentTier' }, '.pricePerUnit'],
+                cat: [
+                  "state.priceTiers.",
+                  { var: "state.currentTier" },
+                  ".pricePerUnit",
+                ],
               },
             },
           },
@@ -277,58 +323,64 @@ export const marketGroupBuyDef = defineFiberApp({
       dependencies: [],
     },
     {
-      from: 'PROCESSING',
-      to: 'FULFILLED',
-      eventName: 'fulfill',
+      from: "PROCESSING",
+      to: "FULFILLED",
+      eventName: "fulfill",
       guard: {
         or: [
-          { '===': [{ var: 'event.agent' }, { var: 'state.vendor' }] },
-          { '===': [{ var: 'event.agent' }, { var: 'state.organizer' }] },
+          { "===": [{ var: "event.agent" }, { var: "state.vendor" }] },
+          { "===": [{ var: "event.agent" }, { var: "state.organizer" }] },
         ],
       },
       effect: {
         merge: [
-          { var: 'state' },
+          { var: "state" },
           {
-            status: 'FULFILLED',
-            fulfilledAt: { var: '$timestamp' },
-            trackingInfo: { var: 'event.trackingInfo' },
+            status: "FULFILLED",
+            fulfilledAt: { var: "$timestamp" },
+            trackingInfo: { var: "event.trackingInfo" },
           },
         ],
       },
       dependencies: [],
     },
     {
-      from: 'OPEN',
-      to: 'REFUNDED',
-      eventName: 'finalize',
+      from: "OPEN",
+      to: "REFUNDED",
+      eventName: "finalize",
       guard: {
         and: [
-          { '<': [{ var: 'state.totalQuantity' }, { var: 'state.minQuantity' }] },
-          { '>=': [{ var: '$timestamp' }, { var: 'state.deadline' }] },
+          {
+            "<": [{ var: "state.totalQuantity" }, { var: "state.minQuantity" }],
+          },
+          { ">=": [{ var: "$timestamp" }, { var: "state.deadline" }] },
         ],
       },
       effect: {
         merge: [
-          { var: 'state' },
-          { status: 'REFUNDED', refundedAt: { var: '$timestamp' }, reason: 'threshold_not_met' },
+          { var: "state" },
+          {
+            status: "REFUNDED",
+            refundedAt: { var: "$timestamp" },
+            reason: "threshold_not_met",
+          },
         ],
       },
       dependencies: [],
     },
     {
-      from: 'REFUNDED',
-      to: 'REFUNDED',
-      eventName: 'claim_refund',
+      from: "REFUNDED",
+      to: "REFUNDED",
+      eventName: "claim_refund",
       guard: {
         and: [
           {
-            '>': [
+            ">": [
               {
                 size: {
                   filter: [
-                    { var: 'state.orders' },
-                    { '===': [{ var: 'buyer' }, { var: 'event.agent' }] },
+                    { var: "state.orders" },
+                    { "===": [{ var: "buyer" }, { var: "event.agent" }] },
                   ],
                 },
               },
@@ -336,9 +388,9 @@ export const marketGroupBuyDef = defineFiberApp({
             ],
           },
           {
-            '!': [
+            "!": [
               {
-                in: [{ var: 'event.agent' }, { var: 'state.refundsClaimed' }],
+                in: [{ var: "event.agent" }, { var: "state.refundsClaimed" }],
               },
             ],
           },
@@ -346,10 +398,10 @@ export const marketGroupBuyDef = defineFiberApp({
       },
       effect: {
         merge: [
-          { var: 'state' },
+          { var: "state" },
           {
             refundsClaimed: {
-              cat: [{ var: 'state.refundsClaimed' }, [{ var: 'event.agent' }]],
+              cat: [{ var: "state.refundsClaimed" }, [{ var: "event.agent" }]],
             },
           },
         ],

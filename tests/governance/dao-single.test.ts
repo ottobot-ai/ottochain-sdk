@@ -200,10 +200,10 @@ describe('SingleOwnerDAO State Machine', () => {
 
   describe('Cross-References', () => {
     it('should have cross-references defined', () => {
-      expect(daoSingleDef.crossReferences).toBeDefined();
-      expect(daoSingleDef.crossReferences).toHaveProperty('Identity');
-      expect(daoSingleDef.crossReferences).toHaveProperty('Contract');
-      expect(daoSingleDef.crossReferences).toHaveProperty('Treasury');
+      expect(daoSingleDef.metadata.crossReferences).toBeDefined();
+      expect(daoSingleDef.metadata.crossReferences).toHaveProperty('Identity');
+      expect(daoSingleDef.metadata.crossReferences).toHaveProperty('Contract');
+      expect(daoSingleDef.metadata.crossReferences).toHaveProperty('Treasury');
     });
   });
 });

@@ -6,8 +6,8 @@
  * @packageDocumentation
  */
 
-import { IdentityState } from '../../generated/ottochain/apps/identity/v1/identity.js';
-import { AttestationType } from '../../generated/ottochain/apps/identity/v1/attestation.js';
+import { IdentityState } from "../../generated/ottochain/apps/identity/v1/identity.js";
+import { AttestationType } from "../../generated/ottochain/apps/identity/v1/attestation.js";
 
 // ---------------------------------------------------------------------------
 // State Machine Transitions
@@ -20,14 +20,22 @@ import { AttestationType } from '../../generated/ottochain/apps/identity/v1/atte
  */
 export const IDENTITY_TRANSITIONS: Record<IdentityState, readonly string[]> = {
   [IdentityState.IDENTITY_STATE_UNSPECIFIED]: [],
-  [IdentityState.IDENTITY_STATE_UNREGISTERED]: ['register'],
-  [IdentityState.IDENTITY_STATE_REGISTERED]: ['activate', 'withdraw'],
-  [IdentityState.IDENTITY_STATE_ACTIVE]: ['challenge', 'slash', 'deactivate', 'withdraw'],
-  [IdentityState.IDENTITY_STATE_CHALLENGED]: ['uphold_challenge', 'dismiss_challenge'],
-  [IdentityState.IDENTITY_STATE_SUSPENDED]: ['begin_probation'],
-  [IdentityState.IDENTITY_STATE_PROBATION]: ['complete_probation'],
-  [IdentityState.IDENTITY_STATE_SLASHED]: ['reactivate', 'withdraw'],
-  [IdentityState.IDENTITY_STATE_INACTIVE]: ['activate', 'withdraw'],
+  [IdentityState.IDENTITY_STATE_UNREGISTERED]: ["register"],
+  [IdentityState.IDENTITY_STATE_REGISTERED]: ["activate", "withdraw"],
+  [IdentityState.IDENTITY_STATE_ACTIVE]: [
+    "challenge",
+    "slash",
+    "deactivate",
+    "withdraw",
+  ],
+  [IdentityState.IDENTITY_STATE_CHALLENGED]: [
+    "uphold_challenge",
+    "dismiss_challenge",
+  ],
+  [IdentityState.IDENTITY_STATE_SUSPENDED]: ["begin_probation"],
+  [IdentityState.IDENTITY_STATE_PROBATION]: ["complete_probation"],
+  [IdentityState.IDENTITY_STATE_SLASHED]: ["reactivate", "withdraw"],
+  [IdentityState.IDENTITY_STATE_INACTIVE]: ["activate", "withdraw"],
   [IdentityState.IDENTITY_STATE_WITHDRAWN]: [], // Terminal state
   [IdentityState.UNRECOGNIZED]: [],
 };

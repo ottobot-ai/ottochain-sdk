@@ -242,10 +242,10 @@ describe('DAOReputation State Machine', () => {
 
   describe('Cross-References', () => {
     it('should have cross-references defined', () => {
-      expect(daoReputationDef.crossReferences).toBeDefined();
-      expect(daoReputationDef.crossReferences).toHaveProperty('Identity');
-      expect(daoReputationDef.crossReferences).toHaveProperty('Reputation');
-      expect(daoReputationDef.crossReferences).toHaveProperty('Contract');
+      expect(daoReputationDef.metadata.crossReferences).toBeDefined();
+      expect(daoReputationDef.metadata.crossReferences).toHaveProperty('Identity');
+      expect(daoReputationDef.metadata.crossReferences).toHaveProperty('Reputation');
+      expect(daoReputationDef.metadata.crossReferences).toHaveProperty('Contract');
     });
   });
 });

@@ -116,6 +116,8 @@ export interface FiberAppMetadata {
   version: string;
   description?: string;
   category?: string;
+  /** Cross-references to other fiber types (informational) */
+  crossReferences?: CrossReferences;
 }
 
 export interface CrossReferenceSpec {
@@ -133,9 +135,6 @@ export interface FiberAppDefinition<
   TEvent extends string = string
 > {
   metadata: FiberAppMetadata;
-  
-  /** Cross-references to other fiber types */
-  crossReferences?: CrossReferences;
   
   /** Schema for fiber creation inputs (user-provided) */
   createSchema?: {
