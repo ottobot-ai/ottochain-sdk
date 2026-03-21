@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.1.0](https://github.com/ottobot-ai/ottochain-sdk/compare/v2.0.0...v2.1.0) (2026-03-21)
+
+
+### Features
+
+* **identity:** unify identity and oracle proto types ([#132](https://github.com/ottobot-ai/ottochain-sdk/issues/132)) ([1342da1](https://github.com/ottobot-ai/ottochain-sdk/commit/1342da1))
+* **schema:** add defineFiberApp() helper for type-safe fiber app definitions
+* **apps:** convert all fiber apps from JSON to TypeScript
+* **corporate:** add corp-entity, corp-board, corp-shareholders, corp-securities state machines
+* **governance:** add dao-single, dao-multisig, dao-token, dao-reputation state machines
+* **markets:** add market-prediction, market-auction, market-crowdfund, market-group-buy state machines
+
+
+### Code Refactoring
+
+* unify identity.proto with IdentityType enum (AGENT, ORACLE, SERVICE)
+* archive original JSON state machines to json-archive directories
+
 ## [2.0.0](https://github.com/ottobot-ai/ottochain-sdk/compare/v1.6.0...v2.0.0) (2026-03-21)
 
 
