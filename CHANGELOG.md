@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.0.0](https://github.com/ottobot-ai/ottochain-sdk/compare/v2.0.0...v3.0.0) (2026-03-21)
+
+
+### ⚠ BREAKING CHANGES
+
+* Identity and Oracle proto types unified
+
+### Code Refactoring
+
+* unify v2 protos  ([#132](https://github.com/ottobot-ai/ottochain-sdk/issues/132)) ([55e29fd](https://github.com/ottobot-ai/ottochain-sdk/commit/55e29fdbb4d6ea4a9e5135c6f3efcc0c8ac49080))
+
 ## [2.0.0](https://github.com/ottobot-ai/ottochain-sdk/compare/v1.6.0...v2.0.0) (2026-03-21)
 
 
