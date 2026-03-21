@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck — TDD scaffolding: accesses future defineFiberApp() shape not yet implemented
 /**
  * Contracts Conversion Requirements Tests
