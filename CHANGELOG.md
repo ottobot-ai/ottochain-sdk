@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.0](https://github.com/ottobot-ai/ottochain-sdk/compare/v2.1.0...v2.2.0) (2026-03-21)
+
+
+### Features
+
+* **schema:** add toProtoDefinition() helper for metagraph submission ([#138](https://github.com/ottobot-ai/ottochain-sdk/issues/138)) ([9484b97](https://github.com/ottobot-ai/ottochain-sdk/commit/9484b97b4362937b29e37df223b23f7ecff56b73))
+
 ## [2.1.0](https://github.com/ottobot-ai/ottochain-sdk/compare/v2.0.0...v2.1.0) (2026-03-21)
 
 
