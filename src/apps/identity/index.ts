@@ -90,6 +90,7 @@ import {
   identityAgentDef,
   identityOracleDef,
 } from "./state-machines/index.js";
+import type { FiberAppDefinition } from "../../schema/fiber-app.js";
 
 export { identityUniversalDef, identityAgentDef, identityOracleDef };
 
@@ -108,6 +109,6 @@ export type IdentityDefType = keyof typeof IDENTITY_DEFINITIONS;
  */
 export function getIdentityDefinition(
   type: IdentityDefType = "agent",
-): unknown {
+): FiberAppDefinition {
   return IDENTITY_DEFINITIONS[type];
 }

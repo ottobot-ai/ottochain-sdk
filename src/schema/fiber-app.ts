@@ -267,6 +267,7 @@ export function toProtoDefinition<T extends FiberAppDefinition>(
   def: T
 ): ProtoStateMachineDefinition {
   // Extract only the proto-compatible fields
+  // NOTE: guard and effect are REQUIRED by the Scala Transition case class (no defaults)
   const protoDef: ProtoStateMachineDefinition = {
     states: {},
     initialState: def.initialState,
@@ -274,10 +275,10 @@ export function toProtoDefinition<T extends FiberAppDefinition>(
       from: t.from,
       to: t.to,
       eventName: t.eventName,
-      ...(t.guard && { guard: t.guard }),
-      ...(t.effect && { effect: t.effect }),
-      ...(t.dependencies?.length && { dependencies: [...t.dependencies] as unknown[] }),
-      ...(t.emits?.length && { emits: [...t.emits] as unknown[] }),
+      guard: t.guard,   // Required - Scala has no default
+      effect: t.effect, // Required - Scala has no default
+      // dependencies has default Set.empty in Scala, so omit if empty
+      ...(t.dependencies?.length && { dependencies: [...t.dependencies] }),
     })),
   };
 

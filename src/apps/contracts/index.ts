@@ -42,6 +42,7 @@ import {
   contractAgreementDef,
   contractEscrowDef,
 } from "./state-machines/index.js";
+import type { FiberAppDefinition } from "../../schema/fiber-app.js";
 
 export { contractUniversalDef, contractAgreementDef, contractEscrowDef };
 
@@ -60,11 +61,11 @@ export type ContractType = keyof typeof CONTRACTS_DEFINITIONS;
  */
 export function getContractDefinition(
   type: ContractType = "agreement",
-): unknown {
+): FiberAppDefinition {
   return CONTRACTS_DEFINITIONS[type];
 }
 
 /** @deprecated Use getContractDefinition('escrow') */
-export function getEscrowDefinition(): unknown {
+export function getEscrowDefinition(): FiberAppDefinition {
   return contractEscrowDef;
 }

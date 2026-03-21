@@ -26,7 +26,9 @@ import {
   IDENTITY_DEFINITIONS as APP_IDENTITY_DEFINITIONS,
 } from '../src/apps/identity/index.js';
 import {
-  IDENTITY_DEFINITIONS as SM_IDENTITY_DEFINITIONS,
+  identityAgentDef,
+  identityOracleDef,
+  identityUniversalDef,
 } from '../src/apps/identity/state-machines/index.js';
 import {
   getContractDefinition,
@@ -604,23 +606,20 @@ describe('definition helper functions', () => {
     });
   });
 
-  describe('SM_IDENTITY_DEFINITIONS (lazy loaders)', () => {
-    it('agent loader returns the definition', async () => {
-      const def = await SM_IDENTITY_DEFINITIONS.agent();
-      expect(def).toBeDefined();
-      expect((def as any).metadata.name).toBe('IdentityAgent');
+  describe('State machine definition direct exports', () => {
+    it('identityAgentDef is defined', () => {
+      expect(identityAgentDef).toBeDefined();
+      expect(identityAgentDef.metadata.name).toBe('IdentityAgent');
     });
 
-    it('oracle loader returns the definition', async () => {
-      const def = await SM_IDENTITY_DEFINITIONS.oracle();
-      expect(def).toBeDefined();
-      expect((def as any).metadata.name).toBe('IdentityOracle');
+    it('identityOracleDef is defined', () => {
+      expect(identityOracleDef).toBeDefined();
+      expect(identityOracleDef.metadata.name).toBe('IdentityOracle');
     });
 
-    it('universal loader returns the definition', async () => {
-      const def = await SM_IDENTITY_DEFINITIONS.universal();
-      expect(def).toBeDefined();
-      expect((def as any).metadata.name).toBe('IdentityUniversal');
+    it('identityUniversalDef is defined', () => {
+      expect(identityUniversalDef).toBeDefined();
+      expect(identityUniversalDef.metadata.name).toBe('IdentityUniversal');
     });
   });
 });

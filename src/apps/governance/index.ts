@@ -66,6 +66,7 @@ import {
   daoTokenDef,
   daoReputationDef,
 } from "./state-machines/index.js";
+import type { FiberAppDefinition } from "../../schema/fiber-app.js";
 
 export {
   govUniversalDef,
@@ -92,14 +93,14 @@ export type GovernanceType = keyof typeof GOVERNANCE_DEFINITIONS;
  * Get a governance state machine definition by type.
  * @param type - 'universal' | 'simple' | 'daoSingle' | 'daoMultisig' | 'daoToken' | 'daoReputation'
  */
-export function getGovernanceDefinition(type: GovernanceType): unknown {
+export function getGovernanceDefinition(type: GovernanceType): FiberAppDefinition {
   return GOVERNANCE_DEFINITIONS[type];
 }
 
 /** @deprecated Use getGovernanceDefinition('daoSingle' | 'daoMultisig' | 'daoToken' | 'daoReputation') */
 export function getDAODefinition(
   daoType: "Single" | "Multisig" | "Threshold" | "Token",
-): unknown {
+): FiberAppDefinition {
   const map: Record<string, GovernanceType> = {
     Single: "daoSingle",
     Multisig: "daoMultisig",

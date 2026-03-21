@@ -82,6 +82,7 @@ import {
   corpShareholdersDef,
   corpSecuritiesDef,
 } from "./state-machines/index.js";
+import type { FiberAppDefinition } from "../../schema/fiber-app.js";
 
 export { corpEntityDef, corpBoardDef, corpShareholdersDef, corpSecuritiesDef };
 
@@ -99,6 +100,6 @@ export type CorporateType = keyof typeof CORPORATE_DEFINITIONS;
  * Get a corporate state machine definition by type.
  * @param type - 'entity' | 'board' | 'shareholders' | 'securities'
  */
-export function getCorporateDefinition(type: CorporateType): unknown {
+export function getCorporateDefinition(type: CorporateType): FiberAppDefinition {
   return CORPORATE_DEFINITIONS[type];
 }

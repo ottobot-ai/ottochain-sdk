@@ -1,12 +1,11 @@
 /**
- * Governance State Machine Definitions
- *
- * TypeScript-first definitions using defineFiberApp() - no JSON, no code generation.
+ * Governance state machine definitions.
+ * Re-exports from TypeScript definition files.
  */
 
-export { govUniversalDef } from "./governance-universal.js";
-export { govSimpleDef } from "./governance-simple.js";
-export { daoSingleDef } from "./dao-single.js";
-export { daoMultisigDef } from "./dao-multisig.js";
-export { daoTokenDef } from "./dao-token.js";
-export { daoReputationDef } from "./dao-reputation.js";
+export { daoMultisigDef } from './dao-multisig.js';
+export { daoReputationDef } from './dao-reputation.js';
+export { daoSingleDef } from './dao-single.js';
+export { daoTokenDef } from './dao-token.js';
+export { govSimpleDef } from './governance-simple.js';
+export { govUniversalDef } from './governance-universal.js';
