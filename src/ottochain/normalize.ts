@@ -2,40 +2,31 @@
  * Normalize OttoChain Messages for Signing
  *
  * Converts OttoChain message objects to the wire format expected by the
- * Scala metagraph. Metakit's JsonBinaryCodec (used by OttoChain for data
- * transaction signing) canonicalizes JSON with dropNullValues = true.
+ * Scala metagraph. Specifically, ensures all `Option[A]=None` fields are
+ * present as explicit `null` values, matching what circe's magnolia encoder
+ * produces on the Scala side.
  *
- * NOTE: This is Metakit's codec, NOT tessellation's JsonSerializer (which
- * uses Brotli compression for snapshots/consensus — a different layer).
- * Different layers use different byte-sequence encoders.
+ * This is necessary because metakit's `JsonBinaryCodec.deriveDataUpdate`
+ * (rc.8) canonicalizes the circe-encoded JSON **including null fields**.
+ * If the TypeScript client omits optional fields (undefined), the canonical
+ * JSON won't match and signature verification will fail.
  *
- * Because Metakit drops null fields during canonicalization, the canonical
- * JSON used for signature verification **omits** null fields entirely.
- * If the TypeScript client includes explicit nulls (e.g., `"metadata": null`),
- * the canonical form won't match and signature verification will fail.
- *
- * Schema mapping (Scala → TypeScript wire format):
- * - `Option[A] = None` → field OMITTED (not null, not undefined)
+ * Schema mapping (Scala → TypeScript):
+ * - `Option[A] = None` → `null` (must be explicit, not undefined/absent)
  * - `Option[A] = Some(v)` → `v`
- * - `List.empty` / `Set.empty` → `[]`
+ * - `List.empty` → `[]`
  * - `Map.empty` → `{}`
- * - `Boolean = false` → `false` (always include, not a null/Option)
  */
 
 /**
- * Normalize a State object for wire format.
- * State: id (required), isFinal (default false), metadata (Option = None)
- * Omit metadata when null/undefined (dropNullValues).
+ * Normalize a State object for wire format
  */
 function normalizeState(state: Record<string, unknown>): Record<string, unknown> {
-  const result: Record<string, unknown> = {
+  return {
     id: state.id,
     isFinal: state.isFinal ?? false,
+    metadata: state.metadata ?? null,
   };
-  if (state.metadata != null) {
-    result.metadata = state.metadata;
-  }
-  return result;
 }
 
 /**
@@ -94,56 +85,43 @@ function normalizeDefinition(def: Record<string, unknown>): Record<string, unkno
   const transitions = (def.transitions as Record<string, unknown>[] | undefined) ?? [];
 
   // Strip FiberAppMetadata if present — it's TypeScript-only, not part of wire format.
-  // Omit metadata entirely when null/FiberAppMetadata (dropNullValues = true on Scala side).
-  const wireMetadata = isFiberAppMetadata(def.metadata) ? undefined : def.metadata;
+  // The Scala schema has `metadata: Option[Json] = None`, so use null for wire format.
+  const wireMetadata = isFiberAppMetadata(def.metadata) ? null : (def.metadata ?? null);
 
-  const result: Record<string, unknown> = {
+  return {
     states: normalizedStates,
     initialState: def.initialState,
     transitions: transitions.map(normalizeTransition),
+    metadata: wireMetadata,
   };
-  if (wireMetadata != null) {
-    result.metadata = wireMetadata;
-  }
-  return result;
 }
 
 /**
  * Normalize a CreateStateMachine message for wire format
  *
- * Metakit's JsonBinaryCodec uses dropNullValues = true for canonicalization.
- * Optional fields at their defaults must be OMITTED (not set to null)
- * to match the canonical JSON used for signature verification.
- *
- * - definition.metadata → OMITTED when absent/FiberAppMetadata
- * - definition.states[*].metadata → OMITTED when absent
- * - definition.transitions[*].dependencies → [] (Set.empty default, always included)
- * - parentFiberId → OMITTED when absent (Option[UUID] = None)
- * - participants → OMITTED when absent (Option[Set[Address]] = None)
+ * Ensures all Option/default fields are explicit in wire format:
+ * - definition.metadata → null when absent
+ * - definition.states[*].metadata → null when absent
+ * - definition.transitions[*].dependencies → [] when absent
+ * - parentFiberId → null when absent
  *
  * @example
  * ```typescript
  * const message = normalizeCreateStateMachine({
  *   fiberId: '...',
- *   definition: { states: { INIT: { id: 'INIT', isFinal: false } }, ... },
+ *   definition: { states: { INIT: { id: { value: 'INIT' }, isFinal: false } }, ... },
  *   initialData: {}
  * });
- * // Optional fields are absent (not null): no parentFiberId, no metadata, etc.
+ * // message now has parentFiberId: null, definition.metadata: null, etc.
  * ```
  */
 export function normalizeCreateStateMachine(msg: Record<string, unknown>): Record<string, unknown> {
-  const result: Record<string, unknown> = {
+  return {
     fiberId: msg.fiberId,
     definition: normalizeDefinition(msg.definition as Record<string, unknown>),
     initialData: msg.initialData ?? {},
+    parentFiberId: msg.parentFiberId ?? null,
   };
-  if (msg.parentFiberId != null) {
-    result.parentFiberId = msg.parentFiberId;
-  }
-  if (msg.participants != null) {
-    result.participants = msg.participants;
-  }
-  return result;
 }
 
 /**
