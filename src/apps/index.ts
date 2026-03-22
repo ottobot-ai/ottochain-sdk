@@ -33,3 +33,5 @@ export * as contracts from "./contracts/index.js";
 export * as markets from "./markets/index.js";
 export * as governance from "./governance/index.js";
 export * as corporate from "./corporate/index.js";
+/** @deprecated Use `identity` — oracle types are unified into Identity */
+export * as oracles from "./oracles/index.js";
