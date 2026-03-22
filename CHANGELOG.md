@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.3](https://github.com/ottobot-ai/ottochain-sdk/compare/v2.2.2...v2.2.3) (2026-03-22)
+
+
+### Bug Fixes
+
+* **normalize:** strip FiberAppMetadata from definition.metadata ([#144](https://github.com/ottobot-ai/ottochain-sdk/issues/144)) ([27bf43b](https://github.com/ottobot-ai/ottochain-sdk/commit/27bf43bec6cff48725585ffd7776a5dcf1a84e00))
+
 ## [2.2.2](https://github.com/ottobot-ai/ottochain-sdk/compare/v2.2.1...v2.2.2) (2026-03-21)
 
 
