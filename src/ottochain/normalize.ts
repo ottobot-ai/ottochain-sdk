@@ -104,7 +104,6 @@ function normalizeDefinition(def: Record<string, unknown>): Record<string, unkno
  * - definition.states[*].metadata → null when absent
  * - definition.transitions[*].dependencies → [] when absent
  * - parentFiberId → null when absent
- * - participants → null when absent (Optional Set[Address] for multi-party signing)
  *
  * @example
  * ```typescript
@@ -113,16 +112,20 @@ function normalizeDefinition(def: Record<string, unknown>): Record<string, unkno
  *   definition: { states: { INIT: { id: { value: 'INIT' }, isFinal: false } }, ... },
  *   initialData: {}
  * });
- * // message now has parentFiberId: null, participants: null, definition.metadata: null, etc.
+ * // message now has parentFiberId: null, definition.metadata: null, etc.
  * ```
  */
 export function normalizeCreateStateMachine(msg: Record<string, unknown>): Record<string, unknown> {
+  // Only fields that exist in Scala CreateStateMachine case class:
+  //   fiberId: UUID, definition: StateMachineDefinition,
+  //   initialData: JsonLogicValue, parentFiberId: Option[UUID] = None
+  // Unknown fields cause signature mismatch: Metakit decodes into the case
+  // class (dropping unknowns), re-encodes without them → different hash.
   return {
     fiberId: msg.fiberId,
     definition: normalizeDefinition(msg.definition as Record<string, unknown>),
     initialData: msg.initialData ?? {},
     parentFiberId: msg.parentFiberId ?? null,
-    participants: msg.participants ?? null,
   };
 }
 

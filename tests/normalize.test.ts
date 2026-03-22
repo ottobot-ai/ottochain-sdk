@@ -28,7 +28,6 @@ describe('normalize', () => {
         },
         initialData: { key: 'value' },
         parentFiberId: null,
-        participants: null,
       });
     });
 
@@ -182,7 +181,7 @@ describe('normalize', () => {
       });
       expect(result).toHaveProperty('CreateStateMachine');
       expect((result.CreateStateMachine as any).parentFiberId).toBeNull();
-      expect((result.CreateStateMachine as any).participants).toBeNull();
+      expect('participants' in (result.CreateStateMachine as any)).toBe(false);
     });
 
     it('normalizes TransitionStateMachine wrapper', () => {
