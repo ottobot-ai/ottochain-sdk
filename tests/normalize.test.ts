@@ -86,6 +86,49 @@ describe('normalize', () => {
       });
       expect(result.initialData).toEqual({});
     });
+
+    it('strips FiberAppMetadata from definition.metadata', () => {
+      // FiberAppMetadata has 'name' and 'app' fields — should be stripped to null
+      const result = normalizeCreateStateMachine({
+        fiberId: 'test-fiber',
+        definition: {
+          states: { INIT: { id: 'INIT', isFinal: false } },
+          initialState: 'INIT',
+          transitions: [],
+          // This is FiberAppMetadata, not wire format metadata
+          metadata: {
+            name: 'ContractAgreement',
+            app: 'contracts',
+            type: 'agreement',
+            version: '1.0.0',
+            description: 'Two-party agreement with completion attestation',
+            crossReferences: {
+              proposerIdentityId: { machine: 'identity-agent', description: 'proposer' },
+            },
+          },
+        },
+        initialData: {},
+      });
+
+      // FiberAppMetadata should be stripped to null for wire format
+      expect((result.definition as any).metadata).toBeNull();
+    });
+
+    it('preserves simple JSON metadata (not FiberAppMetadata)', () => {
+      const result = normalizeCreateStateMachine({
+        fiberId: 'test-fiber',
+        definition: {
+          states: { INIT: { id: 'INIT', isFinal: false } },
+          initialState: 'INIT',
+          transitions: [],
+          // Simple JSON metadata without 'name' and 'app' should pass through
+          metadata: { customField: 'value', version: 2 },
+        },
+        initialData: {},
+      });
+
+      expect((result.definition as any).metadata).toEqual({ customField: 'value', version: 2 });
+    });
   });
 
   describe('normalizeTransitionStateMachine', () => {

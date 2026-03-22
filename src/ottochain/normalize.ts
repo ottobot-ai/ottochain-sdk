@@ -55,7 +55,23 @@ function normalizeTransition(t: Record<string, unknown>): Record<string, unknown
 }
 
 /**
+ * Check if a value looks like FiberAppMetadata (has 'name' and 'app' fields).
+ * These TypeScript-only fields should be stripped before sending to metagraph.
+ */
+function isFiberAppMetadata(value: unknown): boolean {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'name' in value &&
+    'app' in value
+  );
+}
+
+/**
  * Normalize a StateMachineDefinition for wire format
+ *
+ * Strips FiberAppMetadata from the definition — the Scala schema expects
+ * `metadata: Option[Json] = None`, not the TypeScript app metadata object.
  */
 function normalizeDefinition(def: Record<string, unknown>): Record<string, unknown> {
   const states = def.states as Record<string, Record<string, unknown>> | undefined;
@@ -68,11 +84,15 @@ function normalizeDefinition(def: Record<string, unknown>): Record<string, unkno
 
   const transitions = (def.transitions as Record<string, unknown>[] | undefined) ?? [];
 
+  // Strip FiberAppMetadata if present — it's TypeScript-only, not part of wire format.
+  // The Scala schema has `metadata: Option[Json] = None`, so use null for wire format.
+  const wireMetadata = isFiberAppMetadata(def.metadata) ? null : (def.metadata ?? null);
+
   return {
     states: normalizedStates,
     initialState: def.initialState,
     transitions: transitions.map(normalizeTransition),
-    metadata: def.metadata ?? null,
+    metadata: wireMetadata,
   };
 }
 
