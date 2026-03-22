@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.4](https://github.com/ottobot-ai/ottochain-sdk/compare/v2.2.3...v2.2.4) (2026-03-22)
+
+
+### Bug Fixes
+
+* **normalize:** omit null fields instead of setting explicit nulls ([#146](https://github.com/ottobot-ai/ottochain-sdk/issues/146)) ([3a83a6e](https://github.com/ottobot-ai/ottochain-sdk/commit/3a83a6ec59be05bf9e0ee44939e38f4111cf21fa))
+
 ## [2.2.3](https://github.com/ottobot-ai/ottochain-sdk/compare/v2.2.2...v2.2.3) (2026-03-22)
 
 
