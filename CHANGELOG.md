@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.5](https://github.com/ottobot-ai/ottochain-sdk/compare/v2.2.4...v2.2.5) (2026-03-22)
+
+
+### Bug Fixes
+
+* **normalize:** remove non-existent participants field and revert drop-null ([#149](https://github.com/ottobot-ai/ottochain-sdk/issues/149)) ([61b3b57](https://github.com/ottobot-ai/ottochain-sdk/commit/61b3b57fd8f21c559853cc5d2aa6ee67d25847a7))
+
 ## [2.2.4](https://github.com/ottobot-ai/ottochain-sdk/compare/v2.2.3...v2.2.4) (2026-03-22)
 
 
