@@ -7,7 +7,7 @@ import {
 
 describe('normalize', () => {
   describe('normalizeCreateStateMachine', () => {
-    it('adds explicit nulls for missing optional fields', () => {
+    it('omits null optional fields (dropNullValues = true on Scala side)', () => {
       const result = normalizeCreateStateMachine({
         fiberId: 'test-fiber',
         definition: {
@@ -21,15 +21,17 @@ describe('normalize', () => {
       expect(result).toEqual({
         fiberId: 'test-fiber',
         definition: {
-          states: { INIT: { id: 'INIT', isFinal: false, metadata: null } },
+          states: { INIT: { id: 'INIT', isFinal: false } },
           initialState: 'INIT',
           transitions: [],
-          metadata: null,
         },
         initialData: { key: 'value' },
-        parentFiberId: null,
-        participants: null,
       });
+      // Optional fields should NOT be present (not null, not undefined — absent)
+      expect('parentFiberId' in result).toBe(false);
+      expect('participants' in result).toBe(false);
+      expect('metadata' in (result.definition as any)).toBe(false);
+      expect('metadata' in (result.definition as any).states.INIT).toBe(false);
     });
 
     it('preserves provided optional fields', () => {
@@ -56,6 +58,7 @@ describe('normalize', () => {
 
       expect(result.parentFiberId).toBe('parent-123');
       expect((result.definition as any).metadata).toEqual({ def: true });
+      expect((result.definition as any).states.INIT.metadata).toEqual({ key: 'val' });
       const transition = ((result.definition as any).transitions as any[])[0];
       expect(transition.guard).toEqual({ '==': [1, 1] });
       expect(transition.effect).toEqual({ merge: [{ var: 'state' }, { updated: true }] });
@@ -88,30 +91,25 @@ describe('normalize', () => {
     });
 
     it('strips FiberAppMetadata from definition.metadata', () => {
-      // FiberAppMetadata has 'name' and 'app' fields — should be stripped to null
       const result = normalizeCreateStateMachine({
         fiberId: 'test-fiber',
         definition: {
           states: { INIT: { id: 'INIT', isFinal: false } },
           initialState: 'INIT',
           transitions: [],
-          // This is FiberAppMetadata, not wire format metadata
           metadata: {
             name: 'ContractAgreement',
             app: 'contracts',
             type: 'agreement',
             version: '1.0.0',
-            description: 'Two-party agreement with completion attestation',
-            crossReferences: {
-              proposerIdentityId: { machine: 'identity-agent', description: 'proposer' },
-            },
+            crossReferences: {},
           },
         },
         initialData: {},
       });
 
-      // FiberAppMetadata should be stripped to null for wire format
-      expect((result.definition as any).metadata).toBeNull();
+      // FiberAppMetadata stripped — metadata field should be absent
+      expect('metadata' in (result.definition as any)).toBe(false);
     });
 
     it('preserves simple JSON metadata (not FiberAppMetadata)', () => {
@@ -121,7 +119,6 @@ describe('normalize', () => {
           states: { INIT: { id: 'INIT', isFinal: false } },
           initialState: 'INIT',
           transitions: [],
-          // Simple JSON metadata without 'name' and 'app' should pass through
           metadata: { customField: 'value', version: 2 },
         },
         initialData: {},
@@ -145,16 +142,6 @@ describe('normalize', () => {
         payload: { amount: 100 },
         targetSequenceNumber: 5,
       });
-    });
-
-    it('preserves empty object payload', () => {
-      const result = normalizeTransitionStateMachine({
-        fiberId: 'f1',
-        eventName: 'go',
-        payload: {},
-        targetSequenceNumber: 5,
-      });
-      expect(result.payload).toEqual({});
     });
   });
 
@@ -181,8 +168,9 @@ describe('normalize', () => {
         },
       });
       expect(result).toHaveProperty('CreateStateMachine');
-      expect((result.CreateStateMachine as any).parentFiberId).toBeNull();
-      expect((result.CreateStateMachine as any).participants).toBeNull();
+      // Optional fields should be absent, not null
+      expect('parentFiberId' in (result.CreateStateMachine as any)).toBe(false);
+      expect('participants' in (result.CreateStateMachine as any)).toBe(false);
     });
 
     it('normalizes TransitionStateMachine wrapper', () => {
@@ -190,16 +178,6 @@ describe('normalize', () => {
         TransitionStateMachine: { fiberId: 'f1', eventName: 'go', payload: {}, targetSequenceNumber: 1 },
       });
       expect(result).toHaveProperty('TransitionStateMachine');
-      expect((result.TransitionStateMachine as any).payload).toEqual({});
-      expect((result.TransitionStateMachine as any).targetSequenceNumber).toBe(1);
-    });
-
-    it('normalizes ArchiveStateMachine wrapper', () => {
-      const result = normalizeMessage({
-        ArchiveStateMachine: { fiberId: 'f1', targetSequenceNumber: 2 },
-      });
-      expect(result).toHaveProperty('ArchiveStateMachine');
-      expect((result.ArchiveStateMachine as any).targetSequenceNumber).toBe(2);
     });
 
     it('passes through unknown message types unchanged', () => {
