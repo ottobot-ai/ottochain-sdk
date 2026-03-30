@@ -74,7 +74,7 @@ importers:
         version: 29.4.6(@babel/core@7.29.0)(@jest/transform@30.3.0)(@jest/types@30.3.0)(babel-jest@30.3.0(@babel/core@7.29.0))(jest-util@30.3.0)(jest@30.3.0(@types/node@25.5.0))(typescript@5.4.5)
       ts-proto:
         specifier: ^2.11.5
-        version: 2.11.5
+        version: 2.11.6
       typedoc:
         specifier: ^0.28.17
         version: 0.28.18(typescript@5.4.5)
@@ -3159,8 +3159,8 @@ packages:
   ts-proto-descriptors@2.1.0:
     resolution: {integrity: sha512-S5EZYEQ6L9KLFfjSRpZWDIXDV/W7tAj8uW7pLsihIxyr62EAVSiKuVPwE8iWnr849Bqa53enex1jhDUcpgquzA==}
 
-  ts-proto@2.11.5:
-    resolution: {integrity: sha512-Ua2Mu92MhCkOCQgOTn00jOZaOE51JHW/Zfmf65Gtp7mOe2DxUVjKvaedayjQ0SVrblyCVSKCm2tAX/2FWgiFzQ==}
+  ts-proto@2.11.6:
+    resolution: {integrity: sha512-2rPkH5W/KeXOyVUC6o06RdRabVK8zSDmQpnRz4XbRiYMHRdI12KqDjAdGW7ebxzzMNE5cw/j+ptA0WMVqZILrQ==}
     hasBin: true
 
   tslib@1.14.1:
@@ -7094,7 +7094,7 @@ snapshots:
     dependencies:
       '@bufbuild/protobuf': 2.11.0
 
-  ts-proto@2.11.5:
+  ts-proto@2.11.6:
     dependencies:
       '@bufbuild/protobuf': 2.11.0
       case-anything: 2.1.13
