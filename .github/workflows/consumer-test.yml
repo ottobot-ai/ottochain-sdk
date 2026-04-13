@@ -29,7 +29,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: pnpm/action-setup@v5
+      - uses: pnpm/action-setup@v6
 
       - uses: actions/setup-node@v6
         with:
@@ -66,7 +66,7 @@ jobs:
           repository: ottobot-ai/ottochain-services
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: pnpm/action-setup@v5
+      - uses: pnpm/action-setup@v6
         # Uses version from packageManager field in consumer repo's package.json
 
       - uses: actions/setup-node@v6
@@ -114,7 +114,7 @@ jobs:
           repository: ottobot-ai/ottochain-explorer
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: pnpm/action-setup@v5
+      - uses: pnpm/action-setup@v6
         with:
           version: 10
         # Explorer repo doesn't yet have packageManager in package.json; pin explicitly
