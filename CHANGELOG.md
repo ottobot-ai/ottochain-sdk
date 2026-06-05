@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.3.0](https://github.com/ottobot-ai/ottochain-sdk/compare/v2.2.5...v2.3.0) (2026-06-05)
+
+
+### Features
+
+* genesis-manifest exporter for std apps ([#180](https://github.com/ottobot-ai/ottochain-sdk/issues/180)) ([ca146a1](https://github.com/ottobot-ai/ottochain-sdk/commit/ca146a1bfdb09a7ef957698537280c037105c64e))
+* populate standard per-state metadata on std-app state machines ([#182](https://github.com/ottobot-ai/ottochain-sdk/issues/182)) ([05abdfc](https://github.com/ottobot-ai/ottochain-sdk/commit/05abdfce2ccfed13ee4ba2fc0a8e5f885aa788ff))
+* sync message and query types with chain registry surface ([#181](https://github.com/ottobot-ai/ottochain-sdk/issues/181)) ([af4286b](https://github.com/ottobot-ai/ottochain-sdk/commit/af4286b69f1dc39c09976d5982e25504f81d62be))
+
 ## [2.2.5](https://github.com/ottobot-ai/ottochain-sdk/compare/v2.2.4...v2.2.5) (2026-03-22)
 
 
