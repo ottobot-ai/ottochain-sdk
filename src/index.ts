@@ -58,6 +58,17 @@ export * from './ottochain/transaction.js';
 export { normalizeCreateStateMachine, normalizeTransitionStateMachine, normalizeArchiveStateMachine, normalizeMessage } from './ottochain/normalize.js';
 export { dropNulls } from './ottochain/drop-nulls.js';
 
+// ─── Genesis manifest exporter (std-app pre-registration content) ─────────────
+export { buildGenesisManifest, GENESIS_MANIFEST_VERSION } from './ottochain/genesis-manifest.js';
+export type {
+  GenesisManifest,
+  GenesisPackage,
+  GenesisSchemaShape,
+  GenesisMessageShape,
+  GenesisFieldShape,
+  GenesisStateMachineDefinition,
+} from './ottochain/index.js';
+
 // ─── Generated protobuf types (canonical definitions) ────────────────────────
 export * from './generated/index.js';
 
