@@ -3,6 +3,7 @@ syntax = "proto3";
 package ottochain.v1;
 
 import "ottochain/v1/fiber.proto";
+import "ottochain/v1/common.proto";
 import "google/protobuf/struct.proto";
 
 // Create a new state machine fiber
@@ -11,6 +12,9 @@ message CreateStateMachine {
   StateMachineDefinition definition = 2;
   google.protobuf.Value initial_data = 3;
   optional string parent_fiber_id = 4;
+  // Optional reference to a registered schema/program version (#26). When present, the chain
+  // resolves it against the registry at create time and records the verified SchemaBinding.
+  optional SchemaRef schema_ref = 5;
 }
 
 // Trigger a state machine transition
@@ -25,6 +29,16 @@ message TransitionStateMachine {
 message ArchiveStateMachine {
   string fiber_id = 1;
   int64 target_sequence_number = 2;  // Fiber ordinal
+}
+
+// Upgrade an existing fiber to a different registered version of the SAME package (#27).
+message UpgradeFiber {
+  string fiber_id = 1;
+  SchemaRef target_ref = 2;
+  StateMachineDefinition new_definition = 3;
+  // Optional JSON-Logic transform applied to the prior state data during upgrade.
+  optional google.protobuf.Value migration = 4;
+  int64 target_sequence_number = 5;  // Fiber ordinal
 }
 
 // Create a new script fiber
@@ -43,6 +57,33 @@ message InvokeScript {
   int64 target_sequence_number = 4;  // Fiber ordinal
 }
 
+// Create-or-append a registry schema-package version (npm-publish semantics). The chain derives
+// the routing id from `name`, so there is no fiber_id on the wire.
+message PublishVersion {
+  string name = 1;            // Full registry name "labels.tld" (e.g. "order.package")
+  string version = 2;         // SemVer string "MAJOR.MINOR.PATCH"
+  string schema_b64 = 3;      // Base64 of the proto FileDescriptorSet (base64-validated + hashed, then dropped)
+  SchemaShape schema_shape = 4;
+  StateMachineDefinition definition = 5;
+  bool strict = 6;            // Opt-in runtime conformance gate (#33); default false
+  map<string, string> metadata = 7;  // Optional off-chain links grab-bag
+}
+
+// Change a registered version's lifecycle status (Active <-> Deprecated -> Yanked). Owner-gated.
+message SetVersionStatus {
+  string name = 1;            // Full registry name "labels.tld"
+  string version = 2;         // SemVer string
+  RegistryStatus status = 3;
+}
+
+// Register a human-readable nickname for an existing fiber (#29). The chain derives the routing id
+// from `name`, so there is no fiber_id on the wire.
+message RegisterAlias {
+  string name = 1;            // Full registry name "labels.tld" (e.g. "my-escrow.machine")
+  string target_fiber_id = 2; // The existing fiber UUID this alias points at
+  map<string, string> metadata = 3;  // Optional off-chain links grab-bag
+}
+
 // Union message type for all OttoChain operations
 message OttochainMessage {
   oneof message {
@@ -51,5 +92,9 @@ message OttochainMessage {
     ArchiveStateMachine archive_state_machine = 3;
     CreateScript create_script = 4;
     InvokeScript invoke_script = 5;
+    UpgradeFiber upgrade_fiber = 6;
+    PublishVersion publish_version = 7;
+    SetVersionStatus set_version_status = 8;
+    RegisterAlias register_alias = 9;
   }
 }

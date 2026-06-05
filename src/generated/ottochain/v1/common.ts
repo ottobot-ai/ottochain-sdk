@@ -5,5 +5,2102 @@
 // source: ottochain/v1/common.proto
 
 /* eslint-disable */
+import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 
 export const protobufPackage = "ottochain.v1";
+
+/**
+ * Lifecycle status of a registered version (npm/Cargo-style).
+ *   - ACTIVE     — selectable + recommended.
+ *   - DEPRECATED — still resolvable/runnable, flagged, discouraged for new instances.
+ *   - YANKED     — excluded from NEW resolutions; existing pinned fibers keep running.
+ */
+export enum RegistryStatus {
+  REGISTRY_STATUS_UNSPECIFIED = "REGISTRY_STATUS_UNSPECIFIED",
+  ACTIVE = "ACTIVE",
+  DEPRECATED = "DEPRECATED",
+  YANKED = "YANKED",
+  UNRECOGNIZED = "UNRECOGNIZED",
+}
+
+export function registryStatusFromJSON(object: any): RegistryStatus {
+  switch (object) {
+    case 0:
+    case "REGISTRY_STATUS_UNSPECIFIED":
+      return RegistryStatus.REGISTRY_STATUS_UNSPECIFIED;
+    case 1:
+    case "ACTIVE":
+      return RegistryStatus.ACTIVE;
+    case 2:
+    case "DEPRECATED":
+      return RegistryStatus.DEPRECATED;
+    case 3:
+    case "YANKED":
+      return RegistryStatus.YANKED;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return RegistryStatus.UNRECOGNIZED;
+  }
+}
+
+export function registryStatusToJSON(object: RegistryStatus): string {
+  switch (object) {
+    case RegistryStatus.REGISTRY_STATUS_UNSPECIFIED:
+      return "REGISTRY_STATUS_UNSPECIFIED";
+    case RegistryStatus.ACTIVE:
+      return "ACTIVE";
+    case RegistryStatus.DEPRECATED:
+      return "DEPRECATED";
+    case RegistryStatus.YANKED:
+      return "YANKED";
+    case RegistryStatus.UNRECOGNIZED:
+    default:
+      return "UNRECOGNIZED";
+  }
+}
+
+export function registryStatusToNumber(object: RegistryStatus): number {
+  switch (object) {
+    case RegistryStatus.REGISTRY_STATUS_UNSPECIFIED:
+      return 0;
+    case RegistryStatus.ACTIVE:
+      return 1;
+    case RegistryStatus.DEPRECATED:
+      return 2;
+    case RegistryStatus.YANKED:
+      return 3;
+    case RegistryStatus.UNRECOGNIZED:
+    default:
+      return -1;
+  }
+}
+
+/**
+ * A caller's version requirement, resolved against a VersionLineage (Cargo/npm-style).
+ * On the JSON wire it is a single-key wrapper object: {"Exact":{"version":"1.0.0"}}, {"Latest":{}}, ...
+ */
+export interface VersionReq {
+  requirement?:
+    | //
+    /** exactly this version */
+    { $case: "exact"; exact: ExactVersion }
+    | //
+    /** same MAJOR and >= v (^1.2.0) */
+    { $case: "caret"; caret: CaretVersion }
+    | //
+    /** same MAJOR.MINOR and >= v (~1.2.0) */
+    { $case: "tilde"; tilde: TildeVersion }
+    | //
+    /** highest selectable version */
+    { $case: "latest"; latest: LatestVersion }
+    | //
+    /** exact artifact by schema hash */
+    { $case: "pinnedHash"; pinnedHash: PinnedHashVersion }
+    | undefined;
+}
+
+export interface ExactVersion {
+  /** SemVer string */
+  version: string;
+}
+
+export interface CaretVersion {
+  /** SemVer string */
+  version: string;
+}
+
+export interface TildeVersion {
+  /** SemVer string */
+  version: string;
+}
+
+export interface LatestVersion {
+}
+
+export interface PinnedHashVersion {
+  /** Hash value */
+  schemaHash: string;
+}
+
+/** A caller's reference to a registered schema/program version, supplied at fiber creation. */
+export interface SchemaRef {
+  /** Full registry name "labels.tld" (e.g. "counter.package") */
+  name: string;
+  version?: VersionReq | undefined;
+}
+
+/** One field of a MessageShape — mirrors a protobuf FieldDescriptorProto at the field level. */
+export interface FieldShape {
+  name: string;
+  number: number;
+  typeName: string;
+  /** default false */
+  repeated: boolean;
+  /** default false */
+  optional: boolean;
+}
+
+/** A single protobuf message shape: its type name plus its fields. */
+export interface MessageShape {
+  typeName: string;
+  fields: FieldShape[];
+}
+
+/**
+ * The on-chain projection of a version's proto schema: the State message plus one
+ * message per command/event (keyed by event name). Publisher-claimed and advisory.
+ */
+export interface SchemaShape {
+  stateMessage?:
+    | MessageShape
+    | undefined;
+  /** keyed by event name */
+  commands: { [key: string]: MessageShape };
+}
+
+export interface SchemaShape_CommandsEntry {
+  key: string;
+  value?: MessageShape | undefined;
+}
+
+/**
+ * The resolved, pinned binding recorded on a fiber: which registry (name, version) it
+ * instantiates, with the committed hashes.
+ */
+export interface SchemaBinding {
+  /** Full registry name "labels.tld" */
+  name: string;
+  /** SemVer string */
+  version: string;
+  /** Hash value (descriptor commitment) */
+  schemaHash: string;
+  /** Hash value (verified-binding anchor) */
+  logicHash: string;
+}
+
+/** One immutable version of a registry entry. */
+export interface RegisteredVersion {
+  /** SemVer string */
+  version: string;
+  /** Hash value (descriptor commitment) */
+  schemaHash: string;
+  /** Hash value (verified-binding anchor) */
+  logicHash: string;
+  schemaShape?: SchemaShape | undefined;
+  status: RegistryStatus;
+  /** Snapshot ordinal */
+  registeredAt: number;
+  /** default false */
+  strict: boolean;
+}
+
+/** The append-only, monotonic version lineage of a single registry entry. */
+export interface VersionLineage {
+  /** SemVer-string keyed */
+  versions: { [key: string]: RegisteredVersion };
+}
+
+export interface VersionLineage_VersionsEntry {
+  key: string;
+  value?: RegisteredVersion | undefined;
+}
+
+/**
+ * What a registry entry resolves to, discriminated by the name's TLD.
+ * On the JSON wire it is a single-key wrapper object. Note the SchemaPackage double-nesting:
+ * {"SchemaPackage":{"versions":{"versions":{"1.0.0":{...}}}}}.
+ */
+export interface RegistryTarget {
+  target?:
+    | //
+    /** .package — a versioned schema/program type */
+    { $case: "schemaPackage"; schemaPackage: SchemaPackageTarget }
+    | //
+    /** .machine / .script — a nickname for a fiber (#29) */
+    { $case: "instanceAlias"; instanceAlias: InstanceAliasTarget }
+    | undefined;
+}
+
+export interface SchemaPackageTarget {
+  versions?: VersionLineage | undefined;
+}
+
+export interface InstanceAliasTarget {
+  fiberId: string;
+}
+
+/** A single owned entry in the registry namespace. */
+export interface RegistryEntry {
+  /** Full registry name "labels.tld" */
+  name: string;
+  /** Owning DAG addresses */
+  owner: string[];
+  target?:
+    | RegistryTarget
+    | undefined;
+  /** Optional off-chain links grab-bag */
+  metadata: { [key: string]: string };
+}
+
+export interface RegistryEntry_MetadataEntry {
+  key: string;
+  value: string;
+}
+
+function createBaseVersionReq(): VersionReq {
+  return { requirement: undefined };
+}
+
+export const VersionReq: MessageFns<VersionReq> = {
+  encode(message: VersionReq, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    switch (message.requirement?.$case) {
+      case "exact":
+        ExactVersion.encode(message.requirement.exact, writer.uint32(10).fork()).join();
+        break;
+      case "caret":
+        CaretVersion.encode(message.requirement.caret, writer.uint32(18).fork()).join();
+        break;
+      case "tilde":
+        TildeVersion.encode(message.requirement.tilde, writer.uint32(26).fork()).join();
+        break;
+      case "latest":
+        LatestVersion.encode(message.requirement.latest, writer.uint32(34).fork()).join();
+        break;
+      case "pinnedHash":
+        PinnedHashVersion.encode(message.requirement.pinnedHash, writer.uint32(42).fork()).join();
+        break;
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): VersionReq {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseVersionReq();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.requirement = { $case: "exact", exact: ExactVersion.decode(reader, reader.uint32()) };
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.requirement = { $case: "caret", caret: CaretVersion.decode(reader, reader.uint32()) };
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.requirement = { $case: "tilde", tilde: TildeVersion.decode(reader, reader.uint32()) };
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.requirement = { $case: "latest", latest: LatestVersion.decode(reader, reader.uint32()) };
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.requirement = { $case: "pinnedHash", pinnedHash: PinnedHashVersion.decode(reader, reader.uint32()) };
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): VersionReq {
+    return {
+      requirement: isSet(object.exact)
+        ? { $case: "exact", exact: ExactVersion.fromJSON(object.exact) }
+        : isSet(object.caret)
+        ? { $case: "caret", caret: CaretVersion.fromJSON(object.caret) }
+        : isSet(object.tilde)
+        ? { $case: "tilde", tilde: TildeVersion.fromJSON(object.tilde) }
+        : isSet(object.latest)
+        ? { $case: "latest", latest: LatestVersion.fromJSON(object.latest) }
+        : isSet(object.pinnedHash)
+        ? { $case: "pinnedHash", pinnedHash: PinnedHashVersion.fromJSON(object.pinnedHash) }
+        : isSet(object.pinned_hash)
+        ? { $case: "pinnedHash", pinnedHash: PinnedHashVersion.fromJSON(object.pinned_hash) }
+        : undefined,
+    };
+  },
+
+  toJSON(message: VersionReq): unknown {
+    const obj: any = {};
+    if (message.requirement?.$case === "exact") {
+      obj.exact = ExactVersion.toJSON(message.requirement.exact);
+    } else if (message.requirement?.$case === "caret") {
+      obj.caret = CaretVersion.toJSON(message.requirement.caret);
+    } else if (message.requirement?.$case === "tilde") {
+      obj.tilde = TildeVersion.toJSON(message.requirement.tilde);
+    } else if (message.requirement?.$case === "latest") {
+      obj.latest = LatestVersion.toJSON(message.requirement.latest);
+    } else if (message.requirement?.$case === "pinnedHash") {
+      obj.pinnedHash = PinnedHashVersion.toJSON(message.requirement.pinnedHash);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<VersionReq>, I>>(base?: I): VersionReq {
+    return VersionReq.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<VersionReq>, I>>(object: I): VersionReq {
+    const message = createBaseVersionReq();
+    switch (object.requirement?.$case) {
+      case "exact": {
+        if (object.requirement?.exact !== undefined && object.requirement?.exact !== null) {
+          message.requirement = { $case: "exact", exact: ExactVersion.fromPartial(object.requirement.exact) };
+        }
+        break;
+      }
+      case "caret": {
+        if (object.requirement?.caret !== undefined && object.requirement?.caret !== null) {
+          message.requirement = { $case: "caret", caret: CaretVersion.fromPartial(object.requirement.caret) };
+        }
+        break;
+      }
+      case "tilde": {
+        if (object.requirement?.tilde !== undefined && object.requirement?.tilde !== null) {
+          message.requirement = { $case: "tilde", tilde: TildeVersion.fromPartial(object.requirement.tilde) };
+        }
+        break;
+      }
+      case "latest": {
+        if (object.requirement?.latest !== undefined && object.requirement?.latest !== null) {
+          message.requirement = { $case: "latest", latest: LatestVersion.fromPartial(object.requirement.latest) };
+        }
+        break;
+      }
+      case "pinnedHash": {
+        if (object.requirement?.pinnedHash !== undefined && object.requirement?.pinnedHash !== null) {
+          message.requirement = {
+            $case: "pinnedHash",
+            pinnedHash: PinnedHashVersion.fromPartial(object.requirement.pinnedHash),
+          };
+        }
+        break;
+      }
+    }
+    return message;
+  },
+};
+
+function createBaseExactVersion(): ExactVersion {
+  return { version: "" };
+}
+
+export const ExactVersion: MessageFns<ExactVersion> = {
+  encode(message: ExactVersion, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.version !== "") {
+      writer.uint32(10).string(message.version);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ExactVersion {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseExactVersion();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.version = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ExactVersion {
+    return { version: isSet(object.version) ? globalThis.String(object.version) : "" };
+  },
+
+  toJSON(message: ExactVersion): unknown {
+    const obj: any = {};
+    if (message.version !== "") {
+      obj.version = message.version;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ExactVersion>, I>>(base?: I): ExactVersion {
+    return ExactVersion.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ExactVersion>, I>>(object: I): ExactVersion {
+    const message = createBaseExactVersion();
+    message.version = object.version ?? "";
+    return message;
+  },
+};
+
+function createBaseCaretVersion(): CaretVersion {
+  return { version: "" };
+}
+
+export const CaretVersion: MessageFns<CaretVersion> = {
+  encode(message: CaretVersion, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.version !== "") {
+      writer.uint32(10).string(message.version);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CaretVersion {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCaretVersion();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.version = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CaretVersion {
+    return { version: isSet(object.version) ? globalThis.String(object.version) : "" };
+  },
+
+  toJSON(message: CaretVersion): unknown {
+    const obj: any = {};
+    if (message.version !== "") {
+      obj.version = message.version;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CaretVersion>, I>>(base?: I): CaretVersion {
+    return CaretVersion.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CaretVersion>, I>>(object: I): CaretVersion {
+    const message = createBaseCaretVersion();
+    message.version = object.version ?? "";
+    return message;
+  },
+};
+
+function createBaseTildeVersion(): TildeVersion {
+  return { version: "" };
+}
+
+export const TildeVersion: MessageFns<TildeVersion> = {
+  encode(message: TildeVersion, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.version !== "") {
+      writer.uint32(10).string(message.version);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): TildeVersion {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseTildeVersion();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.version = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): TildeVersion {
+    return { version: isSet(object.version) ? globalThis.String(object.version) : "" };
+  },
+
+  toJSON(message: TildeVersion): unknown {
+    const obj: any = {};
+    if (message.version !== "") {
+      obj.version = message.version;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<TildeVersion>, I>>(base?: I): TildeVersion {
+    return TildeVersion.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<TildeVersion>, I>>(object: I): TildeVersion {
+    const message = createBaseTildeVersion();
+    message.version = object.version ?? "";
+    return message;
+  },
+};
+
+function createBaseLatestVersion(): LatestVersion {
+  return {};
+}
+
+export const LatestVersion: MessageFns<LatestVersion> = {
+  encode(_: LatestVersion, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): LatestVersion {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseLatestVersion();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(_: any): LatestVersion {
+    return {};
+  },
+
+  toJSON(_: LatestVersion): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<LatestVersion>, I>>(base?: I): LatestVersion {
+    return LatestVersion.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<LatestVersion>, I>>(_: I): LatestVersion {
+    const message = createBaseLatestVersion();
+    return message;
+  },
+};
+
+function createBasePinnedHashVersion(): PinnedHashVersion {
+  return { schemaHash: "" };
+}
+
+export const PinnedHashVersion: MessageFns<PinnedHashVersion> = {
+  encode(message: PinnedHashVersion, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.schemaHash !== "") {
+      writer.uint32(10).string(message.schemaHash);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): PinnedHashVersion {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBasePinnedHashVersion();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.schemaHash = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): PinnedHashVersion {
+    return {
+      schemaHash: isSet(object.schemaHash)
+        ? globalThis.String(object.schemaHash)
+        : isSet(object.schema_hash)
+        ? globalThis.String(object.schema_hash)
+        : "",
+    };
+  },
+
+  toJSON(message: PinnedHashVersion): unknown {
+    const obj: any = {};
+    if (message.schemaHash !== "") {
+      obj.schemaHash = message.schemaHash;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<PinnedHashVersion>, I>>(base?: I): PinnedHashVersion {
+    return PinnedHashVersion.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<PinnedHashVersion>, I>>(object: I): PinnedHashVersion {
+    const message = createBasePinnedHashVersion();
+    message.schemaHash = object.schemaHash ?? "";
+    return message;
+  },
+};
+
+function createBaseSchemaRef(): SchemaRef {
+  return { name: "", version: undefined };
+}
+
+export const SchemaRef: MessageFns<SchemaRef> = {
+  encode(message: SchemaRef, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.name !== "") {
+      writer.uint32(10).string(message.name);
+    }
+    if (message.version !== undefined) {
+      VersionReq.encode(message.version, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): SchemaRef {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSchemaRef();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.version = VersionReq.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SchemaRef {
+    return {
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
+      version: isSet(object.version) ? VersionReq.fromJSON(object.version) : undefined,
+    };
+  },
+
+  toJSON(message: SchemaRef): unknown {
+    const obj: any = {};
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.version !== undefined) {
+      obj.version = VersionReq.toJSON(message.version);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SchemaRef>, I>>(base?: I): SchemaRef {
+    return SchemaRef.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<SchemaRef>, I>>(object: I): SchemaRef {
+    const message = createBaseSchemaRef();
+    message.name = object.name ?? "";
+    message.version = (object.version !== undefined && object.version !== null)
+      ? VersionReq.fromPartial(object.version)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseFieldShape(): FieldShape {
+  return { name: "", number: 0, typeName: "", repeated: false, optional: false };
+}
+
+export const FieldShape: MessageFns<FieldShape> = {
+  encode(message: FieldShape, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.name !== "") {
+      writer.uint32(10).string(message.name);
+    }
+    if (message.number !== 0) {
+      writer.uint32(16).int32(message.number);
+    }
+    if (message.typeName !== "") {
+      writer.uint32(26).string(message.typeName);
+    }
+    if (message.repeated !== false) {
+      writer.uint32(32).bool(message.repeated);
+    }
+    if (message.optional !== false) {
+      writer.uint32(40).bool(message.optional);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): FieldShape {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseFieldShape();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.number = reader.int32();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.typeName = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.repeated = reader.bool();
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.optional = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): FieldShape {
+    return {
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
+      number: isSet(object.number) ? globalThis.Number(object.number) : 0,
+      typeName: isSet(object.typeName)
+        ? globalThis.String(object.typeName)
+        : isSet(object.type_name)
+        ? globalThis.String(object.type_name)
+        : "",
+      repeated: isSet(object.repeated) ? globalThis.Boolean(object.repeated) : false,
+      optional: isSet(object.optional) ? globalThis.Boolean(object.optional) : false,
+    };
+  },
+
+  toJSON(message: FieldShape): unknown {
+    const obj: any = {};
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.number !== 0) {
+      obj.number = Math.round(message.number);
+    }
+    if (message.typeName !== "") {
+      obj.typeName = message.typeName;
+    }
+    if (message.repeated !== false) {
+      obj.repeated = message.repeated;
+    }
+    if (message.optional !== false) {
+      obj.optional = message.optional;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<FieldShape>, I>>(base?: I): FieldShape {
+    return FieldShape.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<FieldShape>, I>>(object: I): FieldShape {
+    const message = createBaseFieldShape();
+    message.name = object.name ?? "";
+    message.number = object.number ?? 0;
+    message.typeName = object.typeName ?? "";
+    message.repeated = object.repeated ?? false;
+    message.optional = object.optional ?? false;
+    return message;
+  },
+};
+
+function createBaseMessageShape(): MessageShape {
+  return { typeName: "", fields: [] };
+}
+
+export const MessageShape: MessageFns<MessageShape> = {
+  encode(message: MessageShape, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.typeName !== "") {
+      writer.uint32(10).string(message.typeName);
+    }
+    for (const v of message.fields) {
+      FieldShape.encode(v!, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): MessageShape {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseMessageShape();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.typeName = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.fields.push(FieldShape.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): MessageShape {
+    return {
+      typeName: isSet(object.typeName)
+        ? globalThis.String(object.typeName)
+        : isSet(object.type_name)
+        ? globalThis.String(object.type_name)
+        : "",
+      fields: globalThis.Array.isArray(object?.fields) ? object.fields.map((e: any) => FieldShape.fromJSON(e)) : [],
+    };
+  },
+
+  toJSON(message: MessageShape): unknown {
+    const obj: any = {};
+    if (message.typeName !== "") {
+      obj.typeName = message.typeName;
+    }
+    if (message.fields?.length) {
+      obj.fields = message.fields.map((e) => FieldShape.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<MessageShape>, I>>(base?: I): MessageShape {
+    return MessageShape.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<MessageShape>, I>>(object: I): MessageShape {
+    const message = createBaseMessageShape();
+    message.typeName = object.typeName ?? "";
+    message.fields = object.fields?.map((e) => FieldShape.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseSchemaShape(): SchemaShape {
+  return { stateMessage: undefined, commands: {} };
+}
+
+export const SchemaShape: MessageFns<SchemaShape> = {
+  encode(message: SchemaShape, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.stateMessage !== undefined) {
+      MessageShape.encode(message.stateMessage, writer.uint32(10).fork()).join();
+    }
+    globalThis.Object.entries(message.commands).forEach(([key, value]: [string, MessageShape]) => {
+      SchemaShape_CommandsEntry.encode({ key: key as any, value }, writer.uint32(18).fork()).join();
+    });
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): SchemaShape {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSchemaShape();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.stateMessage = MessageShape.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          const entry2 = SchemaShape_CommandsEntry.decode(reader, reader.uint32());
+          if (entry2.value !== undefined) {
+            message.commands[entry2.key] = entry2.value;
+          }
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SchemaShape {
+    return {
+      stateMessage: isSet(object.stateMessage)
+        ? MessageShape.fromJSON(object.stateMessage)
+        : isSet(object.state_message)
+        ? MessageShape.fromJSON(object.state_message)
+        : undefined,
+      commands: isObject(object.commands)
+        ? (globalThis.Object.entries(object.commands) as [string, any][]).reduce(
+          (acc: { [key: string]: MessageShape }, [key, value]: [string, any]) => {
+            acc[key] = MessageShape.fromJSON(value);
+            return acc;
+          },
+          {},
+        )
+        : {},
+    };
+  },
+
+  toJSON(message: SchemaShape): unknown {
+    const obj: any = {};
+    if (message.stateMessage !== undefined) {
+      obj.stateMessage = MessageShape.toJSON(message.stateMessage);
+    }
+    if (message.commands) {
+      const entries = globalThis.Object.entries(message.commands) as [string, MessageShape][];
+      if (entries.length > 0) {
+        obj.commands = {};
+        entries.forEach(([k, v]) => {
+          obj.commands[k] = MessageShape.toJSON(v);
+        });
+      }
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SchemaShape>, I>>(base?: I): SchemaShape {
+    return SchemaShape.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<SchemaShape>, I>>(object: I): SchemaShape {
+    const message = createBaseSchemaShape();
+    message.stateMessage = (object.stateMessage !== undefined && object.stateMessage !== null)
+      ? MessageShape.fromPartial(object.stateMessage)
+      : undefined;
+    message.commands = (globalThis.Object.entries(object.commands ?? {}) as [string, MessageShape][]).reduce(
+      (acc: { [key: string]: MessageShape }, [key, value]: [string, MessageShape]) => {
+        if (value !== undefined) {
+          acc[key] = MessageShape.fromPartial(value);
+        }
+        return acc;
+      },
+      {},
+    );
+    return message;
+  },
+};
+
+function createBaseSchemaShape_CommandsEntry(): SchemaShape_CommandsEntry {
+  return { key: "", value: undefined };
+}
+
+export const SchemaShape_CommandsEntry: MessageFns<SchemaShape_CommandsEntry> = {
+  encode(message: SchemaShape_CommandsEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== undefined) {
+      MessageShape.encode(message.value, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): SchemaShape_CommandsEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSchemaShape_CommandsEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.key = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.value = MessageShape.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SchemaShape_CommandsEntry {
+    return {
+      key: isSet(object.key) ? globalThis.String(object.key) : "",
+      value: isSet(object.value) ? MessageShape.fromJSON(object.value) : undefined,
+    };
+  },
+
+  toJSON(message: SchemaShape_CommandsEntry): unknown {
+    const obj: any = {};
+    if (message.key !== "") {
+      obj.key = message.key;
+    }
+    if (message.value !== undefined) {
+      obj.value = MessageShape.toJSON(message.value);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SchemaShape_CommandsEntry>, I>>(base?: I): SchemaShape_CommandsEntry {
+    return SchemaShape_CommandsEntry.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<SchemaShape_CommandsEntry>, I>>(object: I): SchemaShape_CommandsEntry {
+    const message = createBaseSchemaShape_CommandsEntry();
+    message.key = object.key ?? "";
+    message.value = (object.value !== undefined && object.value !== null)
+      ? MessageShape.fromPartial(object.value)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseSchemaBinding(): SchemaBinding {
+  return { name: "", version: "", schemaHash: "", logicHash: "" };
+}
+
+export const SchemaBinding: MessageFns<SchemaBinding> = {
+  encode(message: SchemaBinding, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.name !== "") {
+      writer.uint32(10).string(message.name);
+    }
+    if (message.version !== "") {
+      writer.uint32(18).string(message.version);
+    }
+    if (message.schemaHash !== "") {
+      writer.uint32(26).string(message.schemaHash);
+    }
+    if (message.logicHash !== "") {
+      writer.uint32(34).string(message.logicHash);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): SchemaBinding {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSchemaBinding();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.version = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.schemaHash = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.logicHash = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SchemaBinding {
+    return {
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
+      version: isSet(object.version) ? globalThis.String(object.version) : "",
+      schemaHash: isSet(object.schemaHash)
+        ? globalThis.String(object.schemaHash)
+        : isSet(object.schema_hash)
+        ? globalThis.String(object.schema_hash)
+        : "",
+      logicHash: isSet(object.logicHash)
+        ? globalThis.String(object.logicHash)
+        : isSet(object.logic_hash)
+        ? globalThis.String(object.logic_hash)
+        : "",
+    };
+  },
+
+  toJSON(message: SchemaBinding): unknown {
+    const obj: any = {};
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.version !== "") {
+      obj.version = message.version;
+    }
+    if (message.schemaHash !== "") {
+      obj.schemaHash = message.schemaHash;
+    }
+    if (message.logicHash !== "") {
+      obj.logicHash = message.logicHash;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SchemaBinding>, I>>(base?: I): SchemaBinding {
+    return SchemaBinding.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<SchemaBinding>, I>>(object: I): SchemaBinding {
+    const message = createBaseSchemaBinding();
+    message.name = object.name ?? "";
+    message.version = object.version ?? "";
+    message.schemaHash = object.schemaHash ?? "";
+    message.logicHash = object.logicHash ?? "";
+    return message;
+  },
+};
+
+function createBaseRegisteredVersion(): RegisteredVersion {
+  return {
+    version: "",
+    schemaHash: "",
+    logicHash: "",
+    schemaShape: undefined,
+    status: RegistryStatus.REGISTRY_STATUS_UNSPECIFIED,
+    registeredAt: 0,
+    strict: false,
+  };
+}
+
+export const RegisteredVersion: MessageFns<RegisteredVersion> = {
+  encode(message: RegisteredVersion, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.version !== "") {
+      writer.uint32(10).string(message.version);
+    }
+    if (message.schemaHash !== "") {
+      writer.uint32(18).string(message.schemaHash);
+    }
+    if (message.logicHash !== "") {
+      writer.uint32(26).string(message.logicHash);
+    }
+    if (message.schemaShape !== undefined) {
+      SchemaShape.encode(message.schemaShape, writer.uint32(34).fork()).join();
+    }
+    if (message.status !== RegistryStatus.REGISTRY_STATUS_UNSPECIFIED) {
+      writer.uint32(40).int32(registryStatusToNumber(message.status));
+    }
+    if (message.registeredAt !== 0) {
+      writer.uint32(48).int64(message.registeredAt);
+    }
+    if (message.strict !== false) {
+      writer.uint32(56).bool(message.strict);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): RegisteredVersion {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRegisteredVersion();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.version = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.schemaHash = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.logicHash = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.schemaShape = SchemaShape.decode(reader, reader.uint32());
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.status = registryStatusFromJSON(reader.int32());
+          continue;
+        }
+        case 6: {
+          if (tag !== 48) {
+            break;
+          }
+
+          message.registeredAt = longToNumber(reader.int64());
+          continue;
+        }
+        case 7: {
+          if (tag !== 56) {
+            break;
+          }
+
+          message.strict = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): RegisteredVersion {
+    return {
+      version: isSet(object.version) ? globalThis.String(object.version) : "",
+      schemaHash: isSet(object.schemaHash)
+        ? globalThis.String(object.schemaHash)
+        : isSet(object.schema_hash)
+        ? globalThis.String(object.schema_hash)
+        : "",
+      logicHash: isSet(object.logicHash)
+        ? globalThis.String(object.logicHash)
+        : isSet(object.logic_hash)
+        ? globalThis.String(object.logic_hash)
+        : "",
+      schemaShape: isSet(object.schemaShape)
+        ? SchemaShape.fromJSON(object.schemaShape)
+        : isSet(object.schema_shape)
+        ? SchemaShape.fromJSON(object.schema_shape)
+        : undefined,
+      status: isSet(object.status) ? registryStatusFromJSON(object.status) : RegistryStatus.REGISTRY_STATUS_UNSPECIFIED,
+      registeredAt: isSet(object.registeredAt)
+        ? globalThis.Number(object.registeredAt)
+        : isSet(object.registered_at)
+        ? globalThis.Number(object.registered_at)
+        : 0,
+      strict: isSet(object.strict) ? globalThis.Boolean(object.strict) : false,
+    };
+  },
+
+  toJSON(message: RegisteredVersion): unknown {
+    const obj: any = {};
+    if (message.version !== "") {
+      obj.version = message.version;
+    }
+    if (message.schemaHash !== "") {
+      obj.schemaHash = message.schemaHash;
+    }
+    if (message.logicHash !== "") {
+      obj.logicHash = message.logicHash;
+    }
+    if (message.schemaShape !== undefined) {
+      obj.schemaShape = SchemaShape.toJSON(message.schemaShape);
+    }
+    if (message.status !== RegistryStatus.REGISTRY_STATUS_UNSPECIFIED) {
+      obj.status = registryStatusToJSON(message.status);
+    }
+    if (message.registeredAt !== 0) {
+      obj.registeredAt = Math.round(message.registeredAt);
+    }
+    if (message.strict !== false) {
+      obj.strict = message.strict;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<RegisteredVersion>, I>>(base?: I): RegisteredVersion {
+    return RegisteredVersion.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<RegisteredVersion>, I>>(object: I): RegisteredVersion {
+    const message = createBaseRegisteredVersion();
+    message.version = object.version ?? "";
+    message.schemaHash = object.schemaHash ?? "";
+    message.logicHash = object.logicHash ?? "";
+    message.schemaShape = (object.schemaShape !== undefined && object.schemaShape !== null)
+      ? SchemaShape.fromPartial(object.schemaShape)
+      : undefined;
+    message.status = object.status ?? RegistryStatus.REGISTRY_STATUS_UNSPECIFIED;
+    message.registeredAt = object.registeredAt ?? 0;
+    message.strict = object.strict ?? false;
+    return message;
+  },
+};
+
+function createBaseVersionLineage(): VersionLineage {
+  return { versions: {} };
+}
+
+export const VersionLineage: MessageFns<VersionLineage> = {
+  encode(message: VersionLineage, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    globalThis.Object.entries(message.versions).forEach(([key, value]: [string, RegisteredVersion]) => {
+      VersionLineage_VersionsEntry.encode({ key: key as any, value }, writer.uint32(10).fork()).join();
+    });
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): VersionLineage {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseVersionLineage();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          const entry1 = VersionLineage_VersionsEntry.decode(reader, reader.uint32());
+          if (entry1.value !== undefined) {
+            message.versions[entry1.key] = entry1.value;
+          }
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): VersionLineage {
+    return {
+      versions: isObject(object.versions)
+        ? (globalThis.Object.entries(object.versions) as [string, any][]).reduce(
+          (acc: { [key: string]: RegisteredVersion }, [key, value]: [string, any]) => {
+            acc[key] = RegisteredVersion.fromJSON(value);
+            return acc;
+          },
+          {},
+        )
+        : {},
+    };
+  },
+
+  toJSON(message: VersionLineage): unknown {
+    const obj: any = {};
+    if (message.versions) {
+      const entries = globalThis.Object.entries(message.versions) as [string, RegisteredVersion][];
+      if (entries.length > 0) {
+        obj.versions = {};
+        entries.forEach(([k, v]) => {
+          obj.versions[k] = RegisteredVersion.toJSON(v);
+        });
+      }
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<VersionLineage>, I>>(base?: I): VersionLineage {
+    return VersionLineage.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<VersionLineage>, I>>(object: I): VersionLineage {
+    const message = createBaseVersionLineage();
+    message.versions = (globalThis.Object.entries(object.versions ?? {}) as [string, RegisteredVersion][]).reduce(
+      (acc: { [key: string]: RegisteredVersion }, [key, value]: [string, RegisteredVersion]) => {
+        if (value !== undefined) {
+          acc[key] = RegisteredVersion.fromPartial(value);
+        }
+        return acc;
+      },
+      {},
+    );
+    return message;
+  },
+};
+
+function createBaseVersionLineage_VersionsEntry(): VersionLineage_VersionsEntry {
+  return { key: "", value: undefined };
+}
+
+export const VersionLineage_VersionsEntry: MessageFns<VersionLineage_VersionsEntry> = {
+  encode(message: VersionLineage_VersionsEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== undefined) {
+      RegisteredVersion.encode(message.value, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): VersionLineage_VersionsEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseVersionLineage_VersionsEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.key = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.value = RegisteredVersion.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): VersionLineage_VersionsEntry {
+    return {
+      key: isSet(object.key) ? globalThis.String(object.key) : "",
+      value: isSet(object.value) ? RegisteredVersion.fromJSON(object.value) : undefined,
+    };
+  },
+
+  toJSON(message: VersionLineage_VersionsEntry): unknown {
+    const obj: any = {};
+    if (message.key !== "") {
+      obj.key = message.key;
+    }
+    if (message.value !== undefined) {
+      obj.value = RegisteredVersion.toJSON(message.value);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<VersionLineage_VersionsEntry>, I>>(base?: I): VersionLineage_VersionsEntry {
+    return VersionLineage_VersionsEntry.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<VersionLineage_VersionsEntry>, I>>(object: I): VersionLineage_VersionsEntry {
+    const message = createBaseVersionLineage_VersionsEntry();
+    message.key = object.key ?? "";
+    message.value = (object.value !== undefined && object.value !== null)
+      ? RegisteredVersion.fromPartial(object.value)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseRegistryTarget(): RegistryTarget {
+  return { target: undefined };
+}
+
+export const RegistryTarget: MessageFns<RegistryTarget> = {
+  encode(message: RegistryTarget, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    switch (message.target?.$case) {
+      case "schemaPackage":
+        SchemaPackageTarget.encode(message.target.schemaPackage, writer.uint32(10).fork()).join();
+        break;
+      case "instanceAlias":
+        InstanceAliasTarget.encode(message.target.instanceAlias, writer.uint32(18).fork()).join();
+        break;
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): RegistryTarget {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRegistryTarget();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.target = {
+            $case: "schemaPackage",
+            schemaPackage: SchemaPackageTarget.decode(reader, reader.uint32()),
+          };
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.target = {
+            $case: "instanceAlias",
+            instanceAlias: InstanceAliasTarget.decode(reader, reader.uint32()),
+          };
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): RegistryTarget {
+    return {
+      target: isSet(object.schemaPackage)
+        ? { $case: "schemaPackage", schemaPackage: SchemaPackageTarget.fromJSON(object.schemaPackage) }
+        : isSet(object.schema_package)
+        ? { $case: "schemaPackage", schemaPackage: SchemaPackageTarget.fromJSON(object.schema_package) }
+        : isSet(object.instanceAlias)
+        ? { $case: "instanceAlias", instanceAlias: InstanceAliasTarget.fromJSON(object.instanceAlias) }
+        : isSet(object.instance_alias)
+        ? { $case: "instanceAlias", instanceAlias: InstanceAliasTarget.fromJSON(object.instance_alias) }
+        : undefined,
+    };
+  },
+
+  toJSON(message: RegistryTarget): unknown {
+    const obj: any = {};
+    if (message.target?.$case === "schemaPackage") {
+      obj.schemaPackage = SchemaPackageTarget.toJSON(message.target.schemaPackage);
+    } else if (message.target?.$case === "instanceAlias") {
+      obj.instanceAlias = InstanceAliasTarget.toJSON(message.target.instanceAlias);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<RegistryTarget>, I>>(base?: I): RegistryTarget {
+    return RegistryTarget.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<RegistryTarget>, I>>(object: I): RegistryTarget {
+    const message = createBaseRegistryTarget();
+    switch (object.target?.$case) {
+      case "schemaPackage": {
+        if (object.target?.schemaPackage !== undefined && object.target?.schemaPackage !== null) {
+          message.target = {
+            $case: "schemaPackage",
+            schemaPackage: SchemaPackageTarget.fromPartial(object.target.schemaPackage),
+          };
+        }
+        break;
+      }
+      case "instanceAlias": {
+        if (object.target?.instanceAlias !== undefined && object.target?.instanceAlias !== null) {
+          message.target = {
+            $case: "instanceAlias",
+            instanceAlias: InstanceAliasTarget.fromPartial(object.target.instanceAlias),
+          };
+        }
+        break;
+      }
+    }
+    return message;
+  },
+};
+
+function createBaseSchemaPackageTarget(): SchemaPackageTarget {
+  return { versions: undefined };
+}
+
+export const SchemaPackageTarget: MessageFns<SchemaPackageTarget> = {
+  encode(message: SchemaPackageTarget, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.versions !== undefined) {
+      VersionLineage.encode(message.versions, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): SchemaPackageTarget {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSchemaPackageTarget();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.versions = VersionLineage.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SchemaPackageTarget {
+    return { versions: isSet(object.versions) ? VersionLineage.fromJSON(object.versions) : undefined };
+  },
+
+  toJSON(message: SchemaPackageTarget): unknown {
+    const obj: any = {};
+    if (message.versions !== undefined) {
+      obj.versions = VersionLineage.toJSON(message.versions);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SchemaPackageTarget>, I>>(base?: I): SchemaPackageTarget {
+    return SchemaPackageTarget.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<SchemaPackageTarget>, I>>(object: I): SchemaPackageTarget {
+    const message = createBaseSchemaPackageTarget();
+    message.versions = (object.versions !== undefined && object.versions !== null)
+      ? VersionLineage.fromPartial(object.versions)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseInstanceAliasTarget(): InstanceAliasTarget {
+  return { fiberId: "" };
+}
+
+export const InstanceAliasTarget: MessageFns<InstanceAliasTarget> = {
+  encode(message: InstanceAliasTarget, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.fiberId !== "") {
+      writer.uint32(10).string(message.fiberId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): InstanceAliasTarget {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseInstanceAliasTarget();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.fiberId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): InstanceAliasTarget {
+    return {
+      fiberId: isSet(object.fiberId)
+        ? globalThis.String(object.fiberId)
+        : isSet(object.fiber_id)
+        ? globalThis.String(object.fiber_id)
+        : "",
+    };
+  },
+
+  toJSON(message: InstanceAliasTarget): unknown {
+    const obj: any = {};
+    if (message.fiberId !== "") {
+      obj.fiberId = message.fiberId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<InstanceAliasTarget>, I>>(base?: I): InstanceAliasTarget {
+    return InstanceAliasTarget.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<InstanceAliasTarget>, I>>(object: I): InstanceAliasTarget {
+    const message = createBaseInstanceAliasTarget();
+    message.fiberId = object.fiberId ?? "";
+    return message;
+  },
+};
+
+function createBaseRegistryEntry(): RegistryEntry {
+  return { name: "", owner: [], target: undefined, metadata: {} };
+}
+
+export const RegistryEntry: MessageFns<RegistryEntry> = {
+  encode(message: RegistryEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.name !== "") {
+      writer.uint32(10).string(message.name);
+    }
+    for (const v of message.owner) {
+      writer.uint32(18).string(v!);
+    }
+    if (message.target !== undefined) {
+      RegistryTarget.encode(message.target, writer.uint32(26).fork()).join();
+    }
+    globalThis.Object.entries(message.metadata).forEach(([key, value]: [string, string]) => {
+      RegistryEntry_MetadataEntry.encode({ key: key as any, value }, writer.uint32(34).fork()).join();
+    });
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): RegistryEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRegistryEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.owner.push(reader.string());
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.target = RegistryTarget.decode(reader, reader.uint32());
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          const entry4 = RegistryEntry_MetadataEntry.decode(reader, reader.uint32());
+          if (entry4.value !== undefined) {
+            message.metadata[entry4.key] = entry4.value;
+          }
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): RegistryEntry {
+    return {
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
+      owner: globalThis.Array.isArray(object?.owner) ? object.owner.map((e: any) => globalThis.String(e)) : [],
+      target: isSet(object.target) ? RegistryTarget.fromJSON(object.target) : undefined,
+      metadata: isObject(object.metadata)
+        ? (globalThis.Object.entries(object.metadata) as [string, any][]).reduce(
+          (acc: { [key: string]: string }, [key, value]: [string, any]) => {
+            acc[key] = globalThis.String(value);
+            return acc;
+          },
+          {},
+        )
+        : {},
+    };
+  },
+
+  toJSON(message: RegistryEntry): unknown {
+    const obj: any = {};
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.owner?.length) {
+      obj.owner = message.owner;
+    }
+    if (message.target !== undefined) {
+      obj.target = RegistryTarget.toJSON(message.target);
+    }
+    if (message.metadata) {
+      const entries = globalThis.Object.entries(message.metadata) as [string, string][];
+      if (entries.length > 0) {
+        obj.metadata = {};
+        entries.forEach(([k, v]) => {
+          obj.metadata[k] = v;
+        });
+      }
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<RegistryEntry>, I>>(base?: I): RegistryEntry {
+    return RegistryEntry.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<RegistryEntry>, I>>(object: I): RegistryEntry {
+    const message = createBaseRegistryEntry();
+    message.name = object.name ?? "";
+    message.owner = object.owner?.map((e) => e) || [];
+    message.target = (object.target !== undefined && object.target !== null)
+      ? RegistryTarget.fromPartial(object.target)
+      : undefined;
+    message.metadata = (globalThis.Object.entries(object.metadata ?? {}) as [string, string][]).reduce(
+      (acc: { [key: string]: string }, [key, value]: [string, string]) => {
+        if (value !== undefined) {
+          acc[key] = globalThis.String(value);
+        }
+        return acc;
+      },
+      {},
+    );
+    return message;
+  },
+};
+
+function createBaseRegistryEntry_MetadataEntry(): RegistryEntry_MetadataEntry {
+  return { key: "", value: "" };
+}
+
+export const RegistryEntry_MetadataEntry: MessageFns<RegistryEntry_MetadataEntry> = {
+  encode(message: RegistryEntry_MetadataEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== "") {
+      writer.uint32(18).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): RegistryEntry_MetadataEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRegistryEntry_MetadataEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.key = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.value = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): RegistryEntry_MetadataEntry {
+    return {
+      key: isSet(object.key) ? globalThis.String(object.key) : "",
+      value: isSet(object.value) ? globalThis.String(object.value) : "",
+    };
+  },
+
+  toJSON(message: RegistryEntry_MetadataEntry): unknown {
+    const obj: any = {};
+    if (message.key !== "") {
+      obj.key = message.key;
+    }
+    if (message.value !== "") {
+      obj.value = message.value;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<RegistryEntry_MetadataEntry>, I>>(base?: I): RegistryEntry_MetadataEntry {
+    return RegistryEntry_MetadataEntry.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<RegistryEntry_MetadataEntry>, I>>(object: I): RegistryEntry_MetadataEntry {
+    const message = createBaseRegistryEntry_MetadataEntry();
+    message.key = object.key ?? "";
+    message.value = object.value ?? "";
+    return message;
+  },
+};
+
+type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+
+export type DeepPartial<T> = T extends Builtin ? T
+  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
+  : T extends { $case: string } ? { [K in keyof Omit<T, "$case">]?: DeepPartial<T[K]> } & { $case: T["$case"] }
+  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
+  : Partial<T>;
+
+type KeysOfUnion<T> = T extends T ? keyof T : never;
+export type Exact<P, I extends P> = P extends Builtin ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+
+function longToNumber(int64: { toString(): string }): number {
+  const num = globalThis.Number(int64.toString());
+  if (num > globalThis.Number.MAX_SAFE_INTEGER) {
+    throw new globalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
+  }
+  if (num < globalThis.Number.MIN_SAFE_INTEGER) {
+    throw new globalThis.Error("Value is smaller than Number.MIN_SAFE_INTEGER");
+  }
+  return num;
+}
+
+function isObject(value: any): boolean {
+  return typeof value === "object" && value !== null;
+}
+
+function isSet(value: any): boolean {
+  return value !== null && value !== undefined;
+}
+
+export interface MessageFns<T> {
+  encode(message: T, writer?: BinaryWriter): BinaryWriter;
+  decode(input: BinaryReader | Uint8Array, length?: number): T;
+  fromJSON(object: any): T;
+  toJSON(message: T): unknown;
+  create<I extends Exact<DeepPartial<T>, I>>(base?: I): T;
+  fromPartial<I extends Exact<DeepPartial<T>, I>>(object: I): T;
+}

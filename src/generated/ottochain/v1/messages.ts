@@ -7,6 +7,14 @@
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { Value } from "../../google/protobuf/struct.js";
+import {
+  RegistryStatus,
+  registryStatusFromJSON,
+  registryStatusToJSON,
+  registryStatusToNumber,
+  SchemaRef,
+  SchemaShape,
+} from "./common.js";
 import { AccessControlPolicy, StateMachineDefinition } from "./fiber.js";
 
 export const protobufPackage = "ottochain.v1";
@@ -16,7 +24,14 @@ export interface CreateStateMachine {
   fiberId: string;
   definition?: StateMachineDefinition | undefined;
   initialData?: any | undefined;
-  parentFiberId?: string | undefined;
+  parentFiberId?:
+    | string
+    | undefined;
+  /**
+   * Optional reference to a registered schema/program version (#26). When present, the chain
+   * resolves it against the registry at create time and records the verified SchemaBinding.
+   */
+  schemaRef?: SchemaRef | undefined;
 }
 
 /** Trigger a state machine transition */
@@ -33,6 +48,21 @@ export interface TransitionStateMachine {
 /** Archive a state machine fiber */
 export interface ArchiveStateMachine {
   fiberId: string;
+  /** Fiber ordinal */
+  targetSequenceNumber: number;
+}
+
+/** Upgrade an existing fiber to a different registered version of the SAME package (#27). */
+export interface UpgradeFiber {
+  fiberId: string;
+  targetRef?: SchemaRef | undefined;
+  newDefinition?:
+    | StateMachineDefinition
+    | undefined;
+  /** Optional JSON-Logic transform applied to the prior state data during upgrade. */
+  migration?:
+    | any
+    | undefined;
   /** Fiber ordinal */
   targetSequenceNumber: number;
 }
@@ -56,6 +86,59 @@ export interface InvokeScript {
   targetSequenceNumber: number;
 }
 
+/**
+ * Create-or-append a registry schema-package version (npm-publish semantics). The chain derives
+ * the routing id from `name`, so there is no fiber_id on the wire.
+ */
+export interface PublishVersion {
+  /** Full registry name "labels.tld" (e.g. "order.package") */
+  name: string;
+  /** SemVer string "MAJOR.MINOR.PATCH" */
+  version: string;
+  /** Base64 of the proto FileDescriptorSet (base64-validated + hashed, then dropped) */
+  schemaB64: string;
+  schemaShape?: SchemaShape | undefined;
+  definition?:
+    | StateMachineDefinition
+    | undefined;
+  /** Opt-in runtime conformance gate (#33); default false */
+  strict: boolean;
+  /** Optional off-chain links grab-bag */
+  metadata: { [key: string]: string };
+}
+
+export interface PublishVersion_MetadataEntry {
+  key: string;
+  value: string;
+}
+
+/** Change a registered version's lifecycle status (Active <-> Deprecated -> Yanked). Owner-gated. */
+export interface SetVersionStatus {
+  /** Full registry name "labels.tld" */
+  name: string;
+  /** SemVer string */
+  version: string;
+  status: RegistryStatus;
+}
+
+/**
+ * Register a human-readable nickname for an existing fiber (#29). The chain derives the routing id
+ * from `name`, so there is no fiber_id on the wire.
+ */
+export interface RegisterAlias {
+  /** Full registry name "labels.tld" (e.g. "my-escrow.machine") */
+  name: string;
+  /** The existing fiber UUID this alias points at */
+  targetFiberId: string;
+  /** Optional off-chain links grab-bag */
+  metadata: { [key: string]: string };
+}
+
+export interface RegisterAlias_MetadataEntry {
+  key: string;
+  value: string;
+}
+
 /** Union message type for all OttoChain operations */
 export interface OttochainMessage {
   message?:
@@ -64,11 +147,15 @@ export interface OttochainMessage {
     | { $case: "archiveStateMachine"; archiveStateMachine: ArchiveStateMachine }
     | { $case: "createScript"; createScript: CreateScript }
     | { $case: "invokeScript"; invokeScript: InvokeScript }
+    | { $case: "upgradeFiber"; upgradeFiber: UpgradeFiber }
+    | { $case: "publishVersion"; publishVersion: PublishVersion }
+    | { $case: "setVersionStatus"; setVersionStatus: SetVersionStatus }
+    | { $case: "registerAlias"; registerAlias: RegisterAlias }
     | undefined;
 }
 
 function createBaseCreateStateMachine(): CreateStateMachine {
-  return { fiberId: "", definition: undefined, initialData: undefined, parentFiberId: undefined };
+  return { fiberId: "", definition: undefined, initialData: undefined, parentFiberId: undefined, schemaRef: undefined };
 }
 
 export const CreateStateMachine: MessageFns<CreateStateMachine> = {
@@ -84,6 +171,9 @@ export const CreateStateMachine: MessageFns<CreateStateMachine> = {
     }
     if (message.parentFiberId !== undefined) {
       writer.uint32(34).string(message.parentFiberId);
+    }
+    if (message.schemaRef !== undefined) {
+      SchemaRef.encode(message.schemaRef, writer.uint32(42).fork()).join();
     }
     return writer;
   },
@@ -127,6 +217,14 @@ export const CreateStateMachine: MessageFns<CreateStateMachine> = {
           message.parentFiberId = reader.string();
           continue;
         }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.schemaRef = SchemaRef.decode(reader, reader.uint32());
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -154,6 +252,11 @@ export const CreateStateMachine: MessageFns<CreateStateMachine> = {
         : isSet(object.parent_fiber_id)
         ? globalThis.String(object.parent_fiber_id)
         : undefined,
+      schemaRef: isSet(object.schemaRef)
+        ? SchemaRef.fromJSON(object.schemaRef)
+        : isSet(object.schema_ref)
+        ? SchemaRef.fromJSON(object.schema_ref)
+        : undefined,
     };
   },
 
@@ -171,6 +274,9 @@ export const CreateStateMachine: MessageFns<CreateStateMachine> = {
     if (message.parentFiberId !== undefined) {
       obj.parentFiberId = message.parentFiberId;
     }
+    if (message.schemaRef !== undefined) {
+      obj.schemaRef = SchemaRef.toJSON(message.schemaRef);
+    }
     return obj;
   },
 
@@ -185,6 +291,9 @@ export const CreateStateMachine: MessageFns<CreateStateMachine> = {
       : undefined;
     message.initialData = object.initialData ?? undefined;
     message.parentFiberId = object.parentFiberId ?? undefined;
+    message.schemaRef = (object.schemaRef !== undefined && object.schemaRef !== null)
+      ? SchemaRef.fromPartial(object.schemaRef)
+      : undefined;
     return message;
   },
 };
@@ -388,6 +497,150 @@ export const ArchiveStateMachine: MessageFns<ArchiveStateMachine> = {
   fromPartial<I extends Exact<DeepPartial<ArchiveStateMachine>, I>>(object: I): ArchiveStateMachine {
     const message = createBaseArchiveStateMachine();
     message.fiberId = object.fiberId ?? "";
+    message.targetSequenceNumber = object.targetSequenceNumber ?? 0;
+    return message;
+  },
+};
+
+function createBaseUpgradeFiber(): UpgradeFiber {
+  return { fiberId: "", targetRef: undefined, newDefinition: undefined, migration: undefined, targetSequenceNumber: 0 };
+}
+
+export const UpgradeFiber: MessageFns<UpgradeFiber> = {
+  encode(message: UpgradeFiber, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.fiberId !== "") {
+      writer.uint32(10).string(message.fiberId);
+    }
+    if (message.targetRef !== undefined) {
+      SchemaRef.encode(message.targetRef, writer.uint32(18).fork()).join();
+    }
+    if (message.newDefinition !== undefined) {
+      StateMachineDefinition.encode(message.newDefinition, writer.uint32(26).fork()).join();
+    }
+    if (message.migration !== undefined) {
+      Value.encode(Value.wrap(message.migration), writer.uint32(34).fork()).join();
+    }
+    if (message.targetSequenceNumber !== 0) {
+      writer.uint32(40).int64(message.targetSequenceNumber);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UpgradeFiber {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUpgradeFiber();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.fiberId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.targetRef = SchemaRef.decode(reader, reader.uint32());
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.newDefinition = StateMachineDefinition.decode(reader, reader.uint32());
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.migration = Value.unwrap(Value.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.targetSequenceNumber = longToNumber(reader.int64());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UpgradeFiber {
+    return {
+      fiberId: isSet(object.fiberId)
+        ? globalThis.String(object.fiberId)
+        : isSet(object.fiber_id)
+        ? globalThis.String(object.fiber_id)
+        : "",
+      targetRef: isSet(object.targetRef)
+        ? SchemaRef.fromJSON(object.targetRef)
+        : isSet(object.target_ref)
+        ? SchemaRef.fromJSON(object.target_ref)
+        : undefined,
+      newDefinition: isSet(object.newDefinition)
+        ? StateMachineDefinition.fromJSON(object.newDefinition)
+        : isSet(object.new_definition)
+        ? StateMachineDefinition.fromJSON(object.new_definition)
+        : undefined,
+      migration: isSet(object?.migration) ? object.migration : undefined,
+      targetSequenceNumber: isSet(object.targetSequenceNumber)
+        ? globalThis.Number(object.targetSequenceNumber)
+        : isSet(object.target_sequence_number)
+        ? globalThis.Number(object.target_sequence_number)
+        : 0,
+    };
+  },
+
+  toJSON(message: UpgradeFiber): unknown {
+    const obj: any = {};
+    if (message.fiberId !== "") {
+      obj.fiberId = message.fiberId;
+    }
+    if (message.targetRef !== undefined) {
+      obj.targetRef = SchemaRef.toJSON(message.targetRef);
+    }
+    if (message.newDefinition !== undefined) {
+      obj.newDefinition = StateMachineDefinition.toJSON(message.newDefinition);
+    }
+    if (message.migration !== undefined) {
+      obj.migration = message.migration;
+    }
+    if (message.targetSequenceNumber !== 0) {
+      obj.targetSequenceNumber = Math.round(message.targetSequenceNumber);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<UpgradeFiber>, I>>(base?: I): UpgradeFiber {
+    return UpgradeFiber.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<UpgradeFiber>, I>>(object: I): UpgradeFiber {
+    const message = createBaseUpgradeFiber();
+    message.fiberId = object.fiberId ?? "";
+    message.targetRef = (object.targetRef !== undefined && object.targetRef !== null)
+      ? SchemaRef.fromPartial(object.targetRef)
+      : undefined;
+    message.newDefinition = (object.newDefinition !== undefined && object.newDefinition !== null)
+      ? StateMachineDefinition.fromPartial(object.newDefinition)
+      : undefined;
+    message.migration = object.migration ?? undefined;
     message.targetSequenceNumber = object.targetSequenceNumber ?? 0;
     return message;
   },
@@ -635,6 +888,572 @@ export const InvokeScript: MessageFns<InvokeScript> = {
   },
 };
 
+function createBasePublishVersion(): PublishVersion {
+  return {
+    name: "",
+    version: "",
+    schemaB64: "",
+    schemaShape: undefined,
+    definition: undefined,
+    strict: false,
+    metadata: {},
+  };
+}
+
+export const PublishVersion: MessageFns<PublishVersion> = {
+  encode(message: PublishVersion, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.name !== "") {
+      writer.uint32(10).string(message.name);
+    }
+    if (message.version !== "") {
+      writer.uint32(18).string(message.version);
+    }
+    if (message.schemaB64 !== "") {
+      writer.uint32(26).string(message.schemaB64);
+    }
+    if (message.schemaShape !== undefined) {
+      SchemaShape.encode(message.schemaShape, writer.uint32(34).fork()).join();
+    }
+    if (message.definition !== undefined) {
+      StateMachineDefinition.encode(message.definition, writer.uint32(42).fork()).join();
+    }
+    if (message.strict !== false) {
+      writer.uint32(48).bool(message.strict);
+    }
+    globalThis.Object.entries(message.metadata).forEach(([key, value]: [string, string]) => {
+      PublishVersion_MetadataEntry.encode({ key: key as any, value }, writer.uint32(58).fork()).join();
+    });
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): PublishVersion {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBasePublishVersion();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.version = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.schemaB64 = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.schemaShape = SchemaShape.decode(reader, reader.uint32());
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.definition = StateMachineDefinition.decode(reader, reader.uint32());
+          continue;
+        }
+        case 6: {
+          if (tag !== 48) {
+            break;
+          }
+
+          message.strict = reader.bool();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          const entry7 = PublishVersion_MetadataEntry.decode(reader, reader.uint32());
+          if (entry7.value !== undefined) {
+            message.metadata[entry7.key] = entry7.value;
+          }
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): PublishVersion {
+    return {
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
+      version: isSet(object.version) ? globalThis.String(object.version) : "",
+      schemaB64: isSet(object.schemaB64)
+        ? globalThis.String(object.schemaB64)
+        : isSet(object.schema_b64)
+        ? globalThis.String(object.schema_b64)
+        : "",
+      schemaShape: isSet(object.schemaShape)
+        ? SchemaShape.fromJSON(object.schemaShape)
+        : isSet(object.schema_shape)
+        ? SchemaShape.fromJSON(object.schema_shape)
+        : undefined,
+      definition: isSet(object.definition) ? StateMachineDefinition.fromJSON(object.definition) : undefined,
+      strict: isSet(object.strict) ? globalThis.Boolean(object.strict) : false,
+      metadata: isObject(object.metadata)
+        ? (globalThis.Object.entries(object.metadata) as [string, any][]).reduce(
+          (acc: { [key: string]: string }, [key, value]: [string, any]) => {
+            acc[key] = globalThis.String(value);
+            return acc;
+          },
+          {},
+        )
+        : {},
+    };
+  },
+
+  toJSON(message: PublishVersion): unknown {
+    const obj: any = {};
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.version !== "") {
+      obj.version = message.version;
+    }
+    if (message.schemaB64 !== "") {
+      obj.schemaB64 = message.schemaB64;
+    }
+    if (message.schemaShape !== undefined) {
+      obj.schemaShape = SchemaShape.toJSON(message.schemaShape);
+    }
+    if (message.definition !== undefined) {
+      obj.definition = StateMachineDefinition.toJSON(message.definition);
+    }
+    if (message.strict !== false) {
+      obj.strict = message.strict;
+    }
+    if (message.metadata) {
+      const entries = globalThis.Object.entries(message.metadata) as [string, string][];
+      if (entries.length > 0) {
+        obj.metadata = {};
+        entries.forEach(([k, v]) => {
+          obj.metadata[k] = v;
+        });
+      }
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<PublishVersion>, I>>(base?: I): PublishVersion {
+    return PublishVersion.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<PublishVersion>, I>>(object: I): PublishVersion {
+    const message = createBasePublishVersion();
+    message.name = object.name ?? "";
+    message.version = object.version ?? "";
+    message.schemaB64 = object.schemaB64 ?? "";
+    message.schemaShape = (object.schemaShape !== undefined && object.schemaShape !== null)
+      ? SchemaShape.fromPartial(object.schemaShape)
+      : undefined;
+    message.definition = (object.definition !== undefined && object.definition !== null)
+      ? StateMachineDefinition.fromPartial(object.definition)
+      : undefined;
+    message.strict = object.strict ?? false;
+    message.metadata = (globalThis.Object.entries(object.metadata ?? {}) as [string, string][]).reduce(
+      (acc: { [key: string]: string }, [key, value]: [string, string]) => {
+        if (value !== undefined) {
+          acc[key] = globalThis.String(value);
+        }
+        return acc;
+      },
+      {},
+    );
+    return message;
+  },
+};
+
+function createBasePublishVersion_MetadataEntry(): PublishVersion_MetadataEntry {
+  return { key: "", value: "" };
+}
+
+export const PublishVersion_MetadataEntry: MessageFns<PublishVersion_MetadataEntry> = {
+  encode(message: PublishVersion_MetadataEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== "") {
+      writer.uint32(18).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): PublishVersion_MetadataEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBasePublishVersion_MetadataEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.key = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.value = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): PublishVersion_MetadataEntry {
+    return {
+      key: isSet(object.key) ? globalThis.String(object.key) : "",
+      value: isSet(object.value) ? globalThis.String(object.value) : "",
+    };
+  },
+
+  toJSON(message: PublishVersion_MetadataEntry): unknown {
+    const obj: any = {};
+    if (message.key !== "") {
+      obj.key = message.key;
+    }
+    if (message.value !== "") {
+      obj.value = message.value;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<PublishVersion_MetadataEntry>, I>>(base?: I): PublishVersion_MetadataEntry {
+    return PublishVersion_MetadataEntry.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<PublishVersion_MetadataEntry>, I>>(object: I): PublishVersion_MetadataEntry {
+    const message = createBasePublishVersion_MetadataEntry();
+    message.key = object.key ?? "";
+    message.value = object.value ?? "";
+    return message;
+  },
+};
+
+function createBaseSetVersionStatus(): SetVersionStatus {
+  return { name: "", version: "", status: RegistryStatus.REGISTRY_STATUS_UNSPECIFIED };
+}
+
+export const SetVersionStatus: MessageFns<SetVersionStatus> = {
+  encode(message: SetVersionStatus, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.name !== "") {
+      writer.uint32(10).string(message.name);
+    }
+    if (message.version !== "") {
+      writer.uint32(18).string(message.version);
+    }
+    if (message.status !== RegistryStatus.REGISTRY_STATUS_UNSPECIFIED) {
+      writer.uint32(24).int32(registryStatusToNumber(message.status));
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): SetVersionStatus {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSetVersionStatus();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.version = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.status = registryStatusFromJSON(reader.int32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SetVersionStatus {
+    return {
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
+      version: isSet(object.version) ? globalThis.String(object.version) : "",
+      status: isSet(object.status) ? registryStatusFromJSON(object.status) : RegistryStatus.REGISTRY_STATUS_UNSPECIFIED,
+    };
+  },
+
+  toJSON(message: SetVersionStatus): unknown {
+    const obj: any = {};
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.version !== "") {
+      obj.version = message.version;
+    }
+    if (message.status !== RegistryStatus.REGISTRY_STATUS_UNSPECIFIED) {
+      obj.status = registryStatusToJSON(message.status);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SetVersionStatus>, I>>(base?: I): SetVersionStatus {
+    return SetVersionStatus.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<SetVersionStatus>, I>>(object: I): SetVersionStatus {
+    const message = createBaseSetVersionStatus();
+    message.name = object.name ?? "";
+    message.version = object.version ?? "";
+    message.status = object.status ?? RegistryStatus.REGISTRY_STATUS_UNSPECIFIED;
+    return message;
+  },
+};
+
+function createBaseRegisterAlias(): RegisterAlias {
+  return { name: "", targetFiberId: "", metadata: {} };
+}
+
+export const RegisterAlias: MessageFns<RegisterAlias> = {
+  encode(message: RegisterAlias, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.name !== "") {
+      writer.uint32(10).string(message.name);
+    }
+    if (message.targetFiberId !== "") {
+      writer.uint32(18).string(message.targetFiberId);
+    }
+    globalThis.Object.entries(message.metadata).forEach(([key, value]: [string, string]) => {
+      RegisterAlias_MetadataEntry.encode({ key: key as any, value }, writer.uint32(26).fork()).join();
+    });
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): RegisterAlias {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRegisterAlias();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.targetFiberId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          const entry3 = RegisterAlias_MetadataEntry.decode(reader, reader.uint32());
+          if (entry3.value !== undefined) {
+            message.metadata[entry3.key] = entry3.value;
+          }
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): RegisterAlias {
+    return {
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
+      targetFiberId: isSet(object.targetFiberId)
+        ? globalThis.String(object.targetFiberId)
+        : isSet(object.target_fiber_id)
+        ? globalThis.String(object.target_fiber_id)
+        : "",
+      metadata: isObject(object.metadata)
+        ? (globalThis.Object.entries(object.metadata) as [string, any][]).reduce(
+          (acc: { [key: string]: string }, [key, value]: [string, any]) => {
+            acc[key] = globalThis.String(value);
+            return acc;
+          },
+          {},
+        )
+        : {},
+    };
+  },
+
+  toJSON(message: RegisterAlias): unknown {
+    const obj: any = {};
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.targetFiberId !== "") {
+      obj.targetFiberId = message.targetFiberId;
+    }
+    if (message.metadata) {
+      const entries = globalThis.Object.entries(message.metadata) as [string, string][];
+      if (entries.length > 0) {
+        obj.metadata = {};
+        entries.forEach(([k, v]) => {
+          obj.metadata[k] = v;
+        });
+      }
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<RegisterAlias>, I>>(base?: I): RegisterAlias {
+    return RegisterAlias.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<RegisterAlias>, I>>(object: I): RegisterAlias {
+    const message = createBaseRegisterAlias();
+    message.name = object.name ?? "";
+    message.targetFiberId = object.targetFiberId ?? "";
+    message.metadata = (globalThis.Object.entries(object.metadata ?? {}) as [string, string][]).reduce(
+      (acc: { [key: string]: string }, [key, value]: [string, string]) => {
+        if (value !== undefined) {
+          acc[key] = globalThis.String(value);
+        }
+        return acc;
+      },
+      {},
+    );
+    return message;
+  },
+};
+
+function createBaseRegisterAlias_MetadataEntry(): RegisterAlias_MetadataEntry {
+  return { key: "", value: "" };
+}
+
+export const RegisterAlias_MetadataEntry: MessageFns<RegisterAlias_MetadataEntry> = {
+  encode(message: RegisterAlias_MetadataEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== "") {
+      writer.uint32(18).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): RegisterAlias_MetadataEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRegisterAlias_MetadataEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.key = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.value = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): RegisterAlias_MetadataEntry {
+    return {
+      key: isSet(object.key) ? globalThis.String(object.key) : "",
+      value: isSet(object.value) ? globalThis.String(object.value) : "",
+    };
+  },
+
+  toJSON(message: RegisterAlias_MetadataEntry): unknown {
+    const obj: any = {};
+    if (message.key !== "") {
+      obj.key = message.key;
+    }
+    if (message.value !== "") {
+      obj.value = message.value;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<RegisterAlias_MetadataEntry>, I>>(base?: I): RegisterAlias_MetadataEntry {
+    return RegisterAlias_MetadataEntry.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<RegisterAlias_MetadataEntry>, I>>(object: I): RegisterAlias_MetadataEntry {
+    const message = createBaseRegisterAlias_MetadataEntry();
+    message.key = object.key ?? "";
+    message.value = object.value ?? "";
+    return message;
+  },
+};
+
 function createBaseOttochainMessage(): OttochainMessage {
   return { message: undefined };
 }
@@ -656,6 +1475,18 @@ export const OttochainMessage: MessageFns<OttochainMessage> = {
         break;
       case "invokeScript":
         InvokeScript.encode(message.message.invokeScript, writer.uint32(42).fork()).join();
+        break;
+      case "upgradeFiber":
+        UpgradeFiber.encode(message.message.upgradeFiber, writer.uint32(50).fork()).join();
+        break;
+      case "publishVersion":
+        PublishVersion.encode(message.message.publishVersion, writer.uint32(58).fork()).join();
+        break;
+      case "setVersionStatus":
+        SetVersionStatus.encode(message.message.setVersionStatus, writer.uint32(66).fork()).join();
+        break;
+      case "registerAlias":
+        RegisterAlias.encode(message.message.registerAlias, writer.uint32(74).fork()).join();
         break;
     }
     return writer;
@@ -717,6 +1548,41 @@ export const OttochainMessage: MessageFns<OttochainMessage> = {
           message.message = { $case: "invokeScript", invokeScript: InvokeScript.decode(reader, reader.uint32()) };
           continue;
         }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.message = { $case: "upgradeFiber", upgradeFiber: UpgradeFiber.decode(reader, reader.uint32()) };
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.message = { $case: "publishVersion", publishVersion: PublishVersion.decode(reader, reader.uint32()) };
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.message = {
+            $case: "setVersionStatus",
+            setVersionStatus: SetVersionStatus.decode(reader, reader.uint32()),
+          };
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.message = { $case: "registerAlias", registerAlias: RegisterAlias.decode(reader, reader.uint32()) };
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -760,6 +1626,22 @@ export const OttochainMessage: MessageFns<OttochainMessage> = {
         ? { $case: "invokeScript", invokeScript: InvokeScript.fromJSON(object.invokeScript) }
         : isSet(object.invoke_script)
         ? { $case: "invokeScript", invokeScript: InvokeScript.fromJSON(object.invoke_script) }
+        : isSet(object.upgradeFiber)
+        ? { $case: "upgradeFiber", upgradeFiber: UpgradeFiber.fromJSON(object.upgradeFiber) }
+        : isSet(object.upgrade_fiber)
+        ? { $case: "upgradeFiber", upgradeFiber: UpgradeFiber.fromJSON(object.upgrade_fiber) }
+        : isSet(object.publishVersion)
+        ? { $case: "publishVersion", publishVersion: PublishVersion.fromJSON(object.publishVersion) }
+        : isSet(object.publish_version)
+        ? { $case: "publishVersion", publishVersion: PublishVersion.fromJSON(object.publish_version) }
+        : isSet(object.setVersionStatus)
+        ? { $case: "setVersionStatus", setVersionStatus: SetVersionStatus.fromJSON(object.setVersionStatus) }
+        : isSet(object.set_version_status)
+        ? { $case: "setVersionStatus", setVersionStatus: SetVersionStatus.fromJSON(object.set_version_status) }
+        : isSet(object.registerAlias)
+        ? { $case: "registerAlias", registerAlias: RegisterAlias.fromJSON(object.registerAlias) }
+        : isSet(object.register_alias)
+        ? { $case: "registerAlias", registerAlias: RegisterAlias.fromJSON(object.register_alias) }
         : undefined,
     };
   },
@@ -776,6 +1658,14 @@ export const OttochainMessage: MessageFns<OttochainMessage> = {
       obj.createScript = CreateScript.toJSON(message.message.createScript);
     } else if (message.message?.$case === "invokeScript") {
       obj.invokeScript = InvokeScript.toJSON(message.message.invokeScript);
+    } else if (message.message?.$case === "upgradeFiber") {
+      obj.upgradeFiber = UpgradeFiber.toJSON(message.message.upgradeFiber);
+    } else if (message.message?.$case === "publishVersion") {
+      obj.publishVersion = PublishVersion.toJSON(message.message.publishVersion);
+    } else if (message.message?.$case === "setVersionStatus") {
+      obj.setVersionStatus = SetVersionStatus.toJSON(message.message.setVersionStatus);
+    } else if (message.message?.$case === "registerAlias") {
+      obj.registerAlias = RegisterAlias.toJSON(message.message.registerAlias);
     }
     return obj;
   },
@@ -831,6 +1721,42 @@ export const OttochainMessage: MessageFns<OttochainMessage> = {
         }
         break;
       }
+      case "upgradeFiber": {
+        if (object.message?.upgradeFiber !== undefined && object.message?.upgradeFiber !== null) {
+          message.message = {
+            $case: "upgradeFiber",
+            upgradeFiber: UpgradeFiber.fromPartial(object.message.upgradeFiber),
+          };
+        }
+        break;
+      }
+      case "publishVersion": {
+        if (object.message?.publishVersion !== undefined && object.message?.publishVersion !== null) {
+          message.message = {
+            $case: "publishVersion",
+            publishVersion: PublishVersion.fromPartial(object.message.publishVersion),
+          };
+        }
+        break;
+      }
+      case "setVersionStatus": {
+        if (object.message?.setVersionStatus !== undefined && object.message?.setVersionStatus !== null) {
+          message.message = {
+            $case: "setVersionStatus",
+            setVersionStatus: SetVersionStatus.fromPartial(object.message.setVersionStatus),
+          };
+        }
+        break;
+      }
+      case "registerAlias": {
+        if (object.message?.registerAlias !== undefined && object.message?.registerAlias !== null) {
+          message.message = {
+            $case: "registerAlias",
+            registerAlias: RegisterAlias.fromPartial(object.message.registerAlias),
+          };
+        }
+        break;
+      }
     }
     return message;
   },
@@ -858,6 +1784,10 @@ function longToNumber(int64: { toString(): string }): number {
     throw new globalThis.Error("Value is smaller than Number.MIN_SAFE_INTEGER");
   }
   return num;
+}
+
+function isObject(value: any): boolean {
+  return typeof value === "object" && value !== null;
 }
 
 function isSet(value: any): boolean {
