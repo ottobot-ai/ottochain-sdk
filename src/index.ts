@@ -55,6 +55,11 @@ export * from './types.js';
 
 // ─── OttoChain-specific transaction helpers ───────────────────────────────────
 export * from './ottochain/transaction.js';
+// Shadow metagraph-sdk's `batchSign` (re-exported transitively by the star
+// export above) with our null-stripping wrapper. An explicit named re-export
+// takes precedence over the ambiguous `export *` collision, so every consumer
+// of `@ottochain/sdk` gets the rc.9-compatible (null-dropping) batchSign.
+export { batchSign } from './ottochain/transaction.js';
 export { normalizeCreateStateMachine, normalizeTransitionStateMachine, normalizeArchiveStateMachine, normalizeMessage } from './ottochain/normalize.js';
 export { dropNulls } from './ottochain/drop-nulls.js';
 

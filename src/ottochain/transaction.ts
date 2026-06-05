@@ -5,8 +5,13 @@
  * self-signed mode, where clients sign their own transactions.
  */
 
-import { signDataUpdate, getPublicKeyId } from '@constellation-network/metagraph-sdk';
-import type { Signed } from '@constellation-network/metagraph-sdk';
+import {
+  signDataUpdate,
+  getPublicKeyId,
+  batchSign as metagraphBatchSign,
+} from '@constellation-network/metagraph-sdk';
+import type { Signed, SigningOptions } from '@constellation-network/metagraph-sdk';
+import { dropNulls } from './drop-nulls.js';
 
 // ============================================================================
 // State Machine Operations
@@ -288,9 +293,15 @@ export async function signTransaction<T>(
   message: T,
   privateKey: string
 ): Promise<Signed<T>> {
-  const proof = await signDataUpdate(message, privateKey);
+  // The chain's Scala server (metakit rc.9) drops null object-fields before
+  // building the canonical bytes it signs/verifies. We must drop nulls here too
+  // so the canonical JSON matches; otherwise verification fails (HTTP 400).
+  // The Signed envelope's `value` carries the same null-free message so the
+  // sent form and the signed form agree.
+  const canonical = dropNulls(message);
+  const proof = await signDataUpdate(canonical, privateKey);
   return {
-    value: message,
+    value: canonical,
     proofs: [proof],
   };
 }
@@ -342,11 +353,41 @@ export async function addTransactionSignature<T>(
   signed: Signed<T>,
   privateKey: string
 ): Promise<Signed<T>> {
-  const newProof = await signDataUpdate(signed.value, privateKey);
+  // Drop nulls so every proof signs the same canonical bytes the server uses
+  // (metakit rc.9 drops null object-fields). Keeps sent + signed forms in sync.
+  const canonical = dropNulls(signed.value);
+  const newProof = await signDataUpdate(canonical, privateKey);
   return {
-    value: signed.value,
+    value: canonical,
     proofs: [...signed.proofs, newProof],
   };
+}
+
+/**
+ * Sign a value with multiple keys at once, dropping null object-fields first.
+ *
+ * This is a null-stripping wrapper around metagraph-sdk's `batchSign`. The
+ * chain's Scala server (metakit rc.9) drops null object-fields before building
+ * the canonical bytes it signs/verifies, while the metagraph-sdk signer
+ * RFC-8785-canonicalizes and KEEPS nulls. Stripping nulls here keeps the TS
+ * client's canonical form byte-identical to the server's, and the returned
+ * Signed envelope's `value` is the null-free message so sent + signed agree.
+ *
+ * Re-exported from `@ottochain/sdk` AFTER the metagraph-sdk star export so it
+ * shadows the upstream `batchSign` for every consumer.
+ *
+ * @param value - Any JSON-serializable message
+ * @param privateKeys - Array of private keys in hex format
+ * @param options - Signing options forwarded to the underlying signer
+ * @returns Signed object whose `value` and proofs are over the null-free message
+ */
+export function batchSign<T>(
+  value: T,
+  privateKeys: string[],
+  options?: SigningOptions
+): Signed<T> {
+  const canonical = dropNulls(value);
+  return metagraphBatchSign(canonical, privateKeys, options);
 }
 
 /**

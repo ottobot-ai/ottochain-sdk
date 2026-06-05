@@ -6,10 +6,25 @@ import {
   createInvokeScriptPayload,
   signTransaction,
   addTransactionSignature,
+  batchSign,
   createDataTransactionRequest,
   getPublicKeyForRegistration,
 } from '../../src/ottochain/transaction.js';
-import { generateKeyPair } from '@constellation-network/metagraph-sdk';
+import { generateKeyPair, verify } from '@constellation-network/metagraph-sdk';
+
+// Recursively assert there are no `null` object-field values anywhere in `value`.
+function expectNoNullFields(value: unknown): void {
+  if (Array.isArray(value)) {
+    value.forEach(expectNoNullFields);
+    return;
+  }
+  if (value !== null && typeof value === 'object') {
+    for (const [, v] of Object.entries(value as Record<string, unknown>)) {
+      expect(v).not.toBeNull();
+      expectNoNullFields(v);
+    }
+  }
+}
 
 describe('transaction helpers', () => {
   describe('createStateMachinePayload', () => {
@@ -200,6 +215,82 @@ describe('transaction helpers', () => {
       expect(multiSigned.proofs).toHaveLength(2);
       expect(multiSigned.proofs[0].id).not.toEqual(multiSigned.proofs[1].id);
       expect(multiSigned.value).toEqual(message);
+    });
+  });
+
+  describe('null-stripping (rc.9 server parity)', () => {
+    it('signTransaction drops null object-fields from the signed value', async () => {
+      const kp = generateKeyPair();
+      // A CreateStateMachine-shaped message carrying state metadata: null,
+      // exactly like the std-app definitions that fail on chain.
+      const message = {
+        CreateStateMachine: {
+          fiberId: 'f1',
+          definition: {
+            states: {
+              ACTIVE: { id: 'ACTIVE', isFinal: false, metadata: null },
+              DONE: { id: 'DONE', isFinal: true, metadata: null },
+            },
+            initialState: 'ACTIVE',
+            transitions: [],
+            metadata: null,
+          },
+          initialData: {},
+        },
+      };
+
+      const signed = await signTransaction(message, kp.privateKey);
+
+      // The signed envelope value must have no null object-fields.
+      expectNoNullFields(signed.value);
+      const def = (signed.value as any).CreateStateMachine.definition;
+      expect(def.states.ACTIVE).toEqual({ id: 'ACTIVE', isFinal: false });
+      expect(def).not.toHaveProperty('metadata');
+      // Empty collections are preserved.
+      expect(def.transitions).toEqual([]);
+      expect((signed.value as any).CreateStateMachine.initialData).toEqual({});
+    });
+
+    it('signTransaction produces a signature that verifies over the null-free value', async () => {
+      const kp = generateKeyPair();
+      const message = { CreateScript: { fiberId: 's1', scriptProgram: {}, initialState: null, accessControl: { type: 'open' } } };
+      const signed = await signTransaction(message, kp.privateKey);
+      expect((signed.value as any).CreateScript).not.toHaveProperty('initialState');
+      // signTransaction signs as a DataUpdate (Constellation prefix).
+      const result = await verify(signed, true);
+      expect(result.isValid).toBe(true);
+    });
+
+    it('addTransactionSignature keeps the value null-free and adds a proof', async () => {
+      const kp1 = generateKeyPair();
+      const kp2 = generateKeyPair();
+      const message = { CreateScript: { fiberId: 's1', scriptProgram: {}, initialState: null, accessControl: { type: 'open' } } };
+      const signed = await signTransaction(message, kp1.privateKey);
+      const multi = await addTransactionSignature(signed, kp2.privateKey);
+      expect(multi.proofs).toHaveLength(2);
+      expectNoNullFields(multi.value);
+      expect((multi.value as any).CreateScript).not.toHaveProperty('initialState');
+    });
+  });
+
+  describe('batchSign (null-stripping wrapper)', () => {
+    it('strips null object-fields before signing and in the returned value', () => {
+      const kp1 = generateKeyPair();
+      const kp2 = generateKeyPair();
+      const message = { fiberId: 'f1', meta: null, nested: { keep: 1, drop: null }, list: [] };
+      const signed = batchSign(message, [kp1.privateKey, kp2.privateKey]);
+      expect(signed.proofs).toHaveLength(2);
+      expect(signed.value).toEqual({ fiberId: 'f1', nested: { keep: 1 }, list: [] });
+      expectNoNullFields(signed.value);
+    });
+
+    it('verifies the proofs it produced', async () => {
+      const kp = generateKeyPair();
+      const message = { fiberId: 'f1', meta: null };
+      // No signing mode passed → plain signature (matches verify(signed, false)).
+      const signed = batchSign(message, [kp.privateKey]);
+      const result = await verify(signed, false);
+      expect(result.isValid).toBe(true);
     });
   });
 
