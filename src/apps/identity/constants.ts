@@ -6,7 +6,7 @@
  * @packageDocumentation
  */
 
-import { IdentityState } from "../../generated/ottochain/apps/identity/v1/identity.js";
+import { State } from "../../generated/ottochain/apps/identity/v1/identity.js";
 import { AttestationType } from "../../generated/ottochain/apps/identity/v1/attestation.js";
 
 // ---------------------------------------------------------------------------
@@ -18,26 +18,26 @@ import { AttestationType } from "../../generated/ottochain/apps/identity/v1/atte
  * Maps current state to allowed event names.
  * Note: Some transitions are type-specific (agent vs oracle)
  */
-export const IDENTITY_TRANSITIONS: Record<IdentityState, readonly string[]> = {
-  [IdentityState.IDENTITY_STATE_UNSPECIFIED]: [],
-  [IdentityState.IDENTITY_STATE_UNREGISTERED]: ["register"],
-  [IdentityState.IDENTITY_STATE_REGISTERED]: ["activate", "withdraw"],
-  [IdentityState.IDENTITY_STATE_ACTIVE]: [
+export const IDENTITY_TRANSITIONS: Record<State, readonly string[]> = {
+  [State.IDENTITY_STATE_UNSPECIFIED]: [],
+  [State.IDENTITY_STATE_UNREGISTERED]: ["register"],
+  [State.IDENTITY_STATE_REGISTERED]: ["activate", "withdraw"],
+  [State.IDENTITY_STATE_ACTIVE]: [
     "challenge",
     "slash",
     "deactivate",
     "withdraw",
   ],
-  [IdentityState.IDENTITY_STATE_CHALLENGED]: [
+  [State.IDENTITY_STATE_CHALLENGED]: [
     "uphold_challenge",
     "dismiss_challenge",
   ],
-  [IdentityState.IDENTITY_STATE_SUSPENDED]: ["begin_probation"],
-  [IdentityState.IDENTITY_STATE_PROBATION]: ["complete_probation"],
-  [IdentityState.IDENTITY_STATE_SLASHED]: ["reactivate", "withdraw"],
-  [IdentityState.IDENTITY_STATE_INACTIVE]: ["activate", "withdraw"],
-  [IdentityState.IDENTITY_STATE_WITHDRAWN]: [], // Terminal state
-  [IdentityState.UNRECOGNIZED]: [],
+  [State.IDENTITY_STATE_SUSPENDED]: ["begin_probation"],
+  [State.IDENTITY_STATE_PROBATION]: ["complete_probation"],
+  [State.IDENTITY_STATE_SLASHED]: ["reactivate", "withdraw"],
+  [State.IDENTITY_STATE_INACTIVE]: ["activate", "withdraw"],
+  [State.IDENTITY_STATE_WITHDRAWN]: [], // Terminal state
+  [State.UNRECOGNIZED]: [],
 };
 
 // Legacy alias
@@ -63,7 +63,7 @@ export const ATTESTATION_DELTAS: Record<AttestationType, number> = {
 /**
  * Check if a transition is valid for the given state.
  */
-export function canTransition(state: IdentityState, event: string): boolean {
+export function canTransition(state: State, event: string): boolean {
   return IDENTITY_TRANSITIONS[state]?.includes(event) ?? false;
 }
 

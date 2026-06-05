@@ -51,9 +51,13 @@ export {
 } from './ottochain/v1/records.js';
 
 // App: Identity (unified in v2.1)
+// The nested lifecycle/kind enums dropped their app prefix in the proto
+// (now Type/State, disambiguated by package ottochain.apps.identity.v1).
+// This flat barrel re-aliases them back to app-qualified names so the global
+// export namespace stays collision-free across apps.
 export {
-  IdentityType,
-  IdentityState,
+  Type as IdentityType,
+  State as IdentityState,
   Platform,
   PlatformLink,
   Reputation,
@@ -69,8 +73,8 @@ export {
 } from './ottochain/apps/identity/v1/identity.js';
 
 // Legacy aliases for backward compatibility
-export { IdentityState as AgentState } from './ottochain/apps/identity/v1/identity.js';
-export { IdentityState as OracleState } from './ottochain/apps/identity/v1/identity.js';
+export { State as AgentState } from './ottochain/apps/identity/v1/identity.js';
+export { State as OracleState } from './ottochain/apps/identity/v1/identity.js';
 
 export {
   AttestationType,
@@ -83,7 +87,7 @@ export {
 
 // App: Contracts
 export {
-  ContractState,
+  State as ContractState,
   Contract,
   ProposeContractRequest,
   AcceptContractRequest,
@@ -95,8 +99,8 @@ export {
 
 // App: Markets
 export {
-  MarketType,
-  MarketState,
+  Type as MarketType,
+  State as MarketState,
   Commitment,
   Resolution,
   Market,

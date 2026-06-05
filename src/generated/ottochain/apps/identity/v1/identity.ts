@@ -11,7 +11,7 @@ import { Timestamp } from "../../../../google/protobuf/timestamp.js";
 export const protobufPackage = "ottochain.apps.identity.v1";
 
 /** Identity type - determines which state machine variant applies */
-export enum IdentityType {
+export enum Type {
   IDENTITY_TYPE_UNSPECIFIED = "IDENTITY_TYPE_UNSPECIFIED",
   /** IDENTITY_TYPE_AGENT - AI agent identity */
   IDENTITY_TYPE_AGENT = "IDENTITY_TYPE_AGENT",
@@ -22,54 +22,54 @@ export enum IdentityType {
   UNRECOGNIZED = "UNRECOGNIZED",
 }
 
-export function identityTypeFromJSON(object: any): IdentityType {
+export function typeFromJSON(object: any): Type {
   switch (object) {
     case 0:
     case "IDENTITY_TYPE_UNSPECIFIED":
-      return IdentityType.IDENTITY_TYPE_UNSPECIFIED;
+      return Type.IDENTITY_TYPE_UNSPECIFIED;
     case 1:
     case "IDENTITY_TYPE_AGENT":
-      return IdentityType.IDENTITY_TYPE_AGENT;
+      return Type.IDENTITY_TYPE_AGENT;
     case 2:
     case "IDENTITY_TYPE_ORACLE":
-      return IdentityType.IDENTITY_TYPE_ORACLE;
+      return Type.IDENTITY_TYPE_ORACLE;
     case 3:
     case "IDENTITY_TYPE_SERVICE":
-      return IdentityType.IDENTITY_TYPE_SERVICE;
+      return Type.IDENTITY_TYPE_SERVICE;
     case -1:
     case "UNRECOGNIZED":
     default:
-      return IdentityType.UNRECOGNIZED;
+      return Type.UNRECOGNIZED;
   }
 }
 
-export function identityTypeToJSON(object: IdentityType): string {
+export function typeToJSON(object: Type): string {
   switch (object) {
-    case IdentityType.IDENTITY_TYPE_UNSPECIFIED:
+    case Type.IDENTITY_TYPE_UNSPECIFIED:
       return "IDENTITY_TYPE_UNSPECIFIED";
-    case IdentityType.IDENTITY_TYPE_AGENT:
+    case Type.IDENTITY_TYPE_AGENT:
       return "IDENTITY_TYPE_AGENT";
-    case IdentityType.IDENTITY_TYPE_ORACLE:
+    case Type.IDENTITY_TYPE_ORACLE:
       return "IDENTITY_TYPE_ORACLE";
-    case IdentityType.IDENTITY_TYPE_SERVICE:
+    case Type.IDENTITY_TYPE_SERVICE:
       return "IDENTITY_TYPE_SERVICE";
-    case IdentityType.UNRECOGNIZED:
+    case Type.UNRECOGNIZED:
     default:
       return "UNRECOGNIZED";
   }
 }
 
-export function identityTypeToNumber(object: IdentityType): number {
+export function typeToNumber(object: Type): number {
   switch (object) {
-    case IdentityType.IDENTITY_TYPE_UNSPECIFIED:
+    case Type.IDENTITY_TYPE_UNSPECIFIED:
       return 0;
-    case IdentityType.IDENTITY_TYPE_AGENT:
+    case Type.IDENTITY_TYPE_AGENT:
       return 1;
-    case IdentityType.IDENTITY_TYPE_ORACLE:
+    case Type.IDENTITY_TYPE_ORACLE:
       return 2;
-    case IdentityType.IDENTITY_TYPE_SERVICE:
+    case Type.IDENTITY_TYPE_SERVICE:
       return 3;
-    case IdentityType.UNRECOGNIZED:
+    case Type.UNRECOGNIZED:
     default:
       return -1;
   }
@@ -79,7 +79,7 @@ export function identityTypeToNumber(object: IdentityType): number {
  * Unified identity lifecycle states
  * Shared across all identity types with type-specific transitions
  */
-export enum IdentityState {
+export enum State {
   IDENTITY_STATE_UNSPECIFIED = "IDENTITY_STATE_UNSPECIFIED",
   /** IDENTITY_STATE_UNREGISTERED - Not yet registered (oracle initial) */
   IDENTITY_STATE_UNREGISTERED = "IDENTITY_STATE_UNREGISTERED",
@@ -102,96 +102,96 @@ export enum IdentityState {
   UNRECOGNIZED = "UNRECOGNIZED",
 }
 
-export function identityStateFromJSON(object: any): IdentityState {
+export function stateFromJSON(object: any): State {
   switch (object) {
     case 0:
     case "IDENTITY_STATE_UNSPECIFIED":
-      return IdentityState.IDENTITY_STATE_UNSPECIFIED;
+      return State.IDENTITY_STATE_UNSPECIFIED;
     case 1:
     case "IDENTITY_STATE_UNREGISTERED":
-      return IdentityState.IDENTITY_STATE_UNREGISTERED;
+      return State.IDENTITY_STATE_UNREGISTERED;
     case 2:
     case "IDENTITY_STATE_REGISTERED":
-      return IdentityState.IDENTITY_STATE_REGISTERED;
+      return State.IDENTITY_STATE_REGISTERED;
     case 3:
     case "IDENTITY_STATE_ACTIVE":
-      return IdentityState.IDENTITY_STATE_ACTIVE;
+      return State.IDENTITY_STATE_ACTIVE;
     case 4:
     case "IDENTITY_STATE_CHALLENGED":
-      return IdentityState.IDENTITY_STATE_CHALLENGED;
+      return State.IDENTITY_STATE_CHALLENGED;
     case 5:
     case "IDENTITY_STATE_SUSPENDED":
-      return IdentityState.IDENTITY_STATE_SUSPENDED;
+      return State.IDENTITY_STATE_SUSPENDED;
     case 6:
     case "IDENTITY_STATE_PROBATION":
-      return IdentityState.IDENTITY_STATE_PROBATION;
+      return State.IDENTITY_STATE_PROBATION;
     case 7:
     case "IDENTITY_STATE_SLASHED":
-      return IdentityState.IDENTITY_STATE_SLASHED;
+      return State.IDENTITY_STATE_SLASHED;
     case 8:
     case "IDENTITY_STATE_INACTIVE":
-      return IdentityState.IDENTITY_STATE_INACTIVE;
+      return State.IDENTITY_STATE_INACTIVE;
     case 9:
     case "IDENTITY_STATE_WITHDRAWN":
-      return IdentityState.IDENTITY_STATE_WITHDRAWN;
+      return State.IDENTITY_STATE_WITHDRAWN;
     case -1:
     case "UNRECOGNIZED":
     default:
-      return IdentityState.UNRECOGNIZED;
+      return State.UNRECOGNIZED;
   }
 }
 
-export function identityStateToJSON(object: IdentityState): string {
+export function stateToJSON(object: State): string {
   switch (object) {
-    case IdentityState.IDENTITY_STATE_UNSPECIFIED:
+    case State.IDENTITY_STATE_UNSPECIFIED:
       return "IDENTITY_STATE_UNSPECIFIED";
-    case IdentityState.IDENTITY_STATE_UNREGISTERED:
+    case State.IDENTITY_STATE_UNREGISTERED:
       return "IDENTITY_STATE_UNREGISTERED";
-    case IdentityState.IDENTITY_STATE_REGISTERED:
+    case State.IDENTITY_STATE_REGISTERED:
       return "IDENTITY_STATE_REGISTERED";
-    case IdentityState.IDENTITY_STATE_ACTIVE:
+    case State.IDENTITY_STATE_ACTIVE:
       return "IDENTITY_STATE_ACTIVE";
-    case IdentityState.IDENTITY_STATE_CHALLENGED:
+    case State.IDENTITY_STATE_CHALLENGED:
       return "IDENTITY_STATE_CHALLENGED";
-    case IdentityState.IDENTITY_STATE_SUSPENDED:
+    case State.IDENTITY_STATE_SUSPENDED:
       return "IDENTITY_STATE_SUSPENDED";
-    case IdentityState.IDENTITY_STATE_PROBATION:
+    case State.IDENTITY_STATE_PROBATION:
       return "IDENTITY_STATE_PROBATION";
-    case IdentityState.IDENTITY_STATE_SLASHED:
+    case State.IDENTITY_STATE_SLASHED:
       return "IDENTITY_STATE_SLASHED";
-    case IdentityState.IDENTITY_STATE_INACTIVE:
+    case State.IDENTITY_STATE_INACTIVE:
       return "IDENTITY_STATE_INACTIVE";
-    case IdentityState.IDENTITY_STATE_WITHDRAWN:
+    case State.IDENTITY_STATE_WITHDRAWN:
       return "IDENTITY_STATE_WITHDRAWN";
-    case IdentityState.UNRECOGNIZED:
+    case State.UNRECOGNIZED:
     default:
       return "UNRECOGNIZED";
   }
 }
 
-export function identityStateToNumber(object: IdentityState): number {
+export function stateToNumber(object: State): number {
   switch (object) {
-    case IdentityState.IDENTITY_STATE_UNSPECIFIED:
+    case State.IDENTITY_STATE_UNSPECIFIED:
       return 0;
-    case IdentityState.IDENTITY_STATE_UNREGISTERED:
+    case State.IDENTITY_STATE_UNREGISTERED:
       return 1;
-    case IdentityState.IDENTITY_STATE_REGISTERED:
+    case State.IDENTITY_STATE_REGISTERED:
       return 2;
-    case IdentityState.IDENTITY_STATE_ACTIVE:
+    case State.IDENTITY_STATE_ACTIVE:
       return 3;
-    case IdentityState.IDENTITY_STATE_CHALLENGED:
+    case State.IDENTITY_STATE_CHALLENGED:
       return 4;
-    case IdentityState.IDENTITY_STATE_SUSPENDED:
+    case State.IDENTITY_STATE_SUSPENDED:
       return 5;
-    case IdentityState.IDENTITY_STATE_PROBATION:
+    case State.IDENTITY_STATE_PROBATION:
       return 6;
-    case IdentityState.IDENTITY_STATE_SLASHED:
+    case State.IDENTITY_STATE_SLASHED:
       return 7;
-    case IdentityState.IDENTITY_STATE_INACTIVE:
+    case State.IDENTITY_STATE_INACTIVE:
       return 8;
-    case IdentityState.IDENTITY_STATE_WITHDRAWN:
+    case State.IDENTITY_STATE_WITHDRAWN:
       return 9;
-    case IdentityState.UNRECOGNIZED:
+    case State.UNRECOGNIZED:
     default:
       return -1;
   }
@@ -312,8 +312,8 @@ export interface Identity {
   address: string;
   publicKey: string;
   displayName: string;
-  identityType: IdentityType;
-  state: IdentityState;
+  identityType: Type;
+  state: State;
   reputation?:
     | Reputation
     | undefined;
@@ -328,7 +328,7 @@ export interface Identity {
 }
 
 export interface RegisterIdentityRequest {
-  identityType: IdentityType;
+  identityType: Type;
   address: string;
   displayName: string;
   /** For oracles/services */
@@ -368,7 +368,7 @@ export interface WithdrawIdentityRequest {
 
 export interface IdentityDefinition {
   /** Configuration for identity state machine */
-  identityType: IdentityType;
+  identityType: Type;
   /** Default starting reputation */
   initialReputation: number;
   /** Min rep/stake to activate */
@@ -777,8 +777,8 @@ function createBaseIdentity(): Identity {
     address: "",
     publicKey: "",
     displayName: "",
-    identityType: IdentityType.IDENTITY_TYPE_UNSPECIFIED,
-    state: IdentityState.IDENTITY_STATE_UNSPECIFIED,
+    identityType: Type.IDENTITY_TYPE_UNSPECIFIED,
+    state: State.IDENTITY_STATE_UNSPECIFIED,
     reputation: undefined,
     stake: 0,
     domains: [],
@@ -803,11 +803,11 @@ export const Identity: MessageFns<Identity> = {
     if (message.displayName !== "") {
       writer.uint32(34).string(message.displayName);
     }
-    if (message.identityType !== IdentityType.IDENTITY_TYPE_UNSPECIFIED) {
-      writer.uint32(40).int32(identityTypeToNumber(message.identityType));
+    if (message.identityType !== Type.IDENTITY_TYPE_UNSPECIFIED) {
+      writer.uint32(40).int32(typeToNumber(message.identityType));
     }
-    if (message.state !== IdentityState.IDENTITY_STATE_UNSPECIFIED) {
-      writer.uint32(48).int32(identityStateToNumber(message.state));
+    if (message.state !== State.IDENTITY_STATE_UNSPECIFIED) {
+      writer.uint32(48).int32(stateToNumber(message.state));
     }
     if (message.reputation !== undefined) {
       Reputation.encode(message.reputation, writer.uint32(58).fork()).join();
@@ -877,7 +877,7 @@ export const Identity: MessageFns<Identity> = {
             break;
           }
 
-          message.identityType = identityTypeFromJSON(reader.int32());
+          message.identityType = typeFromJSON(reader.int32());
           continue;
         }
         case 6: {
@@ -885,7 +885,7 @@ export const Identity: MessageFns<Identity> = {
             break;
           }
 
-          message.state = identityStateFromJSON(reader.int32());
+          message.state = stateFromJSON(reader.int32());
           continue;
         }
         case 7: {
@@ -968,11 +968,11 @@ export const Identity: MessageFns<Identity> = {
         ? globalThis.String(object.display_name)
         : "",
       identityType: isSet(object.identityType)
-        ? identityTypeFromJSON(object.identityType)
+        ? typeFromJSON(object.identityType)
         : isSet(object.identity_type)
-        ? identityTypeFromJSON(object.identity_type)
-        : IdentityType.IDENTITY_TYPE_UNSPECIFIED,
-      state: isSet(object.state) ? identityStateFromJSON(object.state) : IdentityState.IDENTITY_STATE_UNSPECIFIED,
+        ? typeFromJSON(object.identity_type)
+        : Type.IDENTITY_TYPE_UNSPECIFIED,
+      state: isSet(object.state) ? stateFromJSON(object.state) : State.IDENTITY_STATE_UNSPECIFIED,
       reputation: isSet(object.reputation) ? Reputation.fromJSON(object.reputation) : undefined,
       stake: isSet(object.stake) ? globalThis.Number(object.stake) : 0,
       domains: globalThis.Array.isArray(object?.domains) ? object.domains.map((e: any) => globalThis.String(e)) : [],
@@ -1013,11 +1013,11 @@ export const Identity: MessageFns<Identity> = {
     if (message.displayName !== "") {
       obj.displayName = message.displayName;
     }
-    if (message.identityType !== IdentityType.IDENTITY_TYPE_UNSPECIFIED) {
-      obj.identityType = identityTypeToJSON(message.identityType);
+    if (message.identityType !== Type.IDENTITY_TYPE_UNSPECIFIED) {
+      obj.identityType = typeToJSON(message.identityType);
     }
-    if (message.state !== IdentityState.IDENTITY_STATE_UNSPECIFIED) {
-      obj.state = identityStateToJSON(message.state);
+    if (message.state !== State.IDENTITY_STATE_UNSPECIFIED) {
+      obj.state = stateToJSON(message.state);
     }
     if (message.reputation !== undefined) {
       obj.reputation = Reputation.toJSON(message.reputation);
@@ -1052,8 +1052,8 @@ export const Identity: MessageFns<Identity> = {
     message.address = object.address ?? "";
     message.publicKey = object.publicKey ?? "";
     message.displayName = object.displayName ?? "";
-    message.identityType = object.identityType ?? IdentityType.IDENTITY_TYPE_UNSPECIFIED;
-    message.state = object.state ?? IdentityState.IDENTITY_STATE_UNSPECIFIED;
+    message.identityType = object.identityType ?? Type.IDENTITY_TYPE_UNSPECIFIED;
+    message.state = object.state ?? State.IDENTITY_STATE_UNSPECIFIED;
     message.reputation = (object.reputation !== undefined && object.reputation !== null)
       ? Reputation.fromPartial(object.reputation)
       : undefined;
@@ -1068,19 +1068,13 @@ export const Identity: MessageFns<Identity> = {
 };
 
 function createBaseRegisterIdentityRequest(): RegisterIdentityRequest {
-  return {
-    identityType: IdentityType.IDENTITY_TYPE_UNSPECIFIED,
-    address: "",
-    displayName: "",
-    initialStake: 0,
-    domains: [],
-  };
+  return { identityType: Type.IDENTITY_TYPE_UNSPECIFIED, address: "", displayName: "", initialStake: 0, domains: [] };
 }
 
 export const RegisterIdentityRequest: MessageFns<RegisterIdentityRequest> = {
   encode(message: RegisterIdentityRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.identityType !== IdentityType.IDENTITY_TYPE_UNSPECIFIED) {
-      writer.uint32(8).int32(identityTypeToNumber(message.identityType));
+    if (message.identityType !== Type.IDENTITY_TYPE_UNSPECIFIED) {
+      writer.uint32(8).int32(typeToNumber(message.identityType));
     }
     if (message.address !== "") {
       writer.uint32(18).string(message.address);
@@ -1109,7 +1103,7 @@ export const RegisterIdentityRequest: MessageFns<RegisterIdentityRequest> = {
             break;
           }
 
-          message.identityType = identityTypeFromJSON(reader.int32());
+          message.identityType = typeFromJSON(reader.int32());
           continue;
         }
         case 2: {
@@ -1156,10 +1150,10 @@ export const RegisterIdentityRequest: MessageFns<RegisterIdentityRequest> = {
   fromJSON(object: any): RegisterIdentityRequest {
     return {
       identityType: isSet(object.identityType)
-        ? identityTypeFromJSON(object.identityType)
+        ? typeFromJSON(object.identityType)
         : isSet(object.identity_type)
-        ? identityTypeFromJSON(object.identity_type)
-        : IdentityType.IDENTITY_TYPE_UNSPECIFIED,
+        ? typeFromJSON(object.identity_type)
+        : Type.IDENTITY_TYPE_UNSPECIFIED,
       address: isSet(object.address) ? globalThis.String(object.address) : "",
       displayName: isSet(object.displayName)
         ? globalThis.String(object.displayName)
@@ -1177,8 +1171,8 @@ export const RegisterIdentityRequest: MessageFns<RegisterIdentityRequest> = {
 
   toJSON(message: RegisterIdentityRequest): unknown {
     const obj: any = {};
-    if (message.identityType !== IdentityType.IDENTITY_TYPE_UNSPECIFIED) {
-      obj.identityType = identityTypeToJSON(message.identityType);
+    if (message.identityType !== Type.IDENTITY_TYPE_UNSPECIFIED) {
+      obj.identityType = typeToJSON(message.identityType);
     }
     if (message.address !== "") {
       obj.address = message.address;
@@ -1200,7 +1194,7 @@ export const RegisterIdentityRequest: MessageFns<RegisterIdentityRequest> = {
   },
   fromPartial<I extends Exact<DeepPartial<RegisterIdentityRequest>, I>>(object: I): RegisterIdentityRequest {
     const message = createBaseRegisterIdentityRequest();
-    message.identityType = object.identityType ?? IdentityType.IDENTITY_TYPE_UNSPECIFIED;
+    message.identityType = object.identityType ?? Type.IDENTITY_TYPE_UNSPECIFIED;
     message.address = object.address ?? "";
     message.displayName = object.displayName ?? "";
     message.initialStake = object.initialStake ?? 0;
@@ -1687,7 +1681,7 @@ export const WithdrawIdentityRequest: MessageFns<WithdrawIdentityRequest> = {
 
 function createBaseIdentityDefinition(): IdentityDefinition {
   return {
-    identityType: IdentityType.IDENTITY_TYPE_UNSPECIFIED,
+    identityType: Type.IDENTITY_TYPE_UNSPECIFIED,
     initialReputation: 0,
     activationThreshold: 0,
     minStake: 0,
@@ -1699,8 +1693,8 @@ function createBaseIdentityDefinition(): IdentityDefinition {
 
 export const IdentityDefinition: MessageFns<IdentityDefinition> = {
   encode(message: IdentityDefinition, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.identityType !== IdentityType.IDENTITY_TYPE_UNSPECIFIED) {
-      writer.uint32(8).int32(identityTypeToNumber(message.identityType));
+    if (message.identityType !== Type.IDENTITY_TYPE_UNSPECIFIED) {
+      writer.uint32(8).int32(typeToNumber(message.identityType));
     }
     if (message.initialReputation !== 0) {
       writer.uint32(16).int32(message.initialReputation);
@@ -1735,7 +1729,7 @@ export const IdentityDefinition: MessageFns<IdentityDefinition> = {
             break;
           }
 
-          message.identityType = identityTypeFromJSON(reader.int32());
+          message.identityType = typeFromJSON(reader.int32());
           continue;
         }
         case 2: {
@@ -1798,10 +1792,10 @@ export const IdentityDefinition: MessageFns<IdentityDefinition> = {
   fromJSON(object: any): IdentityDefinition {
     return {
       identityType: isSet(object.identityType)
-        ? identityTypeFromJSON(object.identityType)
+        ? typeFromJSON(object.identityType)
         : isSet(object.identity_type)
-        ? identityTypeFromJSON(object.identity_type)
-        : IdentityType.IDENTITY_TYPE_UNSPECIFIED,
+        ? typeFromJSON(object.identity_type)
+        : Type.IDENTITY_TYPE_UNSPECIFIED,
       initialReputation: isSet(object.initialReputation)
         ? globalThis.Number(object.initialReputation)
         : isSet(object.initial_reputation)
@@ -1837,8 +1831,8 @@ export const IdentityDefinition: MessageFns<IdentityDefinition> = {
 
   toJSON(message: IdentityDefinition): unknown {
     const obj: any = {};
-    if (message.identityType !== IdentityType.IDENTITY_TYPE_UNSPECIFIED) {
-      obj.identityType = identityTypeToJSON(message.identityType);
+    if (message.identityType !== Type.IDENTITY_TYPE_UNSPECIFIED) {
+      obj.identityType = typeToJSON(message.identityType);
     }
     if (message.initialReputation !== 0) {
       obj.initialReputation = Math.round(message.initialReputation);
@@ -1866,7 +1860,7 @@ export const IdentityDefinition: MessageFns<IdentityDefinition> = {
   },
   fromPartial<I extends Exact<DeepPartial<IdentityDefinition>, I>>(object: I): IdentityDefinition {
     const message = createBaseIdentityDefinition();
-    message.identityType = object.identityType ?? IdentityType.IDENTITY_TYPE_UNSPECIFIED;
+    message.identityType = object.identityType ?? Type.IDENTITY_TYPE_UNSPECIFIED;
     message.initialReputation = object.initialReputation ?? 0;
     message.activationThreshold = object.activationThreshold ?? 0;
     message.minStake = object.minStake ?? 0;

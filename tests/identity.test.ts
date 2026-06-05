@@ -5,7 +5,7 @@ import {
   canTransition,
   getReputationDelta,
   DEFAULT_REPUTATION_CONFIG,
-  IdentityState,
+  State,
   AttestationType,
 } from '../src/apps/identity';
 
@@ -59,19 +59,19 @@ describe('Identity module', () => {
 
   describe('canTransition', () => {
     it('returns true for valid transition from registered', () => {
-      expect(canTransition(IdentityState.IDENTITY_STATE_REGISTERED, 'activate')).toBe(true);
+      expect(canTransition(State.IDENTITY_STATE_REGISTERED, 'activate')).toBe(true);
     });
 
     it('returns false for invalid transition', () => {
-      expect(canTransition(IdentityState.IDENTITY_STATE_WITHDRAWN, 'activate')).toBe(false);
+      expect(canTransition(State.IDENTITY_STATE_WITHDRAWN, 'activate')).toBe(false);
     });
 
     it('returns false for terminal state', () => {
-      expect(canTransition(IdentityState.IDENTITY_STATE_WITHDRAWN, 'any_event')).toBe(false);
+      expect(canTransition(State.IDENTITY_STATE_WITHDRAWN, 'any_event')).toBe(false);
     });
 
     it('returns true for oracle reactivation from slashed', () => {
-      expect(canTransition(IdentityState.IDENTITY_STATE_SLASHED, 'reactivate')).toBe(true);
+      expect(canTransition(State.IDENTITY_STATE_SLASHED, 'reactivate')).toBe(true);
     });
   });
 

@@ -17,10 +17,12 @@
  * @packageDocumentation
  */
 
-// Re-export generated protobuf types (source of truth)
+// Re-export generated protobuf types (source of truth).
+// The nested lifecycle/kind enums dropped their app prefix in the proto; under
+// this app-scoped entrypoint they are unambiguously Type / State.
 export {
-  IdentityType,
-  IdentityState,
+  Type,
+  State,
   Platform,
   PlatformLink,
   Reputation,
@@ -33,16 +35,25 @@ export {
   AddStakeRequest,
   WithdrawIdentityRequest,
   IdentityDefinition,
-  identityTypeFromJSON,
-  identityTypeToJSON,
-  identityStateFromJSON,
-  identityStateToJSON,
+  typeFromJSON,
+  typeToJSON,
+  stateFromJSON,
+  stateToJSON,
   platformFromJSON,
   platformToJSON,
 } from "../../generated/ottochain/apps/identity/v1/identity.js";
 
 // Legacy aliases for backward compatibility
-export { IdentityState as AgentState } from "../../generated/ottochain/apps/identity/v1/identity.js";
+export { State as AgentState } from "../../generated/ottochain/apps/identity/v1/identity.js";
+// Deprecated app-prefixed aliases (renamed to Type / State); kept for compat.
+export {
+  Type as IdentityType,
+  State as IdentityState,
+  typeFromJSON as identityTypeFromJSON,
+  typeToJSON as identityTypeToJSON,
+  stateFromJSON as identityStateFromJSON,
+  stateToJSON as identityStateToJSON,
+} from "../../generated/ottochain/apps/identity/v1/identity.js";
 
 export {
   AttestationType,

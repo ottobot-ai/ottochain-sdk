@@ -6,8 +6,8 @@
  * @example
  * ```typescript
  * import {
- *   MarketType,
- *   MarketState,
+ *   Type,
+ *   State,
  *   Market,
  *   getMarketDefinition,
  *   MARKETS_DEFINITIONS
@@ -20,10 +20,12 @@
  * @packageDocumentation
  */
 
-// Re-export generated protobuf types (source of truth)
+// Re-export generated protobuf types (source of truth).
+// The nested lifecycle/kind enums dropped their app prefix in the proto; under
+// this app-scoped entrypoint they are unambiguously Type / State.
 export {
-  MarketType,
-  MarketState,
+  Type,
+  State,
   Commitment,
   Resolution,
   Market,
@@ -32,10 +34,20 @@ export {
   SubmitResolutionRequest,
   CancelMarketRequest,
   MarketDefinition,
-  marketTypeFromJSON,
-  marketTypeToJSON,
-  marketStateFromJSON,
-  marketStateToJSON,
+  typeFromJSON,
+  typeToJSON,
+  stateFromJSON,
+  stateToJSON,
+} from "../../generated/ottochain/apps/markets/v1/market.js";
+
+// Deprecated app-prefixed aliases (renamed to Type / State); kept for compat.
+export {
+  Type as MarketType,
+  State as MarketState,
+  typeFromJSON as marketTypeFromJSON,
+  typeToJSON as marketTypeToJSON,
+  stateFromJSON as marketStateFromJSON,
+  stateToJSON as marketStateToJSON,
 } from "../../generated/ottochain/apps/markets/v1/market.js";
 
 // ---------------------------------------------------------------------------

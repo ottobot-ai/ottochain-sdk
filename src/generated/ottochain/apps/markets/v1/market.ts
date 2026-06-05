@@ -12,7 +12,7 @@ import { Timestamp } from "../../../../google/protobuf/timestamp.js";
 export const protobufPackage = "ottochain.apps.markets.v1";
 
 /** Type of market mechanism */
-export enum MarketType {
+export enum Type {
   MARKET_TYPE_UNSPECIFIED = "MARKET_TYPE_UNSPECIFIED",
   /** MARKET_TYPE_PREDICTION - Prediction market for future outcomes */
   MARKET_TYPE_PREDICTION = "MARKET_TYPE_PREDICTION",
@@ -25,68 +25,68 @@ export enum MarketType {
   UNRECOGNIZED = "UNRECOGNIZED",
 }
 
-export function marketTypeFromJSON(object: any): MarketType {
+export function typeFromJSON(object: any): Type {
   switch (object) {
     case 0:
     case "MARKET_TYPE_UNSPECIFIED":
-      return MarketType.MARKET_TYPE_UNSPECIFIED;
+      return Type.MARKET_TYPE_UNSPECIFIED;
     case 1:
     case "MARKET_TYPE_PREDICTION":
-      return MarketType.MARKET_TYPE_PREDICTION;
+      return Type.MARKET_TYPE_PREDICTION;
     case 2:
     case "MARKET_TYPE_AUCTION":
-      return MarketType.MARKET_TYPE_AUCTION;
+      return Type.MARKET_TYPE_AUCTION;
     case 3:
     case "MARKET_TYPE_CROWDFUND":
-      return MarketType.MARKET_TYPE_CROWDFUND;
+      return Type.MARKET_TYPE_CROWDFUND;
     case 4:
     case "MARKET_TYPE_GROUP_BUY":
-      return MarketType.MARKET_TYPE_GROUP_BUY;
+      return Type.MARKET_TYPE_GROUP_BUY;
     case -1:
     case "UNRECOGNIZED":
     default:
-      return MarketType.UNRECOGNIZED;
+      return Type.UNRECOGNIZED;
   }
 }
 
-export function marketTypeToJSON(object: MarketType): string {
+export function typeToJSON(object: Type): string {
   switch (object) {
-    case MarketType.MARKET_TYPE_UNSPECIFIED:
+    case Type.MARKET_TYPE_UNSPECIFIED:
       return "MARKET_TYPE_UNSPECIFIED";
-    case MarketType.MARKET_TYPE_PREDICTION:
+    case Type.MARKET_TYPE_PREDICTION:
       return "MARKET_TYPE_PREDICTION";
-    case MarketType.MARKET_TYPE_AUCTION:
+    case Type.MARKET_TYPE_AUCTION:
       return "MARKET_TYPE_AUCTION";
-    case MarketType.MARKET_TYPE_CROWDFUND:
+    case Type.MARKET_TYPE_CROWDFUND:
       return "MARKET_TYPE_CROWDFUND";
-    case MarketType.MARKET_TYPE_GROUP_BUY:
+    case Type.MARKET_TYPE_GROUP_BUY:
       return "MARKET_TYPE_GROUP_BUY";
-    case MarketType.UNRECOGNIZED:
+    case Type.UNRECOGNIZED:
     default:
       return "UNRECOGNIZED";
   }
 }
 
-export function marketTypeToNumber(object: MarketType): number {
+export function typeToNumber(object: Type): number {
   switch (object) {
-    case MarketType.MARKET_TYPE_UNSPECIFIED:
+    case Type.MARKET_TYPE_UNSPECIFIED:
       return 0;
-    case MarketType.MARKET_TYPE_PREDICTION:
+    case Type.MARKET_TYPE_PREDICTION:
       return 1;
-    case MarketType.MARKET_TYPE_AUCTION:
+    case Type.MARKET_TYPE_AUCTION:
       return 2;
-    case MarketType.MARKET_TYPE_CROWDFUND:
+    case Type.MARKET_TYPE_CROWDFUND:
       return 3;
-    case MarketType.MARKET_TYPE_GROUP_BUY:
+    case Type.MARKET_TYPE_GROUP_BUY:
       return 4;
-    case MarketType.UNRECOGNIZED:
+    case Type.UNRECOGNIZED:
     default:
       return -1;
   }
 }
 
 /** Market lifecycle states */
-export enum MarketState {
+export enum State {
   MARKET_STATE_UNSPECIFIED = "MARKET_STATE_UNSPECIFIED",
   /** MARKET_STATE_PROPOSED - Market created, awaiting activation */
   MARKET_STATE_PROPOSED = "MARKET_STATE_PROPOSED",
@@ -105,82 +105,82 @@ export enum MarketState {
   UNRECOGNIZED = "UNRECOGNIZED",
 }
 
-export function marketStateFromJSON(object: any): MarketState {
+export function stateFromJSON(object: any): State {
   switch (object) {
     case 0:
     case "MARKET_STATE_UNSPECIFIED":
-      return MarketState.MARKET_STATE_UNSPECIFIED;
+      return State.MARKET_STATE_UNSPECIFIED;
     case 1:
     case "MARKET_STATE_PROPOSED":
-      return MarketState.MARKET_STATE_PROPOSED;
+      return State.MARKET_STATE_PROPOSED;
     case 2:
     case "MARKET_STATE_OPEN":
-      return MarketState.MARKET_STATE_OPEN;
+      return State.MARKET_STATE_OPEN;
     case 3:
     case "MARKET_STATE_CLOSED":
-      return MarketState.MARKET_STATE_CLOSED;
+      return State.MARKET_STATE_CLOSED;
     case 4:
     case "MARKET_STATE_RESOLVING":
-      return MarketState.MARKET_STATE_RESOLVING;
+      return State.MARKET_STATE_RESOLVING;
     case 5:
     case "MARKET_STATE_SETTLED":
-      return MarketState.MARKET_STATE_SETTLED;
+      return State.MARKET_STATE_SETTLED;
     case 6:
     case "MARKET_STATE_REFUNDED":
-      return MarketState.MARKET_STATE_REFUNDED;
+      return State.MARKET_STATE_REFUNDED;
     case 7:
     case "MARKET_STATE_CANCELLED":
-      return MarketState.MARKET_STATE_CANCELLED;
+      return State.MARKET_STATE_CANCELLED;
     case -1:
     case "UNRECOGNIZED":
     default:
-      return MarketState.UNRECOGNIZED;
+      return State.UNRECOGNIZED;
   }
 }
 
-export function marketStateToJSON(object: MarketState): string {
+export function stateToJSON(object: State): string {
   switch (object) {
-    case MarketState.MARKET_STATE_UNSPECIFIED:
+    case State.MARKET_STATE_UNSPECIFIED:
       return "MARKET_STATE_UNSPECIFIED";
-    case MarketState.MARKET_STATE_PROPOSED:
+    case State.MARKET_STATE_PROPOSED:
       return "MARKET_STATE_PROPOSED";
-    case MarketState.MARKET_STATE_OPEN:
+    case State.MARKET_STATE_OPEN:
       return "MARKET_STATE_OPEN";
-    case MarketState.MARKET_STATE_CLOSED:
+    case State.MARKET_STATE_CLOSED:
       return "MARKET_STATE_CLOSED";
-    case MarketState.MARKET_STATE_RESOLVING:
+    case State.MARKET_STATE_RESOLVING:
       return "MARKET_STATE_RESOLVING";
-    case MarketState.MARKET_STATE_SETTLED:
+    case State.MARKET_STATE_SETTLED:
       return "MARKET_STATE_SETTLED";
-    case MarketState.MARKET_STATE_REFUNDED:
+    case State.MARKET_STATE_REFUNDED:
       return "MARKET_STATE_REFUNDED";
-    case MarketState.MARKET_STATE_CANCELLED:
+    case State.MARKET_STATE_CANCELLED:
       return "MARKET_STATE_CANCELLED";
-    case MarketState.UNRECOGNIZED:
+    case State.UNRECOGNIZED:
     default:
       return "UNRECOGNIZED";
   }
 }
 
-export function marketStateToNumber(object: MarketState): number {
+export function stateToNumber(object: State): number {
   switch (object) {
-    case MarketState.MARKET_STATE_UNSPECIFIED:
+    case State.MARKET_STATE_UNSPECIFIED:
       return 0;
-    case MarketState.MARKET_STATE_PROPOSED:
+    case State.MARKET_STATE_PROPOSED:
       return 1;
-    case MarketState.MARKET_STATE_OPEN:
+    case State.MARKET_STATE_OPEN:
       return 2;
-    case MarketState.MARKET_STATE_CLOSED:
+    case State.MARKET_STATE_CLOSED:
       return 3;
-    case MarketState.MARKET_STATE_RESOLVING:
+    case State.MARKET_STATE_RESOLVING:
       return 4;
-    case MarketState.MARKET_STATE_SETTLED:
+    case State.MARKET_STATE_SETTLED:
       return 5;
-    case MarketState.MARKET_STATE_REFUNDED:
+    case State.MARKET_STATE_REFUNDED:
       return 6;
-    case MarketState.MARKET_STATE_CANCELLED:
+    case State.MARKET_STATE_CANCELLED:
       return 7;
-    case MarketState.UNRECOGNIZED:
+    case State.UNRECOGNIZED:
     default:
       return -1;
   }
@@ -217,7 +217,7 @@ export interface Market {
   /** Unique market identifier */
   id: string;
   /** Type of market mechanism */
-  marketType: MarketType;
+  marketType: Type;
   /** Market creator's address */
   creator: string;
   /** Human-readable market title */
@@ -241,7 +241,7 @@ export interface Market {
   /** Oracle resolution submissions */
   resolutions: Resolution[];
   /** Current market state */
-  status: MarketState;
+  status: State;
   /** Market creation timestamp */
   createdAt?:
     | Date
@@ -252,7 +252,7 @@ export interface Market {
 
 /** Create a new market */
 export interface CreateMarketRequest {
-  marketType: MarketType;
+  marketType: Type;
   creator: string;
   title: string;
   terms?: { [key: string]: any } | undefined;
@@ -514,7 +514,7 @@ export const Resolution: MessageFns<Resolution> = {
 function createBaseMarket(): Market {
   return {
     id: "",
-    marketType: MarketType.MARKET_TYPE_UNSPECIFIED,
+    marketType: Type.MARKET_TYPE_UNSPECIFIED,
     creator: "",
     title: "",
     terms: undefined,
@@ -524,7 +524,7 @@ function createBaseMarket(): Market {
     oracles: [],
     quorum: 0,
     resolutions: [],
-    status: MarketState.MARKET_STATE_UNSPECIFIED,
+    status: State.MARKET_STATE_UNSPECIFIED,
     createdAt: undefined,
     updatedAt: undefined,
   };
@@ -535,8 +535,8 @@ export const Market: MessageFns<Market> = {
     if (message.id !== "") {
       writer.uint32(10).string(message.id);
     }
-    if (message.marketType !== MarketType.MARKET_TYPE_UNSPECIFIED) {
-      writer.uint32(16).int32(marketTypeToNumber(message.marketType));
+    if (message.marketType !== Type.MARKET_TYPE_UNSPECIFIED) {
+      writer.uint32(16).int32(typeToNumber(message.marketType));
     }
     if (message.creator !== "") {
       writer.uint32(26).string(message.creator);
@@ -565,8 +565,8 @@ export const Market: MessageFns<Market> = {
     for (const v of message.resolutions) {
       Resolution.encode(v!, writer.uint32(90).fork()).join();
     }
-    if (message.status !== MarketState.MARKET_STATE_UNSPECIFIED) {
-      writer.uint32(96).int32(marketStateToNumber(message.status));
+    if (message.status !== State.MARKET_STATE_UNSPECIFIED) {
+      writer.uint32(96).int32(stateToNumber(message.status));
     }
     if (message.createdAt !== undefined) {
       Timestamp.encode(toTimestamp(message.createdAt), writer.uint32(106).fork()).join();
@@ -597,7 +597,7 @@ export const Market: MessageFns<Market> = {
             break;
           }
 
-          message.marketType = marketTypeFromJSON(reader.int32());
+          message.marketType = typeFromJSON(reader.int32());
           continue;
         }
         case 3: {
@@ -677,7 +677,7 @@ export const Market: MessageFns<Market> = {
             break;
           }
 
-          message.status = marketStateFromJSON(reader.int32());
+          message.status = stateFromJSON(reader.int32());
           continue;
         }
         case 13: {
@@ -709,10 +709,10 @@ export const Market: MessageFns<Market> = {
     return {
       id: isSet(object.id) ? globalThis.String(object.id) : "",
       marketType: isSet(object.marketType)
-        ? marketTypeFromJSON(object.marketType)
+        ? typeFromJSON(object.marketType)
         : isSet(object.market_type)
-        ? marketTypeFromJSON(object.market_type)
-        : MarketType.MARKET_TYPE_UNSPECIFIED,
+        ? typeFromJSON(object.market_type)
+        : Type.MARKET_TYPE_UNSPECIFIED,
       creator: isSet(object.creator) ? globalThis.String(object.creator) : "",
       title: isSet(object.title) ? globalThis.String(object.title) : "",
       terms: isObject(object.terms) ? object.terms : undefined,
@@ -726,7 +726,7 @@ export const Market: MessageFns<Market> = {
       resolutions: globalThis.Array.isArray(object?.resolutions)
         ? object.resolutions.map((e: any) => Resolution.fromJSON(e))
         : [],
-      status: isSet(object.status) ? marketStateFromJSON(object.status) : MarketState.MARKET_STATE_UNSPECIFIED,
+      status: isSet(object.status) ? stateFromJSON(object.status) : State.MARKET_STATE_UNSPECIFIED,
       createdAt: isSet(object.createdAt)
         ? fromJsonTimestamp(object.createdAt)
         : isSet(object.created_at)
@@ -745,8 +745,8 @@ export const Market: MessageFns<Market> = {
     if (message.id !== "") {
       obj.id = message.id;
     }
-    if (message.marketType !== MarketType.MARKET_TYPE_UNSPECIFIED) {
-      obj.marketType = marketTypeToJSON(message.marketType);
+    if (message.marketType !== Type.MARKET_TYPE_UNSPECIFIED) {
+      obj.marketType = typeToJSON(message.marketType);
     }
     if (message.creator !== "") {
       obj.creator = message.creator;
@@ -775,8 +775,8 @@ export const Market: MessageFns<Market> = {
     if (message.resolutions?.length) {
       obj.resolutions = message.resolutions.map((e) => Resolution.toJSON(e));
     }
-    if (message.status !== MarketState.MARKET_STATE_UNSPECIFIED) {
-      obj.status = marketStateToJSON(message.status);
+    if (message.status !== State.MARKET_STATE_UNSPECIFIED) {
+      obj.status = stateToJSON(message.status);
     }
     if (message.createdAt !== undefined) {
       obj.createdAt = message.createdAt.toISOString();
@@ -793,7 +793,7 @@ export const Market: MessageFns<Market> = {
   fromPartial<I extends Exact<DeepPartial<Market>, I>>(object: I): Market {
     const message = createBaseMarket();
     message.id = object.id ?? "";
-    message.marketType = object.marketType ?? MarketType.MARKET_TYPE_UNSPECIFIED;
+    message.marketType = object.marketType ?? Type.MARKET_TYPE_UNSPECIFIED;
     message.creator = object.creator ?? "";
     message.title = object.title ?? "";
     message.terms = object.terms ?? undefined;
@@ -803,7 +803,7 @@ export const Market: MessageFns<Market> = {
     message.oracles = object.oracles?.map((e) => e) || [];
     message.quorum = object.quorum ?? 0;
     message.resolutions = object.resolutions?.map((e) => Resolution.fromPartial(e)) || [];
-    message.status = object.status ?? MarketState.MARKET_STATE_UNSPECIFIED;
+    message.status = object.status ?? State.MARKET_STATE_UNSPECIFIED;
     message.createdAt = object.createdAt ?? undefined;
     message.updatedAt = object.updatedAt ?? undefined;
     return message;
@@ -812,7 +812,7 @@ export const Market: MessageFns<Market> = {
 
 function createBaseCreateMarketRequest(): CreateMarketRequest {
   return {
-    marketType: MarketType.MARKET_TYPE_UNSPECIFIED,
+    marketType: Type.MARKET_TYPE_UNSPECIFIED,
     creator: "",
     title: "",
     terms: undefined,
@@ -825,8 +825,8 @@ function createBaseCreateMarketRequest(): CreateMarketRequest {
 
 export const CreateMarketRequest: MessageFns<CreateMarketRequest> = {
   encode(message: CreateMarketRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.marketType !== MarketType.MARKET_TYPE_UNSPECIFIED) {
-      writer.uint32(8).int32(marketTypeToNumber(message.marketType));
+    if (message.marketType !== Type.MARKET_TYPE_UNSPECIFIED) {
+      writer.uint32(8).int32(typeToNumber(message.marketType));
     }
     if (message.creator !== "") {
       writer.uint32(18).string(message.creator);
@@ -864,7 +864,7 @@ export const CreateMarketRequest: MessageFns<CreateMarketRequest> = {
             break;
           }
 
-          message.marketType = marketTypeFromJSON(reader.int32());
+          message.marketType = typeFromJSON(reader.int32());
           continue;
         }
         case 2: {
@@ -935,10 +935,10 @@ export const CreateMarketRequest: MessageFns<CreateMarketRequest> = {
   fromJSON(object: any): CreateMarketRequest {
     return {
       marketType: isSet(object.marketType)
-        ? marketTypeFromJSON(object.marketType)
+        ? typeFromJSON(object.marketType)
         : isSet(object.market_type)
-        ? marketTypeFromJSON(object.market_type)
-        : MarketType.MARKET_TYPE_UNSPECIFIED,
+        ? typeFromJSON(object.market_type)
+        : Type.MARKET_TYPE_UNSPECIFIED,
       creator: isSet(object.creator) ? globalThis.String(object.creator) : "",
       title: isSet(object.title) ? globalThis.String(object.title) : "",
       terms: isObject(object.terms) ? object.terms : undefined,
@@ -951,8 +951,8 @@ export const CreateMarketRequest: MessageFns<CreateMarketRequest> = {
 
   toJSON(message: CreateMarketRequest): unknown {
     const obj: any = {};
-    if (message.marketType !== MarketType.MARKET_TYPE_UNSPECIFIED) {
-      obj.marketType = marketTypeToJSON(message.marketType);
+    if (message.marketType !== Type.MARKET_TYPE_UNSPECIFIED) {
+      obj.marketType = typeToJSON(message.marketType);
     }
     if (message.creator !== "") {
       obj.creator = message.creator;
@@ -983,7 +983,7 @@ export const CreateMarketRequest: MessageFns<CreateMarketRequest> = {
   },
   fromPartial<I extends Exact<DeepPartial<CreateMarketRequest>, I>>(object: I): CreateMarketRequest {
     const message = createBaseCreateMarketRequest();
-    message.marketType = object.marketType ?? MarketType.MARKET_TYPE_UNSPECIFIED;
+    message.marketType = object.marketType ?? Type.MARKET_TYPE_UNSPECIFIED;
     message.creator = object.creator ?? "";
     message.title = object.title ?? "";
     message.terms = object.terms ?? undefined;

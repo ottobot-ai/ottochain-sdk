@@ -7,7 +7,7 @@ import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
 // Type of market mechanism
-enum MarketType {
+enum Type {
   MARKET_TYPE_UNSPECIFIED = 0;
   MARKET_TYPE_PREDICTION = 1;   // Prediction market for future outcomes
   MARKET_TYPE_AUCTION = 2;      // Auction with bidding mechanics
@@ -16,7 +16,7 @@ enum MarketType {
 }
 
 // Market lifecycle states
-enum MarketState {
+enum State {
   MARKET_STATE_UNSPECIFIED = 0;
   MARKET_STATE_PROPOSED = 1;    // Market created, awaiting activation
   MARKET_STATE_OPEN = 2;        // Accepting commitments
@@ -46,7 +46,7 @@ message Resolution {
 // Universal market container
 message Market {
   string id = 1;                                    // Unique market identifier
-  MarketType market_type = 2;                       // Type of market mechanism
+  Type market_type = 2;                             // Type of market mechanism
   string creator = 3;                 // Market creator's address
   string title = 4;                                 // Human-readable market title
   google.protobuf.Struct terms = 5;                 // Market-specific terms and rules
@@ -56,14 +56,14 @@ message Market {
   repeated string oracles = 9;        // Designated oracle addresses
   int32 quorum = 10;                                // Required oracle agreement count
   repeated Resolution resolutions = 11;             // Oracle resolution submissions
-  MarketState status = 12;                          // Current market state
+  State status = 12;                                 // Current market state
   google.protobuf.Timestamp created_at = 13;        // Market creation timestamp
   google.protobuf.Timestamp updated_at = 14;        // Last state update timestamp
 }
 
 // Create a new market
 message CreateMarketRequest {
-  MarketType market_type = 1;
+  Type market_type = 1;
   string creator = 2;
   string title = 3;
   google.protobuf.Struct terms = 4;
