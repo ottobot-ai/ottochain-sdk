@@ -90,12 +90,60 @@ export const contractAgreementDef = defineFiberApp({
   },
 
   states: {
-    PROPOSED: { id: "PROPOSED", isFinal: false, metadata: null },
-    ACTIVE: { id: "ACTIVE", isFinal: false, metadata: null },
-    COMPLETED: { id: "COMPLETED", isFinal: true, metadata: null },
-    DISPUTED: { id: "DISPUTED", isFinal: false, metadata: null },
-    REJECTED: { id: "REJECTED", isFinal: true, metadata: null },
-    CANCELLED: { id: "CANCELLED", isFinal: true, metadata: null },
+    PROPOSED: {
+      id: "PROPOSED",
+      isFinal: false,
+      metadata: {
+        label: "Proposed",
+        description: "Agreement proposed; awaiting the counterparty",
+        category: "initial",
+      },
+    },
+    ACTIVE: {
+      id: "ACTIVE",
+      isFinal: false,
+      metadata: {
+        label: "Active",
+        description: "Agreement accepted and in effect",
+        category: "active",
+      },
+    },
+    COMPLETED: {
+      id: "COMPLETED",
+      isFinal: true,
+      metadata: {
+        label: "Completed",
+        description: "Agreement completed and attested (terminal)",
+        category: "terminal",
+      },
+    },
+    DISPUTED: {
+      id: "DISPUTED",
+      isFinal: false,
+      metadata: {
+        label: "Disputed",
+        description: "A party has raised a dispute; awaiting resolution",
+        category: "pending",
+      },
+    },
+    REJECTED: {
+      id: "REJECTED",
+      isFinal: true,
+      metadata: {
+        label: "Rejected",
+        description: "Proposal rejected by the counterparty (terminal)",
+        category: "terminal",
+      },
+    },
+    CANCELLED: {
+      id: "CANCELLED",
+      isFinal: true,
+      metadata: {
+        label: "Cancelled",
+        description: "Agreement cancelled before completion (terminal)",
+        category: "terminal",
+      },
+    },
   },
 
   initialState: "PROPOSED",

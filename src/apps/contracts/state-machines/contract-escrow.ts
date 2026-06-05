@@ -127,14 +127,78 @@ export const contractEscrowDef = defineFiberApp({
   },
 
   states: {
-    CREATED: { id: "CREATED", isFinal: false, metadata: null },
-    FUNDED: { id: "FUNDED", isFinal: false, metadata: null },
-    ACTIVE: { id: "ACTIVE", isFinal: false, metadata: null },
-    RELEASING: { id: "RELEASING", isFinal: false, metadata: null },
-    DISPUTED: { id: "DISPUTED", isFinal: false, metadata: null },
-    RELEASED: { id: "RELEASED", isFinal: true, metadata: null },
-    REFUNDED: { id: "REFUNDED", isFinal: true, metadata: null },
-    SPLIT: { id: "SPLIT", isFinal: true, metadata: null },
+    CREATED: {
+      id: "CREATED",
+      isFinal: false,
+      metadata: {
+        label: "Created",
+        description: "Escrow created; awaiting funding",
+        category: "initial",
+      },
+    },
+    FUNDED: {
+      id: "FUNDED",
+      isFinal: false,
+      metadata: {
+        label: "Funded",
+        description: "Funds deposited into escrow",
+        category: "active",
+      },
+    },
+    ACTIVE: {
+      id: "ACTIVE",
+      isFinal: false,
+      metadata: {
+        label: "Active",
+        description: "Escrow in effect while work is performed",
+        category: "active",
+      },
+    },
+    RELEASING: {
+      id: "RELEASING",
+      isFinal: false,
+      metadata: {
+        label: "Releasing",
+        description: "Release approved; payout in progress",
+        category: "pending",
+      },
+    },
+    DISPUTED: {
+      id: "DISPUTED",
+      isFinal: false,
+      metadata: {
+        label: "Disputed",
+        description: "A party disputed the escrow; awaiting arbitration",
+        category: "pending",
+      },
+    },
+    RELEASED: {
+      id: "RELEASED",
+      isFinal: true,
+      metadata: {
+        label: "Released",
+        description: "Funds released to the beneficiary (terminal)",
+        category: "terminal",
+      },
+    },
+    REFUNDED: {
+      id: "REFUNDED",
+      isFinal: true,
+      metadata: {
+        label: "Refunded",
+        description: "Funds refunded to the depositor (terminal)",
+        category: "terminal",
+      },
+    },
+    SPLIT: {
+      id: "SPLIT",
+      isFinal: true,
+      metadata: {
+        label: "Split",
+        description: "Funds split between parties per arbitration (terminal)",
+        category: "terminal",
+      },
+    },
   },
 
   initialState: "CREATED",

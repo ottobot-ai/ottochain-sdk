@@ -59,9 +59,33 @@ export const identityUniversalDef = defineFiberApp({
   },
 
   states: {
-    CREATED: { id: "CREATED", isFinal: false },
-    ACTIVE: { id: "ACTIVE", isFinal: false },
-    INACTIVE: { id: "INACTIVE", isFinal: true },
+    CREATED: {
+      id: "CREATED",
+      isFinal: false,
+      metadata: {
+        label: "Created",
+        description: "Identity registered but not yet activated",
+        category: "initial",
+      },
+    },
+    ACTIVE: {
+      id: "ACTIVE",
+      isFinal: false,
+      metadata: {
+        label: "Active",
+        description: "Identity is active and can be updated",
+        category: "active",
+      },
+    },
+    INACTIVE: {
+      id: "INACTIVE",
+      isFinal: true,
+      metadata: {
+        label: "Inactive",
+        description: "Identity deactivated by its owner (terminal)",
+        category: "terminal",
+      },
+    },
   },
 
   initialState: "CREATED",

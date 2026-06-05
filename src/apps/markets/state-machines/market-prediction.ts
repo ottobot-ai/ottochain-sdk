@@ -114,42 +114,74 @@ export const marketPredictionDef = defineFiberApp({
     PROPOSED: {
       id: "PROPOSED",
       isFinal: false,
-      metadata: { description: "Market created but not yet open for trading" },
+      metadata: {
+        label: "Proposed",
+        description: "Market created but not yet open for trading",
+        category: "initial",
+      },
     },
     OPEN: {
       id: "OPEN",
       isFinal: false,
-      metadata: { description: "Accepting positions on outcomes" },
+      metadata: {
+        label: "Open",
+        description: "Accepting positions on outcomes",
+        category: "active",
+      },
     },
     CLOSED: {
       id: "CLOSED",
       isFinal: false,
-      metadata: { description: "No more positions, awaiting resolution" },
+      metadata: {
+        label: "Closed",
+        description: "No more positions, awaiting resolution",
+        category: "pending",
+      },
     },
     RESOLVING: {
       id: "RESOLVING",
       isFinal: false,
-      metadata: { description: "Oracle(s) submitting resolution" },
+      metadata: {
+        label: "Resolving",
+        description: "Oracle(s) submitting resolution",
+        category: "pending",
+      },
     },
     DISPUTED: {
       id: "DISPUTED",
       isFinal: false,
-      metadata: { description: "Resolution challenged, awaiting arbitration" },
+      metadata: {
+        label: "Disputed",
+        description: "Resolution challenged, awaiting arbitration",
+        category: "pending",
+      },
     },
     SETTLED: {
       id: "SETTLED",
       isFinal: true,
-      metadata: { description: "Outcome finalized, payouts available" },
+      metadata: {
+        label: "Settled",
+        description: "Outcome finalized, payouts available",
+        category: "terminal",
+      },
     },
     REFUNDED: {
       id: "REFUNDED",
       isFinal: true,
-      metadata: { description: "Market invalidated, all positions refunded" },
+      metadata: {
+        label: "Refunded",
+        description: "Market invalidated, all positions refunded",
+        category: "terminal",
+      },
     },
     CANCELLED: {
       id: "CANCELLED",
       isFinal: true,
-      metadata: { description: "Market cancelled before opening" },
+      metadata: {
+        label: "Cancelled",
+        description: "Market cancelled before opening",
+        category: "terminal",
+      },
     },
   },
 

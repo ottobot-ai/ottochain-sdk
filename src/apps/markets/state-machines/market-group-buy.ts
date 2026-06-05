@@ -86,41 +86,65 @@ export const marketGroupBuyDef = defineFiberApp({
     PROPOSED: {
       id: "PROPOSED",
       isFinal: false,
-      metadata: { description: "Group buy created but not yet open" },
+      metadata: {
+        label: "Proposed",
+        description: "Group buy created but not yet open",
+        category: "initial",
+      },
     },
     OPEN: {
       id: "OPEN",
       isFinal: false,
-      metadata: { description: "Accepting orders" },
+      metadata: {
+        label: "Open",
+        description: "Accepting orders",
+        category: "active",
+      },
     },
     THRESHOLD_MET: {
       id: "THRESHOLD_MET",
       isFinal: false,
       metadata: {
+        label: "Threshold met",
         description: "Minimum quantity reached, continuing for better tier",
+        category: "active",
       },
     },
     PROCESSING: {
       id: "PROCESSING",
       isFinal: false,
       metadata: {
+        label: "Processing",
         description: "Order placed with vendor, awaiting fulfillment",
+        category: "pending",
       },
     },
     FULFILLED: {
       id: "FULFILLED",
       isFinal: true,
-      metadata: { description: "All items delivered to buyers" },
+      metadata: {
+        label: "Fulfilled",
+        description: "All items delivered to buyers",
+        category: "terminal",
+      },
     },
     REFUNDED: {
       id: "REFUNDED",
       isFinal: true,
-      metadata: { description: "Threshold not met, all orders refunded" },
+      metadata: {
+        label: "Refunded",
+        description: "Threshold not met, all orders refunded",
+        category: "terminal",
+      },
     },
     CANCELLED: {
       id: "CANCELLED",
       isFinal: true,
-      metadata: { description: "Group buy cancelled" },
+      metadata: {
+        label: "Cancelled",
+        description: "Group buy cancelled",
+        category: "terminal",
+      },
     },
   },
 

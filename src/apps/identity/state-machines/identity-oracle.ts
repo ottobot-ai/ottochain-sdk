@@ -135,11 +135,51 @@ export const identityOracleDef = defineFiberApp({
   },
 
   states: {
-    UNREGISTERED: { id: "UNREGISTERED", isFinal: false },
-    REGISTERED: { id: "REGISTERED", isFinal: false },
-    ACTIVE: { id: "ACTIVE", isFinal: false },
-    SLASHED: { id: "SLASHED", isFinal: false },
-    WITHDRAWN: { id: "WITHDRAWN", isFinal: true },
+    UNREGISTERED: {
+      id: "UNREGISTERED",
+      isFinal: false,
+      metadata: {
+        label: "Unregistered",
+        description: "Oracle not yet registered; awaiting stake",
+        category: "initial",
+      },
+    },
+    REGISTERED: {
+      id: "REGISTERED",
+      isFinal: false,
+      metadata: {
+        label: "Registered",
+        description: "Oracle staked and registered but not yet active",
+        category: "pending",
+      },
+    },
+    ACTIVE: {
+      id: "ACTIVE",
+      isFinal: false,
+      metadata: {
+        label: "Active",
+        description: "Oracle is active and may submit resolutions",
+        category: "active",
+      },
+    },
+    SLASHED: {
+      id: "SLASHED",
+      isFinal: false,
+      metadata: {
+        label: "Slashed",
+        description: "Oracle penalized for a lost dispute; stake reduced",
+        category: "pending",
+      },
+    },
+    WITHDRAWN: {
+      id: "WITHDRAWN",
+      isFinal: true,
+      metadata: {
+        label: "Withdrawn",
+        description: "Oracle withdrawn and stake reclaimed (terminal)",
+        category: "terminal",
+      },
+    },
   },
 
   initialState: "UNREGISTERED",

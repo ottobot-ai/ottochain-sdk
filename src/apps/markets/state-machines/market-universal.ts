@@ -37,11 +37,51 @@ export const marketUniversalDef = defineFiberApp({
   },
 
   states: {
-    PROPOSED: { id: "PROPOSED", isFinal: false, metadata: null },
-    OPEN: { id: "OPEN", isFinal: false, metadata: null },
-    CLOSED: { id: "CLOSED", isFinal: false, metadata: null },
-    SETTLED: { id: "SETTLED", isFinal: true, metadata: null },
-    CANCELLED: { id: "CANCELLED", isFinal: true, metadata: null },
+    PROPOSED: {
+      id: "PROPOSED",
+      isFinal: false,
+      metadata: {
+        label: "Proposed",
+        description: "Market created but not yet open",
+        category: "initial",
+      },
+    },
+    OPEN: {
+      id: "OPEN",
+      isFinal: false,
+      metadata: {
+        label: "Open",
+        description: "Market is open for participation",
+        category: "active",
+      },
+    },
+    CLOSED: {
+      id: "CLOSED",
+      isFinal: false,
+      metadata: {
+        label: "Closed",
+        description: "Participation closed; awaiting settlement",
+        category: "pending",
+      },
+    },
+    SETTLED: {
+      id: "SETTLED",
+      isFinal: true,
+      metadata: {
+        label: "Settled",
+        description: "Market settled and payouts available (terminal)",
+        category: "terminal",
+      },
+    },
+    CANCELLED: {
+      id: "CANCELLED",
+      isFinal: true,
+      metadata: {
+        label: "Cancelled",
+        description: "Market cancelled before settlement (terminal)",
+        category: "terminal",
+      },
+    },
   },
 
   initialState: "PROPOSED",

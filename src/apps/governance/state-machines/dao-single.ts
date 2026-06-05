@@ -81,9 +81,33 @@ export const daoSingleDef = defineFiberApp({
   },
 
   states: {
-    ACTIVE: { id: "ACTIVE", isFinal: false, metadata: null },
-    TRANSFERRING: { id: "TRANSFERRING", isFinal: false, metadata: null },
-    DISSOLVED: { id: "DISSOLVED", isFinal: true, metadata: null },
+    ACTIVE: {
+      id: "ACTIVE",
+      isFinal: false,
+      metadata: {
+        label: "Active",
+        description: "Single owner controls the DAO and may act or transfer ownership",
+        category: "initial",
+      },
+    },
+    TRANSFERRING: {
+      id: "TRANSFERRING",
+      isFinal: false,
+      metadata: {
+        label: "Transferring",
+        description: "Ownership transfer proposed; awaiting acceptance",
+        category: "pending",
+      },
+    },
+    DISSOLVED: {
+      id: "DISSOLVED",
+      isFinal: true,
+      metadata: {
+        label: "Dissolved",
+        description: "DAO dissolved by its owner (terminal)",
+        category: "terminal",
+      },
+    },
   },
 
   initialState: "ACTIVE",

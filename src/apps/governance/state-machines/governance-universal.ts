@@ -55,9 +55,33 @@ export const govUniversalDef = defineFiberApp({
   },
 
   states: {
-    ACTIVE: { id: "ACTIVE", isFinal: false, metadata: null },
-    VOTING: { id: "VOTING", isFinal: false, metadata: null },
-    DISSOLVED: { id: "DISSOLVED", isFinal: true, metadata: null },
+    ACTIVE: {
+      id: "ACTIVE",
+      isFinal: false,
+      metadata: {
+        label: "Active",
+        description: "Governance is idle and ready to accept a proposal",
+        category: "initial",
+      },
+    },
+    VOTING: {
+      id: "VOTING",
+      isFinal: false,
+      metadata: {
+        label: "Voting",
+        description: "A proposal is open for voting",
+        category: "pending",
+      },
+    },
+    DISSOLVED: {
+      id: "DISSOLVED",
+      isFinal: true,
+      metadata: {
+        label: "Dissolved",
+        description: "Governance entity dissolved (terminal)",
+        category: "terminal",
+      },
+    },
   },
 
   initialState: "ACTIVE",

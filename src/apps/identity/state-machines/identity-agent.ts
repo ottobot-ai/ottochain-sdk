@@ -136,12 +136,60 @@ export const identityAgentDef = defineFiberApp({
   },
 
   states: {
-    REGISTERED: { id: "REGISTERED", isFinal: false },
-    ACTIVE: { id: "ACTIVE", isFinal: false },
-    CHALLENGED: { id: "CHALLENGED", isFinal: false },
-    SUSPENDED: { id: "SUSPENDED", isFinal: false },
-    PROBATION: { id: "PROBATION", isFinal: false },
-    WITHDRAWN: { id: "WITHDRAWN", isFinal: true },
+    REGISTERED: {
+      id: "REGISTERED",
+      isFinal: false,
+      metadata: {
+        label: "Registered",
+        description: "Agent registered but not yet activated",
+        category: "initial",
+      },
+    },
+    ACTIVE: {
+      id: "ACTIVE",
+      isFinal: false,
+      metadata: {
+        label: "Active",
+        description: "Agent is active and accruing reputation",
+        category: "active",
+      },
+    },
+    CHALLENGED: {
+      id: "CHALLENGED",
+      isFinal: false,
+      metadata: {
+        label: "Challenged",
+        description: "A challenge has been raised; awaiting resolution",
+        category: "pending",
+      },
+    },
+    SUSPENDED: {
+      id: "SUSPENDED",
+      isFinal: false,
+      metadata: {
+        label: "Suspended",
+        description: "Agent suspended after an upheld challenge",
+        category: "pending",
+      },
+    },
+    PROBATION: {
+      id: "PROBATION",
+      isFinal: false,
+      metadata: {
+        label: "Probation",
+        description: "Conditional reinstatement under monitoring",
+        category: "active",
+      },
+    },
+    WITHDRAWN: {
+      id: "WITHDRAWN",
+      isFinal: true,
+      metadata: {
+        label: "Withdrawn",
+        description: "Agent withdrawn from the registry (terminal)",
+        category: "terminal",
+      },
+    },
   },
 
   initialState: "REGISTERED",
