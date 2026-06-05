@@ -32,10 +32,26 @@ export type {
   // State machine definition
   StateMachineDefinition,
 
+  // Registry: versioning, naming, schema shapes
+  SemVer,
+  RegistryStatus,
+  VersionReq,
+  SchemaRef,
+  FieldShape,
+  MessageShape,
+  SchemaShape,
+  SchemaBinding,
+  RegisteredVersion,
+  VersionLineage,
+  RegistryTarget,
+  RegistryEntry,
+
   // Log entries
   EmittedEvent,
   EventReceipt,
   OracleInvocation,
+  CreationReceipt,
+  UpgradeReceipt,
   FiberLogEntry,
 
   // Fiber records
@@ -54,8 +70,12 @@ export type {
   CreateStateMachine,
   TransitionStateMachine,
   ArchiveStateMachine,
+  UpgradeFiber,
   CreateScript,
   InvokeScript,
+  PublishVersion,
+  SetVersionStatus,
+  RegisterAlias,
   OttochainMessage,
   OttochainMessageType,
 } from './types.js';

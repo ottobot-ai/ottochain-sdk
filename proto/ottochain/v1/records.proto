@@ -3,6 +3,7 @@ syntax = "proto3";
 package ottochain.v1;
 
 import "ottochain/v1/fiber.proto";
+import "ottochain/v1/common.proto";
 import "google/protobuf/struct.proto";
 
 // State machine fiber record - on-chain representation
@@ -21,6 +22,8 @@ message StateMachineFiberRecord {
   optional EventReceipt last_receipt = 12;
   optional string parent_fiber_id = 13;
   repeated string child_fiber_ids = 14;
+  // The resolved, pinned registry binding (#26), present when created from a registered version.
+  optional SchemaBinding schema_binding = 15;
 }
 
 // Script fiber record - on-chain representation
@@ -49,6 +52,8 @@ message FiberCommit {
 message OnChainState {
   map<string, FiberCommit> fiber_commits = 1;
   map<string, FiberLogEntryList> latest_logs = 2;
+  // Per-registry-entry commitment hash, keyed by full registry name "labels.tld".
+  map<string, string> registry_commits = 3;
 }
 
 // Helper for map of log entries
@@ -60,4 +65,10 @@ message FiberLogEntryList {
 message CalculatedState {
   map<string, StateMachineFiberRecord> state_machines = 1;
   map<string, ScriptFiberRecord> scripts = 2;
+  // Registry namespace, keyed by full registry name "labels.tld".
+  // Field is named `registry_entries` to avoid a synthetic map-entry name clash with the
+  // top-level RegistryEntry message; the JSON wire key stays `registry` via json_name.
+  map<string, RegistryEntry> registry_entries = 3 [json_name = "registry"];
+  // Reverse records (#29): fiber UUID -> its canonical registered name.
+  map<string, string> reverse_names = 4;
 }

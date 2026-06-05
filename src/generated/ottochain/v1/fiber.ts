@@ -7,6 +7,7 @@
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { Struct, Value } from "../../google/protobuf/struct.js";
+import { SchemaBinding } from "./common.js";
 
 export const protobufPackage = "ottochain.v1";
 
@@ -143,12 +144,38 @@ export interface ScriptInvocation {
   invokedBy: string;
 }
 
-/** Fiber log entry - union of event receipt or script invocation */
+/** Creation receipt - birth record for a fiber, emitted once at creation (#26/#30) */
+export interface CreationReceipt {
+  fiberId: string;
+  /** Snapshot ordinal */
+  ordinal: number;
+  /** State ID */
+  initialState: string;
+  /** DAG addresses */
+  owners: string[];
+  schemaBinding?: SchemaBinding | undefined;
+  parentFiberId?: string | undefined;
+}
+
+/** Upgrade receipt - emitted when a fiber is upgraded to a different registered version (#27) */
+export interface UpgradeReceipt {
+  fiberId: string;
+  /** Snapshot ordinal */
+  ordinal: number;
+  fromBinding?: SchemaBinding | undefined;
+  toBinding?: SchemaBinding | undefined;
+  gasUsed: number;
+  migrated: boolean;
+}
+
+/** Fiber log entry - union of event receipt, script invocation, or lifecycle receipt */
 export interface FiberLogEntry {
-  entry?: { $case: "eventReceipt"; eventReceipt: EventReceipt } | {
-    $case: "scriptInvocation";
-    scriptInvocation: ScriptInvocation;
-  } | undefined;
+  entry?:
+    | { $case: "eventReceipt"; eventReceipt: EventReceipt }
+    | { $case: "scriptInvocation"; scriptInvocation: ScriptInvocation }
+    | { $case: "creationReceipt"; creationReceipt: CreationReceipt }
+    | { $case: "upgradeReceipt"; upgradeReceipt: UpgradeReceipt }
+    | undefined;
 }
 
 function createBaseAccessControlPolicy(): AccessControlPolicy {
@@ -1100,6 +1127,324 @@ export const ScriptInvocation: MessageFns<ScriptInvocation> = {
   },
 };
 
+function createBaseCreationReceipt(): CreationReceipt {
+  return { fiberId: "", ordinal: 0, initialState: "", owners: [], schemaBinding: undefined, parentFiberId: undefined };
+}
+
+export const CreationReceipt: MessageFns<CreationReceipt> = {
+  encode(message: CreationReceipt, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.fiberId !== "") {
+      writer.uint32(10).string(message.fiberId);
+    }
+    if (message.ordinal !== 0) {
+      writer.uint32(16).int64(message.ordinal);
+    }
+    if (message.initialState !== "") {
+      writer.uint32(26).string(message.initialState);
+    }
+    for (const v of message.owners) {
+      writer.uint32(34).string(v!);
+    }
+    if (message.schemaBinding !== undefined) {
+      SchemaBinding.encode(message.schemaBinding, writer.uint32(42).fork()).join();
+    }
+    if (message.parentFiberId !== undefined) {
+      writer.uint32(50).string(message.parentFiberId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CreationReceipt {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreationReceipt();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.fiberId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.ordinal = longToNumber(reader.int64());
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.initialState = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.owners.push(reader.string());
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.schemaBinding = SchemaBinding.decode(reader, reader.uint32());
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.parentFiberId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreationReceipt {
+    return {
+      fiberId: isSet(object.fiberId)
+        ? globalThis.String(object.fiberId)
+        : isSet(object.fiber_id)
+        ? globalThis.String(object.fiber_id)
+        : "",
+      ordinal: isSet(object.ordinal) ? globalThis.Number(object.ordinal) : 0,
+      initialState: isSet(object.initialState)
+        ? globalThis.String(object.initialState)
+        : isSet(object.initial_state)
+        ? globalThis.String(object.initial_state)
+        : "",
+      owners: globalThis.Array.isArray(object?.owners) ? object.owners.map((e: any) => globalThis.String(e)) : [],
+      schemaBinding: isSet(object.schemaBinding)
+        ? SchemaBinding.fromJSON(object.schemaBinding)
+        : isSet(object.schema_binding)
+        ? SchemaBinding.fromJSON(object.schema_binding)
+        : undefined,
+      parentFiberId: isSet(object.parentFiberId)
+        ? globalThis.String(object.parentFiberId)
+        : isSet(object.parent_fiber_id)
+        ? globalThis.String(object.parent_fiber_id)
+        : undefined,
+    };
+  },
+
+  toJSON(message: CreationReceipt): unknown {
+    const obj: any = {};
+    if (message.fiberId !== "") {
+      obj.fiberId = message.fiberId;
+    }
+    if (message.ordinal !== 0) {
+      obj.ordinal = Math.round(message.ordinal);
+    }
+    if (message.initialState !== "") {
+      obj.initialState = message.initialState;
+    }
+    if (message.owners?.length) {
+      obj.owners = message.owners;
+    }
+    if (message.schemaBinding !== undefined) {
+      obj.schemaBinding = SchemaBinding.toJSON(message.schemaBinding);
+    }
+    if (message.parentFiberId !== undefined) {
+      obj.parentFiberId = message.parentFiberId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreationReceipt>, I>>(base?: I): CreationReceipt {
+    return CreationReceipt.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CreationReceipt>, I>>(object: I): CreationReceipt {
+    const message = createBaseCreationReceipt();
+    message.fiberId = object.fiberId ?? "";
+    message.ordinal = object.ordinal ?? 0;
+    message.initialState = object.initialState ?? "";
+    message.owners = object.owners?.map((e) => e) || [];
+    message.schemaBinding = (object.schemaBinding !== undefined && object.schemaBinding !== null)
+      ? SchemaBinding.fromPartial(object.schemaBinding)
+      : undefined;
+    message.parentFiberId = object.parentFiberId ?? undefined;
+    return message;
+  },
+};
+
+function createBaseUpgradeReceipt(): UpgradeReceipt {
+  return { fiberId: "", ordinal: 0, fromBinding: undefined, toBinding: undefined, gasUsed: 0, migrated: false };
+}
+
+export const UpgradeReceipt: MessageFns<UpgradeReceipt> = {
+  encode(message: UpgradeReceipt, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.fiberId !== "") {
+      writer.uint32(10).string(message.fiberId);
+    }
+    if (message.ordinal !== 0) {
+      writer.uint32(16).int64(message.ordinal);
+    }
+    if (message.fromBinding !== undefined) {
+      SchemaBinding.encode(message.fromBinding, writer.uint32(26).fork()).join();
+    }
+    if (message.toBinding !== undefined) {
+      SchemaBinding.encode(message.toBinding, writer.uint32(34).fork()).join();
+    }
+    if (message.gasUsed !== 0) {
+      writer.uint32(40).int64(message.gasUsed);
+    }
+    if (message.migrated !== false) {
+      writer.uint32(48).bool(message.migrated);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UpgradeReceipt {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUpgradeReceipt();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.fiberId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.ordinal = longToNumber(reader.int64());
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.fromBinding = SchemaBinding.decode(reader, reader.uint32());
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.toBinding = SchemaBinding.decode(reader, reader.uint32());
+          continue;
+        }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.gasUsed = longToNumber(reader.int64());
+          continue;
+        }
+        case 6: {
+          if (tag !== 48) {
+            break;
+          }
+
+          message.migrated = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UpgradeReceipt {
+    return {
+      fiberId: isSet(object.fiberId)
+        ? globalThis.String(object.fiberId)
+        : isSet(object.fiber_id)
+        ? globalThis.String(object.fiber_id)
+        : "",
+      ordinal: isSet(object.ordinal) ? globalThis.Number(object.ordinal) : 0,
+      fromBinding: isSet(object.fromBinding)
+        ? SchemaBinding.fromJSON(object.fromBinding)
+        : isSet(object.from_binding)
+        ? SchemaBinding.fromJSON(object.from_binding)
+        : undefined,
+      toBinding: isSet(object.toBinding)
+        ? SchemaBinding.fromJSON(object.toBinding)
+        : isSet(object.to_binding)
+        ? SchemaBinding.fromJSON(object.to_binding)
+        : undefined,
+      gasUsed: isSet(object.gasUsed)
+        ? globalThis.Number(object.gasUsed)
+        : isSet(object.gas_used)
+        ? globalThis.Number(object.gas_used)
+        : 0,
+      migrated: isSet(object.migrated) ? globalThis.Boolean(object.migrated) : false,
+    };
+  },
+
+  toJSON(message: UpgradeReceipt): unknown {
+    const obj: any = {};
+    if (message.fiberId !== "") {
+      obj.fiberId = message.fiberId;
+    }
+    if (message.ordinal !== 0) {
+      obj.ordinal = Math.round(message.ordinal);
+    }
+    if (message.fromBinding !== undefined) {
+      obj.fromBinding = SchemaBinding.toJSON(message.fromBinding);
+    }
+    if (message.toBinding !== undefined) {
+      obj.toBinding = SchemaBinding.toJSON(message.toBinding);
+    }
+    if (message.gasUsed !== 0) {
+      obj.gasUsed = Math.round(message.gasUsed);
+    }
+    if (message.migrated !== false) {
+      obj.migrated = message.migrated;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<UpgradeReceipt>, I>>(base?: I): UpgradeReceipt {
+    return UpgradeReceipt.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<UpgradeReceipt>, I>>(object: I): UpgradeReceipt {
+    const message = createBaseUpgradeReceipt();
+    message.fiberId = object.fiberId ?? "";
+    message.ordinal = object.ordinal ?? 0;
+    message.fromBinding = (object.fromBinding !== undefined && object.fromBinding !== null)
+      ? SchemaBinding.fromPartial(object.fromBinding)
+      : undefined;
+    message.toBinding = (object.toBinding !== undefined && object.toBinding !== null)
+      ? SchemaBinding.fromPartial(object.toBinding)
+      : undefined;
+    message.gasUsed = object.gasUsed ?? 0;
+    message.migrated = object.migrated ?? false;
+    return message;
+  },
+};
+
 function createBaseFiberLogEntry(): FiberLogEntry {
   return { entry: undefined };
 }
@@ -1112,6 +1457,12 @@ export const FiberLogEntry: MessageFns<FiberLogEntry> = {
         break;
       case "scriptInvocation":
         ScriptInvocation.encode(message.entry.scriptInvocation, writer.uint32(18).fork()).join();
+        break;
+      case "creationReceipt":
+        CreationReceipt.encode(message.entry.creationReceipt, writer.uint32(26).fork()).join();
+        break;
+      case "upgradeReceipt":
+        UpgradeReceipt.encode(message.entry.upgradeReceipt, writer.uint32(34).fork()).join();
         break;
     }
     return writer;
@@ -1143,6 +1494,25 @@ export const FiberLogEntry: MessageFns<FiberLogEntry> = {
           };
           continue;
         }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.entry = {
+            $case: "creationReceipt",
+            creationReceipt: CreationReceipt.decode(reader, reader.uint32()),
+          };
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.entry = { $case: "upgradeReceipt", upgradeReceipt: UpgradeReceipt.decode(reader, reader.uint32()) };
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1162,6 +1532,14 @@ export const FiberLogEntry: MessageFns<FiberLogEntry> = {
         ? { $case: "scriptInvocation", scriptInvocation: ScriptInvocation.fromJSON(object.scriptInvocation) }
         : isSet(object.script_invocation)
         ? { $case: "scriptInvocation", scriptInvocation: ScriptInvocation.fromJSON(object.script_invocation) }
+        : isSet(object.creationReceipt)
+        ? { $case: "creationReceipt", creationReceipt: CreationReceipt.fromJSON(object.creationReceipt) }
+        : isSet(object.creation_receipt)
+        ? { $case: "creationReceipt", creationReceipt: CreationReceipt.fromJSON(object.creation_receipt) }
+        : isSet(object.upgradeReceipt)
+        ? { $case: "upgradeReceipt", upgradeReceipt: UpgradeReceipt.fromJSON(object.upgradeReceipt) }
+        : isSet(object.upgrade_receipt)
+        ? { $case: "upgradeReceipt", upgradeReceipt: UpgradeReceipt.fromJSON(object.upgrade_receipt) }
         : undefined,
     };
   },
@@ -1172,6 +1550,10 @@ export const FiberLogEntry: MessageFns<FiberLogEntry> = {
       obj.eventReceipt = EventReceipt.toJSON(message.entry.eventReceipt);
     } else if (message.entry?.$case === "scriptInvocation") {
       obj.scriptInvocation = ScriptInvocation.toJSON(message.entry.scriptInvocation);
+    } else if (message.entry?.$case === "creationReceipt") {
+      obj.creationReceipt = CreationReceipt.toJSON(message.entry.creationReceipt);
+    } else if (message.entry?.$case === "upgradeReceipt") {
+      obj.upgradeReceipt = UpgradeReceipt.toJSON(message.entry.upgradeReceipt);
     }
     return obj;
   },
@@ -1193,6 +1575,24 @@ export const FiberLogEntry: MessageFns<FiberLogEntry> = {
           message.entry = {
             $case: "scriptInvocation",
             scriptInvocation: ScriptInvocation.fromPartial(object.entry.scriptInvocation),
+          };
+        }
+        break;
+      }
+      case "creationReceipt": {
+        if (object.entry?.creationReceipt !== undefined && object.entry?.creationReceipt !== null) {
+          message.entry = {
+            $case: "creationReceipt",
+            creationReceipt: CreationReceipt.fromPartial(object.entry.creationReceipt),
+          };
+        }
+        break;
+      }
+      case "upgradeReceipt": {
+        if (object.entry?.upgradeReceipt !== undefined && object.entry?.upgradeReceipt !== null) {
+          message.entry = {
+            $case: "upgradeReceipt",
+            upgradeReceipt: UpgradeReceipt.fromPartial(object.entry.upgradeReceipt),
           };
         }
         break;

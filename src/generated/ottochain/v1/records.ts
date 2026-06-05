@@ -7,6 +7,7 @@
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { Value } from "../../google/protobuf/struct.js";
+import { RegistryEntry, SchemaBinding } from "./common.js";
 import {
   AccessControlPolicy,
   EventReceipt,
@@ -48,6 +49,8 @@ export interface StateMachineFiberRecord {
   lastReceipt?: EventReceipt | undefined;
   parentFiberId?: string | undefined;
   childFiberIds: string[];
+  /** The resolved, pinned registry binding (#26), present when created from a registered version. */
+  schemaBinding?: SchemaBinding | undefined;
 }
 
 /** Script fiber record - on-chain representation */
@@ -90,6 +93,8 @@ export interface FiberCommit {
 export interface OnChainState {
   fiberCommits: { [key: string]: FiberCommit };
   latestLogs: { [key: string]: FiberLogEntryList };
+  /** Per-registry-entry commitment hash, keyed by full registry name "labels.tld". */
+  registryCommits: { [key: string]: string };
 }
 
 export interface OnChainState_FiberCommitsEntry {
@@ -102,6 +107,11 @@ export interface OnChainState_LatestLogsEntry {
   value?: FiberLogEntryList | undefined;
 }
 
+export interface OnChainState_RegistryCommitsEntry {
+  key: string;
+  value: string;
+}
+
 /** Helper for map of log entries */
 export interface FiberLogEntryList {
   entries: FiberLogEntry[];
@@ -111,6 +121,14 @@ export interface FiberLogEntryList {
 export interface CalculatedState {
   stateMachines: { [key: string]: StateMachineFiberRecord };
   scripts: { [key: string]: ScriptFiberRecord };
+  /**
+   * Registry namespace, keyed by full registry name "labels.tld".
+   * Field is named `registry_entries` to avoid a synthetic map-entry name clash with the
+   * top-level RegistryEntry message; the JSON wire key stays `registry` via json_name.
+   */
+  registryEntries: { [key: string]: RegistryEntry };
+  /** Reverse records (#29): fiber UUID -> its canonical registered name. */
+  reverseNames: { [key: string]: string };
 }
 
 export interface CalculatedState_StateMachinesEntry {
@@ -121,6 +139,16 @@ export interface CalculatedState_StateMachinesEntry {
 export interface CalculatedState_ScriptsEntry {
   key: string;
   value?: ScriptFiberRecord | undefined;
+}
+
+export interface CalculatedState_RegistryEntriesEntry {
+  key: string;
+  value?: RegistryEntry | undefined;
+}
+
+export interface CalculatedState_ReverseNamesEntry {
+  key: string;
+  value: string;
 }
 
 function createBaseStateMachineFiberRecord(): StateMachineFiberRecord {
@@ -139,6 +167,7 @@ function createBaseStateMachineFiberRecord(): StateMachineFiberRecord {
     lastReceipt: undefined,
     parentFiberId: undefined,
     childFiberIds: [],
+    schemaBinding: undefined,
   };
 }
 
@@ -185,6 +214,9 @@ export const StateMachineFiberRecord: MessageFns<StateMachineFiberRecord> = {
     }
     for (const v of message.childFiberIds) {
       writer.uint32(114).string(v!);
+    }
+    if (message.schemaBinding !== undefined) {
+      SchemaBinding.encode(message.schemaBinding, writer.uint32(122).fork()).join();
     }
     return writer;
   },
@@ -308,6 +340,14 @@ export const StateMachineFiberRecord: MessageFns<StateMachineFiberRecord> = {
           message.childFiberIds.push(reader.string());
           continue;
         }
+        case 15: {
+          if (tag !== 122) {
+            break;
+          }
+
+          message.schemaBinding = SchemaBinding.decode(reader, reader.uint32());
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -377,6 +417,11 @@ export const StateMachineFiberRecord: MessageFns<StateMachineFiberRecord> = {
         : globalThis.Array.isArray(object?.child_fiber_ids)
         ? object.child_fiber_ids.map((e: any) => globalThis.String(e))
         : [],
+      schemaBinding: isSet(object.schemaBinding)
+        ? SchemaBinding.fromJSON(object.schemaBinding)
+        : isSet(object.schema_binding)
+        ? SchemaBinding.fromJSON(object.schema_binding)
+        : undefined,
     };
   },
 
@@ -424,6 +469,9 @@ export const StateMachineFiberRecord: MessageFns<StateMachineFiberRecord> = {
     if (message.childFiberIds?.length) {
       obj.childFiberIds = message.childFiberIds;
     }
+    if (message.schemaBinding !== undefined) {
+      obj.schemaBinding = SchemaBinding.toJSON(message.schemaBinding);
+    }
     return obj;
   },
 
@@ -450,6 +498,9 @@ export const StateMachineFiberRecord: MessageFns<StateMachineFiberRecord> = {
       : undefined;
     message.parentFiberId = object.parentFiberId ?? undefined;
     message.childFiberIds = object.childFiberIds?.map((e) => e) || [];
+    message.schemaBinding = (object.schemaBinding !== undefined && object.schemaBinding !== null)
+      ? SchemaBinding.fromPartial(object.schemaBinding)
+      : undefined;
     return message;
   },
 };
@@ -831,7 +882,7 @@ export const FiberCommit: MessageFns<FiberCommit> = {
 };
 
 function createBaseOnChainState(): OnChainState {
-  return { fiberCommits: {}, latestLogs: {} };
+  return { fiberCommits: {}, latestLogs: {}, registryCommits: {} };
 }
 
 export const OnChainState: MessageFns<OnChainState> = {
@@ -841,6 +892,9 @@ export const OnChainState: MessageFns<OnChainState> = {
     });
     globalThis.Object.entries(message.latestLogs).forEach(([key, value]: [string, FiberLogEntryList]) => {
       OnChainState_LatestLogsEntry.encode({ key: key as any, value }, writer.uint32(18).fork()).join();
+    });
+    globalThis.Object.entries(message.registryCommits).forEach(([key, value]: [string, string]) => {
+      OnChainState_RegistryCommitsEntry.encode({ key: key as any, value }, writer.uint32(26).fork()).join();
     });
     return writer;
   },
@@ -871,6 +925,17 @@ export const OnChainState: MessageFns<OnChainState> = {
           const entry2 = OnChainState_LatestLogsEntry.decode(reader, reader.uint32());
           if (entry2.value !== undefined) {
             message.latestLogs[entry2.key] = entry2.value;
+          }
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          const entry3 = OnChainState_RegistryCommitsEntry.decode(reader, reader.uint32());
+          if (entry3.value !== undefined) {
+            message.registryCommits[entry3.key] = entry3.value;
           }
           continue;
         }
@@ -919,6 +984,23 @@ export const OnChainState: MessageFns<OnChainState> = {
           {},
         )
         : {},
+      registryCommits: isObject(object.registryCommits)
+        ? (globalThis.Object.entries(object.registryCommits) as [string, any][]).reduce(
+          (acc: { [key: string]: string }, [key, value]: [string, any]) => {
+            acc[key] = globalThis.String(value);
+            return acc;
+          },
+          {},
+        )
+        : isObject(object.registry_commits)
+        ? (globalThis.Object.entries(object.registry_commits) as [string, any][]).reduce(
+          (acc: { [key: string]: string }, [key, value]: [string, any]) => {
+            acc[key] = globalThis.String(value);
+            return acc;
+          },
+          {},
+        )
+        : {},
     };
   },
 
@@ -939,6 +1021,15 @@ export const OnChainState: MessageFns<OnChainState> = {
         obj.latestLogs = {};
         entries.forEach(([k, v]) => {
           obj.latestLogs[k] = FiberLogEntryList.toJSON(v);
+        });
+      }
+    }
+    if (message.registryCommits) {
+      const entries = globalThis.Object.entries(message.registryCommits) as [string, string][];
+      if (entries.length > 0) {
+        obj.registryCommits = {};
+        entries.forEach(([k, v]) => {
+          obj.registryCommits[k] = v;
         });
       }
     }
@@ -963,6 +1054,15 @@ export const OnChainState: MessageFns<OnChainState> = {
       (acc: { [key: string]: FiberLogEntryList }, [key, value]: [string, FiberLogEntryList]) => {
         if (value !== undefined) {
           acc[key] = FiberLogEntryList.fromPartial(value);
+        }
+        return acc;
+      },
+      {},
+    );
+    message.registryCommits = (globalThis.Object.entries(object.registryCommits ?? {}) as [string, string][]).reduce(
+      (acc: { [key: string]: string }, [key, value]: [string, string]) => {
+        if (value !== undefined) {
+          acc[key] = globalThis.String(value);
         }
         return acc;
       },
@@ -1130,6 +1230,86 @@ export const OnChainState_LatestLogsEntry: MessageFns<OnChainState_LatestLogsEnt
   },
 };
 
+function createBaseOnChainState_RegistryCommitsEntry(): OnChainState_RegistryCommitsEntry {
+  return { key: "", value: "" };
+}
+
+export const OnChainState_RegistryCommitsEntry: MessageFns<OnChainState_RegistryCommitsEntry> = {
+  encode(message: OnChainState_RegistryCommitsEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== "") {
+      writer.uint32(18).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): OnChainState_RegistryCommitsEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseOnChainState_RegistryCommitsEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.key = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.value = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): OnChainState_RegistryCommitsEntry {
+    return {
+      key: isSet(object.key) ? globalThis.String(object.key) : "",
+      value: isSet(object.value) ? globalThis.String(object.value) : "",
+    };
+  },
+
+  toJSON(message: OnChainState_RegistryCommitsEntry): unknown {
+    const obj: any = {};
+    if (message.key !== "") {
+      obj.key = message.key;
+    }
+    if (message.value !== "") {
+      obj.value = message.value;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<OnChainState_RegistryCommitsEntry>, I>>(
+    base?: I,
+  ): OnChainState_RegistryCommitsEntry {
+    return OnChainState_RegistryCommitsEntry.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<OnChainState_RegistryCommitsEntry>, I>>(
+    object: I,
+  ): OnChainState_RegistryCommitsEntry {
+    const message = createBaseOnChainState_RegistryCommitsEntry();
+    message.key = object.key ?? "";
+    message.value = object.value ?? "";
+    return message;
+  },
+};
+
 function createBaseFiberLogEntryList(): FiberLogEntryList {
   return { entries: [] };
 }
@@ -1193,7 +1373,7 @@ export const FiberLogEntryList: MessageFns<FiberLogEntryList> = {
 };
 
 function createBaseCalculatedState(): CalculatedState {
-  return { stateMachines: {}, scripts: {} };
+  return { stateMachines: {}, scripts: {}, registryEntries: {}, reverseNames: {} };
 }
 
 export const CalculatedState: MessageFns<CalculatedState> = {
@@ -1203,6 +1383,12 @@ export const CalculatedState: MessageFns<CalculatedState> = {
     });
     globalThis.Object.entries(message.scripts).forEach(([key, value]: [string, ScriptFiberRecord]) => {
       CalculatedState_ScriptsEntry.encode({ key: key as any, value }, writer.uint32(18).fork()).join();
+    });
+    globalThis.Object.entries(message.registryEntries).forEach(([key, value]: [string, RegistryEntry]) => {
+      CalculatedState_RegistryEntriesEntry.encode({ key: key as any, value }, writer.uint32(26).fork()).join();
+    });
+    globalThis.Object.entries(message.reverseNames).forEach(([key, value]: [string, string]) => {
+      CalculatedState_ReverseNamesEntry.encode({ key: key as any, value }, writer.uint32(34).fork()).join();
     });
     return writer;
   },
@@ -1233,6 +1419,28 @@ export const CalculatedState: MessageFns<CalculatedState> = {
           const entry2 = CalculatedState_ScriptsEntry.decode(reader, reader.uint32());
           if (entry2.value !== undefined) {
             message.scripts[entry2.key] = entry2.value;
+          }
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          const entry3 = CalculatedState_RegistryEntriesEntry.decode(reader, reader.uint32());
+          if (entry3.value !== undefined) {
+            message.registryEntries[entry3.key] = entry3.value;
+          }
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          const entry4 = CalculatedState_ReverseNamesEntry.decode(reader, reader.uint32());
+          if (entry4.value !== undefined) {
+            message.reverseNames[entry4.key] = entry4.value;
           }
           continue;
         }
@@ -1273,6 +1481,40 @@ export const CalculatedState: MessageFns<CalculatedState> = {
           {},
         )
         : {},
+      registryEntries: isObject(object.registry)
+        ? (globalThis.Object.entries(object.registry) as [string, any][]).reduce(
+          (acc: { [key: string]: RegistryEntry }, [key, value]: [string, any]) => {
+            acc[key] = RegistryEntry.fromJSON(value);
+            return acc;
+          },
+          {},
+        )
+        : isObject(object.registry_entries)
+        ? (globalThis.Object.entries(object.registry_entries) as [string, any][]).reduce(
+          (acc: { [key: string]: RegistryEntry }, [key, value]: [string, any]) => {
+            acc[key] = RegistryEntry.fromJSON(value);
+            return acc;
+          },
+          {},
+        )
+        : {},
+      reverseNames: isObject(object.reverseNames)
+        ? (globalThis.Object.entries(object.reverseNames) as [string, any][]).reduce(
+          (acc: { [key: string]: string }, [key, value]: [string, any]) => {
+            acc[key] = globalThis.String(value);
+            return acc;
+          },
+          {},
+        )
+        : isObject(object.reverse_names)
+        ? (globalThis.Object.entries(object.reverse_names) as [string, any][]).reduce(
+          (acc: { [key: string]: string }, [key, value]: [string, any]) => {
+            acc[key] = globalThis.String(value);
+            return acc;
+          },
+          {},
+        )
+        : {},
     };
   },
 
@@ -1293,6 +1535,24 @@ export const CalculatedState: MessageFns<CalculatedState> = {
         obj.scripts = {};
         entries.forEach(([k, v]) => {
           obj.scripts[k] = ScriptFiberRecord.toJSON(v);
+        });
+      }
+    }
+    if (message.registryEntries) {
+      const entries = globalThis.Object.entries(message.registryEntries) as [string, RegistryEntry][];
+      if (entries.length > 0) {
+        obj.registry = {};
+        entries.forEach(([k, v]) => {
+          obj.registry[k] = RegistryEntry.toJSON(v);
+        });
+      }
+    }
+    if (message.reverseNames) {
+      const entries = globalThis.Object.entries(message.reverseNames) as [string, string][];
+      if (entries.length > 0) {
+        obj.reverseNames = {};
+        entries.forEach(([k, v]) => {
+          obj.reverseNames[k] = v;
         });
       }
     }
@@ -1318,6 +1578,22 @@ export const CalculatedState: MessageFns<CalculatedState> = {
       (acc: { [key: string]: ScriptFiberRecord }, [key, value]: [string, ScriptFiberRecord]) => {
         if (value !== undefined) {
           acc[key] = ScriptFiberRecord.fromPartial(value);
+        }
+        return acc;
+      },
+      {},
+    );
+    message.registryEntries = (globalThis.Object.entries(object.registryEntries ?? {}) as [string, RegistryEntry][])
+      .reduce((acc: { [key: string]: RegistryEntry }, [key, value]: [string, RegistryEntry]) => {
+        if (value !== undefined) {
+          acc[key] = RegistryEntry.fromPartial(value);
+        }
+        return acc;
+      }, {});
+    message.reverseNames = (globalThis.Object.entries(object.reverseNames ?? {}) as [string, string][]).reduce(
+      (acc: { [key: string]: string }, [key, value]: [string, string]) => {
+        if (value !== undefined) {
+          acc[key] = globalThis.String(value);
         }
         return acc;
       },
@@ -1483,6 +1759,168 @@ export const CalculatedState_ScriptsEntry: MessageFns<CalculatedState_ScriptsEnt
     message.value = (object.value !== undefined && object.value !== null)
       ? ScriptFiberRecord.fromPartial(object.value)
       : undefined;
+    return message;
+  },
+};
+
+function createBaseCalculatedState_RegistryEntriesEntry(): CalculatedState_RegistryEntriesEntry {
+  return { key: "", value: undefined };
+}
+
+export const CalculatedState_RegistryEntriesEntry: MessageFns<CalculatedState_RegistryEntriesEntry> = {
+  encode(message: CalculatedState_RegistryEntriesEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== undefined) {
+      RegistryEntry.encode(message.value, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CalculatedState_RegistryEntriesEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCalculatedState_RegistryEntriesEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.key = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.value = RegistryEntry.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CalculatedState_RegistryEntriesEntry {
+    return {
+      key: isSet(object.key) ? globalThis.String(object.key) : "",
+      value: isSet(object.value) ? RegistryEntry.fromJSON(object.value) : undefined,
+    };
+  },
+
+  toJSON(message: CalculatedState_RegistryEntriesEntry): unknown {
+    const obj: any = {};
+    if (message.key !== "") {
+      obj.key = message.key;
+    }
+    if (message.value !== undefined) {
+      obj.value = RegistryEntry.toJSON(message.value);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CalculatedState_RegistryEntriesEntry>, I>>(
+    base?: I,
+  ): CalculatedState_RegistryEntriesEntry {
+    return CalculatedState_RegistryEntriesEntry.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CalculatedState_RegistryEntriesEntry>, I>>(
+    object: I,
+  ): CalculatedState_RegistryEntriesEntry {
+    const message = createBaseCalculatedState_RegistryEntriesEntry();
+    message.key = object.key ?? "";
+    message.value = (object.value !== undefined && object.value !== null)
+      ? RegistryEntry.fromPartial(object.value)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseCalculatedState_ReverseNamesEntry(): CalculatedState_ReverseNamesEntry {
+  return { key: "", value: "" };
+}
+
+export const CalculatedState_ReverseNamesEntry: MessageFns<CalculatedState_ReverseNamesEntry> = {
+  encode(message: CalculatedState_ReverseNamesEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== "") {
+      writer.uint32(18).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CalculatedState_ReverseNamesEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCalculatedState_ReverseNamesEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.key = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.value = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CalculatedState_ReverseNamesEntry {
+    return {
+      key: isSet(object.key) ? globalThis.String(object.key) : "",
+      value: isSet(object.value) ? globalThis.String(object.value) : "",
+    };
+  },
+
+  toJSON(message: CalculatedState_ReverseNamesEntry): unknown {
+    const obj: any = {};
+    if (message.key !== "") {
+      obj.key = message.key;
+    }
+    if (message.value !== "") {
+      obj.value = message.value;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CalculatedState_ReverseNamesEntry>, I>>(
+    base?: I,
+  ): CalculatedState_ReverseNamesEntry {
+    return CalculatedState_ReverseNamesEntry.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CalculatedState_ReverseNamesEntry>, I>>(
+    object: I,
+  ): CalculatedState_ReverseNamesEntry {
+    const message = createBaseCalculatedState_ReverseNamesEntry();
+    message.key = object.key ?? "";
+    message.value = object.value ?? "";
     return message;
   },
 };
