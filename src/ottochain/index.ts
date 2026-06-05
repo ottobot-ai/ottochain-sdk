@@ -121,5 +121,16 @@ export {
 } from './normalize.js';
 export { dropNulls } from './drop-nulls.js';
 
+// Genesis manifest exporter (std-app pre-registration content)
+export { buildGenesisManifest, GENESIS_MANIFEST_VERSION } from './genesis-manifest.js';
+export type {
+  GenesisManifest,
+  GenesisPackage,
+  SchemaShape as GenesisSchemaShape,
+  MessageShape as GenesisMessageShape,
+  FieldShape as GenesisFieldShape,
+  StateMachineDefinition as GenesisStateMachineDefinition,
+} from './genesis-manifest.js';
+
 // Note: Governance and Corporate types are now in src/apps/
 // Import from '@ottochain/sdk/apps' instead

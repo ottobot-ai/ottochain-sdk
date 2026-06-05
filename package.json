@@ -80,6 +80,7 @@
     "lint:proto": "buf lint",
     "docs": "typedoc",
     "docs:watch": "typedoc --watch",
+    "genesis:manifest": "npm run build && node scripts/emit-genesis-manifest.mjs genesis/std-manifest.json",
     "prepare": "npm run build",
     "prebuild": "node scripts/inline-json.mjs"
   },
