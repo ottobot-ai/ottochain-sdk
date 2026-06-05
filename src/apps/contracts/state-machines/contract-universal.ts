@@ -32,10 +32,42 @@ export const contractUniversalDef = defineFiberApp({
   },
 
   states: {
-    PROPOSED: { id: "PROPOSED", isFinal: false, metadata: null },
-    ACTIVE: { id: "ACTIVE", isFinal: false, metadata: null },
-    COMPLETED: { id: "COMPLETED", isFinal: true, metadata: null },
-    CANCELLED: { id: "CANCELLED", isFinal: true, metadata: null },
+    PROPOSED: {
+      id: "PROPOSED",
+      isFinal: false,
+      metadata: {
+        label: "Proposed",
+        description: "Contract proposed; awaiting acceptance",
+        category: "initial",
+      },
+    },
+    ACTIVE: {
+      id: "ACTIVE",
+      isFinal: false,
+      metadata: {
+        label: "Active",
+        description: "Contract accepted and in effect",
+        category: "active",
+      },
+    },
+    COMPLETED: {
+      id: "COMPLETED",
+      isFinal: true,
+      metadata: {
+        label: "Completed",
+        description: "Contract obligations fulfilled (terminal)",
+        category: "terminal",
+      },
+    },
+    CANCELLED: {
+      id: "CANCELLED",
+      isFinal: true,
+      metadata: {
+        label: "Cancelled",
+        description: "Contract cancelled before completion (terminal)",
+        category: "terminal",
+      },
+    },
   },
 
   initialState: "PROPOSED",

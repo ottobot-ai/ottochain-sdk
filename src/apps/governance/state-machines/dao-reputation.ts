@@ -132,9 +132,33 @@ export const daoReputationDef = defineFiberApp({
   },
 
   states: {
-    ACTIVE: { id: "ACTIVE", isFinal: false, metadata: null },
-    VOTING: { id: "VOTING", isFinal: false, metadata: null },
-    DISSOLVED: { id: "DISSOLVED", isFinal: true, metadata: null },
+    ACTIVE: {
+      id: "ACTIVE",
+      isFinal: false,
+      metadata: {
+        label: "Active",
+        description: "DAO is idle and ready to accept a proposal",
+        category: "initial",
+      },
+    },
+    VOTING: {
+      id: "VOTING",
+      isFinal: false,
+      metadata: {
+        label: "Voting",
+        description: "Members vote with reputation-weighted power",
+        category: "pending",
+      },
+    },
+    DISSOLVED: {
+      id: "DISSOLVED",
+      isFinal: true,
+      metadata: {
+        label: "Dissolved",
+        description: "Reputation DAO dissolved (terminal)",
+        category: "terminal",
+      },
+    },
   },
 
   initialState: "ACTIVE",

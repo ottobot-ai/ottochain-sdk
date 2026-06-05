@@ -141,5 +141,7 @@ export {
   type FiberAppDefinition,
   type FiberAppMetadata,
   type StateDefinition,
+  type StdStateMetadata,
+  type StateCategory,
   type Transition,
 } from './schema/fiber-app.js';

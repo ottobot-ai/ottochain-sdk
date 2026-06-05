@@ -76,32 +76,56 @@ export const marketAuctionDef = defineFiberApp({
     PROPOSED: {
       id: "PROPOSED",
       isFinal: false,
-      metadata: { description: "Auction created but not yet open" },
+      metadata: {
+        label: "Proposed",
+        description: "Auction created but not yet open",
+        category: "initial",
+      },
     },
     OPEN: {
       id: "OPEN",
       isFinal: false,
-      metadata: { description: "Accepting bids" },
+      metadata: {
+        label: "Open",
+        description: "Accepting bids",
+        category: "active",
+      },
     },
     CLOSING: {
       id: "CLOSING",
       isFinal: false,
-      metadata: { description: "Bid period ended, determining winner" },
+      metadata: {
+        label: "Closing",
+        description: "Bid period ended, determining winner",
+        category: "pending",
+      },
     },
     SETTLED: {
       id: "SETTLED",
       isFinal: true,
-      metadata: { description: "Winner determined, transfer complete" },
+      metadata: {
+        label: "Settled",
+        description: "Winner determined, transfer complete",
+        category: "terminal",
+      },
     },
     NO_SALE: {
       id: "NO_SALE",
       isFinal: true,
-      metadata: { description: "Reserve not met or no valid bids" },
+      metadata: {
+        label: "No sale",
+        description: "Reserve not met or no valid bids",
+        category: "terminal",
+      },
     },
     CANCELLED: {
       id: "CANCELLED",
       isFinal: true,
-      metadata: { description: "Auction cancelled by seller" },
+      metadata: {
+        label: "Cancelled",
+        description: "Auction cancelled by seller",
+        category: "terminal",
+      },
     },
   },
 

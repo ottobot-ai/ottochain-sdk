@@ -124,9 +124,33 @@ export const daoMultisigDef = defineFiberApp({
   },
 
   states: {
-    ACTIVE: { id: "ACTIVE", isFinal: false, metadata: null },
-    PENDING: { id: "PENDING", isFinal: false, metadata: null },
-    DISSOLVED: { id: "DISSOLVED", isFinal: true, metadata: null },
+    ACTIVE: {
+      id: "ACTIVE",
+      isFinal: false,
+      metadata: {
+        label: "Active",
+        description: "Multisig is idle and ready to propose an action",
+        category: "initial",
+      },
+    },
+    PENDING: {
+      id: "PENDING",
+      isFinal: false,
+      metadata: {
+        label: "Pending",
+        description: "An action is awaiting the required signature threshold",
+        category: "pending",
+      },
+    },
+    DISSOLVED: {
+      id: "DISSOLVED",
+      isFinal: true,
+      metadata: {
+        label: "Dissolved",
+        description: "Multisig DAO dissolved (terminal)",
+        category: "terminal",
+      },
+    },
   },
 
   initialState: "ACTIVE",

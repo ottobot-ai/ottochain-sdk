@@ -134,10 +134,42 @@ export const daoTokenDef = defineFiberApp({
   },
 
   states: {
-    ACTIVE: { id: "ACTIVE", isFinal: false, metadata: null },
-    VOTING: { id: "VOTING", isFinal: false, metadata: null },
-    QUEUED: { id: "QUEUED", isFinal: false, metadata: null },
-    DISSOLVED: { id: "DISSOLVED", isFinal: true, metadata: null },
+    ACTIVE: {
+      id: "ACTIVE",
+      isFinal: false,
+      metadata: {
+        label: "Active",
+        description: "DAO is idle and ready to accept a proposal",
+        category: "initial",
+      },
+    },
+    VOTING: {
+      id: "VOTING",
+      isFinal: false,
+      metadata: {
+        label: "Voting",
+        description: "Token holders are voting on the active proposal",
+        category: "pending",
+      },
+    },
+    QUEUED: {
+      id: "QUEUED",
+      isFinal: false,
+      metadata: {
+        label: "Queued",
+        description: "Passed proposal queued in timelock before execution",
+        category: "pending",
+      },
+    },
+    DISSOLVED: {
+      id: "DISSOLVED",
+      isFinal: true,
+      metadata: {
+        label: "Dissolved",
+        description: "Token DAO dissolved (terminal)",
+        category: "terminal",
+      },
+    },
   },
 
   initialState: "ACTIVE",

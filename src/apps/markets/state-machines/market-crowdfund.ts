@@ -84,27 +84,47 @@ export const marketCrowdfundDef = defineFiberApp({
     PROPOSED: {
       id: "PROPOSED",
       isFinal: false,
-      metadata: { description: "Campaign created but not yet open" },
+      metadata: {
+        label: "Proposed",
+        description: "Campaign created but not yet open",
+        category: "initial",
+      },
     },
     OPEN: {
       id: "OPEN",
       isFinal: false,
-      metadata: { description: "Accepting pledges" },
+      metadata: {
+        label: "Open",
+        description: "Accepting pledges",
+        category: "active",
+      },
     },
     FUNDED: {
       id: "FUNDED",
       isFinal: true,
-      metadata: { description: "Threshold met, funds released to creator" },
+      metadata: {
+        label: "Funded",
+        description: "Threshold met, funds released to creator",
+        category: "terminal",
+      },
     },
     REFUNDED: {
       id: "REFUNDED",
       isFinal: true,
-      metadata: { description: "Threshold not met, all pledges refunded" },
+      metadata: {
+        label: "Refunded",
+        description: "Threshold not met, all pledges refunded",
+        category: "terminal",
+      },
     },
     CANCELLED: {
       id: "CANCELLED",
       isFinal: true,
-      metadata: { description: "Campaign cancelled by creator" },
+      metadata: {
+        label: "Cancelled",
+        description: "Campaign cancelled by creator",
+        category: "terminal",
+      },
     },
   },
 

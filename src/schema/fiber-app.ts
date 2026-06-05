@@ -74,11 +74,52 @@ export interface EventSchema {
 // State Machine Core (matches metagraph)
 // =============================================================================
 
+/**
+ * Lifecycle category for a state — a small fixed vocabulary that lets UIs group
+ * and color states and lets analytics bucket fibers without app-specific logic.
+ *
+ * - `initial`  — the machine's `initialState` (entry point)
+ * - `active`   — a normal, operational, non-terminal state
+ * - `pending`  — a transient state awaiting an action/condition/timeout
+ * - `terminal` — a final state (`isFinal: true`); the machine ends here
+ */
+export type StateCategory = 'initial' | 'active' | 'pending' | 'terminal';
+
+/**
+ * Standard per-state metadata convention for OttoChain std apps.
+ *
+ * This is the minimal, high-value block we attach to every standard state
+ * definition (instead of `metadata: null`). It is plain JSON, so it survives
+ * the client/server null-dropping canonicalization (only NULL fields are
+ * dropped; a populated object is kept and signed/verified identically on both
+ * sides). Custom apps may extend `StateDefinition.metadata` with extra keys.
+ *
+ * Fields:
+ * - `label`       — short human-readable title for the state (e.g. "Active")
+ * - `description` — one-line explanation of what the state means
+ * - `category`    — optional lifecycle hint (see {@link StateCategory})
+ */
+export interface StdStateMetadata {
+  /** Short human-readable title, e.g. "Voting". */
+  label: string;
+  /** One-line description of what this state represents. */
+  description: string;
+  /** Optional lifecycle category hint for UIs / analytics. */
+  category?: StateCategory;
+}
+
 export interface StateDefinition {
   id: string;
   isFinal: boolean;
   description?: string;
-  metadata?: Record<string, unknown> | null;
+  /**
+   * Optional per-state metadata. Std apps populate the {@link StdStateMetadata}
+   * convention (`label` / `description` / `category`); custom apps may use any
+   * JSON object or `null`. NOTE: a `null` here is stripped from the signed wire
+   * form (the chain drops null object-fields), so prefer populated metadata or
+   * omit the field entirely.
+   */
+  metadata?: StdStateMetadata | Record<string, unknown> | null;
 }
 
 export type JsonLogicRule = Record<string, unknown>;

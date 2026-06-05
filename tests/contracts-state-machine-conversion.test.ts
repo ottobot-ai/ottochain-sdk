@@ -51,38 +51,31 @@ describe('Contracts State Machine Conversion', () => {
       });
     });
 
-    it('should have proper state definitions', () => {
+    it('should have proper state definitions with standard metadata', () => {
       expect(contractAgreementDef.states).toBeDefined();
-      expect(contractAgreementDef.states.PROPOSED).toEqual({
-        id: 'PROPOSED',
-        isFinal: false,
-        metadata: null,
-      });
-      expect(contractAgreementDef.states.ACTIVE).toEqual({
-        id: 'ACTIVE', 
-        isFinal: false,
-        metadata: null,
-      });
-      expect(contractAgreementDef.states.COMPLETED).toEqual({
-        id: 'COMPLETED',
-        isFinal: true,
-        metadata: null,
-      });
-      expect(contractAgreementDef.states.DISPUTED).toEqual({
-        id: 'DISPUTED',
-        isFinal: false,
-        metadata: null,
-      });
-      expect(contractAgreementDef.states.REJECTED).toEqual({
-        id: 'REJECTED',
-        isFinal: true,
-        metadata: null,
-      });
-      expect(contractAgreementDef.states.CANCELLED).toEqual({
-        id: 'CANCELLED',
-        isFinal: true,
-        metadata: null,
-      });
+
+      // id / isFinal are unchanged; metadata is now the standard
+      // { label, description, category } block (no longer null) so the
+      // definition survives the client/server null-dropping canonicalization.
+      const expected: Record<string, { isFinal: boolean; category: string }> = {
+        PROPOSED: { isFinal: false, category: 'initial' },
+        ACTIVE: { isFinal: false, category: 'active' },
+        COMPLETED: { isFinal: true, category: 'terminal' },
+        DISPUTED: { isFinal: false, category: 'pending' },
+        REJECTED: { isFinal: true, category: 'terminal' },
+        CANCELLED: { isFinal: true, category: 'terminal' },
+      };
+
+      for (const [id, exp] of Object.entries(expected)) {
+        const state = contractAgreementDef.states[id];
+        expect(state.id).toBe(id);
+        expect(state.isFinal).toBe(exp.isFinal);
+        expect(state.metadata).not.toBeNull();
+        const meta = state.metadata as Record<string, unknown>;
+        expect(typeof meta.label).toBe('string');
+        expect(typeof meta.description).toBe('string');
+        expect(meta.category).toBe(exp.category);
+      }
     });
 
     it('should define proper transitions with events', () => {
