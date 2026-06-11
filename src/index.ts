@@ -61,7 +61,6 @@ export * from './types.js';
 
 // ─── OttoChain-specific transaction helpers ───────────────────────────────────
 export * from './ottochain/transaction.js';
-export { normalizeCreateStateMachine, normalizeTransitionStateMachine, normalizeArchiveStateMachine, normalizeMessage } from './ottochain/normalize.js';
 export { dropNulls } from './ottochain/drop-nulls.js';
 
 // ─── Genesis manifest exporter (std-app pre-registration content) ─────────────
