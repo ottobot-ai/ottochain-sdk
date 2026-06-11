@@ -45,8 +45,12 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
-          registry-url: 'https://registry.npmjs.org'
-          scope: '@ottochain'
+          # IMPORTANT: do NOT set registry-url/scope here. Passing registry-url makes
+          # actions/setup-node write a project .npmrc with `_authToken=${NODE_AUTH_TOKEN}`
+          # and default NODE_AUTH_TOKEN to the literal placeholder `XXXXX-XXXXX-XXXXX-XXXXX`.
+          # npm/pnpm then attempt TOKEN auth with that bogus value (404) and never fall back
+          # to OIDC trusted publishing — any configured token suppresses the OIDC exchange.
+          # With no .npmrc token, pnpm publishes to the default npmjs registry via OIDC.
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
