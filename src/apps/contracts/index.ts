@@ -6,7 +6,7 @@
  * @example
  * ```typescript
  * import {
- *   ContractState,
+ *   State,
  *   Contract,
  *   getContractDefinition,
  *   CONTRACTS_DEFINITIONS
@@ -19,9 +19,11 @@
  * @packageDocumentation
  */
 
-// Re-export generated protobuf types (source of truth)
+// Re-export generated protobuf types (source of truth).
+// The nested lifecycle enum dropped its app prefix in the proto; under this
+// app-scoped entrypoint it is unambiguously State.
 export {
-  ContractState,
+  State,
   Contract,
   ProposeContractRequest,
   AcceptContractRequest,
@@ -29,8 +31,15 @@ export {
   RejectContractRequest,
   DisputeContractRequest,
   ContractDefinition,
-  contractStateFromJSON,
-  contractStateToJSON,
+  stateFromJSON,
+  stateToJSON,
+} from "../../generated/ottochain/apps/contracts/v1/contract.js";
+
+// Deprecated app-prefixed alias (renamed to State); kept for compat.
+export {
+  State as ContractState,
+  stateFromJSON as contractStateFromJSON,
+  stateToJSON as contractStateToJSON,
 } from "../../generated/ottochain/apps/contracts/v1/contract.js";
 
 // ---------------------------------------------------------------------------

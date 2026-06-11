@@ -6,7 +6,7 @@ import "ottochain/v1/common.proto";
 import "google/protobuf/timestamp.proto";
 
 // Identity type - determines which state machine variant applies
-enum IdentityType {
+enum Type {
   IDENTITY_TYPE_UNSPECIFIED = 0;
   IDENTITY_TYPE_AGENT = 1;     // AI agent identity
   IDENTITY_TYPE_ORACLE = 2;    // Oracle service identity
@@ -15,7 +15,7 @@ enum IdentityType {
 
 // Unified identity lifecycle states
 // Shared across all identity types with type-specific transitions
-enum IdentityState {
+enum State {
   IDENTITY_STATE_UNSPECIFIED = 0;
   IDENTITY_STATE_UNREGISTERED = 1;  // Not yet registered (oracle initial)
   IDENTITY_STATE_REGISTERED = 2;    // Registered, pending activation
@@ -70,8 +70,8 @@ message Identity {
   string address = 2;
   string public_key = 3;
   string display_name = 4;
-  IdentityType identity_type = 5;
-  IdentityState state = 6;
+  Type identity_type = 5;
+  State state = 6;
   Reputation reputation = 7;
   int64 stake = 8;                         // Staked amount (oracles/services)
   repeated string domains = 9;             // Expertise domains (oracles)
@@ -86,7 +86,7 @@ message Identity {
 // ============================================================================
 
 message RegisterIdentityRequest {
-  IdentityType identity_type = 1;
+  Type identity_type = 1;
   string address = 2;
   string display_name = 3;
   int64 initial_stake = 4;         // For oracles/services
@@ -128,7 +128,7 @@ message WithdrawIdentityRequest {
 
 message IdentityDefinition {
   // Configuration for identity state machine
-  IdentityType identity_type = 1;
+  Type identity_type = 1;
   int32 initial_reputation = 2;        // Default starting reputation
   int32 activation_threshold = 3;      // Min rep/stake to activate
   int64 min_stake = 4;                 // Min stake for oracles/services

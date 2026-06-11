@@ -1,5 +1,5 @@
 import {
-  IdentityState,
+  State,
   AttestationType,
   AGENT_TRANSITIONS,
   IDENTITY_TRANSITIONS,
@@ -11,19 +11,19 @@ import {
 describe('Identity Constants', () => {
   describe('IDENTITY_TRANSITIONS', () => {
     it('should define transitions for all states', () => {
-      expect(IDENTITY_TRANSITIONS[IdentityState.IDENTITY_STATE_REGISTERED]).toContain('activate');
-      expect(IDENTITY_TRANSITIONS[IdentityState.IDENTITY_STATE_REGISTERED]).toContain('withdraw');
-      expect(IDENTITY_TRANSITIONS[IdentityState.IDENTITY_STATE_ACTIVE]).toContain('challenge');
-      expect(IDENTITY_TRANSITIONS[IdentityState.IDENTITY_STATE_WITHDRAWN]).toEqual([]);
+      expect(IDENTITY_TRANSITIONS[State.IDENTITY_STATE_REGISTERED]).toContain('activate');
+      expect(IDENTITY_TRANSITIONS[State.IDENTITY_STATE_REGISTERED]).toContain('withdraw');
+      expect(IDENTITY_TRANSITIONS[State.IDENTITY_STATE_ACTIVE]).toContain('challenge');
+      expect(IDENTITY_TRANSITIONS[State.IDENTITY_STATE_WITHDRAWN]).toEqual([]);
     });
 
     it('should not allow transitions from terminal state', () => {
-      expect(IDENTITY_TRANSITIONS[IdentityState.IDENTITY_STATE_WITHDRAWN]).toHaveLength(0);
+      expect(IDENTITY_TRANSITIONS[State.IDENTITY_STATE_WITHDRAWN]).toHaveLength(0);
     });
 
     it('should define oracle-specific slashed state transitions', () => {
-      expect(IDENTITY_TRANSITIONS[IdentityState.IDENTITY_STATE_SLASHED]).toContain('reactivate');
-      expect(IDENTITY_TRANSITIONS[IdentityState.IDENTITY_STATE_SLASHED]).toContain('withdraw');
+      expect(IDENTITY_TRANSITIONS[State.IDENTITY_STATE_SLASHED]).toContain('reactivate');
+      expect(IDENTITY_TRANSITIONS[State.IDENTITY_STATE_SLASHED]).toContain('withdraw');
     });
 
     it('AGENT_TRANSITIONS should be alias for IDENTITY_TRANSITIONS', () => {
@@ -46,13 +46,13 @@ describe('Identity Constants', () => {
 
   describe('canTransition', () => {
     it('should return true for valid transitions', () => {
-      expect(canTransition(IdentityState.IDENTITY_STATE_REGISTERED, 'activate')).toBe(true);
-      expect(canTransition(IdentityState.IDENTITY_STATE_ACTIVE, 'challenge')).toBe(true);
+      expect(canTransition(State.IDENTITY_STATE_REGISTERED, 'activate')).toBe(true);
+      expect(canTransition(State.IDENTITY_STATE_ACTIVE, 'challenge')).toBe(true);
     });
 
     it('should return false for invalid transitions', () => {
-      expect(canTransition(IdentityState.IDENTITY_STATE_WITHDRAWN, 'activate')).toBe(false);
-      expect(canTransition(IdentityState.IDENTITY_STATE_REGISTERED, 'suspend')).toBe(false);
+      expect(canTransition(State.IDENTITY_STATE_WITHDRAWN, 'activate')).toBe(false);
+      expect(canTransition(State.IDENTITY_STATE_REGISTERED, 'suspend')).toBe(false);
     });
   });
 

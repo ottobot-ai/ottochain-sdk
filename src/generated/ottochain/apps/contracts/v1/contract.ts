@@ -12,7 +12,7 @@ import { Timestamp } from "../../../../google/protobuf/timestamp.js";
 export const protobufPackage = "ottochain.apps.contracts.v1";
 
 /** Contract lifecycle states */
-export enum ContractState {
+export enum State {
   CONTRACT_STATE_UNSPECIFIED = "CONTRACT_STATE_UNSPECIFIED",
   /** CONTRACT_STATE_PROPOSED - Awaiting counterparty acceptance */
   CONTRACT_STATE_PROPOSED = "CONTRACT_STATE_PROPOSED",
@@ -29,75 +29,75 @@ export enum ContractState {
   UNRECOGNIZED = "UNRECOGNIZED",
 }
 
-export function contractStateFromJSON(object: any): ContractState {
+export function stateFromJSON(object: any): State {
   switch (object) {
     case 0:
     case "CONTRACT_STATE_UNSPECIFIED":
-      return ContractState.CONTRACT_STATE_UNSPECIFIED;
+      return State.CONTRACT_STATE_UNSPECIFIED;
     case 1:
     case "CONTRACT_STATE_PROPOSED":
-      return ContractState.CONTRACT_STATE_PROPOSED;
+      return State.CONTRACT_STATE_PROPOSED;
     case 2:
     case "CONTRACT_STATE_ACTIVE":
-      return ContractState.CONTRACT_STATE_ACTIVE;
+      return State.CONTRACT_STATE_ACTIVE;
     case 3:
     case "CONTRACT_STATE_COMPLETED":
-      return ContractState.CONTRACT_STATE_COMPLETED;
+      return State.CONTRACT_STATE_COMPLETED;
     case 4:
     case "CONTRACT_STATE_REJECTED":
-      return ContractState.CONTRACT_STATE_REJECTED;
+      return State.CONTRACT_STATE_REJECTED;
     case 5:
     case "CONTRACT_STATE_DISPUTED":
-      return ContractState.CONTRACT_STATE_DISPUTED;
+      return State.CONTRACT_STATE_DISPUTED;
     case 6:
     case "CONTRACT_STATE_CANCELLED":
-      return ContractState.CONTRACT_STATE_CANCELLED;
+      return State.CONTRACT_STATE_CANCELLED;
     case -1:
     case "UNRECOGNIZED":
     default:
-      return ContractState.UNRECOGNIZED;
+      return State.UNRECOGNIZED;
   }
 }
 
-export function contractStateToJSON(object: ContractState): string {
+export function stateToJSON(object: State): string {
   switch (object) {
-    case ContractState.CONTRACT_STATE_UNSPECIFIED:
+    case State.CONTRACT_STATE_UNSPECIFIED:
       return "CONTRACT_STATE_UNSPECIFIED";
-    case ContractState.CONTRACT_STATE_PROPOSED:
+    case State.CONTRACT_STATE_PROPOSED:
       return "CONTRACT_STATE_PROPOSED";
-    case ContractState.CONTRACT_STATE_ACTIVE:
+    case State.CONTRACT_STATE_ACTIVE:
       return "CONTRACT_STATE_ACTIVE";
-    case ContractState.CONTRACT_STATE_COMPLETED:
+    case State.CONTRACT_STATE_COMPLETED:
       return "CONTRACT_STATE_COMPLETED";
-    case ContractState.CONTRACT_STATE_REJECTED:
+    case State.CONTRACT_STATE_REJECTED:
       return "CONTRACT_STATE_REJECTED";
-    case ContractState.CONTRACT_STATE_DISPUTED:
+    case State.CONTRACT_STATE_DISPUTED:
       return "CONTRACT_STATE_DISPUTED";
-    case ContractState.CONTRACT_STATE_CANCELLED:
+    case State.CONTRACT_STATE_CANCELLED:
       return "CONTRACT_STATE_CANCELLED";
-    case ContractState.UNRECOGNIZED:
+    case State.UNRECOGNIZED:
     default:
       return "UNRECOGNIZED";
   }
 }
 
-export function contractStateToNumber(object: ContractState): number {
+export function stateToNumber(object: State): number {
   switch (object) {
-    case ContractState.CONTRACT_STATE_UNSPECIFIED:
+    case State.CONTRACT_STATE_UNSPECIFIED:
       return 0;
-    case ContractState.CONTRACT_STATE_PROPOSED:
+    case State.CONTRACT_STATE_PROPOSED:
       return 1;
-    case ContractState.CONTRACT_STATE_ACTIVE:
+    case State.CONTRACT_STATE_ACTIVE:
       return 2;
-    case ContractState.CONTRACT_STATE_COMPLETED:
+    case State.CONTRACT_STATE_COMPLETED:
       return 3;
-    case ContractState.CONTRACT_STATE_REJECTED:
+    case State.CONTRACT_STATE_REJECTED:
       return 4;
-    case ContractState.CONTRACT_STATE_DISPUTED:
+    case State.CONTRACT_STATE_DISPUTED:
       return 5;
-    case ContractState.CONTRACT_STATE_CANCELLED:
+    case State.CONTRACT_STATE_CANCELLED:
       return 6;
-    case ContractState.UNRECOGNIZED:
+    case State.UNRECOGNIZED:
     default:
       return -1;
   }
@@ -110,7 +110,7 @@ export interface Contract {
   contractId: string;
   proposer: string;
   counterparty: string;
-  state: ContractState;
+  state: State;
   /** Flexible terms structure */
   terms?: { [key: string]: any } | undefined;
   proposedAt?: Date | undefined;
@@ -172,7 +172,7 @@ function createBaseContract(): Contract {
     contractId: "",
     proposer: "",
     counterparty: "",
-    state: ContractState.CONTRACT_STATE_UNSPECIFIED,
+    state: State.CONTRACT_STATE_UNSPECIFIED,
     terms: undefined,
     proposedAt: undefined,
     acceptedAt: undefined,
@@ -195,8 +195,8 @@ export const Contract: MessageFns<Contract> = {
     if (message.counterparty !== "") {
       writer.uint32(34).string(message.counterparty);
     }
-    if (message.state !== ContractState.CONTRACT_STATE_UNSPECIFIED) {
-      writer.uint32(40).int32(contractStateToNumber(message.state));
+    if (message.state !== State.CONTRACT_STATE_UNSPECIFIED) {
+      writer.uint32(40).int32(stateToNumber(message.state));
     }
     if (message.terms !== undefined) {
       Struct.encode(Struct.wrap(message.terms), writer.uint32(50).fork()).join();
@@ -260,7 +260,7 @@ export const Contract: MessageFns<Contract> = {
             break;
           }
 
-          message.state = contractStateFromJSON(reader.int32());
+          message.state = stateFromJSON(reader.int32());
           continue;
         }
         case 6: {
@@ -322,7 +322,7 @@ export const Contract: MessageFns<Contract> = {
         : "",
       proposer: isSet(object.proposer) ? globalThis.String(object.proposer) : "",
       counterparty: isSet(object.counterparty) ? globalThis.String(object.counterparty) : "",
-      state: isSet(object.state) ? contractStateFromJSON(object.state) : ContractState.CONTRACT_STATE_UNSPECIFIED,
+      state: isSet(object.state) ? stateFromJSON(object.state) : State.CONTRACT_STATE_UNSPECIFIED,
       terms: isObject(object.terms) ? object.terms : undefined,
       proposedAt: isSet(object.proposedAt)
         ? fromJsonTimestamp(object.proposedAt)
@@ -361,8 +361,8 @@ export const Contract: MessageFns<Contract> = {
     if (message.counterparty !== "") {
       obj.counterparty = message.counterparty;
     }
-    if (message.state !== ContractState.CONTRACT_STATE_UNSPECIFIED) {
-      obj.state = contractStateToJSON(message.state);
+    if (message.state !== State.CONTRACT_STATE_UNSPECIFIED) {
+      obj.state = stateToJSON(message.state);
     }
     if (message.terms !== undefined) {
       obj.terms = message.terms;
@@ -391,7 +391,7 @@ export const Contract: MessageFns<Contract> = {
     message.contractId = object.contractId ?? "";
     message.proposer = object.proposer ?? "";
     message.counterparty = object.counterparty ?? "";
-    message.state = object.state ?? ContractState.CONTRACT_STATE_UNSPECIFIED;
+    message.state = object.state ?? State.CONTRACT_STATE_UNSPECIFIED;
     message.terms = object.terms ?? undefined;
     message.proposedAt = object.proposedAt ?? undefined;
     message.acceptedAt = object.acceptedAt ?? undefined;

@@ -7,7 +7,7 @@ import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
 // Contract lifecycle states
-enum ContractState {
+enum State {
   CONTRACT_STATE_UNSPECIFIED = 0;
   CONTRACT_STATE_PROPOSED = 1;    // Awaiting counterparty acceptance
   CONTRACT_STATE_ACTIVE = 2;      // Both parties agreed, in progress
@@ -23,7 +23,7 @@ message Contract {
   string contract_id = 2;                    // Human-readable ID
   string proposer = 3;
   string counterparty = 4;
-  ContractState state = 5;
+  State state = 5;
   google.protobuf.Struct terms = 6;          // Flexible terms structure
   google.protobuf.Timestamp proposed_at = 7;
   google.protobuf.Timestamp accepted_at = 8;
