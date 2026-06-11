@@ -61,11 +61,19 @@ jobs:
       - name: Run tests
         run: pnpm test
 
+      - name: Upgrade npm for OIDC trusted publishing
+        # The OIDC -> registry token exchange (trusted publishing) is an npm CLI feature
+        # added in 11.5.1. Node 20 ships npm 10.x, and `pnpm publish` does NOT perform the
+        # exchange at all (it only signs provenance, then errors ENEEDAUTH). So publish with
+        # a recent npm CLI below.
+        run: npm install -g npm@latest
+
       - name: Publish to npmjs.com
-        # OIDC trusted publishing: no NODE_AUTH_TOKEN. The job's id-token: write permission plus
-        # the npm-side trusted publisher (repo + this workflow file) authenticate the publish, and
-        # --provenance attaches a signed build-provenance attestation.
-        run: pnpm publish --access public --provenance --no-git-checks
+        # OIDC trusted publishing: no NODE_AUTH_TOKEN / no .npmrc token. The job's
+        # id-token: write permission plus the npm-side trusted publisher (repo + this workflow
+        # filename) mint a short-lived publish token; --provenance attaches the attestation.
+        # --ignore-scripts skips the `prepare` rebuild (dist already built above).
+        run: npm publish --access public --provenance --ignore-scripts
 
       - name: Setup for GitHub Packages
         uses: actions/setup-node@v6
