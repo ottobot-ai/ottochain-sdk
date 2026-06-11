@@ -133,12 +133,6 @@ export type {
 } from './transaction.js';
 
 // Data utilities
-export {
-  normalizeCreateStateMachine,
-  normalizeTransitionStateMachine,
-  normalizeArchiveStateMachine,
-  normalizeMessage,
-} from './normalize.js';
 export { dropNulls } from './drop-nulls.js';
 
 // Genesis manifest exporter (std-app pre-registration content)

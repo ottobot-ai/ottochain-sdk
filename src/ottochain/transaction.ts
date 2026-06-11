@@ -5,8 +5,9 @@
  * self-signed mode, where clients sign their own transactions.
  */
 
-import { signDataUpdate, getPublicKeyId } from '@constellation-network/metagraph-sdk';
+import { getPublicKeyId } from '@constellation-network/metagraph-sdk';
 import type { Signed } from '@constellation-network/metagraph-sdk';
+import { signDataUpdate } from '../signing.js';
 
 // ============================================================================
 // State Machine Operations
@@ -253,6 +254,11 @@ export function createInvokeScriptPayload(params: InvokeScriptParams): InvokeScr
  * This creates a Signed<T> object with the exact format expected by the bridge's
  * `/agent/transition` endpoint when using self-signed mode.
  *
+ * The signature is computed over the null-dropped canonical bytes (null
+ * object fields removed recursively, array nulls preserved, then RFC 8785),
+ * matching metakit's content-hash rule. Explicit-null and absent optional
+ * fields therefore produce identical signatures.
+ *
  * @param message - The message to sign (e.g., from createTransitionPayload)
  * @param privateKey - The private key in hex format (64 characters)
  * @returns A signed object ready for submission to the bridge
@@ -333,6 +339,9 @@ export function createDataTransactionRequest<T>(signed: Signed<T>): DataTransact
  *
  * Use this for multi-signature scenarios where multiple parties
  * need to sign the same transaction.
+ *
+ * The new signature is computed over the null-dropped canonical bytes,
+ * matching metakit's content-hash rule (see {@link signTransaction}).
  *
  * @param signed - The already-signed transaction
  * @param privateKey - Additional signer's private key
