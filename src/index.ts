@@ -22,8 +22,14 @@
 export * from '@constellation-network/metagraph-sdk';
 
 // Override verify — package embeds `mode` in signed objects and ignores isDataUpdate
-// when mode is present. Our wrapper strips mode so isDataUpdate always wins.
+// when mode is present. Our wrapper strips mode so isDataUpdate always wins,
+// and dataUpdate verification happens over null-dropped canonical bytes.
 export { verify } from './verify.js';
+
+// Override the dataUpdate signing surface — dropNulls is applied internally
+// (drop null object fields, preserve array nulls, then RFC 8785) to match
+// metakit's content-hash rule. Standard-mode signing is passed through.
+export { signDataUpdate, createSignedObject, addSignature, batchSign } from './signing.js';
 
 // ─── Network clients ──────────────────────────────────────────────────────────
 // Re-export from package network subpath
