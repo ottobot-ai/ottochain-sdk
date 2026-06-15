@@ -51,7 +51,7 @@ export type FiberStatus = 'Active' | 'Archived' | 'Failed';
 // ---------------------------------------------------------------------------
 
 /**
- * Access control policy for script oracles.
+ * Access control policy for scripts.
  * Wire format: discriminated union with type key.
  */
 export type AccessControlPolicy =
@@ -281,9 +281,9 @@ export interface EventReceipt {
 }
 
 /**
- * Log entry for a script oracle invocation.
+ * Log entry for a script invocation.
  */
-export interface OracleInvocation {
+export interface ScriptInvocation {
   fiberId: string;
   method: string;
   args: JsonLogicValue;
@@ -328,7 +328,7 @@ export interface UpgradeReceipt {
 /**
  * Union type for all fiber log entries.
  */
-export type FiberLogEntry = EventReceipt | OracleInvocation | CreationReceipt | UpgradeReceipt;
+export type FiberLogEntry = EventReceipt | ScriptInvocation | CreationReceipt | UpgradeReceipt;
 
 // ---------------------------------------------------------------------------
 // Fiber records
@@ -358,7 +358,7 @@ export interface StateMachineFiberRecord {
 }
 
 /**
- * On-chain record for a script oracle fiber.
+ * On-chain record for a script fiber.
  */
 export interface ScriptFiberRecord {
   fiberId: string;
@@ -371,7 +371,7 @@ export interface ScriptFiberRecord {
   sequenceNumber: number;
   owners: string[];  // Plain string array
   status: FiberStatus;
-  lastInvocation?: OracleInvocation;
+  lastInvocation?: ScriptInvocation;
 }
 
 /**
@@ -458,7 +458,7 @@ export interface ArchiveStateMachine {
 }
 
 /**
- * Create a new script oracle fiber.
+ * Create a new script fiber.
  */
 export interface CreateScript {
   fiberId: string;
@@ -468,7 +468,7 @@ export interface CreateScript {
 }
 
 /**
- * Invoke a script oracle.
+ * Invoke a script script.
  */
 export interface InvokeScript {
   fiberId: string;
