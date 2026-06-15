@@ -131,7 +131,7 @@
     "ts-jest": "29.4.9",
     "ts-proto": "^2.11.6",
     "typedoc": "^0.28.19",
-    "typescript": "^5.0.0"
+    "typescript": "^6.0.3"
   },
   "peerDependencies": {
     "@stardust-collective/dag4": "^2.6.0"
