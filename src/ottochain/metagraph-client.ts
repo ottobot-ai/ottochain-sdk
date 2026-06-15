@@ -18,7 +18,7 @@ import type {
   StateMachineFiberRecord,
   ScriptFiberRecord,
   EventReceipt,
-  OracleInvocation,
+  ScriptInvocation,
   FiberStatus,
 } from './types.js';
 import type { CurrencySnapshotResponse } from './snapshot.js';
@@ -185,22 +185,22 @@ export class MetagraphClient {
   }
 
   /**
-   * Get all script oracles, optionally filtered by status.
+   * Get all scripts, optionally filtered by status.
    */
   async getScripts(status?: FiberStatus): Promise<Record<string, ScriptFiberRecord>> {
     const query = status ? `?status=${status}` : '';
     return this.ml0.get<Record<string, ScriptFiberRecord>>(
-      `/data-application/v1/oracles${query}`
+      `/data-application/v1/scripts${query}`
     );
   }
 
   /**
-   * Get a single script oracle by fiber ID.
+   * Get a single script by fiber ID.
    */
   async getScript(scriptId: string): Promise<ScriptFiberRecord | null> {
     try {
       return await this.ml0.get<ScriptFiberRecord>(
-        `/data-application/v1/oracles/${scriptId}`
+        `/data-application/v1/scripts/${scriptId}`
       );
     } catch (error) {
       if (error instanceof NetworkError && error.statusCode === 404) {
@@ -211,11 +211,11 @@ export class MetagraphClient {
   }
 
   /**
-   * Get oracle invocations from the current ordinal's logs.
+   * Get script invocations from the current ordinal's logs.
    */
-  async getScriptInvocations(scriptId: string): Promise<OracleInvocation[]> {
-    return this.ml0.get<OracleInvocation[]>(
-      `/data-application/v1/oracles/${scriptId}/invocations`
+  async getScriptInvocations(scriptId: string): Promise<ScriptInvocation[]> {
+    return this.ml0.get<ScriptInvocation[]>(
+      `/data-application/v1/scripts/${scriptId}/invocations`
     );
   }
 

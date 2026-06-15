@@ -134,13 +134,13 @@ describe('MetagraphClient', () => {
       mockMl0Get.mockResolvedValue(scripts);
       const result = await client.getScripts();
       expect(result).toEqual(scripts);
-      expect(mockMl0Get).toHaveBeenCalledWith('/data-application/v1/oracles');
+      expect(mockMl0Get).toHaveBeenCalledWith('/data-application/v1/scripts');
     });
 
     it('fetches scripts with status filter', async () => {
       mockMl0Get.mockResolvedValue({});
       await client.getScripts('Active' as any);
-      expect(mockMl0Get).toHaveBeenCalledWith('/data-application/v1/oracles?status=Active');
+      expect(mockMl0Get).toHaveBeenCalledWith('/data-application/v1/scripts?status=Active');
     });
   });
 
@@ -150,7 +150,7 @@ describe('MetagraphClient', () => {
       mockMl0Get.mockResolvedValue(invocations);
       const result = await client.getScriptInvocations('s1');
       expect(result).toEqual(invocations);
-      expect(mockMl0Get).toHaveBeenCalledWith('/data-application/v1/oracles/s1/invocations');
+      expect(mockMl0Get).toHaveBeenCalledWith('/data-application/v1/scripts/s1/invocations');
     });
   });
 
@@ -248,7 +248,7 @@ describe('Snapshot utilities', () => {
     success: true,
   };
 
-  const mockOracleInvocation = {
+  const mockScriptInvocation = {
     fiberId: 'fiber-1',
     method: 'evaluate',
     args: { x: 1 },
@@ -258,7 +258,7 @@ describe('Snapshot utilities', () => {
 
   const mockOnChain = {
     latestLogs: {
-      'fiber-1': [mockEventReceipt, mockOracleInvocation],
+      'fiber-1': [mockEventReceipt, mockScriptInvocation],
     },
     stateMachineFibers: {},
     scriptFibers: {},
@@ -314,7 +314,7 @@ describe('Snapshot utilities', () => {
   });
 
   describe('getScriptInvocations', () => {
-    it('filters to OracleInvocation entries only', () => {
+    it('filters to ScriptInvocation entries only', () => {
       const invocations = getScriptInvocations(mockOnChain as any, 'fiber-1');
       expect(invocations).toHaveLength(1);
       expect(invocations[0].method).toBe('evaluate');

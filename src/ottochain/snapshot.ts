@@ -11,7 +11,7 @@
  */
 
 import { HttpClient } from '@constellation-network/metagraph-sdk/network';
-import type { OnChain, EventReceipt, OracleInvocation, FiberLogEntry } from './types.js';
+import type { OnChain, EventReceipt, ScriptInvocation, FiberLogEntry } from './types.js';
 
 /**
  * Decode on-chain state from binary (JsonBinaryCodec format).
@@ -104,7 +104,7 @@ export function getLogsForFiber(onChain: OnChain, fiberId: string): FiberLogEntr
 /**
  * Get EventReceipt log entries for a specific fiber.
  *
- * EventReceipts are distinguished from OracleInvocations by the presence
+ * EventReceipts are distinguished from ScriptInvocations by the presence
  * of the `eventName` field.
  *
  * @param onChain - Decoded on-chain state
@@ -117,16 +117,16 @@ export function getEventReceipts(onChain: OnChain, fiberId: string): EventReceip
 }
 
 /**
- * Get OracleInvocation log entries for a specific fiber.
+ * Get ScriptInvocation log entries for a specific fiber.
  *
- * OracleInvocations are distinguished from EventReceipts by the presence
+ * ScriptInvocations are distinguished from EventReceipts by the presence
  * of the `method` field.
  *
  * @param onChain - Decoded on-chain state
  * @param fiberId - Fiber UUID to filter by
- * @returns Array of OracleInvocation entries
+ * @returns Array of ScriptInvocation entries
  */
-export function getScriptInvocations(onChain: OnChain, fiberId: string): OracleInvocation[] {
+export function getScriptInvocations(onChain: OnChain, fiberId: string): ScriptInvocation[] {
   return getLogsForFiber(onChain, fiberId)
-    .filter((entry): entry is OracleInvocation => 'method' in entry && 'result' in entry);
+    .filter((entry): entry is ScriptInvocation => 'method' in entry && 'result' in entry);
 }

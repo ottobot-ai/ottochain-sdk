@@ -49,7 +49,7 @@ export type {
   // Log entries
   EmittedEvent,
   EventReceipt,
-  OracleInvocation,
+  ScriptInvocation,
   CreationReceipt,
   UpgradeReceipt,
   FiberLogEntry,
