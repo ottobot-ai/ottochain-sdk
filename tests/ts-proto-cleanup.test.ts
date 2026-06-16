@@ -57,7 +57,7 @@ describe('Group 2: Dist Artifact Cleanup', () => {
       }).trim();
       found = result ? result.split('\n').filter(Boolean) : [];
     } catch {
-      found = [];
+      // find matched nothing; found stays []
     }
     expect(found).toHaveLength(0);
   });
@@ -202,8 +202,7 @@ describe('Group 6: Documentation Presence', () => {
       ).trim();
       found = result.length > 0;
     } catch {
-      // grep exits non-zero if no matches
-      found = false;
+      // grep exits non-zero if no matches; found stays false
     }
 
     if (!found) {

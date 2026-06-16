@@ -25,7 +25,7 @@ try {
   require('@stardust-collective/dag4');
   dag4Available = true;
 } catch {
-  dag4Available = false;
+  // dag4 not installed; dag4Available stays false
 }
 
 const describeWithDag4 = dag4Available ? describe : describe.skip;
