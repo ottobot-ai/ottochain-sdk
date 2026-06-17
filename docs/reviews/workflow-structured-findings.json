@@ -1,0 +1,905 @@
+{
+  "verdicts": [
+    {
+      "pr": 199,
+      "title": "chore(main): release 2.3.1",
+      "verdict": "needs-author-decision",
+      "effort": "trivial",
+      "rationale": "PR #199 is a routine release-please release PR. Its own diff is trivial and correct: +8/-1 across CHANGELOG.md (adds a 2.3.1 section crediting #197 signing/dropNulls + #198 OIDC CI fix) and package.json (2.3.0 -> 2.3.1). It is NOT stale: the head branch (release-please--branches--main--components--sdk, tip 41f28ba dated 2026-06-15 21:02) sits directly on top of current origin/main (dd64dea, #207), and `git log origin/main ^prbranch` is empty — release-please regenerated it after the oracle->script rename (#206) and the TS6/omnibus dep bumps (#200, #207) landed. Those chore/refactor commits are correctly omitted from the release NOTES (release-please only lists feat/fix) but ARE included in the shipped 2.3.1 artifact, so the rename is part of what publishes. mergeable=MERGEABLE, branch is up to date. HOWEVER the merge state is BLOCKED by one genuine failing required check: \"Test ottochain-services\" (Consumer Compatibility). Root cause is real, not flaky: ottochain-services/packages/bridge/src/metagraph.ts:9 imports `normalizeMessage` from @ottochain/sdk, but that symbol was REMOVED from the SDK public API in #197 (the same signing/dropNulls change this very release ships) — confirmed gone from local src/ (no `normalizeMessage`, no normalize export in src/index.ts). So 2.3.1 is effectively a CONSUMER-BREAKING change mis-labeled by conventional-commits as a `fix:` (patch bump). Releasing as-is publishes a patch that breaks the downstream consumer's build. This needs a human decision on semver/consumer handling, not a mechanical merge — hence needs-author-decision rather than land. The other open PRs are unrelated long-stale feature work (delegation pair #41+#95, token state machine #80 overlapping fiber-apps-overhaul, authenticated-tries/subscribeFiberState #83) and do not gate this release.",
+      "dependsOn": [
+        "#197",
+        "#198",
+        "#206",
+        "#207"
+      ],
+      "conflictsWith": [],
+      "alignmentGaps": [
+        "semver mislabel: #197 removed the public export `normalizeMessage` from @ottochain/sdk (gone from src/index.ts and all of src/), which is a BREAKING change for consumers, but conventional-commits classified it `fix(signing):` so release-please cut a PATCH (2.3.0 -> 2.3.1) instead of a major. Releasing 2.3.1 ships a silent API break.",
+        "Required check `Test ottochain-services` (Consumer Compatibility) FAILS: ottochain-services/packages/bridge/src/metagraph.ts(9,21) TS2305 — Module '@ottochain/sdk' has no exported member 'normalizeMessage'. This is the cause of mergeStateStatus=BLOCKED; it is a real downstream break, not a flaky/infra failure.",
+        "Release notes are scoped only to #197/#198, but the 2.3.1 artifact also ships the oracle->script API rename (#206, endpoints /data-application/v1/scripts, type ScriptInvocation) and TypeScript 6 / omnibus dep bumps (#200, #207). The rename itself is another likely consumer-breaking surface change folded into a patch release with no changelog visibility.",
+        "No coordination with downstream: the SDK removed normalizeMessage and renamed oracle->script with no corresponding update staged in /home/euler/repos/ottochain (consumer ottochain-services still on the old import)."
+      ],
+      "recommendedActions": [
+        "Do NOT merge #199 as-is — it would publish a consumer-breaking change as a patch. Decide semver intent first (author/human decision).",
+        "Fix the downstream consumer before/alongside release: update ottochain-services/packages/bridge/src/metagraph.ts:9 to stop importing the removed `normalizeMessage` (the SDK now applies dropNulls internally on the dataUpdate signing path per #197, so the explicit normalize call is no longer needed). Re-run the Consumer Compatibility workflow to clear the BLOCKED state.",
+        "Decide whether 2.3.1 (patch) is the correct version. Given #197 removed a public export and #206 renamed the oracle->script surface, consider re-cutting as a MINOR or MAJOR with a `feat!`/`BREAKING CHANGE:` footer so release-please labels it correctly and the changelog warns consumers.",
+        "If the consumer-compat gate is judged out-of-scope for the SDK repo's own release (the failure is in the external ottochain-services build), have a human either (a) land the consumer fix in /home/euler/repos/ottochain first, or (b) explicitly waive/override the required check — but only after the semver decision above.",
+        "Surface the rename (#206) and removal (#197) in the release notes / BREAKING_CHANGES.md so consumers migrating from 2.3.0 know normalizeMessage is gone and oracle endpoints are now /scripts.",
+        "Treat the four stale feature PRs (#41+#95 delegation, #80 token state machine vs fiber-apps-overhaul, #83 authenticated-tries/subscribeFiberState) separately; they are unrelated to this release and several are already flagged needs-manual-rebase/blocked."
+      ],
+      "risks": [
+        "Merging now publishes @ottochain/sdk 2.3.1 to npm via OIDC trusted publishing (the #198/#186 pipeline is live), breaking any consumer that imports normalizeMessage — silently, since it is only a patch bump.",
+        "The oracle->script rename (#206) riding in this release can break consumers calling the old /data-application/v1/oracle endpoints or using the old type names, with no changelog warning.",
+        "Overriding the BLOCKED check without fixing the consumer leaves ottochain-services unbuildable against the published SDK.",
+        "Signing-path change (#197 dropNulls applied internally) is exactly the canonical/JCS surface where a mismatch yields opaque InvalidSignature/HTTP 400 — worth a real e2e sign+submit check against the chain before publishing, beyond just the type-level consumer test."
+      ]
+    },
+    {
+      "pr": 41,
+      "title": "feat: SDK delegation module — PolicyBuilder + complete API",
+      "verdict": "close",
+      "rationale": "PR #41 implements an SDK delegation surface (DelegationClient, PolicyBuilder, generated delegation/intents protos) that was explicitly designed to pair with on-chain ottochain PR #90 \"JLVM delegation operators\" — which is CLOSED, never merged. The chain has no delegation concept: the JLVM var namespace in ottochain/modules/models/src/main/scala/xyz/kd5ujc/schema/fiber/ReservedKeys.scala injects $ordinal/proofs/address/expiresAt but NO `delegation.*` key, so the PolicyBuilder's core predicates (delegation.active/expiresAt/scope/relayer) reference a context object the chain never provides and would never resolve. The design has since pivoted to an asset-model symmetric-compose handshake (AuthorizeCompose, ComponentWitness, commit-reveal nonces, _transferAsset/_scriptCall), making the PR's bridge-based session-key/relayer model obsolete. On top of the semantic mismatch, the PR is mechanically unrebasable: it branches from v2.0.0 with 32 intervening commits on current (v2.3.0) including a ts-proto migration, proto unification, the normalize/drop-null rework, and the oracle→script rename; it adds a packages/ monorepo + proto/delegation that don't exist now, commits ~3,400 lines of dist/ that is now gitignored, ships ~8,300 lines of generated code from the old proto toolchain, and carries a stale 2.0.0 package.json exports map that conflicts with current and does not even export the ./delegation subpath its own README advertises. This is supersede-by-close: the feature must be redesigned against the current asset-model/script surface, not rebased.",
+      "effort": "large",
+      "dependsOn": [
+        "scasplte2/ottochain#90 (CLOSED — JLVM delegation operators; the on-chain counterpart this PR requires)",
+        "ottobot-ai/ottochain-sdk#95 (OPEN — feat/proto-delegation-credential; the proto half of this delegation pair)"
+      ],
+      "conflictsWith": [
+        "ottobot-ai/ottochain-sdk#80 (OPEN — Asset Model Token State Machine SDK; #41 drags in overlapping token-types/asset-model files: src/types/asset-model/token-types.ts, src/examples/token-types/all-16-types.ts, tests/token-types/)",
+        "current refactor/script-only-api oracle→script rename (722fa8e/#206)",
+        "ts-proto migration + proto unification #132 (PR's src/generated/* from old toolchain)",
+        "normalize/drop-null rework #144-#149",
+        "package.json exports map (PR carries stale v2.0.0 map missing all ./apps/* subpaths)"
+      ],
+      "risks": [
+        "PolicyBuilder emits JSON-Logic referencing delegation.active/expiresAt/scope/relayer vars that the on-chain JLVM (ReservedKeys.scala) does not inject — guards would silently never match, a correctness/security trap if shipped",
+        "Bridge-based DelegationClient(bridgeUrl) + packages/bridge assume a monorepo + separate bridge service that do not exist in the current single-package SDK",
+        "Committed dist/ (~3,400 LOC) is now gitignored; merging would reintroduce build artifacts into source control",
+        "Generated delegation/intents .ts (~5,300 LOC) was emitted by the pre-migration proto toolchain and will not match current ts-proto output",
+        "Re-deriving the feature against asset-model compose semantics is non-trivial; a naive rebase would produce code that compiles but is semantically dead on-chain"
+      ],
+      "alignmentGaps": [
+        "No on-chain delegation: ottochain (test/e2e-warmup-gate) has no DelegationCredential; PR #90 closed",
+        "JLVM context gap: ottochain/modules/models/src/main/scala/xyz/kd5ujc/schema/fiber/ReservedKeys.scala has $ordinal/proofs/address/expiresAt but no delegation namespace — PolicyBuilder predicates in src/delegation/index.ts cannot resolve",
+        "Design pivot: chain implements asset-model symmetric-compose (AuthorizeCompose/ComponentWitness in ottochain/modules/models/.../schema/Updates.scala & asset/ComponentWitness.scala) instead of session-key delegation",
+        "Packaging gap inside the PR itself: README advertises import from '@ottochain/sdk/delegation' but PR package.json adds no ./delegation export entry",
+        "src/apps/index.ts conflict: PR adds `export * as lending` against a different current file; current also omits the oracles namespace export",
+        "src/index.ts conflict: PR adds `export * from './delegation/index.js'` onto a v2.0.0 index that predates signing.js/verify.js/genesis-manifest overrides now present",
+        "proto/ layout: PR adds proto/ottochain/apps/delegation|lending/v1 dirs absent from current proto tree",
+        "Overlap with unimplemented docs/proposals/fiber-apps-overhaul.md (DAO delegation/token mechanics) and PR #80 — token-types belong to #80's scope, not this delegation PR"
+      ],
+      "recommendedActions": [
+        "Close PR #41 as superseded; do not rebase. Record that it is blocked by the closed on-chain PR scasplte2/ottochain#90 and the post-#90 asset-model pivot.",
+        "Close or repurpose the paired proto PR #95 (feat/proto-delegation-credential) for the same reason; if a credential proto is still wanted, redefine it against ottochain ReservedKeys.scala + asset-model compose, not the old delegation.proto.",
+        "If session-key/relayer delegation is still a product goal, open a fresh design issue that first lands the on-chain JLVM context keys (extend ReservedKeys.scala with a delegation namespace) BEFORE any SDK PolicyBuilder, so guards actually resolve.",
+        "Salvage candidates worth cherry-picking into focused new PRs IF still wanted: docs/design/fiber-state-subscription.md (subscribeFiberState/waitForState spec) and the .github/pull_request_template/* + docs/development/* workflow docs — these are stack-independent and do not touch the dead delegation surface.",
+        "Route the token-types/asset-model files (src/types/asset-model/token-types.ts, src/examples/token-types/all-16-types.ts, tests/token-types/) to PR #80, which owns that scope, rather than carrying them in a delegation PR.",
+        "Before any future delegation SDK work, align PolicyBuilder var paths to the actual ReservedKeys ($ordinal, proofs.0.address, expiresAt) and the asset-model compose handshake, and run output through the current dropNulls+JCS signing path (src/signing.ts, src/ottochain/drop-nulls.ts) per docs/signing-and-publishing.md."
+      ]
+    },
+    {
+      "pr": 95,
+      "title": "feat: add DelegationCredential proto schema + delegation messages",
+      "verdict": "close",
+      "rationale": "The PR adds a `DelegationCredential` record + `CreateDelegation`/`RevokeDelegation` messages and wires them into the proto schema, but the ground has moved decisively underneath it on two independent axes, and the feature has no on-chain counterpart.\n\n(1) PROTO FIELD-NUMBER COLLISIONS — the PR was cut against an old proto. Current local /home/euler/repos/ottochain-sdk/proto/ottochain/v1/messages.proto already occupies OttochainMessage oneof fields 6-9 with upgrade_fiber=6, publish_version=7, set_version_status=8, register_alias=9 — the PR tries to add create_delegation=6 and revoke_delegation=7, a hard wire collision. Likewise proto/ottochain/v1/records.proto CalculatedState already uses field 3 (registry_entries, json_name=\"registry\") and field 4 (reverse_names), while the PR adds delegations=3. So 'needs-manual-rebase' understates it: the PR's chosen field numbers are taken, and re-numbering changes the wire format the PR authored.\n\n(2) NO ON-CHAIN COUNTERPART (the canonical authority). In /home/euler/repos/ottochain (Updates.scala + schema/CalculatedState.scala) there is NO delegation concept. The on-chain OttochainMessage/AssetOp set is CreateStateMachine, TransitionStateMachine, ArchiveStateMachine, UpgradeFiber, CreateScript, UpgradeScript, InvokeScript, PublishMachineVersion, PublishScriptVersion, SetVersionStatus, RegisterAlias, CreateAssetPolicy, MintAsset, ApplyMorphism, AuthorizeCompose — no Create/RevokeDelegation. On-chain CalculatedState is {stateMachines, scripts, registry, reverseNames, assets, usedNonces} — there is no `delegations` map; the chain instead grew `assets` (the PR #80 token direction) and `usedNonces`. The chain explicitly DEFERS delegation: RegistryName.scala notes 'per-label ownership/delegation arrives with the nickname-registry follow-up (#29)'. metakit has no delegation either. Because signing is JCS(dropNulls(payload)) verified on-chain (see docs/signing-and-publishing.md, guarded by PublishVersionSigningCanonicalSuite), proto types with no chain decoder are unsignable/unverifiable — any client emitting them gets InvalidSignature (opaque 400). So merging this proto ships dead, mis-numbered wire types.\n\n(3) Stale collateral: the PR's diff still carries src/generated/ottochain/apps/oracles/v1/oracle.ts and bumps ts-proto 2.11.2->2.11.4 across all generated files; the local branch (commit 722fa8e) completed the oracle→script rename and the apps/oracles generated tree is gone, so the regen would conflict broadly and reintroduce stale 'oracles' paths.\n\nNet: the design premise ('DelegationCredential is a first-class CalculatedState record, same tier as StateMachineFiberRecord') is contradicted by the current chain, the field numbers collide, and the regenerated TS is stale. This isn't a mechanical rebase — it's a re-design that should wait until the chain actually defines delegation (chain issue #29). Recommend close (not just block), and reopen/re-author once ottochain lands the on-chain delegation model so proto field numbers and the signing canonical can be derived from the chain rather than guessed.",
+      "effort": "large",
+      "dependsOn": [
+        "ottochain on-chain delegation model (chain issue #29, nickname-registry follow-up) — must define DelegationCredential, CreateDelegation/RevokeDelegation, and a CalculatedState.delegations map (or equivalent) BEFORE any SDK proto can be derived",
+        "PR #41 (feat/sdk-delegation-methods — SDK delegation module / PolicyBuilder) is the API consumer of these proto types; the two are a delegation pair and share the same no-on-chain-counterpart blocker"
+      ],
+      "conflictsWith": [
+        "Local refactor/script-only-api proto state: messages.proto OttochainMessage oneof fields 6-9 (upgrade_fiber/publish_version/set_version_status/register_alias) collide with the PR's create_delegation=6/revoke_delegation=7",
+        "Local records.proto CalculatedState fields 3-4 (registry_entries json_name=registry, reverse_names) collide with the PR's delegations=3",
+        "oracle→script rename (commit 722fa8e): PR regen reintroduces src/generated/ottochain/apps/oracles/v1/oracle.ts which no longer exists locally",
+        "PR #80 (token state machine, AssetRecord/assets) — the chain's actual field-3+ growth is assets/usedNonces, the slot the PR wanted; #80 aligns with on-chain CalculatedState.assets while #95 does not"
+      ],
+      "alignmentGaps": [
+        "No on-chain DelegationCredential: /home/euler/repos/ottochain/modules/models/src/main/scala/xyz/kd5ujc/schema/CalculatedState.scala defines {stateMachines, scripts, registry, reverseNames, assets, usedNonces} — no `delegations` map exists",
+        "No on-chain delegation messages: /home/euler/repos/ottochain/modules/models/src/main/scala/xyz/kd5ujc/schema/Updates.scala has no CreateDelegation/RevokeDelegation in OttochainMessage or AssetOp; chain instead has CreateAssetPolicy/MintAsset/ApplyMorphism/AuthorizeCompose",
+        "Chain explicitly defers delegation: /home/euler/repos/ottochain/modules/models/src/main/scala/xyz/kd5ujc/schema/registry/RegistryName.scala comments that ownership/delegation arrives with nickname-registry follow-up (#29) — not yet implemented",
+        "messages.proto oneof collision: PR's create_delegation=6/revoke_delegation=7 vs local proto/ottochain/v1/messages.proto upgrade_fiber=6/publish_version=7/set_version_status=8/register_alias=9",
+        "records.proto map collision: PR's delegations=3 vs local proto/ottochain/v1/records.proto CalculatedState registry_entries=3/reverse_names=4",
+        "Stale generated tree: PR diff includes src/generated/ottochain/apps/oracles/v1/oracle.ts and ts-proto 2.11.2->2.11.4 bumps; local branch removed apps/oracles via oracle→script rename (722fa8e)",
+        "Signing risk: proto types with no chain decoder cannot round-trip JCS(dropNulls(payload)) — per docs/signing-and-publishing.md any emitted CreateDelegation would fail on-chain verification (InvalidSignature / opaque 400)"
+      ],
+      "risks": [
+        "Merging ships wire-format types the chain will reject at signature verification (InvalidSignature, opaque HTTP 400) — actively misleading to SDK consumers",
+        "Guessed proto field numbers (6/7 in oneof, 3 in CalculatedState) will almost certainly NOT match whatever the chain eventually assigns for delegation, forcing a second breaking proto change later",
+        "Re-numbering to avoid the collision silently changes the binary wire encoding the PR authored, invalidating its own 15 passing tests' assumptions",
+        "Regen reintroduces removed apps/oracles paths, partially reverting the oracle→script rename if merged carelessly"
+      ],
+      "recommendedActions": [
+        "Close PR #95 with a note: blocked on ottochain on-chain delegation model (chain issue #29); proto cannot be derived until the chain defines DelegationCredential + Create/RevokeDelegation and their CalculatedState placement",
+        "Close or hold PR #41 (feat/sdk-delegation-methods) on the same blocker — track the two as a delegation pair to re-author together once the chain lands delegation",
+        "When the chain implements delegation, re-author the proto FROM the chain: read /home/euler/repos/ottochain/modules/models/src/main/scala/xyz/kd5ujc/schema/Updates.scala and CalculatedState.scala for the real field ordering, then assign the next free oneof number (>=10 currently) in proto/ottochain/v1/messages.proto and the next free CalculatedState map field (>=5, after registry_entries/reverse_names; mind the chain's assets/usedNonces) in proto/ottochain/v1/records.proto",
+        "Do NOT reuse the PR's regenerated src/generated/* — regenerate fresh on top of refactor/script-only-api so the oracle→script rename (no apps/oracles) is preserved; adopt the chain's current ts-proto version intentionally rather than the drive-by 2.11.4 bump",
+        "After re-authoring, verify a minimally-built CreateDelegation round-trips JCS(dropNulls(payload)) against the chain's SdkCompatibilitySuite / PublishVersionSigningCanonicalSuite before merge, per docs/signing-and-publishing.md",
+        "Note for triage: PR #80 (assets/AssetRecord) is the PR that actually matches the chain's CalculatedState.assets growth and overlaps docs/proposals/fiber-apps-overhaul.md — prioritize #80 over #95 for the field-3+ region"
+      ]
+    },
+    {
+      "pr": 80,
+      "title": "feat: Asset Model Token State Machine SDK (16 TDEG archetypes)",
+      "verdict": "supersede",
+      "rationale": "The on-chain asset model (ottochain modules/models/.../asset/TokenBehavior.scala + docs/proposals/asset-model.md \"RFC v2\", 2026-06-15) explicitly supersedes this PR's TDEG SDK spec by name. The chain moved from a 4-bit TDEG model to a 5-bit TSCEG lattice (split Divisible into splittable+combinable; weights T=16,S=8,C=4,E=2,G=1, so every numeric value the PR asserts in its tests is now wrong: chain NFT=16 vs PR NFT=8). The chain also changed the representation entirely: behavior is a single packed Int (AssetCommit.behavior) with structure enforced via typed MorphismKinds in Scala, not a per-token StateMachineDefinition JSON with JSON-Logic guards. Additionally the PR's hand-rolled { value: string } StateId wire wrapper contradicts the current SDK canonical ProtoStateMachineDefinition (src/schema/fiber-app.ts:281), which uses plain-string ids; it bypasses the defineFiberApp() schema every other app uses; and it hardcodes a delegation.isAuthorized guard that exists nowhere in the SDK (delegation is in still-unmerged PRs #41/#95). The conflict is semantic, not textual, so a rebase cannot rescue it. This is a reopened #45 re-litigating a model the chain has since rewritten.",
+      "effort": "medium",
+      "dependsOn": [
+        "#41 (SDK delegation module — provides the delegation.isAuthorized authorization surface the PR's governance guards reference)",
+        "#95 (DelegationCredential proto + delegation messages — proto half of the delegation pair)"
+      ],
+      "conflictsWith": [
+        "ottochain asset model RFC v2 (docs/proposals/asset-model.md + modules/models/.../asset/TokenBehavior.scala) — 5-bit TSCEG lattice supersedes the PR's 4-bit TDEG model",
+        "src/schema/fiber-app.ts ProtoStateMachineDefinition — plain-string state ids vs the PR's { value: string } wrapper",
+        "docs/proposals/fiber-apps-overhaul.md — plans Treasury/Registry-asset reorg that this standalone token module ignores"
+      ],
+      "alignmentGaps": [
+        "Bit model mismatch: PR uses 4-bit TDEG (T=8,D=4,E=2,G=1) in src/apps/token/types.ts; chain uses 5-bit TSCEG (T=16,S=8,C=4,E=2,G=1) in ottochain/modules/models/src/main/scala/xyz/kd5ujc/schema/asset/TokenBehavior.scala. NFT=8 in PR vs 16 on chain; all 16 named archetypes and their test assertions are numerically invalid.",
+        "Representation mismatch: chain encodes behavior as a single packed Int (AssetCommit.behavior, Circe Encoder.encodeInt) and enforces structure via typed MorphismKind (Transfer/Burn/Fractionalize/Compose/Decompose/Pool/Wrap/Stake) in Scala; the PR emits a full StateMachineDefinition JSON with split/merge transitions and JSON-Logic guards.",
+        "Wire-format mismatch: src/apps/token/types.ts WireStateId { value: string } and state-machine.ts sid() contradict src/schema/fiber-app.ts:281 ProtoStateMachineDefinition where id/initialState/from/to are plain strings. No { value } StateId wrapper exists in the proto or chain.",
+        "Schema-pattern bypass: src/apps/token/state-machine.ts does not use src/schema/fiber-app.ts defineFiberApp()/toProtoDefinition() that identity/contracts/markets/governance/corporate all use; it duplicates TokenStateMachineDefinition/WireState/WireTransition types.",
+        "Dangling guard dependency: src/apps/token/state-machine.ts hardcodes GOVERNANCE_GUARD { var: 'delegation.isAuthorized' } and EXPIRY_GUARD state.expiresAtOrdinal; grep of src/ finds neither anywhere in the current SDK. Delegation lives only in unmerged #41/#95.",
+        "Missing spec: tests reference docs/design/asset-model-token-spec.md (asset-model-token-spec.md §3/§6.3) which does not exist in the repo.",
+        "Signing-canonical risk: the PR's bespoke { value: string } shape was never validated against JCS(dropNulls(payload)) per docs/signing-and-publishing.md; the chain's Int encoding is specifically chosen as 'signing-canonical-safe'.",
+        "CI regression: .github/workflows/consumer-test.yml change downgrades pnpm/action-setup v6→v4 and pins pnpm 10→9 against the current v6 config."
+      ],
+      "risks": [
+        "Landing as-is would publish SDK token types whose behavior integers (NFT=8 etc.) disagree with the chain (NFT=16), so any consumer building a token would produce updates the chain rejects or mis-types.",
+        "The { value: string } StateId wire shape would diverge from the chain canonical and surface as opaque InvalidSignature/HTTP 400 if ever submitted.",
+        "Hardcoded delegation.isAuthorized guard would silently no-op (guard var unresolved) until #41/#95 land, giving a false sense of governance enforcement.",
+        "Reintroduces a duplicate state-machine type system parallel to src/schema/fiber-app.ts, increasing drift surface for future signing/canonical changes."
+      ],
+      "recommendedActions": [
+        "Close PR #80 as superseded; comment linking ottochain docs/proposals/asset-model.md (RFC v2) and modules/models/.../asset/TokenBehavior.scala as the authoritative model, and reference the supersede note in that RFC §0.",
+        "If a token SDK surface is still wanted, open a fresh issue/PR to implement the 5-bit TSCEG model + MorphismKind verbs as a thin typed mirror of the chain: a packed-Int behavior (encode to Int, not a StateMachineDefinition), built on src/schema/fiber-app.ts defineFiberApp()/toProtoDefinition(), aligned with the Treasury/Registry plan in docs/proposals/fiber-apps-overhaul.md.",
+        "Sequence any new token work AFTER the delegation pair (#41 module + #95 proto) lands so governance guards reference a real delegation.isAuthorized surface instead of a hardcoded var.",
+        "Do not cherry-pick the .github/workflows/consumer-test.yml hunk from this PR — it would regress pnpm/action-setup v6→v4 and pnpm 10→9.",
+        "Salvage value: the 16-test-per-archetype structure and event-builder ergonomics (createTransferEvent/validateTokenEvent) are reusable patterns; carry the testing approach forward, discard the TDEG numerics and { value } wire types."
+      ]
+    },
+    {
+      "pr": 83,
+      "title": "feat: CI/CD workflows, subscribeFiberState subscription, and authenticated-tries SDK docs",
+      "verdict": "close",
+      "rationale": "PR #83 (base `develop`, head `feat/authenticated-tries`, stale since 2026-03-20, +24k/-11.5k) bundles three concerns, two of which are already superseded and the third of which is a spec for an unbuilt, unblockable feature. (1) subscribeFiberState/waitForState in src/ottochain/metagraph-client.ts plus its 4 test files were already merged via PR #44 (commit 14c3ec4, present in HEAD) — the PR shows them as \"added\" only because base `develop` predates that merge. (2) All CI workflows (ci.yml, codeql.yml, release-please.yml, dependabot.yml, release.yml) already exist on the branch and have been evolved well past the PR's March versions — the PR would regress them (e.g. revert the #198 OIDC trusted-publishing fix in release.yml). (3) The headline authenticated-tries deliverable is docs-only: the PR body promises src/apps/asset_model/tries/ source but the diff contains none of it. Its prerequisite — StateMachineFiberRecord.stateRoot — does not exist in src/generated/ottochain/v1/records.ts or proto/ottochain/v1/records.proto; the cited blocker PR #117 turns out to be a closed dependabot ts-proto bump. The on-chain 5-dimension TrieDimension structure (Permissions/Relationships/Activities/Assets/Group) does not exist in ottochain (only a Mock.scala reference) or metakit (which has a generic SparseMerkleTree but not this structure). Additionally the PR conflicts with landed work: its contract/escrow/market state-machine JSON edits are against a pre-#130 base (commit 6dfeff6 \"overhaul fiber apps\" already rewrote those files), and it reintroduces ~20k lines of dist/ and *_pb.js generated files that were removed (dist/ is now gitignored per b5a3687; generated code moved to ts-proto .ts). Net unique salvage value is two design docs.",
+      "effort": "small",
+      "dependsOn": [
+        "#117 (stateRoot on StateMachineFiberRecord) — DOES NOT EXIST; cited #117 is a closed dependabot ts-proto bump",
+        "ottochain PR #107/#117 (5-trie stateRoot computation) — not present in /home/euler/repos/ottochain",
+        "metakit 5-dimension TrieDimension authenticated structure — not present (only generic SparseMerkleTree exists)"
+      ],
+      "conflictsWith": [
+        "src/ottochain/metagraph-client.ts subscribeFiberState/waitForState — already merged via PR #44 (commit 14c3ec4)",
+        "tests/subscribe-fiber-state.test.ts, tests/ts-proto-cleanup.test.ts, tests/verify.test.ts, tests/wallet.test.ts — already present in branch via #44",
+        ".github/workflows/* and .github/dependabot.yml — already exist and are newer; PR would regress release.yml past the #198 OIDC fix",
+        "src/apps/contracts/state-machines/contract.json + escrow.json + markets/market-universal.json — already rewritten by #130 (commit 6dfeff6); PR's crossReferences->metadata move is obsolete and will conflict",
+        "dist/** and src/generated/**/*_pb.{js,d.ts} — dist/ now gitignored (b5a3687); generated code migrated to ts-proto .ts; PR reintroduces ~20k lines of removed artifacts"
+      ],
+      "alignmentGaps": [
+        "PR base is `develop`; current work is on `main`/refactor/script-only-api — develop predates PR #44, #130, #98 (metakit->metagraph-sdk), and the dist/ removal, so nearly the entire diff is rebase noise",
+        "PR body claims src/apps/asset_model/tries/ implementation (types.ts, path-encoding.ts, verifier.ts) but diff contains only docs — the actual SDK source was never written",
+        "docs/design/asset-model-tries-sdk-spec.md assumes StateMachineFiberRecord.stateRoot (HexHash) which is absent from current records.proto/records.ts",
+        "asset-model-tries-sdk-spec.md predates the oracle->script rename (commit 722fa8e/#206); related fiber-apps-overhaul proposal still says 'Status: Draft' and references 'Oracles' even though the overhaul already shipped via #130",
+        "6 of 8 docs in the PR (token-behavior-matrix, asset-model-token-spec, producer-validator-framework, type-architecture, CHANGELOG, TESTING) already exist on the branch; only authenticated-tries.md and asset-model-tries-sdk-spec.md are net-new"
+      ],
+      "risks": [
+        "Merging would regress release.yml below the #198 OIDC trusted-publishing fix and re-commit gitignored dist/ artifacts, breaking the current release pipeline",
+        "Merging would resurrect deleted *_pb.js/_pb.d.ts generated files, conflicting with the ts-proto migration (#98)",
+        "The authenticated-tries spec encodes assumptions (stateRoot field, 5 fixed TrieDimensions) that no on-chain implementation backs, so adopting it as-is risks SDK/chain canonical drift if later built differently"
+      ],
+      "recommendedActions": [
+        "Close PR #83 as superseded — its subscription and CI content is already on main via #44/#130/#98 and the dist/ removal; do not merge.",
+        "Before closing, optionally cherry-pick only the two net-new design docs into a fresh small PR against main IF the authenticated-tries feature is still on the roadmap: docs/design/authenticated-tries.md and docs/design/asset-model-tries-sdk-spec.md.",
+        "If salvaging the tries spec, first reconcile it with the current tree: drop the 'blocked on #117' note (that PR is a ts-proto bump), update the StateMachineFiberRecord.stateRoot dependency to a real tracking item, and align terminology with the oracle->script rename (#206).",
+        "Do NOT salvage any src/apps/*/state-machines/*.json edits from this PR — they are pre-#130 and obsolete.",
+        "Track the authenticated-tries SDK layer as a new feature gated on real upstream work: a stateRoot field added to proto/ottochain/v1/records.proto plus the 5-trie structure landing in ottochain (PR #107/#117 equivalent) and metakit (beyond the generic SparseMerkleTree).",
+        "Keep #80 (Asset Model Token State Machine) as the live continuation of the asset-model line; #41+#95 remain the delegation pair — none depend on #83."
+      ]
+    }
+  ],
+  "alignment": [
+    {
+      "area": "Signing & canonical compatibility",
+      "summary": "The SDK's core signing mechanism — dropNulls + RFC8785/JCS — is correctly aligned with metakit's current JsonBinaryCodec. src/ottochain/drop-nulls.ts byte-matches JsonBinaryCodec.dropNulls (recursively drop null OBJECT fields, preserve array nulls), and signing.ts/verify.ts apply it internally and unconditionally in dataUpdate mode, which is exactly what metakit's content-hash.md (post the 2026-06-10 e2e incident) requires; the content-hash doc even names the SDK's dropNulls as a cross-language conformance target. No divergence in dropNulls ordering or array-null handling. The new sigma (Σ-protocol) opcodes do NOT affect the signing surface: they are JLVM evaluation opcodes used inside guards/effects (prove_dlog_verify, prove_dhtuple_verify, sigma_verify), and no proof-carrying fields were added to any DataUpdate schema on the ottochain side — confirmed by grep across modules/models. The real, high-severity divergences are NOT in the crypto/canonical layer but in the registry SIGNED-MESSAGE SCHEMA, which the SDK has not tracked: (1) the chain split the single PublishVersion into PublishMachineVersion + PublishScriptVersion with restructured shape fields (machineShape/scriptShape + scriptProgram) and replaced SchemaShape with the MachineShape/ScriptShape/RegistryShape ADT, while the SDK still ships one PublishVersion{schemaShape, definition}; and (2) the chain made strict / FieldShape.repeated / FieldShape.optional non-defaulted required Boolean fields, while the SDK types them optional+omittable — a direct violation of the chain's signing-canonical invariant #1 and the SDK's own docs/signing-and-publishing.md rule 2. A secondary soft gap: metakit enforces a JSON depth limit (DefaultMaxDepth=64) that the SDK does not mirror.",
+      "findings": [
+        {
+          "topic": "dropNulls ordering / array-null handling parity",
+          "gap": "No divergence. SDK src/ottochain/drop-nulls.ts (recursively drop null object fields, map over arrays preserving null elements) is byte-for-byte equivalent to metakit JsonBinaryCodec.dropNulls (lines 110-122 of JsonBinaryCodec.scala). Both drop only object-field nulls and preserve array nulls. The SDK applies it internally in signing.ts (signDataUpdate/createSignedObject/addSignature/batchSign) and verify.ts, unconditionally in dataUpdate mode — matching metakit's 'universal and internal' mandate in content-hash.md. metakit's content-hash.md conformance checklist explicitly lists the TS @ottochain/sdk dropNulls as a parity target.",
+          "severity": "none",
+          "sdkState": "src/ottochain/drop-nulls.ts drops object nulls recursively, preserves array nulls; applied internally on every dataUpdate signer and on verify.",
+          "chainState": "metakit JsonBinaryCodec.dropNulls (committed normative rule, PR #46 0378346) applied internally by both derive and deriveDataUpdate codec derivations before JsonCanonicalizer.",
+          "recommendation": "No action on the dropNulls algorithm. Add (or keep) a shared cross-language fixture test asserting hash(value-with-explicit-nulls) == hash(value-with-fields-absent) and array-null preservation, as content-hash.md's conformance checklist prescribes, so this parity cannot silently regress."
+        },
+        {
+          "topic": "PublishVersion signed-message schema split (PublishMachineVersion / PublishScriptVersion)",
+          "gap": "The chain refactored the registry publish op: Updates.scala now has TWO signed OttochainMessage case classes — PublishMachineVersion{name, version, schemaB64, machineShape: MachineShape, definition: StateMachineDefinition, strict: Boolean, metadata: Option} and PublishScriptVersion{..., scriptShape: ScriptShape, scriptProgram: JsonLogicExpression, strict, metadata}. The SDK still ships a single PublishVersion{name, version, schemaB64, schemaShape: SchemaShape, definition: StateMachineDefinition, strict?, metadata?} and lists 'PublishVersion' in OTTOCHAIN_MESSAGE_TYPES / the OttochainMessage union. The wire field set, the message-type tag, and the SchemaShape->MachineShape/ScriptShape ADT all differ. Any PublishVersion the SDK signs canonicalizes to a shape the chain cannot decode into PublishMachineVersion/PublishScriptVersion, and the message-type tag 'PublishVersion' no longer routes — hard reject.",
+          "severity": "high",
+          "sdkState": "src/ottochain/types.ts:501 PublishVersion{schemaShape: SchemaShape; definition: StateMachineDefinition; strict?; metadata?}; union member { PublishVersion } at line 553 and OTTOCHAIN_MESSAGE_TYPES entry 'PublishVersion' at 568. No PublishMachineVersion/PublishScriptVersion/MachineShape/ScriptShape/RegistryShape types exist in the SDK.",
+          "chainState": "ottochain Updates.scala:167/192 PublishMachineVersion + PublishScriptVersion (both extend RegistryOp with OttochainMessage); SchemaShape.scala defines MachineShape/ScriptShape/RegistryShape ADT (Machine|Script|AssetPolicy). PublishVersion no longer exists chain-side.",
+          "recommendation": "Replace the SDK's single PublishVersion type and 'PublishVersion' message tag with PublishMachineVersion and PublishScriptVersion mirroring Updates.scala (machineShape vs scriptShape+scriptProgram), and introduce MachineShape / ScriptShape (MethodDispatch) / RegistryShape to replace SchemaShape. Update OttochainMessage union, OTTOCHAIN_MESSAGE_TYPES, and any builders/exports. Add a round-trip case to mirror PublishVersionSigningCanonicalSuite."
+        },
+        {
+          "topic": "strict typed optional but is required non-defaulted Boolean on chain",
+          "gap": "Chain PublishMachineVersion.strict, PublishScriptVersion.strict and RegisteredVersion.strict are plain `Boolean` with NO Scala default. The chain's CodecConfiguration uses useDefaults=true, but useDefaults only refills fields that HAVE a default — a non-defaulted Boolean that the client omits causes the Circe decode to FAIL outright (missing required field), an even harder failure than the InvalidSignature case. The SDK types strict?: boolean (optional) on both RegisteredVersion (types.ts:204) and PublishVersion (types.ts:512) with comments 'defaults to false and is omittable', which is now false and invites clients to omit it.",
+          "severity": "high",
+          "sdkState": "types.ts:204 RegisteredVersion.strict?: boolean and types.ts:512 PublishVersion.strict?: boolean, both documented as 'defaults to false; omittable'.",
+          "chainState": "RegisteredVersion.scala:37 strict: Boolean (no default); Updates.scala:173/198 strict: Boolean (no default). CodecConfiguration useDefaults=true does NOT cover non-defaulted fields.",
+          "recommendation": "Make strict a required `strict: boolean` (not strict?) on the new PublishMachineVersion/PublishScriptVersion and on RegisteredVersion, and correct the doc comments — the chain has no default, so the client MUST send it. This matches docs/signing-and-publishing.md rule 2 and the ottochain signing-canonical invariant #1."
+        },
+        {
+          "topic": "FieldShape.repeated / FieldShape.optional typed optional but required on chain",
+          "gap": "Chain SchemaShape.scala FieldShape has repeated: Boolean and optional: Boolean with NO defaults — required. These live inside MachineShape/ScriptShape, which are inside the signed PublishMachineVersion/PublishScriptVersion payload. The SDK types FieldShape.repeated?/optional? as optional (types.ts:144-145) with comment 'default to false and are omittable'. A client building a minimal FieldShape and omitting these produces a canonical the chain cannot decode (no default to refill) -> decode/InvalidSignature reject. This is the exact case docs/signing-and-publishing.md rule 2 calls out (repeated: boolean, not repeated?: boolean).",
+          "severity": "high",
+          "sdkState": "types.ts:140-146 FieldShape{repeated?: boolean; optional?: boolean} documented 'default to false and omittable'.",
+          "chainState": "SchemaShape.scala:24-30 FieldShape{repeated: Boolean; optional: Boolean} — no defaults; nested inside the signed publish payload via MachineShape/ScriptShape.",
+          "recommendation": "Make repeated and optional required (`repeated: boolean; optional: boolean`) on FieldShape and fix the wire-format comment. The chain marks them required with no default; omitting them breaks the canonical. (genesis-manifest.ts already types FieldShape.repeated as required — align the public type with it.)"
+        },
+        {
+          "topic": "RegisteredVersion shape field: SchemaShape replaced by RegistryShape ADT",
+          "gap": "Chain RegisteredVersion now carries `shape: RegistryShape` (a Machine|Script|AssetPolicy ADT) instead of the SDK's schemaShape: SchemaShape + the old stateMessage/commands structure. The SDK's RegisteredVersion (types.ts:193) still has schemaShape: SchemaShape{stateMessage, commands}. While RegisteredVersion is chain-committed (read) rather than client-signed, the SDK's decode of registry query responses will mis-shape the data.",
+          "severity": "medium",
+          "sdkState": "types.ts:193-205 RegisteredVersion{schemaShape: SchemaShape; ...}; SchemaShape{stateMessage: MessageShape; commands: Record<string,MessageShape>}.",
+          "chainState": "RegisteredVersion.scala:30-38 RegisteredVersion{..., shape: RegistryShape, ...} where RegistryShape = Machine(MachineShape)|Script(ScriptShape)|AssetPolicy(...). Disjoint-field-name natural discriminator (machineShape / scriptShape / behavior+supply+morphisms+stateShape).",
+          "recommendation": "Replace SchemaShape with the RegistryShape ADT (Machine/Script/AssetPolicy) in RegisteredVersion and the registry query result types, discriminating on the inner field names exactly as the chain's RegistryShape encoder does. Lower urgency than the signed-write types but still needed for correct registry reads."
+        },
+        {
+          "topic": "JSON nesting depth limit not mirrored in SDK",
+          "gap": "metakit's DataUpdate codec validates JSON nesting depth against DefaultMaxDepth=64 (MaxDepthExceededException) on deserialize; the JLVM evaluator separately uses MaxEvalDepth=256 (metakit PR #42). The SDK has no depth check, so a deeply nested payload the SDK happily signs would be rejected by the node's codec validateDepth at depth>64 with an opaque error, indistinguishable from a signature failure to the client.",
+          "severity": "low",
+          "sdkState": "No depth limit anywhere in src/ — signing.ts/verify.ts/drop-nulls.ts impose no nesting bound.",
+          "chainState": "JsonBinaryCodec.scala:42 DefaultMaxDepth=64, validateDepth enforced on both derive and deriveDataUpdate deserialize paths (MaxDepthExceededException).",
+          "recommendation": "Add an optional client-side depth guard (warn/error at depth > 64) in the dataUpdate signing path so over-deep payloads fail fast locally with a clear message rather than as an opaque node-side 400. Low priority — defensive, not a correctness mismatch for normal payloads."
+        },
+        {
+          "topic": "metakit-sdk dependency pin vs DataUpdate codec semantics",
+          "gap": "The SDK pins @constellation-network/metagraph-sdk ^0.2.0 (resolved 0.2.0) for the base sign/verify/canonicalize primitives. The SDK correctly wraps it with dropNulls so the explicit-null-vs-absent hazard is neutralized, and owns dropNulls itself. No divergence found in number serialization or key ordering (the SDK delegates RFC8785 to metagraph-sdk; metakit uses UTF-16BE code-unit key ordering and Ryu/ECMAScript number formatting — assumed matched by metagraph-sdk's vendored RFC8785, which the metakit-sdk TS port is parity-tested against).",
+          "severity": "low",
+          "sdkState": "package.json @constellation-network/metagraph-sdk ^0.2.0; SDK does not own canonicalize/number-serialization, only dropNulls + mode wrapping.",
+          "chainState": "metakit JsonCanonicalizer: UTF-16BE keyOrdering + Ryu ECMAScript double serialization; dropNulls-before-canonicalize is the normative rule.",
+          "recommendation": "No code change required now. Add a regression fixture that signs a known payload and asserts the produced canonical bytes match a metakit-generated golden vector (covering key ordering and number formatting), so a future metagraph-sdk bump that changes RFC8785 output is caught before it ships."
+        }
+      ]
+    },
+    {
+      "area": "Fiber & script API surface",
+      "summary": "The oracle→script rename in the SDK (commit 722fa8e) landed, and the /scripts endpoints + ScriptInvocation/ScriptFiberRecord names match the chain. But the chain has moved well past the SDK on this branch. ottochain's ML0 router (modules/l0/.../ML0Routes.scala, formerly ML0CustomRoutes referenced in SDK doc comments) now exposes ~9 endpoint families the SDK has no client method for (version, util/hash, audit, estimate-fee, state-proof, registry, webhooks, assets). Several on-chain types the SDK mirrors have drifted: FiberStatus is now UPPERCASE on the wire (the SDK's PascalCase literals will never match), a 5th log-entry kind RejectionReceipt exists, fiber records gained authorizedSigners / script schemaBinding, OnChain/CalculatedState gained asset+nonce maps, the registry version shape was renamed/restructured (SchemaShape→RegistryShape ADT, schemaShape field→shape), and the signed-message union split PublishVersion into PublishMachineVersion+PublishScriptVersion and added UpgradeScript plus four asset ops. There is also a concrete signing bug: createScriptPayload defaults accessControl to {type:'open'}, which is not a valid AccessControlPolicy variant. Highest-impact items are the FiberStatus casing (breaks status filtering + record decode discrimination) and the PublishVersion split / accessControl default (produce InvalidSignature or rejected updates).",
+      "findings": [
+        {
+          "topic": "FiberStatus wire casing drift (Active/Archived/Failed vs ACTIVE/ARCHIVED/FAILED)",
+          "gap": "SDK src/ottochain/types.ts:47 declares FiberStatus = 'Active' | 'Archived' | 'Failed'. On chain, FiberStatus.scala extends EnumEntry with Uppercase + CirceEnum, so the wire value is 'ACTIVE'/'ARCHIVED'/'FAILED' (normalized in ottochain commit c9a78b6 'fix: normalize enum values to UPPER_CASE' #73). The SDK's getStateMachines/getScripts pass ?status=Active to ML0Routes' StatusQueryParam, which calls FiberStatus.withNameOption('Active') -> None -> 400 ParseFailure. And record.status will decode as a string the SDK's union does not contain.",
+          "severity": "high",
+          "sdkState": "FiberStatus = 'Active' | 'Archived' | 'Failed'; used as the ?status= query value and as the .status field type",
+          "chainState": "enumeratum Uppercase + CirceEnum => wire is ACTIVE/ARCHIVED/FAILED; the status query decoder rejects any non-uppercase value with HTTP 400",
+          "recommendation": "Change FiberStatus to 'ACTIVE' | 'ARCHIVED' | 'FAILED'. Update getStateMachines/getScripts status filtering, any snapshot.ts discriminators, and tests. This is a silent break for every status-filtered query and for record decoding."
+        },
+        {
+          "topic": "Missing 5th FiberLogEntry kind: RejectionReceipt",
+          "gap": "FiberLogEntry.scala defines a RejectionReceipt variant {fiberId, ordinal, updateType, reason} appended on every node when a combine-reached update is deterministically rejected (unauthorized, non-monotonic, seq mismatch, etc.). The SDK's FiberLogEntry union (types.ts:331) has only EventReceipt | ScriptInvocation | CreationReceipt | UpgradeReceipt, so these entries fall through getLogsForFiber and are mis-typed.",
+          "severity": "high",
+          "sdkState": "FiberLogEntry = EventReceipt | ScriptInvocation | CreationReceipt | UpgradeReceipt",
+          "chainState": "sealed trait FiberLogEntry has 5 variants incl. RejectionReceipt(fiberId, ordinal, updateType, reason)",
+          "recommendation": "Add a RejectionReceipt interface and include it in the FiberLogEntry union. RejectionReceipt is the only on-chain signal that a submitted update was accepted into a batch but rejected by business rules (no state mutation) — clients polling latestLogs need it to distinguish 'rejected' from 'not yet processed'."
+        },
+        {
+          "topic": "Signed-message union: PublishVersion split + missing UpgradeScript and asset ops",
+          "gap": "Updates.scala OttochainMessage now has 15 variants. SDK has 9. PublishVersion was split into PublishMachineVersion (machineShape) and PublishScriptVersion (scriptShape, scriptProgram) — the SDK's single PublishVersion with field schemaShape no longer exists chain-side and will be rejected by the decoder. Also missing: UpgradeScript, and the four asset ops CreateAssetPolicy / MintAsset / ApplyMorphism / AuthorizeCompose. SDK's UpgradeFiber is still valid (machine-only).",
+          "severity": "high",
+          "sdkState": "OttochainMessage union: CreateStateMachine, TransitionStateMachine, ArchiveStateMachine, UpgradeFiber, CreateScript, InvokeScript, PublishVersion, SetVersionStatus, RegisterAlias (9)",
+          "chainState": "15 variants: adds PublishMachineVersion, PublishScriptVersion (replacing PublishVersion), UpgradeScript, CreateAssetPolicy, MintAsset, ApplyMorphism, AuthorizeCompose; messageDecoder discriminates on the single top-level key matching messageName",
+          "recommendation": "Replace PublishVersion with PublishMachineVersion {name,version,schemaB64,machineShape,definition,strict,metadata?} and PublishScriptVersion {name,version,schemaB64,scriptShape,scriptProgram,strict,metadata?}; add UpgradeScript {fiberId,targetRef,newProgram,migration?,targetSequenceNumber}; decide whether to model the asset ops. Update OTTOCHAIN_MESSAGE_TYPES and the generated proto. The chain's messageDecoder only accepts a key equal to a known messageName, so any stale name (PublishVersion) silently fails to decode -> update dropped."
+        },
+        {
+          "topic": "createScriptPayload emits an invalid AccessControlPolicy default",
+          "gap": "transaction.ts:207 createScriptPayload defaults accessControl to { type: 'open' }. AccessControlPolicy.scala is a sealed trait with variants Public (case object), Whitelist(addresses), FiberOwned(fiberId). { type: 'open' } is not any of these and will not decode; even the SDK's own AccessControlPolicy type (types.ts:57) uses { Public: {} } | { Whitelist } | { FiberOwned }, which the builder contradicts.",
+          "severity": "high",
+          "sdkState": "createScriptPayload(): accessControl: params.accessControl ?? { type: 'open' }",
+          "chainState": "AccessControlPolicy = Public (case object) | Whitelist(Set[Address]) | FiberOwned(UUID); Public encodes per circe sealed-trait config, not as {type:'open'}",
+          "recommendation": "Default to the canonical Public encoding the chain expects (confirm whether circe renders the case object as the bare string \"Public\" or {\"Public\":{}}; the SDK type assumes the object form) and type the param as AccessControlPolicy rather than Record<string,unknown>. As written, every CreateScript with a defaulted accessControl is rejected."
+        },
+        {
+          "topic": "Registry version shape renamed/restructured: SchemaShape -> RegistryShape ADT, RegisteredVersion.schemaShape -> shape",
+          "gap": "SDK RegisteredVersion has schemaShape: SchemaShape and SchemaShape = {stateMessage, commands}. Chain RegisteredVersion.scala now has shape: RegistryShape, where RegistryShape is an ADT: Machine{machineShape: MachineShape}, Script{scriptShape: ScriptShape}, AssetPolicy{behavior,supply,morphisms,stateShape}. The old SchemaShape is now MachineShape. genesis-manifest.ts still emits schemaShape:{stateMessage,commands} for std apps.",
+          "severity": "high",
+          "sdkState": "RegisteredVersion.schemaShape: SchemaShape; SchemaShape = { stateMessage: MessageShape; commands: Record<string,MessageShape> }",
+          "chainState": "RegisteredVersion.shape: RegistryShape (Machine|Script|AssetPolicy); MachineShape = {stateMessage, commands}; ScriptShape = MethodDispatch{methods}",
+          "recommendation": "Rename the field to shape and model RegistryShape as a discriminated union (Machine/Script/AssetPolicy), with SchemaShape -> MachineShape. Update genesis-manifest.ts to emit { shape: { machineShape: { stateMessage, commands } } } (or whatever PublishMachineVersion expects). Reads of RegisteredVersion and any genesis pre-registration will otherwise mis-shape."
+        },
+        {
+          "topic": "RegistryTarget missing AssetPolicyPackage variant",
+          "gap": "RegistryTarget.scala has three variants: SchemaPackage, InstanceAlias, AssetPolicyPackage(versions: VersionLineage). SDK types.ts:230 has only SchemaPackage | InstanceAlias.",
+          "severity": "medium",
+          "sdkState": "RegistryTarget = { SchemaPackage } | { InstanceAlias }",
+          "chainState": "RegistryTarget = SchemaPackage | InstanceAlias | AssetPolicyPackage(VersionLineage)",
+          "recommendation": "Add { AssetPolicyPackage: { versions: VersionLineage } } to the RegistryTarget union so getRegistry() responses over .asset names decode."
+        },
+        {
+          "topic": "Fiber record fields drifted: StateMachine.authorizedSigners, Script.schemaBinding",
+          "gap": "Records.scala StateMachineFiberRecord has authorizedSigners: Set[Address] (multi-party signing, #161) not in the SDK record. ScriptFiberRecord has schemaBinding: Option[SchemaBinding] (scripts are now versionable, #162) not in the SDK ScriptFiberRecord.",
+          "severity": "medium",
+          "sdkState": "StateMachineFiberRecord lacks authorizedSigners; ScriptFiberRecord lacks schemaBinding",
+          "chainState": "StateMachineFiberRecord.authorizedSigners: Set[Address]; ScriptFiberRecord.schemaBinding: Option[SchemaBinding]",
+          "recommendation": "Add authorizedSigners?: string[] to StateMachineFiberRecord (note CreateStateMachine.participants seeds it) and schemaBinding?: SchemaBinding to ScriptFiberRecord. Non-fatal for decode (extra fields are ignored) but the SDK cannot surface signer sets or script bindings."
+        },
+        {
+          "topic": "OnChain and CalculatedState missing asset/nonce maps",
+          "gap": "OnChain.scala adds assetCommits: SortedMap[UUID, AssetCommit]. CalculatedState.scala adds assets: SortedMap[UUID, AssetRecord] and usedNonces: SortedMap[UUID, SortedSet[Long]]. SDK OnChain (types.ts:398) and CalculatedState (types.ts:412) omit all three.",
+          "severity": "medium",
+          "sdkState": "OnChain = {fiberCommits, latestLogs, registryCommits}; CalculatedState = {stateMachines, scripts, registry, reverseNames}",
+          "chainState": "OnChain adds assetCommits; CalculatedState adds assets (AssetRecord) and usedNonces",
+          "recommendation": "Add assetCommits?, assets?, usedNonces? (all defaulted/omittable) to the respective interfaces. Decode-tolerant today, but getOnChain()/getCheckpoint() drop asset state silently."
+        },
+        {
+          "topic": "Missing client methods for ~9 new ML0 endpoints",
+          "gap": "ML0Routes.scala exposes GET /v1/version, POST /v1/util/hash, GET /v1/state-machines/{id}/audit, .../estimate-fee?event=, .../state-proof?field=, GET /v1/scripts/{id}/estimate-fee, .../state-proof, GET /v1/assets/{id}/state-proof, GET /v1/registry, /v1/registry/{name}, /v1/registry/reverse/{id}, and POST/DELETE/GET /v1/webhooks/*. MetagraphClient only implements onchain, checkpoint, state-machines (list/get/events), scripts (list/get/invocations), snapshots. None of the registry, audit, estimate-fee, state-proof, version, util/hash, webhook, or asset endpoints are wrapped.",
+          "severity": "medium",
+          "sdkState": "MetagraphClient methods: getOnChain, getCheckpoint, getStateMachines, getStateMachine, getStateMachineEvents, getScripts, getScript, getScriptInvocations + snapshots",
+          "chainState": "adds /version, /util/hash, state-machines{/audit,/estimate-fee,/state-proof}, scripts{/estimate-fee,/state-proof}, assets/{id}/state-proof, registry{,/{name},/reverse/{id}}, webhooks{/subscribe,/subscribers}",
+          "recommendation": "Add client methods: getVersion(), hashMessage(signed) (canonical-digest preflight, very useful for debugging InvalidSignature), getAudit(id):string[], estimateTransitionFee(id,event)/estimateScriptFee(id), getStateProof(id,field?), getRegistry()/getRegistryEntry(name)/getReverseName(id), and webhook subscribe/unsubscribe/list. Prioritize getRegistry* and hashMessage; registry is required to resolve SchemaRef before create, and util/hash directly diagnoses signing-canonical mismatches. Also update the stale @see path in metagraph-client.ts (ML0CustomRoutes.scala -> ML0Routes.scala)."
+        },
+        {
+          "topic": "RegisteredVersion.strict and FieldShape.repeated/optional required vs optional",
+          "gap": "Chain RegisteredVersion.strict: Boolean and FieldShape.repeated/optional: Boolean are REQUIRED (no defaults). SDK marks RegisteredVersion.strict?, FieldShape.repeated?, FieldShape.optional? as optional. For reads this is harmless (chain always emits them), but for the SDK's PublishMachineVersion/genesis path, omitting strict diverges the signing canonical (a non-Option Boolean cannot be dropNulls-omitted) and yields InvalidSignature.",
+          "severity": "low",
+          "sdkState": "strict?, repeated?, optional? all optional",
+          "chainState": "strict: Boolean and FieldShape.repeated/optional: Boolean are required, no default (signing-canonical invariant: no defaulted non-Option fields on signed messages)",
+          "recommendation": "When the SDK gains a PublishMachineVersion/PublishScriptVersion builder, make strict a required field on the wire (always emit true/false). For read-only RegisteredVersion the optional markers are fine. Document that signed registry messages must send strict explicitly."
+        }
+      ]
+    },
+    {
+      "area": "Fiber-app definitions vs chain",
+      "summary": "The OttoChain metagraph is entirely app-agnostic: on-chain it only knows `StateMachineDefinition { states: Map[StateId,State], initialState, transitions: List[Transition], metadata }` (modules/models/.../schema/fiber/StateMachineDefinition.scala), `State { id, isFinal, metadata }`, and `Transition { from, to, eventName, guard, effect, dependencies: Set[UUID] }`. It has NO concept of identity/governance/markets/treasury/registry apps, no `createSchema`/`stateSchema`/`eventSchemas`/`definitions`, no `emits` on transitions, and no `$timestamp` context key. The SDK `FiberAppDefinition` (src/schema/fiber-app.ts) plus the app definitions (src/apps/*) layer a much richer schema on top. The bridging path `toProtoDefinition()` is meant to strip down to the chain shape but is opt-in and itself buggy, and several app definitions use constructs (`emits`, object-form `dependencies`, `$timestamp`) that the chain ignores, rejects, or resolves to null. The unimplemented overhaul (treasury/registry apps, generated types, proto-enum-validation CI) has zero on-chain counterpart and never needs one because the chain is app-agnostic; the SDK-side Phase-1 refactor (oracles->identity, corporate consolidation, universal+specialized) is partly done but the generation/validation tooling from fiber-app-schema.md is absent, so nothing guards these divergences. The chain validators (FiberRules/FiberValidator) and the authoritative SdkCompatibilitySuite + JsonEncodedStateMachineSuite fixtures define the real wire contract and were used to verify each finding.",
+      "findings": [
+        {
+          "topic": "Transition.dependencies: object DependencySpec vs chain Set[UUID]",
+          "sdkState": "src/schema/fiber-app.ts Transition.dependencies is `readonly (string | DependencySpec)[]` where DependencySpec = {machine, instanceRef: JsonLogic, requiredState?}. Corporate machines (corp-entity.ts L476-480, L646-655; also corp-board/corp-securities/corp-shareholders) actually emit object-form dependencies. toProtoDefinition() spreads them through unchanged (fiber-app.ts L322).",
+          "chainState": "modules/models/.../fiber/Transition.scala: `dependencies: Set[UUID]`. The chain decoder (Circe customizableDecoder) decodes each element as a UUID. Chain's own fixtures (JsonEncodedStateMachineSuite L417/444 etc., SdkCompatibilitySuite L71) ALWAYS send dependencies as arrays of UUID strings, never objects. The runtime ContextProvider.buildMachinesContext consumes `Set[UUID]` to inject `machines`/`scripts` context.",
+          "gap": "A DependencySpec object `{machine, instanceRef, requiredState}` cannot decode as a UUID. Any CreateStateMachine carrying such a definition is rejected at the chain decoder (or fails verification), and `requiredState`/`instanceRef` semantics simply do not exist on-chain — there is no declarative cross-machine state precondition; dependencies only seed read-only context. The corporate app definitions are categorically un-submittable as written.",
+          "severity": "critical",
+          "recommendation": "Make DependencySpec a build-time-only authoring affordance and lower it to `string[]` of resolved fiber UUIDs in toProtoDefinition() (resolve `machine`/`instanceRef`/`requiredState` to a concrete fiberId or drop them). Either remove DependencySpec from the wire-bound Transition type or have toProtoDefinition reject/transform non-string dependencies. Add a unit test asserting every app definition's toProtoDefinition output has dependencies as string[] only."
+        },
+        {
+          "topic": "Transition.emits declared statically in SDK; chain has no emits field",
+          "sdkState": "fiber-app.ts Transition.emits: `readonly (string | EmitSpec)[]`. 8 corporate/governance machines declare `emits: [\"CORPORATION_FORMED\"]` etc. (corp-entity.ts L467/512/599/...). toProtoDefinition() does NOT strip emits, so it would ride the signed definition.",
+          "chainState": "Transition.scala has NO emits field. Event emission is a RUNTIME effect convention: the effect result writes the reserved `_emit` key (ReservedKeys.EMIT) parsed by parseEmittedEvent (NAME/DATA/DESTINATION). The chain decoder drops the unknown `emits` field on decode (useDefaults config ignores unknown keys).",
+          "gap": "Two problems: (1) the static `emits` declaration is purely informational and is never honored by the chain — emission only happens if the effect body produces `_emit`, which none of these SDK definitions do, so the declared events never fire; (2) if a caller signs the full definition (with emits present) the chain re-encodes WITHOUT emits, breaking the signing canonical (InvalidSignature) — see finding on canonical mismatch.",
+          "severity": "high",
+          "recommendation": "Either (a) drop `emits` from the wire Transition and keep it as documentation-only metadata stripped by toProtoDefinition, or (b) generate the corresponding `_emit` effect output from the `emits` declaration so the runtime actually emits. Add tests confirming toProtoDefinition output contains no `emits` key, and that declared emits correspond to a real `_emit` in the effect."
+        },
+        {
+          "topic": "Signing-canonical mismatch: SDK definition carries createSchema/stateSchema/eventSchemas/definitions the chain drops",
+          "sdkState": "FiberAppDefinition includes createSchema, stateSchema, eventSchemas, definitions, plus per-transition emits and per-state metadata convention. createStateMachinePayload (src/ottochain/transaction.ts L57-66) accepts an opaque `definition: Record<string,unknown>` and signs whatever it's given. toProtoDefinition() exists to extract the {states,initialState,transitions,metadata} subset but is OPT-IN; nothing forces callers to use it.",
+          "chainState": "StateMachineDefinition has only {states, initialState, transitions, metadata}. CodecConfiguration uses `Configuration.default.withDefaults`, so the decoder silently IGNORES unknown keys (createSchema/eventSchemas/etc.). On verify, the chain re-encodes the decoded StateMachineDefinition WITHOUT those fields. Signing must reproduce JCS(dropNulls(payload)) exactly (docs/signing) or it is rejected InvalidSignature.",
+          "gap": "If any caller passes a raw FiberAppDefinition (or anything beyond the 4 chain fields) to createStateMachinePayload, the signed canonical includes extra keys that the chain's re-encoded canonical lacks -> InvalidSignature (opaque HTTP 400). The SDK ships rich definitions and an opt-in stripper but no guardrail tying the two together.",
+          "severity": "high",
+          "recommendation": "Have createStateMachinePayload run definitions through toProtoDefinition() (or a strict allowlist of {states,initialState,transitions,metadata}) before signing, OR type its `definition` param as ProtoStateMachineDefinition instead of Record<string,unknown>. Add a signing parity test that round-trips a real app definition through toProtoDefinition and asserts byte-for-byte JCS(dropNulls()) equality against the Scala StateMachineDefinition canonical (mirror SdkCompatibilitySuite)."
+        },
+        {
+          "topic": "toProtoDefinition passes FiberAppMetadata as StateMachineDefinition.metadata",
+          "sdkState": "fiber-app.ts toProtoDefinition L335-337: `if (def.metadata) protoDef.metadata = def.metadata`. But FiberAppDefinition.metadata is FiberAppMetadata {name, app, type, version, description, category, crossReferences} — app-routing info, not state-machine metadata. There is no top-level state-machine metadata field on FiberAppDefinition.",
+          "chainState": "StateMachineDefinition.metadata: Option[JsonLogicValue] = None — a free-form on-chain metadata blob, expected to be either absent (null, dropped) or a plain JSON object. Chain stores it but does not interpret app/type/version.",
+          "gap": "toProtoDefinition injects SDK app-routing metadata (name/app/type/version) into the on-chain state-machine metadata slot. This is semantically wrong (app routing leaks into chain metadata) and, more importantly, it makes the on-chain canonical depend on SDK packaging fields — changing description/category/crossReferences would change the signed digest and the registry logicHash even though the executable machine is identical.",
+          "severity": "medium",
+          "recommendation": "Decide explicitly what belongs in StateMachineDefinition.metadata. Either omit it entirely from toProtoDefinition (recommended — keep app metadata off-chain), or project only a stable, intentional subset. Do not pass the full FiberAppMetadata object. Add a test pinning the exact metadata shape that reaches the wire."
+        },
+        {
+          "topic": "$timestamp context variable used pervasively but absent on-chain",
+          "sdkState": "20 of the SDK state machines (~150+ occurrences) use `{var: \"$timestamp\"}` in effects to stamp fields like activatedAt/suspendedAt/createdAt (e.g. identity-agent.ts L206, contract-agreement, dao-*, market-*).",
+          "chainState": "ContextProvider.buildContextData (ContextProvider.scala L160-178) injects ONLY: state, event, eventName, machineId, currentStateId, sequenceNumber, $ordinal, $lastSnapshotHash, $epochProgress, proofs, machines, parent, children, scripts, heldAssets. ReservedKeys defines ORDINAL/EPOCH_PROGRESS/LAST_SNAPSHOT_HASH but NO $timestamp. JsonLogic `var` on a missing key resolves to null.",
+          "gap": "Every effect field set from `$timestamp` will be written as null on-chain (no error, silent). Computed timestamp fields the SDK schema marks `computed: true` (activatedAt, suspendedAt, probationStartedAt, etc.) will always be null in actual fiber state, diverging from SDK/explorer expectations and breaking any guard/ordering logic that compares against a timestamp.",
+          "severity": "high",
+          "recommendation": "Replace `$timestamp` with the chain-provided deterministic ordering key `$ordinal` (or $epochProgress) throughout the app effects, and update the stateSchema field types/descriptions accordingly (ordinal is an integer, not an ISO timestamp). If wall-clock time is truly needed, raise it with the chain team to add a deterministic time key to ContextProvider — but until then, the SDK must stop emitting $timestamp. Add a lint/test that fails if any app effect references a var not in the chain's reserved-context allowlist."
+        },
+        {
+          "topic": "Redundant `status` field in effects vs chain-tracked currentState",
+          "sdkState": "Effects write a `status` field into stateData mirroring the target state (identity-agent.ts: `{status:\"ACTIVE\",...}`), and stateSchema.status is an enum of the state ids marked computed.",
+          "chainState": "FiberEvaluator sets `newStateId = Some(transition.to)` (FiberEvaluator.scala L268); the canonical current state is the fiber record's currentState, independent of any stateData `status` field. The chain never reads a `status` key to determine state.",
+          "gap": "Two sources of truth for lifecycle state: chain `currentState` (authoritative) and an SDK-authored `status` field inside stateData. They can silently diverge if an effect forgets to set status, or if a transition's `to` differs from the status it writes. Not a hard break, but a correctness/consistency footgun and extra signed bytes.",
+          "severity": "low",
+          "recommendation": "Drop the redundant `status` writes from effects and have consumers read the chain's currentState (exposed via the fiber record) as the single source of truth, or add a test asserting every transition's effect status equals transition.to. At minimum document that `status` is advisory and currentState wins."
+        },
+        {
+          "topic": "dependencies omitted-when-empty vs chain requiredness (toProtoDefinition)",
+          "sdkState": "toProtoDefinition L322 omits `dependencies` when empty, with a comment claiming 'dependencies has default Set.empty in Scala'.",
+          "chainState": "Transition.scala `dependencies: Set[UUID]` has NO Scala default. With `useDefaults` the decoder can fall back ONLY where a default exists; for dependencies there is none, so an absent key relies on Circe/magnolia treating a missing Set as empty. The chain's own fixtures (SdkCompatibilitySuite L71, JsonEncodedStateMachineSuite) ALWAYS send `dependencies: []` explicitly.",
+          "gap": "The SDK comment is inaccurate (no Scala default), and omitting the key diverges from every chain reference fixture which sends `[]`. Whether omission decodes cleanly depends on magnolia's empty-collection handling; the canonical the chain re-encodes will contain `dependencies: []`, so if the SDK signed a payload that OMITTED it, the canonical would mismatch unless dropNulls/empty-handling happens to align.",
+          "severity": "medium",
+          "recommendation": "Always emit `dependencies: []` (matching the chain fixtures and the re-encoded canonical) rather than omitting it, and fix the misleading comment. Verify with a signing-parity test that the SDK transition canonical (empty deps) equals the Scala Transition canonical."
+        },
+        {
+          "topic": "No client-side guard against reserved-operator field names",
+          "sdkState": "SDK has no validation preventing a definition from using a JSON Logic operator name (merge, map, count, min, max, in, get, has, keys, values, length, cat, default, find, etc.) as a DATA key inside guard/effect map literals. Authoring is freehand JSON-Logic in the .ts files.",
+          "chainState": "FiberRules.L1.noReservedOperatorFieldNames REJECTS (ReservedOperatorAsFieldName) any definition whose guard/effect MapExpression keys collide with JsonLogicOp.knownOperatorTags. Current SDK apps happen to use operator names only in operator position (legal), so they pass today — verified across contracts/markets/governance.",
+          "gap": "The chain enforces a rule the SDK does not mirror. A future app field named e.g. `count`, `min`, or `merge` as a data key would be silently authored, pass SDK type-checking, then be rejected on-chain. No tooling catches this pre-submit.",
+          "severity": "low",
+          "recommendation": "Port the reserved-operator-key check into defineFiberApp() (or a build-time validator / the proposed generate-app-types.mjs) using the same JsonLogicOp tag list from metakit, so collisions fail fast at SDK build time instead of at chain ingestion."
+        },
+        {
+          "topic": "Overhaul + schema-generation proposals: SDK partially done, zero on-chain counterpart",
+          "sdkState": "Phase-1 of fiber-apps-overhaul.md is partially reflected in the SDK: oracles/ is a deprecated shim absorbed into identity (identity-oracle), corporate is consolidated, markets/governance follow universal+specialized. But Phase-3 apps (treasury, registry) are ABSENT from src/apps, and fiber-app-schema.md's tooling (generate-app-types.mjs, types.generated.ts, transitions.generated.ts, dist/schemas/*.json, validate-proto-enums.mjs CI) is NOT implemented — schemas are handwritten in fiber-app.ts/apps/*.",
+          "chainState": "The chain is fully app-agnostic: grep of modules/models for treasury/registry-as-app/identity/governance/createSchema/eventSchemas finds nothing (only registry as the version/package system, unrelated to the SDK 'registry app' proposal). The chain only ever sees StateMachineDefinition. There is no proto enum per app on-chain to validate against.",
+          "gap": "The overhaul and schema-generation proposals are SDK/tooling concerns with no on-chain analogue — the chain neither needs nor reflects them, so there is no 'chain side' to align for new apps. The risk is purely SDK-internal: without the proposed generation/validation (proto-enum-vs-states CI, reserved-key lint, signing-parity tests), the divergences in the other findings have no automated guardrail. The proto-enum-validation premise in fiber-app-schema.md is partly moot since the chain stores states as free-form StateId strings, not proto enums.",
+          "severity": "medium",
+          "recommendation": "Close the proposals' status: mark the overhaul Phase-1 'done (no on-chain work required, chain is app-agnostic)', defer/abandon treasury+registry until needed, and re-scope fiber-app-schema.md around what actually protects the chain contract — (1) a toProtoDefinition signing-parity test against the Scala canonical, (2) a reserved-context-var allowlist lint ($timestamp etc.), (3) a reserved-operator-key lint, (4) a dependencies-shape check. Drop the proto-enum-validation idea or redirect it to validate states against the registry MachineShape projection instead."
+        }
+      ]
+    }
+  ],
+  "protocols": [
+    {
+      "protocol": "Midnight (IOG / Midnight Foundation) implementing the Kachina model (Kerber, Kiayias, Kohlweiss; IACR ePrint 2020/543). Kachina is the formal \"private smart contract = public on-chain state + private off-chain state + transition function proven by NIZK\" framework, proven secure in the UC model. Midnight is its production instantiation: Compact (DSL) -> ZK circuits + Impact VM (on-chain stack VM that replays the public transcript), with Zswap (ePrint 2022/1002) as the shielded-asset layer. NIGHT token launched on Cardano Dec 8 2025 (Hilo); privacy dApp mainnet (Kukolu) staged for Q1 2026. Compact was contributed to Linux Foundation Decentralized Trust as the \"Minokawa\" project.",
+      "proofSystem": "Kachina the PAPER is proof-system-agnostic: it requires only a general-purpose NIZK/zk-SNARK with simulation-extractability for an arbitrary relation R linking (public-state delta, public transcript) to a witness (private state, private inputs); it does NOT specify a scheme and imposes no setup at the abstraction level. Midnight the IMPLEMENTATION uses `midnight-proofs`, a fork of PSE's Halo2 (lineage Zcash Sapling -> PSE Halo2 v0.3.0): PLONKish arithmetization with KZG polynomial commitments (Pluto-Eris / formerly BLS12-381, Poseidon + in-circuit SHA256, 128-bit truncated Fiat-Shamir for recursion). Zswap uses Zcash-friendly simulation-extractable zk-SNARKs. CRITICAL for OttoChain: this is GENERAL-PURPOSE circuit-satisfiability SNARK machinery, NOT a Schnorr/Sigma system. OttoChain has ONLY Sigma-protocols (ProveDlog / ProveDHTuple / AND-OR proof trees, Fiat-Shamir) which prove fixed algebraic statements (knowledge of discrete logs, DH-tuples, monotone access structures) and CANNOT prove arbitrary JLVM circuit execution. So Kachina's core proving engine cannot be reproduced with Sigma alone. Note on setup: Kachina abstractly needs none (any NIZK, incl. transparent); Midnight's KZG path requires a universal/updatable powers-of-tau SRS.",
+      "stateModel": "Two-part state per contract. (1) PUBLIC state on-chain in the shared ledger; in Compact this is the `ledger` declaration (typed ADT fields -- counters, Merkle trees, sets, maps -- manipulated by the Impact VM, a stack-based VM that replays the public transcript). (2) PRIVATE state held OFF-CHAIN, locally per user, never published. In Kachina the private state is accessed only INDIRECTLY through a contract-defined \"state oracle\"; a contract is formally a transition function plus a leakage function. In Compact private data enters via `witness` functions (return a value AND an updated private state via WitnessContext{ledger, privateState, address}); everything derived from a witness is \"private by default\" and must be explicitly disclosed to cross into public state. The chain stores NO private state and NO global private-state tree -- privacy state is sharded per user; only commitments the contract chooses to bind (e.g. a Merkle-root/commitment ledger field) appear on-chain.",
+      "offchainOnchainSplit": "Off-chain: the user runs the transition locally against their private state, producing (i) a PUBLIC TRANSCRIPT = ordered operations/queries against the public-state oracle (what the chain replays), (ii) a PRIVATE TRANSCRIPT = witness outputs consumed only by the prover, (iii) a public-state delta. A proof server then generates a NIZK that there EXISTS a private state + private inputs making the public transcript a valid execution of the contract transition. On-chain settlement: tx carries {public transcript, public-state delta, proof}; validators verify the proof and the Impact VM re-executes the public transcript against current on-chain state -- commits iff the transcript read-set still matches, else reject/rebase. This transcript-replay IS Kachina's concurrency mechanism: the state-oracle transcript records dependencies so non-conflicting txs commute and reorder, and the contract author controls (via the oracle) what must be proven and what counts as a conflict, minimizing proof size and leakage. The Impact transcript is conceptually the same artifact as a deterministic JLVM state-machine transition log.",
+      "trustSetup": "Universal/updatable trusted setup required in the Midnight instantiation (KZG SRS via powers-of-tau). The Kachina abstraction itself imposes no setup -- any NIZK works, including transparent ones. Halo2's IPA variant is transparent, but midnight-proofs deliberately chose the KZG path for succinct/constant-size proofs and recursion, accepting the ceremony. Schnorr/Sigma-protocols (OttoChain) are transparent / setup-free -- strictly better on this axis, but only for the narrow class of statements Sigma can express.",
+      "assetPrivacy": "Zswap (ePrint 2022/1002): a Zerocash-style shielded UTXO/note model. Each coin is a NOTE committed on-chain via a COMMITMENT in a Merkle tree; spending reveals a deterministic NULLIFIER (from note + secret) to block double-spends, with a zk-SNARK proving the spent note is in the commitment tree and the nullifier is well-formed without revealing which note. Multi-asset + atomic swaps: SPARSE HOMOMORPHIC (multi-value Pedersen) COMMITMENTS to (value,type) pairs that SUM across a tx so balance is checked homomorphically; relaxed/aggregated signatures let independent shielded txs be MERGED into one atomic balanced multi-asset swap non-interactively. This asset-privacy primitive is distinct from the general Kachina contract layer and itself depends on a general SNARK for the spend circuit.",
+      "programmability": "Fully general. Kachina's transition function is arbitrary computation over public+private state; Compact is a statically-typed TypeScript-flavored DSL compiling to ZK circuits, with the compiler auto-splitting code into on-chain (Impact VM ops on the ledger ADT), off-chain (witness/private-state) and in-circuit (proof) parts. It can express arbitrary state machines, access control, private voting, identity/credentials, DEX logic. The ONLY hard limit is circuit encodability (bounded loops, fixed circuit per exported entry point). This generality of HIDDEN logic is a property of the general SNARK, NOT of the Kachina architecture per se -- precisely what a Sigma-only system lacks.",
+      "maturity": "Production-staging as of mid-2026. NIGHT token live on Cardano mainnet since Dec 8 2025 (Hilo phase); federated privacy-dApp mainnet (Kukolu) targeted Q1 2026 for the first wave of production apps. Compact + Impact VM + Zswap are implemented and documented; midnight-proofs is a published Rust crate (v0.7.0). Compact donated to Linux Foundation Decentralized Trust as \"Minokawa\". Underlying theory (Kachina UC-proven; Zswap PETS 2022) is peer-reviewed. Net: research-mature and engineering-mature, just entering production traffic -- more mature than most ZK-contract competitors.",
+      "relevance": "VERY HIGH as a reference architecture, MODERATE as a directly-copyable blueprint, because OttoChain lacks the general SNARK that Kachina/Midnight depend on. Kachina is the canonical formalization of exactly what \"privately managed off-chain fibers\" want to be: a private off-chain state machine whose public effects settle on-chain via a verifiable transcript. Its decomposition (public ledger state + per-user private state + transition function + public-transcript replay for concurrency + explicit leakage function as the privacy budget) is the right mental model and maps cleanly onto OttoChain primitives: JLVM state machines ARE transition functions; the deterministic JCS(dropNulls) canonicalization IS the transcript-equality/replay-determinism guarantee Kachina needs; the Rust/TS/Scala byte-for-byte parity IS the multi-party re-execution Kachina assumes. The GAP is purely the proof: Kachina/Midnight prove an ARBITRARY private transition with a general circuit SNARK; OttoChain has only Sigma-protocols proving fixed algebraic relations. So OttoChain can borrow the ARCHITECTURE and the CONCURRENCY/TRANSCRIPT model directly, and can build a meaningful subset of private fibers whose hidden predicate reduces to Sigma-expressible statements, but CANNOT (without adding a general SNARK) hide arbitrary JLVM transition logic the way Compact does.",
+      "family": "ZK private-smart-contract family -- Kachina lineage (public+private state, NIZK-proven off-chain transition, transcript settlement). Siblings/contrasts: Zexe/VeriZexe, Aleo/snarkVM, Aztec/Noir, Zcash/Zerocash (asset-only). Distinct from FHE-based privacy (smartFHE) and from MPC. OttoChain's Sigma-only stack is closest in spirit to Zerocash-era / Ergo Sigma-protocol systems -- a strict expressiveness subset of the Kachina family.",
+      "patternsToBorrow": [
+        "Public/private state split with per-user OFF-CHAIN private state and NO global private-state tree on chain -- directly applicable to off-chain fibers: the metagraph stores only public fiber state + commitments.",
+        "Transcript-replay settlement = Kachina state-oracle transcript: have an off-chain fiber emit a deterministic PUBLIC transcript of its reads/writes against public state; the metagraph re-executes via JLVM and commits iff the read-set still matches. OttoChain already has the deterministic JLVM + JCS(dropNulls) canonical replay needed to make this byte-for-byte sound -- highest-value borrowable pattern, needs NO SNARK.",
+        "Optimistic concurrency via explicit read/write dependency sets in the transcript, so non-conflicting fiber transitions commute and can be reordered/rebased instead of serialized.",
+        "Explicit LEAKAGE FUNCTION as a first-class privacy budget: force each fiber transition to declare exactly what public info it discloses (Compact 'private by default + explicit disclosure'). A design discipline borrowable regardless of proof system.",
+        "Commit-and-settle with commitments + nullifiers for the cases Sigma CAN handle: a Pedersen/EC commitment to private state, opened/transitioned with a Schnorr/ProveDlog proof; single-use/double-spend enforcement via a deterministic nullifier whose well-formedness is a ProveDHTuple statement. Gives Zswap-style note spending and private membership WITHOUT a general SNARK (anonymity set limited by one-out-of-many/ring scaling).",
+        "Verification-key-as-contract-identity (Midnight): bind a fiber's on-chain identity to a hash of its JLVM program / its Sigma verification parameters, so invoking the fiber means submitting a proof against its fixed statement.",
+        "AND-OR Sigma proof trees for private access control / threshold authorization inside a fiber (private voting thresholds, m-of-n approval, disjunctive credential proofs) -- the native sweet spot of OttoChain's sigma opcodes, mapping onto governance/corporate/identity apps.",
+        "Off-chain proof-server / local-prover architecture: keep witness (secret-key) material on the user's machine; the chain only ever sees public transcript + proof."
+      ],
+      "pitfalls": [
+        "DO NOT assume Sigma-protocols can replace the Kachina/Midnight SNARK. Sigma proves fixed algebraic statements (discrete logs, DH-tuples, monotone AND/OR); it CANNOT prove 'this arbitrary JLVM/JSON-Logic transition executed correctly on hidden inputs.' Hiding arbitrary fiber logic requires general circuit satisfiability you don't have.",
+        "Trusted-setup mismatch: Midnight's KZG path needs a powers-of-tau ceremony. If OttoChain ever adds SNARKs to close the gap, prefer transparent systems (Bulletproofs/STARKs/IPA-Halo2) to preserve the setup-free property Sigma gives today; don't silently inherit a ceremony.",
+        "Transcript determinism is load-bearing: Kachina concurrency/soundness assume the public transcript replays IDENTICALLY across validators. Any nondeterminism in JLVM evaluation or canonicalization across Rust/TS/Scala (exactly what JCS(dropNulls) guards) breaks settlement with opaque failures -- same class as the InvalidSignature/HTTP-400 canonical-mismatch already known in the SDK.",
+        "Leakage is subtle: even with proofs, the public transcript + which oracle entries are touched + tx timing/size leak. Sigma proofs are larger/non-succinct vs SNARKs and can leak statement structure; designing each fiber's leakage function to actually minimize this is hard and must be explicit.",
+        "Asset privacy (Zswap) relies on a SNARK proving Merkle membership of the spent note. A pure-Sigma version only works if membership is a Sigma-friendly statement (one-out-of-many / ring proofs), which scales worse -- anonymity-set size is a real constraint.",
+        "Don't conflate Kachina (general contract layer) with Zswap (asset layer); they are separate constructions, and 'private payments' means importing Zswap's note model, which again leans on a general SNARK for the spend circuit.",
+        "Compact/Halo2 give bounded-loop, fixed-circuit-per-entrypoint semantics; a JSON-Logic state machine is more dynamic. Mapping dynamic JLVM control flow into any fixed proving statement (SNARK or Sigma) forces bounding/unrolling decisions."
+      ],
+      "keyReferences": [
+        {
+          "title": "Kachina - Foundations of Private Smart Contracts (Kerber, Kiayias, Kohlweiss), IACR ePrint 2020/543",
+          "url": "https://eprint.iacr.org/2020/543"
+        },
+        {
+          "title": "Kachina: privacy-preserving smart contracts -- IOHK/IOG blog",
+          "url": "https://iohk.io/en/blog/posts/2022/08/05/kachina-privacy-preserving-smart-contracts/"
+        },
+        {
+          "title": "Kachina: privacy-preserving smart contracts -- Essential Cardano (state oracle transcripts, transition/leakage functions)",
+          "url": "https://www.essentialcardano.io/article/kachina-privacy-preserving-smart-contracts"
+        },
+        {
+          "title": "Zswap: zk-SNARK Based Non-Interactive Multi-Asset Swaps (Engelmann, Kerber, Kohlweiss et al.), IACR ePrint 2022/1002 / PETS 2022",
+          "url": "https://eprint.iacr.org/2022/1002.pdf"
+        },
+        {
+          "title": "Compact, the smart contract language of Midnight",
+          "url": "https://midnight.network/blog/compact-the-smart-contract-language-of-midnight"
+        },
+        {
+          "title": "Compact Deep Dive Part 2 -- Circuits and Witnesses (ProofData: public vs private transcript)",
+          "url": "https://docs.midnight.network/blog/compact-2"
+        },
+        {
+          "title": "midnight-proofs crate (Halo2/PSE fork, PLONK + KZG commitments)",
+          "url": "https://crates.io/crates/midnight-proofs/0.7.0"
+        },
+        {
+          "title": "Compact is now Minokawa, an LF Decentralized Trust project",
+          "url": "https://www.lfdecentralizedtrust.org/blog/compact-smart-contract-language-is-now-minokawa-newest-lf-decentralized-trust-project"
+        },
+        {
+          "title": "Midnight State of the Network -- January 2026 (mainnet/Kukolu staging, production status)",
+          "url": "https://midnight.network/blog/state-of-the-network-january-2026"
+        },
+        {
+          "title": "Halo: Recursive Proof Composition without a Trusted Setup (Halo2 lineage), IACR ePrint 2019/1021",
+          "url": "https://eprint.iacr.org/2019/1021.pdf"
+        }
+      ]
+    },
+    {
+      "protocol": "Aztec Network (Noir / Aztec.nr) — privacy-first zkRollup L2 on Ethereum. Hybrid private/public smart contracts; dev surface is aztec.js + PXE, contracts written in Noir via the Aztec.nr framework.",
+      "proofSystem": "Recursive SNARK stack, NOT a Σ-protocol. Client side: each private function call is one step of a ClientIVC (Incrementally Verifiable Computation) chain folded with Protogalaxy; proven with the Honk family (UltraHonk = PLONK-arithmetised circuits proved via Sumcheck over multilinear polynomials + Shplemini/Gemini+Shplonk PCS opening). Goblin Plonk / ECCVM (over Grumpkin) + Translator (over BN254) defer non-native EC ops across recursion (BN254/Grumpkin curve cycle). Rollup side recursively verifies Honk proofs; one compression layer wraps the final proof in an UltraPlonk circuit for cheap on-chain (Ethereum L1) verification via a KZG/pairing verifier. Hashing is Poseidon2, enshrined protocol-wide. This is a general-purpose SNARK toolchain (arbitrary PLONKish circuits), categorically more powerful — and far heavier — than Schnorr/Σ-protocol opcodes.",
+      "trustSetup": "YES — required. KZG polynomial commitments need a universal (updatable) SRS over the pairing-friendly BN254 curve; the final UltraPlonk wrapper is a zkSNARK with a universal trusted setup. Aztec reuses an existing universal Powers-of-Tau-style ceremony (one-time, updatable, 1-of-n honest assumption). The inner Honk/IPA path over Grumpkin (ECCVM) is transparent (Inner Product Argument, no setup), but the on-chain settlement path still bottoms out in KZG with a trusted SRS. Contrast: OttoChain's Σ-protocol opcodes (ProveDlog/ProveDHTuple + Fiat-Shamir) need NO trusted setup at all — keep that as an advantage, not a gap.",
+      "stateModel": "Dual state. PRIVATE state = UTXO-style \"notes\": encrypted data packets owned by an address. Only the note COMMITMENT (a Poseidon2 hash of the note preimage, siloed by contract address and a per-tx nonce so every leaf is unique) is inserted into an append-only \"note hash tree\" (Merkle). Notes are never deleted. To consume/spend a note you emit a NULLIFIER — a deterministic value derived from (note data, owner nullifier-secret, storage slot) via poseidon2_hash_with_separator — inserted into a separate \"nullifier tree.\" Double-spend prevention = uniqueness check in the nullifier tree; because the nullifier requires the owner's secret key, observers cannot link a note to its nullifier (unlinkability). Updating private state = nullify old note(s) + create new note(s) (cash/change analogy). PUBLIC state = transparent account/slot key-value in a \"public data tree,\" exactly like Ethereum, mutated by the Aztec VM (AVM). The note+nullifier+commitment-tree topology is OttoChain's closest analog target, but here every commitment/nullifier validity is enforced INSIDE a SNARK circuit, not by a chain-side JLVM guard.",
+      "offchainOnchainSplit": "Private execution runs entirely client-side in the PXE (\"Private eXecution Environment,\" a local wallet service); raw private data never leaves the device. PXE simulates each private function (ACIR simulator) producing PrivateCircuitPublicInputs, then the recursive private KERNEL circuit folds/verifies each function call's proof into one transaction proof. Published to the sequencer = the tx proof + public inputs: new note hashes (commitments), new nullifiers, encrypted note/event LOGS (ciphertext only), enqueued public-function calls, and fee info — all opaque (\"public but encrypted; tells you nothing about what happened\"). Ordering rule: private execution ALWAYS precedes public; private fns can enqueue public calls, not vice-versa. The sequencer runs enqueued PUBLIC functions in the AVM (public, deterministic, sequencer-executed), inserts the commitments/nullifiers into the trees, and ROLLUP circuits recursively verify all kernel proofs + advance tree snapshots; the compressed proof settles on Ethereum L1. So: off-chain = produce state transition + correctness proof; on-chain = verify proof, append commitments, insert nullifiers, advance roots. The settlement transcript is commitments + nullifiers + ciphertext logs + a succinct validity proof — which maps directly onto an OttoChain off-chain fiber emitting (new state commitment, nullifier, Σ-proof bundle) for the JLVM guard to re-verify.",
+      "assetPrivacy": "Tokens are notes (encrypted UTXOs) holding (amount, owner). Transfers nullify the sender's input notes and create new value+change notes encrypted to recipient/sender; amounts and the sender↔recipient link stay hidden because notes are ciphertext and nullifiers are unlinkable without the owner's nullifier key. Recipients find incoming notes by trial-decrypting the published encrypted logs with their viewing keys. Key hierarchy separates nullifier, incoming-viewing, and outgoing-viewing keys. A token can also expose a PUBLIC balance (public-data-tree slot); private↔public conversion is explicit (shield/unshield). Anonymity set = the whole note hash tree. Critically, balance conservation (inputs == outputs, amounts non-negative) is enforced by in-circuit RANGE/arithmetic constraints, NOT by a transparent guard — this is the part Σ-protocols alone cannot reproduce.",
+      "programmability": "High / Turing-expressive within circuit limits. Contracts are written in Noir (a Rust-like zk DSL) via Aztec.nr: arbitrary private functions (compiled to ACIR constraint systems), public functions (AVM bytecode), cross-function/cross-contract composability, and explicit private↔public messaging. Arbitrary app logic and state machines ARE expressible — but private logic must be fixed-shape circuits: no unbounded loops, constrained data-dependent control flow, and everything a private fn reads must be provable client-side (it can read historical/immutable state, not live mutable public state at private-proving time). For OttoChain: state machines are expressible here, but private branches are compiled circuits, whereas OttoChain's are interpreted-at-runtime JSON-Logic — so the \"prove arbitrary private execution\" capability does not carry over with Σ-protocols only.",
+      "maturity": "Alpha / experimental, decentralizing. Public testnet through 2024–2025; the community-operated \"Ignition\" L2 chain went live Nov 2025 (Aztec 2.0 line) with permissionless sequencers/provers (3,500+ sequencers cited) settling to Ethereum L1. Explicitly labeled early/experimental software with \"known vulnerabilities,\" launched without full external audit (audits planned alongside the move to UltraPlonk; bug bounty active). Proof stack mid-migration (TurboPlonk → UltraPlonk/UltraHonk). Not yet a hardened, finalized mainnet as of mid-2026; production-grade guarantees still maturing.",
+      "patternsToBorrow": [
+        "Commitment + nullifier set as THE privacy primitive: store only a Poseidon-style hash commitment of off-chain fiber state in an append-only tree, plus a separate nullifier set to retire/transition it. Implementable with Σ-protocols ONLY — the nullifier can be a key-bound value where the owner proves in ZK (ProveDlog, Fiat-Shamir) knowledge of secret x with pubkey g^x and correct nullifier derivation. Highest-value borrowable pattern for OttoChain's private off-chain fibers; no trusted setup needed.",
+        "Unlinkability via key-derived nullifiers: derive the spend/transition tag from the owner's secret key so observers can't link state record -> nullifier. ProveDHTuple expresses a verifiable PRF-style binding of the nullifier to the secret key (equality-of-discrete-logs), a known Σ-friendly construction.",
+        "Off-chain-compute / on-chain-verify settlement shape: client produces new state + short transcript; chain only verifies and appends commitments + nullifiers and advances a root. OttoChain mirror: a private off-chain JLVM fiber evaluates the state machine locally, emits (new state commitment, nullifier, non-interactive Σ-proof bundle) that a public JLVM guard re-verifies via the new sigma opcodes on settlement.",
+        "Separation of viewing / spending / nullifier keys so disclosure (auditability) and spend authority are independent — fully realizable with plain EC keypairs + Σ-protocols.",
+        "Private state as UTXO notes with an explicit shield/unshield boundary to public state — maps onto OttoChain's split of script fibers (callable; can hold the private note path) vs state-machine fibers (public settlement), with conversion as an explicit transition.",
+        "Append-only commitment tree + Merkle membership for 'this note existed': membership proven against a published root. The Merkle authentication can be checked directly by the JLVM (no SNARK for the tree itself); only hiding the committed preimage needs a Σ-proof of knowledge of preimage."
+      ],
+      "pitfalls": [
+        "Aztec's CORRECTNESS (no value creation, guard satisfaction, correct state transition) is enforced inside a GENERAL SNARK circuit. Σ-protocols only prove algebraic statements about discrete logs / DH tuples (knowledge of secret, equality of DLs, AND/OR trees). They cannot, alone, prove 'I ran this arbitrary JSON-Logic state machine and got this output.' The 'prove arbitrary private app logic off-chain' capability is NOT borrowable without a general SNARK OttoChain deliberately lacks.",
+        "Hidden-amount validity (private balance conservation: inputs == outputs, amount >= 0) needs RANGE PROOFS + homomorphic/Pedersen commitments. Plain Schnorr/ProveDlog gives no range proofs; you'd need Bulletproofs-style machinery. Σ-opcodes alone do NOT deliver Aztec-style confidential amounts.",
+        "Fully private CONTROL FLOW (data-dependent branches whose very existence is hidden) requires circuit-level execution. With Σ-protocols you can hide WHICH branch of an AND/OR proof tree was satisfied, but not an arbitrary computation trace — the public JLVM guard still sees the statement shape. Expect a weaker privacy model: hide secrets/keys/witnesses/owners, not the program structure.",
+        "Recursive proof aggregation / IVC (folding many calls into one succinct tx proof) is SNARK-only. Σ-proofs compose via AND/OR trees but do not compress — N statements ~ O(N) proof size. Multi-step off-chain fibers won't get Aztec's succinct single-proof settlement.",
+        "Trusted-setup envy: Aztec needs a universal SRS; the Σ-stack needs none. Do NOT copy KZG/SRS assumptions — preserve the transparent Σ advantage.",
+        "Nullifier privacy depends on a collision-resistant, key-binding hash AND byte-exact canonicalization. OttoChain must derive nullifiers via the SAME canonical path (JCS(dropNulls) + a fixed hash) byte-for-byte across Rust/TS/Scala, or a client-computed nullifier won't match the chain's recomputation — same failure class as the InvalidSignature canonical-mismatch problem.",
+        "Encrypted-log discovery (recipients scanning to find their notes) needs an encryption + note-tagging scheme + client scanning infra; orthogonal to Σ-protocols and real engineering surface (key management, tagging) that must be built regardless."
+      ],
+      "relevance": "HIGH as a design template, MEDIUM as a directly-copyable mechanism. Aztec answers exactly the question OttoChain is asking — private off-chain state machines settling on-chain — and its commitment+nullifier+settlement-root architecture is the canonical reference. BORROWABLE with Σ-protocols ONLY: (1) store an off-chain fiber's private state as a hash COMMITMENT in an append-only tree; (2) retire/transition it via a key-derived NULLIFIER set for unlinkable replay/double-spend protection, authorizing with ProveDlog/ProveDHTuple + Fiat-Shamir; (3) settle off-chain compute by having the public JLVM guard re-verify a non-interactive Σ-proof bundle via the new sigma opcodes — no trusted setup, fitting OttoChain's transparent model. Clean, novel sweet spot. NOT borrowable (needs a general SNARK OttoChain lacks): proving arbitrary private JLVM execution traces, confidential AMOUNTS with range proofs, fully hidden control flow, and succinct recursive aggregation. Guidance: adopt Aztec's note/nullifier/commitment SETTLEMENT topology and key hierarchy; constrain the privacy claim to 'hide witnesses/keys/owners, not arbitrary computation'; treat byte-exact nullifier canonicalization across Rust/TS/Scala as a first-class requirement (same discipline as signing).",
+      "family": "zk-rollup L2 / private smart contracts via general-purpose recursive SNARKs (PLONKish Honk/UltraPlonk + KZG), UTXO encrypted notes + nullifier set, client-side proving (PXE).",
+      "keyReferences": [
+        {
+          "title": "Aztec Docs — Notes (UTXOs): note hash tree, nullifiers, compute_nullifier",
+          "url": "https://docs.aztec.network/developers/docs/concepts/storage/notes"
+        },
+        {
+          "title": "Aztec Protocol Spec — Proving System Overview (UltraPlonk/Honk, KZG universal trusted setup, Protogalaxy, Goblin Plonk, BN254/Grumpkin)",
+          "url": "https://rknhr-uec.github.io/aztec-protocol-spec/protocol-specs/cryptography/proving-system/overview"
+        },
+        {
+          "title": "Aztec Docs — Transactions (PXE, private kernel, note hashes/nullifiers/encrypted logs to sequencer)",
+          "url": "https://docs.aztec.network/developers/docs/foundational-topics/transactions"
+        },
+        {
+          "title": "Aztec Docs — Private Kernel Circuit (Tail): siloing, recursive folding, public inputs",
+          "url": "https://docs.aztec.network/protocol-specs/circuits/private-kernel-tail"
+        },
+        {
+          "title": "Aztec Docs — Keys (nullifier / incoming-viewing / outgoing-viewing key hierarchy)",
+          "url": "https://docs.aztec.network/aztec/concepts/accounts/keys"
+        },
+        {
+          "title": "Aztec Blog — The Best of Both Worlds: blending private and public state",
+          "url": "https://aztec.network/blog/the-best-of-both-worlds-how-aztec-blends-private-and-public-state"
+        },
+        {
+          "title": "Aztec Blog — Aztec 2.0 Pre-Launch Notes (Ignition chain Nov 2025, permissionless sequencers, maturity/audit posture)",
+          "url": "https://aztec.network/blog/aztec-2-0-pre-launch-notes"
+        },
+        {
+          "title": "PXE Service Architecture (client-side private execution environment)",
+          "url": "https://deepwiki.com/AztecProtocol/aztec-packages/5.1-pxe-service-architecture"
+        },
+        {
+          "title": "Aztec architecture overview (transaction lifecycle, PXE->sequencer->L1)",
+          "url": "https://rya-sge.github.io/access-denied/2025/10/29/aztec-architecture-overview/"
+        }
+      ]
+    },
+    {
+      "protocol": "Aleo (Leo language, snarkVM/AVM, Varuna proving). Privacy-focused L1 blockchain implementing Decentralized Private Computation (DPC), descended from the ZEXE paper. Mainnet live since 2024-09-18; consensus is AleoBFT (a16z-assisted) with Proof-of-Succinct-Work puzzles. Programs written in Leo compile to Aleo instructions -> R1CS circuits proven by Varuna (a batched Marlin variant). ~350+ apps deployed at mainnet launch.",
+      "proofSystem": "Varuna: a preprocessing zkSNARK in the AHP (Algebraic Holographic Proof) framework, an optimized/batched iteration of Marlin. Reduces program execution to R1CS, proven via univariate sum-check; verification key is Sonic-style KZG polynomial commitments to the indexed circuit polynomials. Batching amortizes proving cost across many function calls in one transaction (positioned for zk-rollup / proving-as-a-service). This is a GENERAL-PURPOSE SNARK over arbitrary R1CS — fundamentally different in kind from Schnorr/Sigma-protocol proofs of discrete-log relations.",
+      "trustSetup": "YES — requires a trusted setup, but a UNIVERSAL and UPDATABLE one (not per-circuit). Marlin/Varuna use KZG polynomial commitments, which need a powers-of-tau Structured Reference String (SRS) generated once, circuit-independent, via a multi-party ceremony secure as long as >=1 participant per update is honest. Updatable: each contribution strengthens trust. Contrast: Schnorr/Sigma-protocols need NO trusted setup and NO SRS — only a hash (Fiat-Shamir) and public group parameters.",
+      "stateModel": "Private state lives in RECORDS: UTXO-like ciphertexts stored on-chain, each with a mandatory `owner` (address authorized to spend), arbitrary data fields (app payload), and a `nonce` derived from owner's secret. Records are encrypted to the owner; only the owner can decrypt/spend. State advances by CONSUMING old records and CREATING new ones (linear/UTXO semantics). Public state lives separately in on-chain `mappings` (key-value), updated by `finalize` functions. So Aleo has a dual state model: private records (off-chain, encrypted) + public mappings (on-chain, plaintext, deterministic).",
+      "offchainOnchainSplit": "Off-chain: user runs the `transition` (private function) locally in snarkVM, consuming/creating records and producing a Varuna proof of correct execution. On-chain settlement transaction carries only: (1) SERIAL NUMBERS / nullifiers of consumed records (deterministically derived from owner secret + record nonce; network rejects duplicates to prevent double-spend), (2) COMMITMENTS (hashes) of newly created records, and (3) the succinct ZK PROOF attesting all program rules were respected. No private data or addresses are revealed. The optional `finalize` portion runs publicly/on-chain (re-executed by validators, NOT zk-proven) to update mappings — purely private transfers skip finalize entirely; cross-privacy (private<->public) transitions invoke it.",
+      "assetPrivacy": "Asset privacy via encrypted records: amounts, owners, and asset types are hidden inside ciphertext records. A transfer reveals only serial numbers + new commitments + proof, so amounts and sender/receiver identities stay private (shielded, Zcash-like but generalized to arbitrary program state, not just a fixed coin). Supports private, public, and mixed (private-to-public / public-to-private) value flows; the public leg uses transparent mappings.",
+      "programmability": "general-purpose (arbitrary R1CS / Leo programs; private transitions + public finalize)",
+      "maturity": "production (mainnet since 2024-09-18, 350+ apps, audited, public specs)",
+      "relevance": "HIGH as a contrast/aspiration reference, but architecturally divergent from OttoChain. OttoChain's JLVM evaluates JSON-Logic deterministically and byte-for-byte across Rust/TS/Scala, with Schnorr/Sigma-protocol opcodes (ProveDlog/ProveDHTuple/AND-OR Fiat-Shamir trees) — NOT a general SNARK over R1CS. The two systems agree on the GOAL (off-chain execution settling on-chain with cryptographic, not economic, security) but differ on the engine: Aleo proves arbitrary computation succinctly (needs universal trusted setup + heavy proving); Sigma-protocols prove only DISCRETE-LOG-style statements (knowledge of secrets, threshold/multi-sig authorization, equality of DLs) with NO trusted setup and cheap verification. Borrowable patterns are those whose 'private' part reduces to ownership/authorization predicates rather than arbitrary hidden computation.",
+      "patternsToBorrow": [
+        "Records-as-encrypted-UTXOs: model private off-chain fiber state as owner-bound commitments posted on-chain, while keeping the payload off-chain — the COMMITMENT and the consume/create lifecycle are crypto-agnostic and work with only hashes (already in JLVM via canonical JCS+hash).",
+        "Serial-number / nullifier double-spend prevention: derive a deterministic, unlinkable nullifier from owner secret + record nonce so the chain rejects replays WITHOUT learning the record — a nullifier proven via a Sigma ProveDlog (knowledge of the secret key behind a published nullifier/commitment) is fully expressible with only Sigma opcodes, no SNARK.",
+        "Transition/finalize split: cleanly separate the PRIVATE off-chain part (Sigma-proven authorization) from a PUBLIC on-chain state-machine step (the JLVM guard/effect re-evaluated deterministically by validators) — maps directly onto OttoChain's state-machine fibers + script fibers.",
+        "Ownership/authorization proofs: 'I am authorized to advance this fiber' = ProveDlog over the owner key; threshold/committee approval = AND-OR Sigma proof tree — these are the exact lineage of OttoChain's sigma opcodes and need no SNARK.",
+        "Equality/relationship proofs across commitments (e.g. value conserved, same owner across two records) where the relation is a discrete-log equality -> ProveDHTuple covers it with Sigma only.",
+        "Posting only (commitments, nullifiers, proof, transcript) on-chain to minimize on-chain footprint and reveal nothing about state — a deployment/settlement convention OttoChain can adopt regardless of proof system."
+      ],
+      "pitfalls": [
+        "General-purpose hidden computation is NOT borrowable with Sigma-protocols alone. Anything where the PRIVATE part is arbitrary arithmetic over hidden inputs (private balances with hidden arithmetic conservation, range proofs on hidden amounts, hidden-input guard evaluation, confidential order matching) requires a SNARK/Bulletproof — OttoChain's JLVM+Sigma cannot prove 'this hidden JSON-Logic guard evaluated to true over secret inputs'.",
+        "Range proofs (amount in [0, 2^n)) are needed for confidential amounts; classic Sigma alone does not give them — you'd need Bulletproofs or a SNARK. Aleo gets these for free inside R1CS.",
+        "Hiding the PROGRAM/state-transition logic itself (zero-knowledge of which branch executed) needs a SNARK. With Sigma opcodes the JLVM transition is public/deterministic; only authorization secrets can be hidden, not the computation.",
+        "Universal trusted setup is a liability OttoChain avoids — but the flip side is OttoChain cannot match Varuna's 'prove arbitrary R1CS' generality. Do not promise Aleo-equivalent private programmability on a Sigma-only base.",
+        "Encrypted-record confidentiality requires an encryption-to-owner scheme + key management; the byte-for-byte JLVM canonicalization (JCS/dropNulls) must extend cleanly to whatever is hashed/committed, or commitments won't match across Rust/TS/Scala (same InvalidSignature-class failure mode the SDK already guards against).",
+        "Aleo re-executes finalize on every validator (public state is NOT private); copying the transition/finalize split means the public leg gives no privacy — set expectations that only the record/authorization layer is shielded.",
+        "snarkVM proving is GPU-heavy and latency-prone; Sigma verification is cheap, so OttoChain's advantage is cost/simplicity, not feature-parity. Frame 'privately managed off-chain fibers' as authorization-private + commitment-based, not computation-private, unless a SNARK is added later."
+      ],
+      "family": "Privacy-preserving zk-blockchain / Decentralized Private Computation (ZEXE lineage). General zkSNARK over R1CS (Varuna/Marlin), encrypted UTXO records + public mappings.",
+      "keyReferences": [
+        {
+          "title": "Aleo — Understanding Decentralized Private Computation (DPC / ZEXE model)",
+          "url": "https://aleo.org/post/understanding-decentralized-private-computation/"
+        },
+        {
+          "title": "Veridise — How records work in Aleo: the foundation of private state in Leo",
+          "url": "https://veridise.com/blog/learn-blockchain/how-records-work-in-aleo-blockchain-the-foundation-of-private-state-in-leo/"
+        },
+        {
+          "title": "Aleo Developer Docs — Public vs. Private State (records, mappings, transition/finalize)",
+          "url": "https://developer.aleo.org/concepts/fundamentals/public_private/"
+        },
+        {
+          "title": "Zero-Knowledge Proofs in SnarkVM — Varuna, AHP, R1CS, KZG verification keys",
+          "url": "https://www.mintlify.com/provablehq/snarkvm/concepts/zero-knowledge-proofs"
+        },
+        {
+          "title": "Aleo Mainnet is Here (launch date, AleoBFT, Varuna batching)",
+          "url": "https://aleo.org/post/announcing-aleo-mainnet/"
+        },
+        {
+          "title": "ProvableHQ — Varuna SageMath reference implementation",
+          "url": "https://github.com/ProvableHQ/varuna-sage-impl"
+        },
+        {
+          "title": "zkSecurity — Audit of Aleo's synthesizer (R1CS/Varuna internals)",
+          "url": "https://blog.zksecurity.xyz/2023-aleo-synthesizer.pdf"
+        },
+        {
+          "title": "Marlin: Preprocessing zkSNARKs with Universal and Updatable SRS (eprint)",
+          "url": "https://eprint.iacr.org/2019/1047"
+        },
+        {
+          "title": "ZEXE: Enabling Decentralized Private Computation (eprint)",
+          "url": "https://eprint.iacr.org/2018/962"
+        }
+      ]
+    },
+    {
+      "protocol": "Ergo Sigma Protocols + ZeroJoin/ErgoMix (Σ-protocol privacy lineage; Zerocoin->ZeroJoin)",
+      "family": "Schnorr / Ergo Σ-protocol (ProveDlog + ProveDHTuple, CDS AND/OR/THRESHOLD trees, Fiat-Shamir). NOT a monolithic SNARK. ZeroJoin = Zerocoin-style ZK mixing built ENTIRELY from these Σ-leaves (specifically ProveDHTuple), no SNARK.",
+      "proofSystem": "Classical interactive Σ-protocols made non-interactive by the Fiat-Shamir transform. Two atomic leaves over a prime-order group (Ergo uses secp256k1; metakit uses BN254 G1): (1) ProveDlog = Schnorr proof of knowledge of x s.t. pk=x*G; (2) ProveDHTuple = proof of knowledge of w s.t. u=g^w AND v=h^w (a DDH/Diffie-Hellman tuple). Leaves compose into AND/OR/THRESHOLD(k,n) \"sigma proposition\" trees via the CDS (Cramer-Damgard-Schoenmakers) challenge-splitting technique: OR = XOR of challenges, THRESHOLD = Shamir secret-sharing of the parent challenge over a small field (Ergo GF(2^192); metakit GF(2^8) byte-wise over 31-byte challenges). The root challenge is a Fiat-Shamir hash binding the full statement + all commitments + message (strong FS). Soundness rests on DLOG/DDH hardness in the random-oracle model. Linear proof size in tree size; verification is a handful of EC scalar-mults per leaf.",
+      "trustSetup": "NONE. Σ-protocols need no trusted setup, no CRS, no structured reference string, no toxic waste, no powers-of-tau ceremony. Security is plain DLOG (ProveDlog) and DDH (ProveDHTuple/ZeroJoin) in the random-oracle model. This is the single biggest practical advantage over Groth16/PLONK-class SNARKs and the reason it suits a multi-language, byte-for-byte-replicated VM. (Contrast: metakit ALSO ships groth16_verify, which DOES require a per-circuit trusted setup.)",
+      "stateModel": "Ergo: UTXO (\"box\") model. A box carries a guarding ErgoScript proposition that reduces to a SigmaBoolean (sigma proposition tree); to spend, the spender supplies a Fiat-Shamir proof satisfying that tree. There is NO general private-state register: the \"state\" is the box's value + protected data registers, and what is hidden is only WHICH secret/branch authorized the spend (ownership/branch privacy), not arbitrary state contents. ZeroJoin concretely: state = a pool of on-chain \"mix boxes\" of two kinds. (a) Half-mix box: Alice picks secret x, publishes u=g^x. (b) Full-mix boxes: Bob joins by spending Alice's half-mix box + his own equal-value box, picks (y, bit b), publishes h=g^y and v=u^y, and emits TWO indistinguishable full-mix boxes each guarded by `proveDHTuple(g,h,u,v) OR proveDlog(h)`. Alice can later spend exactly one (she knows x, so the DH-tuple (g,g^y,g^x,g^xy) holds for her box); Bob spends the other via proveDlog(y). Under DDH an observer cannot tell which output is whose. State is on-chain UTXO; the only \"off-chain\" part is each party's local secret (x or y).",
+      "offchainOnchainSplit": "ZeroJoin deliberately moves the interaction ON-chain: it is a \"non-interactive CoinJoin\" where the off-chain peer coordination of CoinJoin is replaced by a public chain transaction (the full-mix tx). Off-chain = each participant's secret scalar and their choice of when to join; on-chain = the half-mix/full-mix boxes, the spend proofs (Fiat-Shamir transcripts), and the value flow. Double-spend protection is the native UTXO consumption rule (a mix box, once spent, is gone) -- there is NO separate nullifier set as in Zerocoin/Zcash, because spending the box IS the nullification and the box never re-enters a monotonic pool. Anonymity set grows with the NUMBER OF ROUNDS a coin passes through (each round halves an observer's linking probability -> 1/2^n after n rounds), NOT with a single pool's size; and the half-mix pool size is bounded by unspent half-mix boxes (deposits MINUS withdrawals), so it does NOT grow monotonically the way Zerocoin's commitment+serial pools do.",
+      "assetPrivacy": "Mechanism = output indistinguishability under DDH, i.e. UNLINKABILITY of equal-denomination coins (a mixer/ring-membership privacy), NOT confidential amounts. All mix boxes must share a fixed denomination (like Zerocoin/Zcash sprout), because Σ-protocols give no native range proof / Pedersen-commitment hiding of amounts. So: sender-receiver unlinkability YES; hidden amounts NO; hidden token type NO (mixing is per-asset, per-denomination). ErgoMixer (the production product) layers Covert and Stealth addresses on top for recipient privacy. Privacy is statistical and depends on co-mixers + rounds, not cryptographically perfect like a SNARK shielded pool.",
+      "programmability": "LIMITED to what is expressible as a sigma proposition (a monotone AND/OR/THRESHOLD tree of DLOG/DDH knowledge claims) optionally combined with PUBLIC predicates (height/value/data the script evaluates in the clear). Σ-protocols can prove: key ownership, ring membership (1-of-n), k-of-n thresholds, DH-tuple equality (the ZeroJoin trick), and time-locked/branching authorization. They CANNOT, on their own, express arbitrary private state transitions, hidden-input computation, range/inequality proofs over secret values, set non-membership, or anything needing a circuit -- those need a general SNARK/STARK. ErgoScript runs the surrounding logic in the CLEAR; only the authorization leaves are zero-knowledge. So you can build a state machine whose GUARDS are \"prove you own/are-one-of/k-of-n\", but not a state machine whose STATE is secret.",
+      "maturity": "Production. Ergo sigma protocols are core consensus (live on Ergo mainnet since 2019, sigmastate-interpreter). ZeroJoin published at CBT/ESORICS 2020 (IACR ePrint 2020/560). ErgoMixer is a deployed, non-custodial mainnet mixer (>=v3.0.0 with Tor support, Covert/Stealth addresses), the canonical real-world Σ-protocol privacy product. Mature, audited, battle-tested crypto -- the Σ-leaves themselves are textbook. (metakit's port is NOT yet externally audited on its CDS/strong-FS surface -- see CryptoOps.scala maturity note -- so the design pattern is proven but OttoChain's specific implementation needs its own audit before a real spend path.)",
+      "relevance": "VERY HIGH -- the most architecturally aligned protocol in the research set. metakit's JLVM is adding EXACTLY this lineage: CryptoOps.scala already implements prove_dlog_verify (Schnorr leaf), prove_dhtuple_verify (the literal ZeroJoin DDH leaf), and sigma_verify (recursive CDS AND/OR/THRESHOLD trees with strong Fiat-Shamir, 31-byte injective-into-Fr challenges, no trusted setup) over BN254 G1, with byte-for-byte Rust/TS/Scala conformance vectors. This is the same \"VM runs in the clear, Σ-proofs are pure verify-precompiles\" model as ErgoScript (clear logic + SigmaBoolean authorization leaves). So OttoChain can borrow the Ergo/ZeroJoin AUTHORIZATION-privacy patterns directly with the opcodes it is building, with NO new crypto: ownership proofs, ring/1-of-n membership, k-of-n thresholds, and the ZeroJoin half-mix/full-mix DH-tuple mixer as a script fiber or state-machine guard. The CRUCIAL boundary for the \"privately managed off-chain fibers\" design: Σ-protocols give BRANCH/OWNERSHIP privacy and unlinkable equal-denomination mixing, but they DO NOT give private off-chain STATE -- an off-chain fiber whose internal state is secret and which settles a verified-but-hidden state transition on-chain CANNOT be built from Σ-opcodes alone; that needs a general SNARK/STARK (which metakit only partially has via groth16_verify, and which carries a per-circuit trusted setup OttoChain otherwise avoids).",
+      "patternsToBorrow": [
+        "Ownership / key-possession guards on fiber transitions via prove_dlog_verify (already in metakit CryptoOps.scala) -- a state-machine guard that proves the actor holds a key without a plaintext signature field.",
+        "Ring-membership (1-of-n) and k-of-n threshold authorization via sigma_verify CDS OR/THRESHOLD trees -- e.g. corporate/governance fibers where 'one of the board' or 'k-of-n directors' authorizes a transition while HIDING which member acted. This is borrowable today with only Σ-opcodes.",
+        "The ZeroJoin half-mix/full-mix unlinkable mixer, implemented as a script fiber: two equal-value outputs each guarded by `prove_dhtuple_verify(g,h,u,v) OR prove_dlog_verify(h)`, settling on-chain via normal UTXO/state consumption (no nullifier set needed). Gives per-asset, per-denomination payment unlinkability.",
+        "Strong Fiat-Shamir transcript discipline (bind full statement + all commitments + message; metakit's DomainSep + serializeTree) -- directly reusable as the canonical-signing pattern, and consistent with OttoChain's JCS(dropNulls()) determinism requirement.",
+        "Round-based privacy accounting (anonymity grows as 1/2^rounds, pool is non-monotonic) as the privacy model for any OttoChain mixing fiber -- avoids Zerocoin's ever-growing accumulator and fits a metagraph snapshot/UTXO state.",
+        "Branch-hiding authorization generally: model an off-chain fiber's DECISION/AUTHORIZATION as a sigma proposition while keeping the fiber's PUBLIC effects on-chain -- privacy of 'who/which branch', cheaply, with audited textbook crypto."
+      ],
+      "pitfalls": [
+        "Σ-protocols hide WHICH secret/branch authorized a spend, NOT arbitrary state. A 'private off-chain fiber' whose internal STATE/inputs are secret and which settles a hidden state transition CANNOT be built from prove_dlog/prove_dhtuple/sigma_verify alone -- that is a SNARK/STARK requirement (general circuit), which Σ-opcodes do not provide.",
+        "No native confidential amounts or range proofs. ZeroJoin-style mixing requires FIXED denominations; you cannot hide or range-bound a secret value (balances, bids, limits) with Σ-opcodes -- needs Bulletproofs/SNARK range proofs OttoChain doesn't have.",
+        "Composing standalone prove_dlog_verify/prove_dhtuple_verify with JLVM `or`/`some` is CRYPTOGRAPHICALLY UNSOUND for OR/threshold (no challenge-splitting => no branch hiding). The ONLY sound OR/threshold is the recursive sigma_verify CDS tree. This is called out explicitly in CryptoOps.scala and is an easy, fatal mistake to make at the JSON-Logic layer.",
+        "Strong Fiat-Shamir is load-bearing: a weak transcript that omits any statement point or commitment is forgeable (SPL ZK-ElGamal / Trail-of-Bits weak-FS class). Any OttoChain Σ usage must bind the FULL statement+commitments+message under a frozen canonical byte layout, and must agree byte-for-byte across Scala/Rust/TS.",
+        "metakit's Σ surface is REGISTERED-AND-LIVE but NOT yet externally audited on its CDS/strong-FS code; conformance vectors are necessary-but-not-sufficient. Do not put it on a real mint/spend path (asset morphisms) before that audit.",
+        "Privacy is statistical, not absolute: small co-mix sets, denomination fingerprints, fee-handling leaks, and timing/amount side-channels degrade unlinkability. ZeroJoin/ErgoMix needed a NOVEL fee scheme precisely because naive fee payment de-anonymizes the mix -- any OttoChain mixing fiber must solve the same fee-privacy problem.",
+        "BN254 (metakit's curve) is ~100-bit security and has known pairing-related weakening; it's fine for these discrete-log Σ-proofs but is a weaker curve than Ergo's secp256k1 -- worth noting if Σ-proofs gate high-value asset policies.",
+        "Anonymity needs MULTIPLE rounds (1/2^n); a single mix gives only 1-of-2. Users/fibers that mix once gain little privacy -- the model must drive repeated rounds, which has UX and on-chain-cost implications."
+      ],
+      "keyReferences": [
+        {
+          "title": "ZeroJoin: Combining Zerocoin and CoinJoin (Chepurnoy & Saxena, IACR ePrint 2020/560)",
+          "url": "https://eprint.iacr.org/2020/560"
+        },
+        {
+          "title": "ZeroJoin paper PDF (Ergo CMS mirror)",
+          "url": "https://storage.googleapis.com/ergo-cms-media/2020_560_814f5c12ac/2020_560_814f5c12ac.pdf"
+        },
+        {
+          "title": "ZeroJoin: Combining ZeroCoin and CoinJoin (Ergo Platform, Medium)",
+          "url": "https://medium.com/@ergoplatform/zerojoin-combining-zerocoin-and-coinjoin-f9d0d51be111"
+        },
+        {
+          "title": "Sigma protocols - ErgoDocs (ProveDlog, ProveDHTuple, AND/OR/THRESHOLD, Fiat-Shamir)",
+          "url": "https://docs.ergoplatform.com/dev/scs/sigma/"
+        },
+        {
+          "title": "Understanding Zero-Knowledge Proofs and Sigma Protocols - ErgoDocs (what Σ can/cannot prove)",
+          "url": "https://docs.ergoplatform.com/dev/protocol/zkp/"
+        },
+        {
+          "title": "ZeroJoin - ErgoDocs",
+          "url": "https://docs.ergoplatform.com/dev/crypto/zerojoin/"
+        },
+        {
+          "title": "ErgoMixer - ErgoDocs (production non-custodial mixer; Covert/Stealth addresses, Tor)",
+          "url": "https://docs.ergoplatform.com/eco/ergomixer/"
+        },
+        {
+          "title": "sigmastate-interpreter (ErgoScript compiler + ErgoTree/SigmaBoolean interpreter)",
+          "url": "https://github.com/ScorexFoundation/sigmastate-interpreter"
+        },
+        {
+          "title": "SigmaBoolean Type - ErgoDocs (sigma proposition trees)",
+          "url": "https://docs.ergoplatform.com/dev/scs/types/sigmaboolean/"
+        }
+      ]
+    },
+    {
+      "protocol": "Zcash Sapling/Orchard + MASP (Namada) + Penumbra — the asset-privacy / shielded-pool reference layer (note commitments + nullifiers + shielded pools; Orchard Halo2 no-trusted-setup; Namada multi-asset shielded pool; Penumbra shielded swaps + flow encryption).",
+      "proofSystem": "Heterogeneous across the family, and this is the single most important distinction for OttoChain:\n\n- Zcash Sapling: Groth16 (pairing-based zk-SNARK) over BLS12-381 with the Jubjub inner curve. Requires a circuit-specific trusted setup (the \"Sapling MPC ceremony\" / powers-of-tau). Sprout used Groth16's predecessor (BCTV14/PGHR13) with a per-circuit toxic-waste ceremony.\n- Zcash Orchard: Halo2 — a PLONKish IOP with an inner-product (Bulletproofs-style) polynomial commitment, instantiated on the Pallas/Vesta (\"Pasta\") amicable curve cycle. NO trusted setup (no toxic waste); the cycle enables (future) recursion. This is the only member of the family with a transparent setup. Nullifier: nf = Extract_P([(F_nk(rho) + psi) mod p]·G + cm).\n- Namada MASP: Sapling-derived Groth16 over BLS12-381/Jubjub. REQUIRES a trusted setup — and notably the Zcash Sapling parameters cannot be fully reused, so MASP ran its own MPC ceremony. Adds a third \"Convert\" circuit alongside the Sapling Spend/Output circuits.\n- Penumbra: Groth16 over BLS12-377 (chosen over BLS12-381 to allow depth-1 recursion later) with the decaf377 prime-order group as the in-circuit inner group. REQUIRES a trusted setup (decentralized Groth16 ceremony, one proving/verifying key per fixed action statement). The common belief that Penumbra is Halo2 is WRONG — it is fixed-statement Groth16.\n\nBottom line: every member uses a GENERAL-PURPOSE zk-SNARK/zk-IOP to prove the private state-transition relation in zero knowledge. Three of four need a trusted setup; only Orchard (Halo2) is setup-free. NONE is a Σ-protocol system. Penumbra additionally uses a SEPARATE, non-SNARK primitive — additively-homomorphic threshold encryption (flow encryption) — which is the one component conceptually reachable with Schnorr/Σ-style crypto.",
+      "trustSetup": "Required for Sapling (Groth16 MPC), Namada MASP (its own Groth16 MPC, cannot reuse Sapling params), and Penumbra (Groth16 decentralized ceremony, per-statement keys). NOT required for Orchard (Halo2 transparent setup — this is the headline reason Zcash moved Sprout→Sapling→Orchard, eliminating toxic waste). For OttoChain: Σ-protocols (Schnorr/ProveDlog/ProveDHTuple/AND-OR Fiat-Shamir) are themselves transparent (no trusted setup), matching Orchard's trust profile but NOT its expressive power.",
+      "stateModel": "Shielded-pool UTXO model, uniform across all four:\n- Private state = a set of NOTES. A note binds (recipient address / diversified pkd, value v, asset type, randomness rho/psi/rcm). In MASP each note also carries an explicit asset identifier; in Sapling/Orchard the asset is implicitly ZEC.\n- On-chain, each created note appears only as a hiding-binding NOTE COMMITMENT (cm), appended as a leaf to an append-only incremental Merkle tree (Sapling note-commitment tree; Penumbra calls it the State Commitment Tree / Tiered Commitment Tree). The chain stores commitments, never plaintext notes.\n- Spending a note publishes a NULLIFIER — a deterministic, unlinkable tag derived from the note plus the owner's nullifier key. The chain keeps a nullifier set; a nullifier may appear at most once. This is the double-spend / replay guard, decoupled from which commitment is being spent (spend-unlinkability).\n- A spend proves in zero knowledge: \"I know an opening of some commitment in the tree (Merkle-membership) whose nullifier is X, and I own it.\" The Merkle root is the only public anchor.\n- VALUE COMMITMENTS (Pedersen, homomorphic) per spend/output let the verifier check balance by summing commitments to zero WITHOUT learning amounts. MASP's Convert circuit extends this: it injects \"convert\" value commitments so the homomorphic sum of Spend+Output+Convert is zero, enabling shielded burn/mint between asset types at a public ratio. Penumbra reuses the same homomorphic value-commitment trick for batched DEX flows.",
+      "offchainOnchainSplit": "Wallet/client-side (off-chain) vs chain (on-chain) is sharp and consistent — and is the most directly studyable pattern for OttoChain's \"private off-chain fiber settling on-chain\":\n- OFF-CHAIN (prover/wallet): holds note plaintexts, scans the chain with viewing keys to detect incoming notes (trial-decryption of note ciphertexts), builds the spend, computes nullifiers, and generates the zk proof of the state transition. All \"execution\" (deciding what notes to spend/create) happens client-side.\n- ON-CHAIN (verifier/consensus): receives only (nullifiers, new commitments, value-commitment balance check, zk-proof, Merkle anchor). It verifies the proof against the published anchor, checks nullifier-nonmembership, appends new commitments, and records nullifiers. The chain re-executes NOTHING private — it only verifies a succinct transcript.\n- Penumbra adds a second settlement style for the DEX: per-block BATCH settlement. Individual encrypted swap intents are aggregated; only the NET cross-pair flow is decrypted and settled on-chain at end of block (sealed-bid batch auction, frontrun-resistant). This is \"many private off-chain intents → one public on-chain settlement,\" the closest analogue to private off-chain fibers batching into an on-chain commit.\nThe general shape \"private execution off-chain, publish {nullifiers, commitments, proof/transcript}, chain verifies + advances an accumulator\" is exactly the template a private off-chain fiber would follow.",
+      "assetPrivacy": "- Sapling/Orchard: single-asset (ZEC). Amounts hidden via Pedersen value commitments; sender/receiver hidden via diversified addresses + encrypted note ciphertexts; linkage hidden via nullifiers. One unified anonymity set.\n- MASP (Namada): MULTI-ASSET shielded pool — the reference design. Every asset gets a deterministic \"asset type\" (a hash-to-curve generator); value commitments are per-asset-type Pedersen commitments so the homomorphic balance check is per asset. The Convert circuit allows shielded asset conversion (e.g. rewards/inflation, or pegged conversions) at a public ratio without unshielding. Crucially, ALL assets share ONE anonymity set, so the privacy of each asset grows with total pool activity.\n- Penumbra: also a multi-asset shielded pool (Sapling-derived) plus FLOW ENCRYPTION for the DEX/governance: amounts are additively-homomorphic threshold-encrypted, validators sum ciphertexts and threshold-decrypt only the aggregate (net swap flow / vote tally), so individual amounts stay private even at settlement. Liquidity positions are created anonymously.",
+      "programmability": "Deliberately LIMITED — none is a general programmable state machine. All four expose a FIXED menu of action/circuit types (spend, output, and for MASP convert; for Penumbra additionally delegate/undelegate, swap/swap-claim, position-open/close, governance vote, IBC). Each action type is its own hand-written circuit with (except Orchard) its own proving/verifying key. There is no user-deployable contract, no Turing-complete shielded VM, no arbitrary private state machine. Adding new private functionality = writing and (re-)ceremonying a new circuit. Penumbra explicitly justifies Groth16 by 'an initial set of FIXED functionality.' So: rich asset privacy, essentially zero general programmability inside the shielded domain. (Namada offers limited programmability only by UNSHIELDING to interact with transparent apps — i.e. leaving privacy.)",
+      "maturity": "Production / battle-tested at the cryptographic layer.\n- Zcash Sapling: live since 2018; Orchard activated with NU5 (May 2022); both in continuous mainnet use, heavily audited, formally specified (Zcash Protocol Spec, ZIP-224/225/226).\n- Namada MASP: mainnet launched late 2024; MASP audited; ran its own trusted-setup ceremony; shielded-pool incentives live.\n- Penumbra: mainnet launched 2024; circuits independently audited (zkSecurity). Note: flow-encryption for the DEX is partially future work in the spec (initial DEX reveals batched amounts; full per-swap flow-encryption is a planned upgrade) — so treat Penumbra's flow-encryption as design-mature but partially aspirational, while its shielded pool + batch auction are live.",
+      "relevance": "HIGH as a reference architecture for \"private off-chain fibers settling on-chain,\" but with a HARD CRYPTO CEILING for OttoChain's Σ-protocol-only (Schnorr/ProveDlog/ProveDHTuple/AND-OR, no SNARK) JLVM.\n\nWhat maps cleanly onto Σ-protocols + JLVM (BORROWABLE NOW):\n1. The settlement TEMPLATE: execute privately off-chain, then publish {nullifier(s), new state commitment(s), a verifiable transcript}; the chain verifies a transcript + advances an append-only accumulator and a spent-set. JLVM guards/effects can enforce 'nullifier not in set', 'append commitment', 'verify proof transcript' as ordinary state-machine transitions. This is settlement plumbing, not ZK, and needs no SNARK.\n2. COMMITMENT + NULLIFIER accounting as a Σ-protocol pattern: a Pedersen/commitment opening proven with a Schnorr/ProveDlog Σ-proof, and a nullifier as a deterministic DH-tuple tag (ProveDHTuple: nf relates a secret key and a note tag by a common discrete log) proven equal-without-revealing via the classic Chaum-Pedersen DH-tuple Σ-protocol. Double-spend prevention via a public nullifier set is pure bookkeeping. So 'unlinkable one-time spend tags with ownership proof' IS expressible with ProveDHTuple — genuinely borrowable.\n3. AND-OR proof trees (Σ-protocol composition, exactly the Ergo lineage you're adding): ring/threshold/policy authorization over notes — 'spendable by key A AND (B OR C)' — proven without revealing which branch. Directly borrowable; this is what Σ-protocols are best at.\n4. Penumbra FLOW ENCRYPTION / batch-aggregation: additively-homomorphic (ElGamal-style on a Schnorr-friendly group) threshold encryption + DKG is Σ-protocol-adjacent (threshold Schnorr / Pedersen DKG + Chaum-Pedersen decryption proofs). 'Many private off-chain intents → aggregate → reveal only the net on-chain' is achievable WITHOUT a SNARK, and is the single most relevant borrowable pattern for private-off-chain-fiber batching/settlement on OttoChain.\n5. Homomorphic VALUE-COMMITMENT balance check (sum-to-zero of Pedersen commitments) needs no SNARK by itself — only range proofs do.\n\nWhat REQUIRES a general SNARK and is therefore OUT OF REACH with Σ-protocols alone:\nA. ZERO-KNOWLEDGE MERKLE MEMBERSHIP: proving a spent commitment is some leaf in a large tree WITHOUT revealing which leaf. This is the heart of shielded-pool anonymity and needs a circuit (SNARK/Bulletproofs/STARK). Σ-protocols give you a proof about a KNOWN public commitment, not hidden-index membership over a large set. Without it you get 'verifiable private state + unlinkable nullifiers' but NOT a large shared anonymity set — anonymity collapses toward the size of a small explicit OR-ring (Σ-protocol ring proofs scale linearly, so only tiny rings are practical).\nB. RANGE PROOFS / hidden-amount arithmetic at scale: proving 0 <= v < 2^64 and balance constraints with hidden values needs Bulletproofs or a SNARK; naive Σ-protocol range proofs are too large. So fully-hidden multi-asset amounts (MASP-grade) are not free.\nC. The MASP CONVERT circuit and any general private STATE-MACHINE transition (arbitrary guard/effect evaluated in zero knowledge) are SNARK-shaped. JLVM can evaluate guards/effects in the CLEAR (byte-for-byte Rust/TS/Scala) and prove signatures/openings with Σ-protocols, but it CANNOT prove 'this JSON-Logic transition was applied correctly to HIDDEN inputs' without a circuit for the JLVM itself.\n\nPRACTICAL TAKEAWAY for OttoChain: With only Σ-protocols, target a 'verifiable/authorized private off-chain fiber' model — private off-chain state whose AUTHORIZATION, ownership, one-time-spend tags (nullifiers via ProveDHTuple), policy logic (AND-OR trees), and batched/threshold settlement (flow-encryption-style) are Σ-proven and JLVM-checked — rather than a 'fully shielded anonymity-set' model. You get unlinkable spends, hidden policy branches, threshold-aggregated private settlement, and commit/nullifier bookkeeping; you do NOT get a large hidden anonymity set or hidden-amount/hidden-transition proofs (those are the SNARK-only part). Penumbra's batch-flow settlement and the Chaum-Pedersen/DH-tuple nullifier construction are the highest-value borrowable ideas; the shielded Merkle-membership core is the part to consciously drop or replace with explicit small-ring or transparent designs.",
+      "patternsToBorrow": [
+        "Off-chain-execute / on-chain-verify settlement template: chain consumes only {nullifiers, new commitments, transcript, accumulator anchor} and advances an append-only commitment tree + a spent/nullifier set — expressible directly as JLVM guards/effects, no SNARK needed.",
+        "Nullifiers as deterministic, unlinkable one-time spend tags derived from (note, owner nullifier key), with a public nullifier set for double-spend/replay prevention — realizable as a Chaum-Pedersen DH-tuple Σ-proof (your ProveDHTuple opcode) instead of a circuit.",
+        "Hiding-binding note commitments + Pedersen value commitments with HOMOMORPHIC sum-to-zero balance checking (MASP per-asset-type generators for multi-asset) — the balance check needs no SNARK; only range-bounding amounts does.",
+        "AND-OR Σ-protocol proof trees (the Ergo/Sigma lineage you are adding) for note spend policies / ring/threshold authorization, proving WHICH branch without revealing it — natively Σ-protocol, directly borrowable.",
+        "Penumbra flow encryption / batch settlement: additively-homomorphic threshold encryption + validator DKG so many private off-chain intents aggregate into a single public on-chain net settlement — buildable with threshold-Schnorr / Pedersen DKG + Chaum-Pedersen decryption proofs, NO SNARK; the strongest analogue to private-off-chain-fiber batching.",
+        "Append-only incremental Merkle commitment tree with a published root as the sole public state anchor — a transparent accumulator pattern reusable as ordinary JLVM state even without ZK membership.",
+        "Viewing-key / trial-decryption note discovery: clients scan the chain and detect their own private state off-chain via encrypted note ciphertexts — an off-chain indexing pattern independent of the proof system.",
+        "Orchard's transparent (no-trusted-setup) posture as the design target: Σ-protocols are likewise setup-free, so match Orchard's trust model even though you cannot match its anonymity-set expressiveness."
+      ],
+      "pitfalls": [
+        "DO NOT assume Penumbra is Halo2 — it is fixed-statement Groth16 over BLS12-377 (decaf377) and REQUIRES a trusted setup. Only Orchard is Halo2 / setup-free. Conflating them mis-states the trust model.",
+        "The large shielded ANONYMITY SET depends on zero-knowledge Merkle MEMBERSHIP (proving a spend is SOME leaf without revealing which). Σ-protocols cannot do this at scale — ring proofs are linear-size, so practical rings are tiny. Without a SNARK you get unlinkable spends but only a small/explicit anonymity set, not Zcash-grade privacy. Be explicit that this is dropped.",
+        "Fully HIDDEN AMOUNTS at scale need range proofs (Bulletproofs/SNARK). The homomorphic sum-to-zero check is cheap, but bounding each value to prevent overflow/negative-value forgery is NOT free with plain Σ-protocols.",
+        "MASP's CONVERT circuit and ANY private state-MACHINE transition over HIDDEN inputs are SNARK-shaped. JLVM evaluating JSON-Logic in the CLEAR + Σ-proofs of signatures/openings does NOT prove a hidden-input transition was computed correctly — there is no circuit for the JLVM itself.",
+        "Trusted-setup ceremonies are a liability and an operational burden (MASP couldn't even reuse Zcash's params). Choosing Σ-protocols sidesteps this, but don't claim feature parity with shielded pools that bought their privacy with that ceremony.",
+        "Flow-encryption / threshold-decryption introduces a LIVENESS + COLLUSION trust assumption on the validator/decryptor set (threshold honesty, DKG correctness, epoch key rotation). It is not unconditional privacy and is partly future-work even in Penumbra's own spec — don't overstate its maturity.",
+        "Nullifier-set and commitment-tree growth are unbounded append-only state; production systems need careful note-management, tree epoching, and scanning performance — a real engineering cost the JLVM/fiber settlement layer would inherit.",
+        "Canonicalization caveat for OttoChain specifically: any Σ-proof transcript or commitment serialized into a fiber payload must round-trip through JCS(dropNulls(...)) byte-for-byte across Rust/TS/Scala, or Fiat-Shamir challenges/signatures diverge and yield opaque InvalidSignature — the same parity discipline already required for canonical-z/low31 sigma opcodes."
+      ],
+      "family": "Shielded-pool / note-commitment-nullifier lineage: Zcash Sprout to Sapling (Groth16) to Orchard (Halo2); MASP (Namada, multi-asset Sapling+Convert); Penumbra (multi-asset Sapling-style Groth16 + flow-encrypted batch DEX). The canonical asset-privacy reference layer.",
+      "keyReferences": [
+        {
+          "title": "Zcash Protocol Specification (latest, NU6.1) — Sapling + Orchard, commitments, nullifiers, value commitments",
+          "url": "https://zips.z.cash/protocol/protocol.pdf"
+        },
+        {
+          "title": "ZIP 224: Orchard Shielded Protocol",
+          "url": "https://zips.z.cash/zip-0224"
+        },
+        {
+          "title": "The Orchard Book — Nullifiers design (nf derivation, Faerie-resistance, spend-unlinkability)",
+          "url": "https://zcash.github.io/orchard/design/nullifiers.html"
+        },
+        {
+          "title": "Namada MASP specification (multi-asset shielded pool, asset types)",
+          "url": "https://specs.namada.net/masp.html"
+        },
+        {
+          "title": "Namada blog: Understanding the MASP and Convert (CC) circuits",
+          "url": "https://namada.net/blog/understanding-the-masp-and-cc-circuits"
+        },
+        {
+          "title": "namada-net/masp (GitHub) — Sapling-derived Groth16, Spend/Output/Convert circuits, own MPC ceremony",
+          "url": "https://github.com/namada-net/masp"
+        },
+        {
+          "title": "Penumbra Protocol — Cryptographic Primitives (Groth16 / BLS12-377 / decaf377)",
+          "url": "https://protocol.penumbra.zone/main/crypto.html"
+        },
+        {
+          "title": "Penumbra Protocol — Proving Considerations (Groth16 choice, trusted setup, fixed functionality)",
+          "url": "https://protocol.penumbra.zone/main/crypto/proofs.html"
+        },
+        {
+          "title": "Penumbra Protocol — Batching Flows / flow encryption (threshold homomorphic aggregation)",
+          "url": "https://protocol.penumbra.zone/main/concepts/batching_flows.html"
+        },
+        {
+          "title": "Penumbra Protocol — Decentralized Exchange / ZSwap sealed-bid batch auctions",
+          "url": "https://protocol.penumbra.zone/main/dex.html"
+        },
+        {
+          "title": "penumbra-zone/decaf377 (GitHub) — prime-order group for SNARKs over BLS12-377",
+          "url": "https://github.com/penumbra-zone/decaf377"
+        },
+        {
+          "title": "zkSecurity public audit of Penumbra circuits (confirms Groth16 fixed-statement circuits)",
+          "url": "https://blog.zksecurity.xyz/posts/penumbra/"
+        }
+      ]
+    },
+    {
+      "protocol": "Client-side / overlay proving family — primary: Mina zkApps (off-chain state + on-chain commitment, recursive zk); secondary references for contrast: RAILGUN (on-chain SNARK privacy pool) and Aztec Connect (private zk-rollup, sunset 2023). The brief names Mina as \"closest to bolting privacy onto an existing metagraph without rebuilding the L1,\" so this object centers Mina and uses Railgun/Aztec as comparison points.",
+      "family": "Client-side / overlay proving — privacy as an overlay computed in the user's client (browser/wallet), settled on a base chain via an on-chain verifier, rather than baked into L1 consensus.",
+      "proofSystem": "MINA (most relevant): Kimchi (a PLONK variant) wrapped by the Pickles recursion layer. Kimchi replaces PLONK's pairing/KZG polynomial commitment with an inner-product argument (IPA, Bulletproofs-style), so it is TRANSPARENT — no per-circuit trusted setup / no toxic waste. Security rests on discrete-log hardness over the Pasta cycle of curves (Pallas/Vesta) plus Fiat-Shamir for non-interactivity. The Pasta 2-cycle is what makes cheap recursion (\"proofs of proofs\") possible: prove on one curve, verify on the other without field emulation. This is a GENERAL-PURPOSE SNARK over arithmetic circuits — strictly more expressive than a Σ-protocol. RAILGUN: Groth16 zk-SNARK, per-circuit trusted setup via Perpetual Powers of Tau (1-honest-party assumption). AZTEC CONNECT: PLONK zk-SNARK (in-house, universal/updatable setup via a large MPC ceremony). Note: Mina/Kimchi being transparent + DLog-based is the one in the same cryptographic neighborhood as OttoChain's Σ-protocol opcodes (both Schnorr/Fiat-Shamir over EC groups), but Kimchi is a full circuit prover, not a bare Σ-protocol.",
+      "stateModel": "MINA: Two-layer. (1) On-chain: each zkApp account has exactly 8 field-element slots of on-chain storage. Larger state lives off-chain as a single Merkle Map (Merkle tree of fields / key-value entries); only its Merkle root (a commitment, held in an OffchainState.Commitments field) is stored on-chain. Private inputs are processed client-side and only attestations/commitments reach the chain — raw data never leaves the user's machine. (2) Concurrency is handled by an Actions + Reducer dispatch model: txns dispatch \"actions\" (queued state-change intents) against a precondition; a later settle() consumes the pending action queue via a recursive reducer (createSettlementProof) and advances the committed root. All state is recoverable from actions alone. RAILGUN / AZTEC CONNECT: UTXO \"note\" model — private state is a set of encrypted commitments (notes: owner pubkey, asset id, value, blinding) accumulated in an on-chain Merkle tree; spending reveals a nullifier (hash of spending key + note path) to prevent double-spends without linking to the note. Aztec adds claim notes / defi-interaction notes to bridge to public Ethereum DeFi.",
+      "offchainOnchainSplit": "MINA: Execution and proving happen entirely off-chain/client-side (o1js in the browser); the chain stores only the 8 on-chain fields + the off-chain Merkle root and verifies the recursive proof. settle() maps a batch of off-chain action-driven transitions to a single on-chain commitment update — the on-chain footprint is a commitment + a succinct proof, NOT a transcript or per-step replay. RAILGUN: client builds + proves a join-split locally; on-chain the verifier checks the SNARK, inserts new commitment leaves, and records nullifiers (commitment-insert + nullifier-publish is the settlement). AZTEC CONNECT: users prove join-split/account/claim circuits client-side; a sequencer/rollup provider aggregates many user proofs into a rollup proof verified once on L1, which then maps internal asset_ids to real ETH/ERC-20 movements via the RollupProcessor. Common pattern across all three: heavy compute off-chain, on-chain you only verify a proof and mutate a small commitment/nullifier set.",
+      "assetPrivacy": "MINA: Not primarily an asset-privacy protocol — it gives general programmable privacy (private inputs/state via commitments and attestations). Token amounts are not natively hidden by a shielded-pool primitive the way Railgun/Aztec do it; you'd build confidentiality yourself in-circuit. RAILGUN: dedicated shielded pool — ERC-20/NFTs are \"shielded\" into a 0zk address; balances, amounts, and sender/recipient links are hidden via encrypted UTXO notes + nullifiers; relayers break the gas-payer linkage; Private Proofs of Innocence for compliance. AZTEC CONNECT: shielded zk-assets with hidden sender/value, bridged to public DeFi (interaction values become public at the bridge boundary, but membership/identity stays private).",
+      "programmability": "MINA: HIGH — arbitrary application logic and state machines expressible as o1js zkPrograms / smart contracts; preconditions = assertions in-circuit, account updates carry events/preconditions, recursion lifts the per-proof constraint budget so computation is effectively unbounded (at extra proving cost). Main friction is concurrency (precondition races) which forces the Actions/Reducer pattern. This is general-purpose because it is a full SNARK over circuits. RAILGUN: LOW/FIXED — a small set of fixed audited circuits (shield/unshield/transfer/join-split); not a general app platform, though it can call external DeFi contracts from the shielded balance. AZTEC CONNECT: LOW/FIXED circuits (account/join-split/claim) bridging to whitelisted external \"bridge contracts\"; general programmability only arrived later in the (separate) Aztec Network + Noir, after Connect was sunset.",
+      "maturity": "MINA zkApps: Production L1 (mainnet, Berkeley/Kimchi upgrade live); o1js + off-chain-storage tooling are released and actively used; the recursive-proof model is battle-tested but client-side proving is heavy and concurrency patterns are still a known sharp edge. RAILGUN: Live in production on Ethereum, BSC, Polygon, Arbitrum; tens of thousands of txns and tens of millions of $ in the relay contract as of 2026 — the most production-proven asset-privacy overlay here. AZTEC CONNECT: SUNSET in 2023 (team deliberately shut it down to build the fully programmable Aztec Network + Noir); valuable as a design reference, not a live target. Its main lesson: fixed-circuit private bridges hit a programmability ceiling, motivating a general private VM.",
+      "trustSetup": "MINA: NONE (transparent) — Kimchi's IPA commitment removes the trusted setup; relies on DLog + Fiat-Shamir. This is the key differentiator and the one most aligned with OttoChain's no-ceremony Σ-protocol posture. RAILGUN: Per-circuit trusted setup (Groth16) via Perpetual Powers of Tau MPC (secure if ≥1 participant deletes toxic waste). AZTEC CONNECT: Universal/updatable trusted setup (PLONK) via a large MPC ceremony.",
+      "relevance": "VERY RELEVANT structurally; PARTIALLY borrowable with Σ-protocols alone. Mina zkApps is the right architectural template — off-chain client-side state machine, on-chain stores only a commitment (8 fields + off-chain Merkle root) advanced by an Actions/Reducer settle, with a TRANSPARENT no-trusted-setup proof system (Kimchi/IPA/DLog) that matches OttoChain's ceremony-free Σ-protocol posture. With only Schnorr/Σ-opcodes (ProveDlog, ProveDHTuple, AND-OR Fiat-Shamir) OttoChain CAN build a commit-and-authorize private off-chain fiber: on-chain commitment to canonical JSON state (reusing existing JCS(dropNulls) byte-for-byte parity as the determinism layer), Σ-based authorization/ownership/threshold predicates, and Railgun-style Schnorr/DH-tuple nullifiers for double-spend/replay protection. What it CANNOT do without a general (ideally transparent) SNARK: prove that a hidden JLVM transition was a VALID run of the fiber's JSON-Logic guard/effect, provide confidential amounts with range proofs, or recursively aggregate many private transitions. So the settlement + authorization + nullifier patterns are borrowable now; verifiable private computation is the hard wall and is exactly what Mina has and OttoChain does not.",
+      "patternsToBorrow": [
+        "Mina-style off-chain state with on-chain commitment: store only a hash/commitment of the canonical JSON state (JCS(dropNulls(state))) on the fiber, keep plaintext client-side — leverages OttoChain's existing byte-for-byte canonicalization as the determinism layer a commitment needs.",
+        "Mina Actions+Reducer settle() pattern: dispatch transition intents against a precondition, batch-advance the committed root via a settle step — clean fit for an on-chain fiber that only mutates a commitment.",
+        "Schnorr/ProveDHTuple nullifiers (Railgun-style): deterministic key-derived tags proven via Σ-protocol to prevent double-spend/replay of private transitions WITHOUT a SNARK — highest-value borrowable primitive given metakit's new sigma opcodes.",
+        "ProveDlog / AND-OR proof trees for authorization, ownership, and threshold/multi-party access control on private transitions — maps directly to identity/governance/corporate fibers.",
+        "Transparent, no-trusted-setup posture: follow Mina/Kimchi (IPA, DLog, Fiat-Shamir) rather than Groth16/PLONK ceremonies — aligns with OttoChain's ceremony-free Σ-protocol stance and avoids toxic-waste operational risk.",
+        "Encrypted UTXO note model (Railgun/Aztec) for any asset-privacy fiber where the value relations are simple enough to be DH-tuple-expressible; defer confidential-amount arithmetic until range proofs are in scope.",
+        "Relayer/separated-gas-payer pattern (Railgun) to break the linkage between the on-chain settler and the private actor."
+      ],
+      "pitfalls": [
+        "Σ-protocols CANNOT prove arbitrary JLVM execution — do not promise 'verifiable private state transitions' from sigma opcodes alone; proving a JSON-Logic guard/effect ran correctly in ZK needs a circuit/SNARK OttoChain does not have. This is the central scoping trap.",
+        "Confidential amounts need range proofs (Bulletproofs-class), not bare Schnorr — without them a hidden-value note scheme is unsound (negative/overflow values). Bulletproofs are still transparent/DLog so they're a plausible add, but they are NOT in the current sigma-opcode set.",
+        "Commitment determinism is load-bearing: any divergence between Rust/TS/Scala JCS(dropNulls) canonicalization silently breaks commitment equality (mirrors the existing InvalidSignature/opaque-400 failure mode) — the commitment hash must be computed over the SAME canonical bytes the signing path uses.",
+        "Mina's concurrency sharp edge transfers: naive precondition-on-commitment settlement causes races when multiple clients advance the same off-chain fiber; you must adopt the Actions/Reducer queue or serialize settlement.",
+        "Trusted setup is a real liability for the SNARK alternatives (Railgun Groth16 / Aztec PLONK) — if OttoChain ever reaches for general proving, prefer transparent systems (Kimchi/Halo2/Bulletproofs) to keep the no-ceremony property.",
+        "Aztec Connect's shutdown shows fixed-circuit privacy bridges hit a programmability ceiling — a Σ-only overlay is similarly bounded; be explicit that it covers commit/authorize/nullify, not general private apps, so the roadmap doesn't overcommit.",
+        "Nullifier design must bind to the canonical note + the spending key via ProveDHTuple correctly, or you get either linkability (privacy loss) or forgeable double-spends (soundness loss); this is subtle even though it's 'just' a Σ-protocol.",
+        "On-chain you settle a commitment, not a transcript — resist storing JLVM execution transcripts on-chain to 'prove' transitions; that leaks the private state and defeats the overlay."
+      ],
+      "keyReferences": [
+        {
+          "title": "Mina — Off-Chain Storage (off-chain state, Merkle Map commitment, Actions/Reducer settle())",
+          "url": "https://docs.minaprotocol.com/zkapps/writing-a-zkapp/feature-overview/offchain-storage"
+        },
+        {
+          "title": "Mina — zkApps: Design Decisions, Advantages & Future Vision (client-side proving, 8 on-chain fields)",
+          "url": "https://minaprotocol.com/blog/zkapps-design-decisions-advantages-future-vision"
+        },
+        {
+          "title": "Kimchi: The latest update to Mina's proof system (PLONK variant, IPA, no trusted setup)",
+          "url": "https://minaprotocol.com/blog/kimchi-the-latest-update-to-minas-proof-system"
+        },
+        {
+          "title": "Overview of Pickles — Mina proof-systems book (recursion, Pasta cycle of curves)",
+          "url": "https://o1-labs.github.io/proof-systems/pickles/overview.html"
+        },
+        {
+          "title": "Mina — Recursion (recursive zkPrograms, unbounded off-chain computation)",
+          "url": "https://docs.minaprotocol.com/zkapps/o1js/recursion"
+        },
+        {
+          "title": "Mina — Smart Contracts (preconditions = assertions, account updates, concurrency)",
+          "url": "https://docs.minaprotocol.com/zkapps/writing-a-zkapp/introduction-to-zkapps/smart-contracts"
+        },
+        {
+          "title": "Aztec Connect — Notes & Nullifiers (UTXO note model, value/claim/defi nullifiers)",
+          "url": "https://aztecprotocol.github.io/aztec-connect/notes_and_nullifiers.html"
+        },
+        {
+          "title": "Aztec — Private DeFi with the Aztec Connect Bridge (rollup aggregation, bridge to public DeFi)",
+          "url": "https://aztec.network/blog/private-defi-with-the-aztec-connect-bridge"
+        },
+        {
+          "title": "RAILGUN Overview (encrypted UTXO Merkle tree, Groth16, Perpetual Powers of Tau setup, nullifiers)",
+          "url": "https://rya-sge.github.io/access-denied/2025/10/28/railgun-overview/"
+        },
+        {
+          "title": "RAILGUN Docs — Wiki (shielded 0zk addresses, live on Ethereum/BSC/Polygon/Arbitrum, relayers)",
+          "url": "https://docs.railgun.org/wiki"
+        }
+      ]
+    }
+  ],
+  "machinery": {
+    "summary": "LIVE Sigma family: DLog+DDH leaves + CDS AND/OR/k-of-n tree.",
+    "opcodes": [
+      {
+        "name": "prove_dlog_verify",
+        "description": "DLog leaf"
+      },
+      {
+        "name": "prove_dhtuple_verify",
+        "description": "DDH leaf"
+      },
+      {
+        "name": "sigma_verify",
+        "description": "CDS tree"
+      },
+      {
+        "name": "schnorr/poseidon/pmt/bls",
+        "description": "all TS"
+      },
+      {
+        "name": "smt/mpt/bn254/ecvrf/groth16",
+        "description": "no TS"
+      }
+    ],
+    "canExpressToday": [
+      "discrete-log knowledge",
+      "DDH tuple",
+      "OR/ring",
+      "k-of-n multisig",
+      "AND/OR/threshold",
+      "Groth16 off-chain",
+      "SMT/MPT clear",
+      "Poseidon+Merkle",
+      "ECVRF"
+    ],
+    "gapsForPrivacy": [
+      "no hiding commitment",
+      "no nullifier",
+      "no ZK membership",
+      "no range proof",
+      "no encryption",
+      "no balance leaves",
+      "TS gap",
+      "no audit"
+    ]
+  }
+}
