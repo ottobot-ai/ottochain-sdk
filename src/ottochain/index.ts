@@ -54,6 +54,7 @@ export type {
   ScriptInvocation,
   CreationReceipt,
   UpgradeReceipt,
+  RejectionReceipt,
   FiberLogEntry,
 
   // Fiber records
@@ -80,12 +81,28 @@ export type {
   PublishScriptVersion,
   SetVersionStatus,
   RegisterAlias,
+  CreateAssetPolicy,
+  MintAsset,
+  ApplyMorphism,
+  AuthorizeCompose,
   OttochainMessage,
   OttochainMessageType,
+
+  // Asset model
+  MorphismKind,
+  MorphismVisibility,
+  TokenBehavior,
+  SupplyPolicy,
+  MorphismSpec,
+  AssetHolder,
+  OriginProvenance,
+  ComponentWitness,
+  AssetRecord,
+  AssetCommit,
 } from './types.js';
 
 // Runtime message type validation
-export { OTTOCHAIN_MESSAGE_TYPES } from './types.js';
+export { OTTOCHAIN_MESSAGE_TYPES, TOKEN_BEHAVIOR_BITS } from './types.js';
 
 // Snapshot decoder
 export type { CurrencySnapshotResponse } from './snapshot.js';
@@ -102,6 +119,8 @@ export {
 // Metagraph client
 export type {
   Checkpoint,
+  StateProof,
+  FeeEstimate,
   MetagraphClientConfig,
   SubscribeOptions,
   FiberStateCallback,
