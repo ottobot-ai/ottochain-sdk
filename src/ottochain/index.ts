@@ -139,6 +139,10 @@ export {
   createStateMachinePayload,
   createScriptPayload,
   createDataTransactionRequest,
+  createAssetPolicyPayload,
+  createMintAssetPayload,
+  createApplyMorphismPayload,
+  createAuthorizeComposePayload,
 } from './transaction.js';
 
 export type {

@@ -337,10 +337,12 @@ export function toProtoDefinition<T extends FiberAppDefinition>(
     };
   }
 
-  // Pass metadata through unchanged - it's an optional unstructured object
-  if (def.metadata) {
-    protoDef.metadata = def.metadata as unknown as Record<string, unknown>;
-  }
+  // NOTE: `def.metadata` is the SDK's FiberAppMetadata (name/app/type/version — app-routing
+  // packaging info), NOT chain metadata. Projecting it onto the wire would make the on-chain
+  // canonical + the registry `logicHash` depend on packaging fields (changing `description` would
+  // change the signed digest of an otherwise-identical machine), so it is deliberately NOT emitted
+  // (the chain's `StateMachineDefinition.metadata` stays absent → `None`). A caller that genuinely
+  // needs on-chain metadata sets `ProtoStateMachineDefinition.metadata` explicitly after conversion.
 
   return protoDef;
 }
