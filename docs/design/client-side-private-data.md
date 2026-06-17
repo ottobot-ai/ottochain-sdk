@@ -93,21 +93,22 @@ Every commitment / nullifier / proof preimage MUST be the **identical byte strin
 
 **The consequence is the sharpest honest finding in this design:** a commitment bound by zk-jlvm (raw-bytes keccak) and a signature bound by the chain (`JCS ∘ dropNulls`) are computed over **different bytes**. Any client that builds a private payload, signs it, and *also* proves over it will silently bind two different things → the opaque `InvalidSignature` / false-verify class, with no useful error.
 
-**The fix — force one canonical path.** The SDK must canonicalize `JCS(dropNulls(x))` for `expr` and `data` *before* handing them to the prover, so that
+**The fix — one shared canonical path, now provided by metakit.** As of **metakit-sdk `1.8.x`**, its exported `canonicalize` already drops null object-fields internally (`serializeJcs(dropNullFields(x))`, server-aligned) and `signDataUpdate` signs over it — so the single canonical step is just metakit's `canonicalize(x)`, shared by the signer and the prover feed:
 
 ```
-preimage(x) = keccak256( JCS( dropNulls(x) ) )
+preimage(x) = keccak256( canonicalize(x) )     // canonicalize = metakit-sdk's JCS ∘ dropNullFields
 ```
 
-is the **single** preimage used by both the signature and the proof. This is small SDK glue, but it must land **before** any semi-private or private use. For value fields that must be range-/arithmetic-checked, the commitment is instead `Poseidon(fieldFr, salt)` over the fixed Fr encoding (`hex-bytes.ts encodeFr`, matching `fr_to_bytes32`); the same single-source discipline applies.
+is the **single** preimage behind both the signature (sha256 over the canonical, + Constellation prefix) and the proof (keccak256 over the canonical) — they bind the **same canonical string**. It must land **before** any semi-private or private use. For value fields that must be range-/arithmetic-checked, the commitment is instead `Poseidon(fieldFr, salt)` over the fixed Fr encoding (`hex-bytes.ts encodeFr`, matching `fr_to_bytes32`); the same single-source discipline applies.
 
 ```ts
-// SDK prover glue — ONE canonical path shared with signing.
-import { dropNulls } from '@ottochain/sdk/core';
-import { canonicalize } from './rfc8785';        // JCS / RFC 8785
-const proverPreimage = (x: unknown) => keccak256(utf8(canonicalize(dropNulls(x))));
-// commitment = proverPreimage(data);  signature also over proverPreimage(payload)
+// SDK prover glue — ONE canonical path, the SAME function signing uses.
+import { canonicalize } from '@constellation-network/metagraph-sdk'; // metakit-sdk 1.8.x: drops nulls internally
+const proverPreimage = (x: unknown) => keccak256(utf8(canonicalize(x)));
+// commitment = proverPreimage(data);  signature also binds canonicalize(payload)
 ```
+
+> **Version note:** the SDK currently pins metagraph-sdk `^0.2.0`, whose `signDataUpdate` signs the payload as-is — so `src/signing.ts` applies `dropNulls` by hand (and on 0.2.0 `proverPreimage` must too: `keccak256(canonicalize(dropNulls(x)))`). On the bump to `1.8.x`, drop the manual `dropNulls` here and in `signing.ts`; metakit does it. (`1.8.x` is not yet published — npm/crates latest is `0.2.0`.)
 
 CRITICAL nuance from `docs/signing-and-publishing.md`: because the chain re-fills omitted *defaulted required* fields, the private-data SDK types must make those fields **required** (e.g. `repeated: boolean`, not `repeated?: boolean`) exactly as the signing types already do — a commitment over a payload that omits a chain-required defaulted field will not match the chain's recomputed preimage.
 

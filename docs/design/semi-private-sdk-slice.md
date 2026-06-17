@@ -39,24 +39,27 @@ Dependencies are already in the tree (confirmed in `ottochain-sdk/package.json` 
 
 This is the single most important file in the slice. The parent doc's "dominant failure source" (§3.0): **signing** hashes `JCS(dropNulls(payload))` (`src/signing.ts` → `dropNulls` then metagraph‑sdk's RFC‑8785), but **zk‑jlvm** hashes the **raw bytes the prover was handed** (`keccak256(expr_json.as_bytes())`, `keccak256(data_json.as_bytes())` — `zk-jlvm/program/src/main.rs:18‑19`; only the *output* is canonicalized, line 22). A payload that is signed and *also* proven binds two different byte strings → the opaque empty‑body `InvalidSignature` 400 (`docs/signing-and-publishing.md`).
 
-The fix is to force **one** canonical step (`canonicalize ∘ dropNulls`) that *both* the signer and the prover‑feed share, so the bytes are identical. The factoring:
+The fix is to force **one** canonical step that *both* the signer and the prover‑feed share, so the bytes are identical. As of **metakit-sdk `1.8.x`** that step *is* its exported `canonicalize` — which now drops null object-fields internally (`serializeJcs(dropNullFields(x))`, server-aligned) — so there is nothing extra to add:
 
 ```ts
 // src/zk/preimage.ts
-import { canonicalize } from '@constellation-network/metagraph-sdk'; // JCS / RFC 8785 (canonicalize npm)
+import { canonicalize } from '@constellation-network/metagraph-sdk'; // 1.8.x: JCS ∘ dropNullFields
 import { keccak_256 } from '@noble/hashes/sha3';
-import { dropNulls } from '../ottochain/drop-nulls.js';
 
 const utf8 = (s: string): Uint8Array => new TextEncoder().encode(s);
 
 /**
- * THE single canonical step. `canonicalForSigning(x)` is the EXACT byte string
- * the chain signs over (JCS ∘ dropNulls), so feeding the prover this same string
- * makes the zk-jlvm keccak preimage equal the signature preimage. This is the
- * §3.0 unification: one code path, shared by signing.ts and the prover feed.
+ * THE single canonical step. `canonicalForSigning(x)` is the EXACT canonical string the chain signs
+ * over (metakit-sdk `canonicalize` = JCS ∘ dropNullFields), so feeding the prover this same string
+ * makes the zk-jlvm keccak preimage equal the signature preimage.
+ *
+ * VERSION NOTE: on metagraph-sdk `0.2.0` (the current pin) `canonicalize` does NOT drop nulls, so
+ * there this is `canonicalize(dropNulls(x))` (import `dropNulls` from '../ottochain/drop-nulls.js').
+ * On the `1.8.x` bump it collapses to `canonicalize(x)` and the SDK's manual dropNulls — here and in
+ * signing.ts — goes away.
  */
 export function canonicalForSigning(x: unknown): string {
-  return canonicalize(dropNulls(x));        // string; throws if unserializable
+  return canonicalize(x);                   // metakit-sdk 1.8.x drops nulls internally
 }
 
 /** keccak256 of the canonical bytes — the value zk-jlvm commits as exprHash / dataHash. */
