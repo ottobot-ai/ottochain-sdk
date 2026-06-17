@@ -38,6 +38,13 @@ export interface CreateStateMachineMessage {
 /**
  * Create a new state machine fiber payload.
  *
+ * @remarks
+ * `params.definition` is signed VERBATIM. Pass the output of `toProtoDefinition(def)` (the
+ * allowlisted wire shape) — NOT a raw `FiberAppDefinition`: extra authoring fields
+ * (`createSchema` / `stateSchema` / `eventSchemas` / per-transition `emits`) would be signed
+ * but re-encoded away by the chain, diverging the canonical → opaque `InvalidSignature`.
+ * See `tests/ottochain/signing-parity.test.ts`.
+ *
  * @param params - State machine creation parameters
  * @returns A CreateStateMachine message ready for signing
  *
