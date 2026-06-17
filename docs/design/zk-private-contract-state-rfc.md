@@ -253,41 +253,76 @@ No new crypto opcode: `groth16_verify` (proof), `poseidon` (hashing/commitments)
 `poseidon` fold proves too gas-heavy — added behind profiling, not preemptively. The general
 circuit lives in metakit-**sdk** (`zk-jlvm-shielded`), not metakit.
 
-## 8. Proving cost (estimate)
+## 8. Proving cost (MEASURED)
 
-Cost of a fused transition = shielded scaffolding + the `jlvm-core` effect + the Groth16 wrap.
-Anchor: the now-sound `zk-shielded` value circuit measured **~133M cycles** for 2-in/2-out (two
-depth-8 Poseidon-Merkle memberships + 4 commitments + 2 nullifiers + per-asset conservation),
-and its Groth16 proof on the **RTX 5090** (`sp1-gpu-server`) completed in single-digit-to-low-
-tens of minutes.
+All numbers below are measured on this hardware (SP1 v6, RTX 5090), not estimated.
 
-Decomposition for the 1-in/1-out fused transition:
+**Fused transition, small state — `68.8M cycles`.** The bundled 1-in/1-out transition
+(`{"balance":100,"bids":[]}`, deduct effect) executes in **68,764,987 cycles**, public values
+matching native exactly. Its Groth16 proof was generated **and verified on the GPU**
+(`sp1-gpu-server 6.2.4`, device 0) in **~1.5 min** wall-clock; vkey
+`0x00f48340d57e907ec1364bb941e40d86808c0fe5360ead51c4a401556a0d1267`.
 
-- **Shielded scaffolding** (1 depth-8 membership + old/new commitments + nullifier + owner
-  hash ≈ ~12 Poseidon perms) — *fewer* than zk-shielded's 2-in/2-out (~20+ perms). Poseidon
-  dominates zk-shielded's 133M, so scaffolding ≈ **~60–90M cycles**.
-- **`jlvm-core` effect** — parse the witness JSON + evaluate the effect + RFC-8785 canonicalize
-  the output. For a small app effect (merge/cat/arithmetic) this is **single-digit to low-tens
-  of M cycles**, dominated by JSON parse/canonicalize, not the logic.
-- **2× keccak256** — cheap with SP1's keccak precompile (**< ~1M each**).
+**The split: fixed scaffolding vs. size-linear effect.** The two parts scale very differently:
 
-So a typical fused transition ≈ **~80–130M cycles** — the *same order* as `zk-shielded`. The
-**Groth16 wrap is a roughly fixed cost** (recursion + final SNARK) that dominates wall-clock
-regardless of guest cycles.
+- **Scaffolding (FIXED, ~68M):** Poseidon-Merkle membership (depth-8) + old/new commitments +
+  nullifier + owner hash + BN254 field arithmetic + parsing the Merkle-proof witness. This is
+  **independent of state size** — it operates on the 32-byte state *hash*, not the state.
+- **`jlvm-core` effect (LINEAR in state size):** parse the state JSON + evaluate + RFC-8785
+  canonicalize the new state + keccak it. Measured scaling (via `zk-jlvm`):
 
-- **On the 5090:** expect **single-digit to ~15 min** per Groth16 proof (the wrap dominates),
-  comparable to the measured `zk-shielded` proof.
-- **On the SP1 prover network:** priced by prover-gas roughly ∝ cycles; a ~100M-cycle program
-  Groth16-wrapped sits in the **same tier as the value circuit** — order **cents–dollars per
-  proof** (exact figure per the current network tariff). Wallets prove off-chain (local GPU or
-  the network); the chain only *verifies* (the cheap `groth16_verify` opcode).
+  | JSON elements | bytes | eval cycles |
+  | ---: | ---: | ---: |
+  | ~5 (tiny) | ~50 B | ~87K |
+  | 200 | 0.9 KB | 3.4M |
+  | 3,000 | 16.9 KB | 52.3M |
 
-**Caveat — exact `jlvm-core` cycles are currently blocked.** The `zk-jlvm` (and `zk-jlvm-shielded`)
-**guest** can't build here: `jlvm-core` pulls `blst`, whose C backend doesn't cross-compile for
-the SP1 riscv target with the system `cc` (`-mabi=lp64` unrecognized). Fixing it (point the
-guest C build at SP1's clang, or feature-gate `blst` out of the guest) unblocks the precise
-cycle count **and** the GPU fixture. The native constraint system (the `lib`) is unaffected —
-`blst` builds fine on x86 — so `zk-jlvm-shielded-lib` is green today (metakit-sdk #53).
+  i.e. **≈ 87K fixed + ~17K cycles per JSON element** (the cost is `num-bigint`/Ratio number
+  handling + canonicalize, not the operator logic). Linear.
+
+**So is the effect negligible at max size? NO — only at small/typical size.** Crossover (effect
+≈ scaffolding) is at **~4,000 elements (~22 KB)**. Extrapolating to the fiber engine's
+**`maxStateSizeBytes = 1 MB`** cap (~150K elements) the effect is **~2.5B cycles — ~1.5 orders
+of magnitude LARGER than the scaffolding.** Concretely:
+
+| state size | transition ≈ | effect vs scaffolding |
+| --- | --- | --- |
+| typical app (≤ ~1K elems, few KB) | ~68–85M | effect negligible (the measured case) |
+| ~4K elems (~22 KB) | ~136M | effect ≈ scaffolding |
+| 1 MB cap (~150K elems) | **~2.6B** | effect dominates (~37×) |
+
+**Critical: gas does NOT bound proving cost.** `maxGas = 10M` meters *operations* (one `merge`
+over a huge object is cheap in gas), but zkVM cycles scale with *bytes parsed/canonicalized*.
+An effect can sit inside the gas budget and still be billions of zkVM cycles. So:
+
+- A shielded pool must impose its **own, tighter state-size cap** (a few KB) — far below the
+  1 MB fiber cap — to keep proofs fast. The note model rehashes the *whole* state each
+  transition, so its proving cost is `O(state size)`.
+- This is the **quantified argument for the auth-DB model (§3.1.1) at large state**: an
+  in-circuit SMT/MPT update touches `O(log n)` nodes, not the whole map, so a large *keyed*
+  state stays cheap to prove. Note model for small per-instance state; auth-DB when state grows.
+
+**On the SP1 prover network:** priced by prover-gas roughly ∝ cycles; a ~68M-cycle small-state
+transition is the **same tier as the `zk-shielded` value circuit** — order **cents–dollars per
+proof**. Wallets prove off-chain (local GPU or the network); the chain only *verifies* (the
+cheap `groth16_verify` opcode). A 1 MB-state transition would be ~40× that — another reason to
+cap shielded state size.
+
+*Guest-build note (resolved):* the guest needs `jlvm-core` without `blst` (its C backend can't
+cross-compile for the SP1 riscv target). Fixed by making `blst` an optional, default-on `bls`
+feature in `jlvm-core` and depending on it with `default-features = false` from the guests — see
+the **PV / opcode** note below.
+
+## 8.1 No new metakit opcode for public-values decoding
+
+The fused public values are **four static `bytes32`** (`anchor`, `nullifier`, `newCommitment`,
+`exprHash`) — a fixed 128-byte ABI layout, **no dynamic arrays**. So the guard extracts each
+field with the existing `substr`/`slice` ops at constant offsets, and since `groth16_verify`
+attests *exactly* those `publicValues` bytes, slicing fields **from the verified string** is the
+binding — no `jlvm_pv_decode` opcode and no hash-commit needed. (This is why the fixed 1-in/1-out
+layout is preferable to the value circuit's variable-length `nullifiers[]`/`outputCms[]`, which
+*would* have needed dynamic-array offset-following — the original motivation for a PV-decode
+opcode in the value sketch §6.1. It evaporates here.)
 
 ## 9. Phasing
 
@@ -295,8 +330,8 @@ cycle count **and** the GPU fixture. The native constraint system (the `lib`) is
 | --- | --- | --- |
 | **P0** | this RFC | ✅ |
 | **P1** | `zk-jlvm-shielded` **lib**: fused circuit (membership ∧ `jlvm-core` effect ∧ nullifier ∧ new-commitment) + native tests | ✅ metakit-sdk #53 (9/9) |
-| **P1b** | the SP1 **guest** + host + GPU Groth16 fixture + first conformance vector | ⛔ blocked on the `blst`/guest-build fix (also blocks `zk-jlvm`) |
-| **P2** | `shieldApp(def)` in `ottochain-sdk` + a generic `std.shielded.pool` genesis package | |
+| **P1b** | the SP1 **guest** + host + GPU Groth16 fixture | ✅ guest builds blst-free, execute matches native (68.8M cycles), GPU groth16 fixture proved+verified (vkey `0x00f48340…`) |
+| **P2** | `shieldApp(def)` in `ottochain-sdk` + a generic `std.shielded.pool` genesis package | 🔜 in progress |
 | **P3** | **sealed-bid (Vickrey)** worked end-to-end: place-bid (P1) → reveal → tally | |
 | **P4** | bounded-growth: committed nullifier structure + state rent (shared) | |
 
@@ -315,10 +350,14 @@ cycle count **and** the GPU fixture. The native constraint system (the `lib`) is
   off-chain coordinator, when needed, becomes the **Bridge** (`~/repos/ottochain-services/`)
   for convenience — a later move, not a v1 dependency.
 
+- **`blst`/guest-build** (P1b) — RESOLVED: `blst` is now an optional, default-on `bls` feature
+  in `jlvm-core`; guests use `default-features = false`. Unblocks `zk-jlvm` too.
+- **Shielded state-size cap** — a shielded pool caps note state well below the 1 MB fiber cap
+  (proving cost is `O(state size)`; §8). Large *keyed* state ⇒ the auth-DB variant.
+
 **Still open:**
 
 1. **`exprHash` pinning** granularity — per-pool (one app) vs per-event (a multi-app pool).
-2. **The `blst`/guest-build fix** (P1b) — SP1-clang for the guest C build vs feature-gating
-   `blst` out of the zkVM target.
-3. **zk-settlement** for sealed-bid — the in-circuit second-price proof that seals losers'
+2. **zk-settlement** for sealed-bid — the in-circuit second-price proof that seals losers'
    amounts permanently (the §4 follow-up).
+3. **Auth-DB variant** — an in-circuit SMT/MPT mutator for large keyed/shared state (§3.1.1, §8).
