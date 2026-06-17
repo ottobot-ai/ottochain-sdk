@@ -137,7 +137,9 @@ export interface SchemaRef {
 /**
  * One field of a {@link MessageShape} — mirrors a protobuf `FieldDescriptorProto`
  * at the field level (name + field number + type).
- * Wire format: `repeated`/`optional` default to `false` and are omittable.
+ * Wire format: `repeated`/`optional` are REQUIRED Booleans with NO chain default. The
+ * SDK MUST send them — they ride inside the signed `MachineShape`/`ScriptShape` payload,
+ * and omitting a no-default field diverges the canonical (decode failure / InvalidSignature).
  *
  * @see modules/models/.../schema/registry/SchemaShape.scala
  */
@@ -145,8 +147,8 @@ export interface FieldShape {
   name: string;
   number: number;
   typeName: string;
-  repeated?: boolean;
-  optional?: boolean;
+  repeated: boolean;
+  optional: boolean;
 }
 
 /**
@@ -160,16 +162,48 @@ export interface MessageShape {
 }
 
 /**
- * The on-chain projection of a version's proto schema: the State message plus one
- * message per command/event (keyed by event name). Publisher-claimed and advisory.
+ * The on-chain projection of a STATE-MACHINE version's proto schema: the State message
+ * plus one message per command/event (keyed by event name). Publisher-claimed and advisory.
+ * (Chain `MachineShape`; supersedes the old loose `SchemaShape`.)
  *
  * @see modules/models/.../schema/registry/SchemaShape.scala
  */
-export interface SchemaShape {
+export interface MachineShape {
   stateMessage: MessageShape;
   /** One message per command/event, keyed by event name. */
   commands: Record<string, MessageShape>;
 }
+
+/**
+ * The on-chain projection of a SCRIPT version's surface. Chain `ScriptShape` is a sealed
+ * ADT with one variant today, `MethodDispatch`, encoded directly as `{ methods: {...} }`
+ * (the `methods` key discriminates from future variants).
+ *
+ * @see modules/models/.../schema/registry/SchemaShape.scala
+ */
+export interface ScriptShape {
+  /** One {@link MessageShape} per callable method, keyed by method name. */
+  methods: Record<string, MessageShape>;
+}
+
+/**
+ * The advisory schema projection stored in a {@link RegisteredVersion}, discriminated by
+ * inner field names (no explicit tag): `machineShape` (state-machine package), `scriptShape`
+ * (script package), or the AssetPolicy fields (`behavior`/`supply`/`morphisms`/`stateShape`).
+ *
+ * @see modules/models/.../schema/registry/SchemaShape.scala (RegistryShape ADT)
+ */
+export type RegistryShape =
+  | { machineShape: MachineShape }
+  | { scriptShape: ScriptShape }
+  // AssetPolicy package projection (asset-model.md §5a). Loosely typed for now; the full
+  // TokenBehavior / SupplyPolicy / MorphismSpec types land with the asset-op message surface.
+  | {
+      behavior: unknown;
+      supply: unknown;
+      morphisms: Record<string, unknown>;
+      stateShape: MessageShape;
+    };
 
 /**
  * The resolved, pinned binding recorded on a fiber: which registry (name, version) it
@@ -189,8 +223,9 @@ export interface SchemaBinding {
 
 /**
  * One immutable version of a registry entry. The chain commits only the hashes + the
- * typed {@link SchemaShape} projection (never the descriptor or definition bytes).
- * Wire format: `strict` defaults to `false` and is omittable.
+ * typed {@link RegistryShape} projection (never the descriptor or definition bytes).
+ * Wire format: `strict` is a REQUIRED Boolean (the chain has no default — read responses
+ * always carry it, and signed publish messages MUST send it).
  *
  * @see modules/models/.../schema/registry/RegisteredVersion.scala
  */
@@ -200,12 +235,13 @@ export interface RegisteredVersion {
   schemaHash: string;
   /** The verified-binding anchor: `StateMachineDefinition.computeDigest` of the logic. */
   logicHash: string;
-  schemaShape: SchemaShape;
+  /** The kind-correct advisory projection (Machine | Script | AssetPolicy). */
+  shape: RegistryShape;
   status: RegistryStatus;
   /** Snapshot ordinal at which this version was registered. */
   registeredAt: number;
-  /** Opt-in runtime conformance gate (#33); defaults to `false`. */
-  strict?: boolean;
+  /** Opt-in runtime conformance gate (#33). Required on the wire. */
+  strict: boolean;
 }
 
 /**
@@ -472,12 +508,26 @@ export interface CreateScript {
 }
 
 /**
- * Invoke a script script.
+ * Invoke a script method.
  */
 export interface InvokeScript {
   fiberId: string;
   method: string;
   args: JsonLogicValue;
+  targetSequenceNumber: number;
+}
+
+/**
+ * Upgrade an existing script fiber to a different registered version of the SAME package.
+ * The chain verifies `newProgram` hashes to the target version's `logicHash`, applies the
+ * optional `migration` (a JSON-Logic transform of the prior state data), and re-pins the binding.
+ */
+export interface UpgradeScript {
+  fiberId: string;
+  targetRef: SchemaRef;
+  newProgram: JsonLogicExpression;
+  /** Optional JSON-Logic transform applied to the prior state data during upgrade. */
+  migration?: JsonLogicExpression;
   targetSequenceNumber: number;
 }
 
@@ -497,24 +547,48 @@ export interface UpgradeFiber {
 }
 
 /**
- * Create-or-append a registry schema-package version (npm-publish semantics): the first publish
- * for a name claims it and makes the signer the owner; later publishes require an existing owner.
+ * Create-or-append a registry version for a STATE-MACHINE package (npm-publish semantics): the
+ * first publish for a name claims it and makes the signer the owner; later publishes require an
+ * existing owner. The chain split the old `PublishVersion` into machine/script variants — this is
+ * the machine half.
  *
  * Note: `fiberId` is NOT on the wire — the chain derives the routing id from `name`.
  */
-export interface PublishVersion {
+export interface PublishMachineVersion {
   /** Full registry name `labels.tld` (e.g. "order.package"). */
   name: string;
   version: SemVer;
   /** Base64 of the proto FileDescriptorSet; the chain base64-validates + hashes it, then drops the bytes. */
   schemaB64: string;
   /** The typed proto projection the chain stores for discovery (advisory). */
-  schemaShape: SchemaShape;
+  machineShape: MachineShape;
   /** The typed JSON-Logic state machine; hashed into `logicHash` for verified binding (#37). */
   definition: StateMachineDefinition;
-  /** Opt-in runtime conformance gate (#33); defaults to `false`, omittable. */
-  strict?: boolean;
-  /** Optional off-chain links grab-bag set on the entry at first publish; defaults to `{}`, omittable. */
+  /** Opt-in runtime conformance gate (#33). REQUIRED — the chain has no default; omitting it diverges the signed canonical. */
+  strict: boolean;
+  /** Optional off-chain links grab-bag set on the entry at first publish; omittable (`None`). */
+  metadata?: Record<string, string>;
+}
+
+/**
+ * Create-or-append a registry version for a SCRIPT package — parallel to {@link PublishMachineVersion}
+ * but carrying a `scriptProgram` (JSON-Logic) instead of a state-machine `definition`.
+ *
+ * Note: `fiberId` is NOT on the wire — the chain derives the routing id from `name`.
+ */
+export interface PublishScriptVersion {
+  /** Full registry name `labels.tld`. */
+  name: string;
+  version: SemVer;
+  /** Base64 of the proto FileDescriptorSet; the chain base64-validates + hashes it, then drops the bytes. */
+  schemaB64: string;
+  /** The typed method-surface projection the chain stores for discovery (advisory). */
+  scriptShape: ScriptShape;
+  /** The typed JSON-Logic script; hashed into `logicHash` for verified binding (#37). */
+  scriptProgram: JsonLogicExpression;
+  /** Opt-in runtime conformance gate (#33). REQUIRED — omitting it diverges the signed canonical. */
+  strict: boolean;
+  /** Optional off-chain links grab-bag; omittable (`None`). */
   metadata?: Record<string, string>;
 }
 
@@ -554,7 +628,9 @@ export type OttochainMessage =
   | { UpgradeFiber: UpgradeFiber }
   | { CreateScript: CreateScript }
   | { InvokeScript: InvokeScript }
-  | { PublishVersion: PublishVersion }
+  | { UpgradeScript: UpgradeScript }
+  | { PublishMachineVersion: PublishMachineVersion }
+  | { PublishScriptVersion: PublishScriptVersion }
   | { SetVersionStatus: SetVersionStatus }
   | { RegisterAlias: RegisterAlias };
 
@@ -569,9 +645,13 @@ export const OTTOCHAIN_MESSAGE_TYPES = [
   'UpgradeFiber',
   'CreateScript',
   'InvokeScript',
-  'PublishVersion',
+  'UpgradeScript',
+  'PublishMachineVersion',
+  'PublishScriptVersion',
   'SetVersionStatus',
   'RegisterAlias',
+  // Asset ops (CreateAssetPolicy / MintAsset / ApplyMorphism / AuthorizeCompose) are a flagged
+  // follow-up — they need the TokenBehavior / SupplyPolicy / MorphismSpec / AssetHolder types.
 ] as const;
 
 /**

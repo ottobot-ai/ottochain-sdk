@@ -68,7 +68,7 @@ export { buildGenesisManifest, GENESIS_MANIFEST_VERSION } from './ottochain/gene
 export type {
   GenesisManifest,
   GenesisPackage,
-  GenesisSchemaShape,
+  GenesisMachineShape,
   GenesisMessageShape,
   GenesisFieldShape,
   GenesisStateMachineDefinition,
