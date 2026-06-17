@@ -46,13 +46,66 @@ the state arbitrary and the binding layer becomes general.
 
 ```
 zk-shielded note:        Note { value: u64, owner, asset, rho }     // value-typed
-zk-jlvm-shielded note:   Note { stateHash, owner, rho }             // stateHash = poseidon(canonical(appState))
+zk-jlvm-shielded note:   Note { stateHash, owner, rho }             // stateHash = keccak(canonical(appState))
 ```
 
-`stateHash` is the Poseidon hash of the canonical (RFC 8785) JSON of the app's private
-`stateData` — the same canonicalization `zk-jlvm` already uses for `dataHash`. Everything
-else (commitment, owner-from-nsk, nullifier `= poseidon(rho, nsk)`, Merkle membership) is
-reused verbatim from `zk-shielded`.
+`stateHash = keccak256(canonical(state))` (RFC 8785, the same canonicalization `zk-jlvm` uses
+for `dataHash`), folded into the Poseidon commitment as two 128-bit limbs:
+`cm = Poseidon([stateHi, stateLo, owner, rho])`. (keccak for the byte→hash step because
+poseidon-bn254 hashes field elements, not arbitrary bytes; the limbs keep it field-native and
+fully binding.) Everything else — `owner = Poseidon([nsk])`, `nf = Poseidon([rho, nsk])`,
+Poseidon-Merkle membership — is reused verbatim from `zk-shielded`. **Implemented + tested:**
+`zk-jlvm-shielded-lib`, metakit-sdk #53 (9/9 native tests green).
+
+### 3.1.1 Why a note model and not an auth-DB (MPT / SMT / PMT / IMT)?
+
+A fair question, since metakit already has `mpt_verify` / `smt_verify` / `pmt_verify`. The
+distinction is **how private state is represented and authenticated**, and the two models are
+complementary, not competitors:
+
+| | **Note model** (this RFC) | **Auth-DB model** (SMT/MPT keyed) |
+|---|---|---|
+| state shape | a set of independent commitments (blobs) | a key→value map under one root |
+| update | spend old note → create new note (replace whole) | prove read(k)=v, write(k,v') in-circuit |
+| large state | rehash the whole blob | partial O(log n) update |
+| anti-replay | explicit **nullifier set** (monotonic, unprunable — the growth tax) | **root-versioning** (no nullifier set!) — but needs stale-root rejection |
+| concurrency | independent notes parallel; one note serialized by its nullifier | one root serializes *all* writers (unless sharded) |
+| unlinkability | strong (spent note ↔ output unlinkable) | weaker (repeated writes to key `k` link) unless positions re-randomized |
+| in-circuit cost | 1 membership + 1 commitment | 1 membership + 1 **in-circuit trie-insert** gadget (more constraints, new work) |
+| best for | per-instance, single-owner, replace-wholesale (a bid, a coin, a credential) | mutable keyed maps, account balances, large/shared state |
+
+Three things make the note model the right **v1**:
+
+1. **It's the minimal generalization of `zk-shielded`** — same membership/nullifier/commitment
+   scaffolding, only the leaf payload (`stateHash`) and the conservation→effect swap change.
+   No new in-circuit trie gadget to build and audit.
+2. **The chosen first apps are per-instance / single-owner** — a sealed bid, an identity
+   credential, an escrow. Their state is small and replaced wholesale; `stateHash` can hash a
+   *structured* object, so "keyed-ish" state still fits, it's just rehashed each step.
+3. **We're already using a PMT** — the commitment tree *is* a Poseidon-Merkle tree
+   (`pmt_verify`). "Note vs PMT" is a false choice; the note model is *opaque-blob leaves in a
+   PMT + a nullifier set*. An auth-DB would instead put *keyed* leaves in an SMT/MPT and update
+   in place.
+
+When the auth-DB model wins, and the path to it:
+
+- **Large keyed maps / per-key updates** (an account ledger, a big registry): an **in-circuit
+  SMT/MPT insert** beats rehashing a giant blob. This is real new circuit work (the on-chain
+  `smt_verify`/`mpt_verify` are verifiers, not in-circuit *mutators*).
+- **Avoiding the unbounded nullifier set**: the auth-DB's **root-versioning** is the one model
+  that sidesteps the monotonic nullifier set entirely (a transition just extends the *current*
+  root; stale roots are rejected by comparison) — at the cost of linkability unless you
+  re-randomize, which brings nullifiers back. So it's a privacy/cost trade, not a free win.
+- **`IMT` specifically** solves a *different* sub-problem: efficient **in-circuit
+  non-membership** (proving a nullifier is *not* yet spent). That's orthogonal to the state
+  model — if we keep the note model and want the nullifier check *inside* the proof (rather
+  than in the on-chain combine), an IMT is how. v1 does the nullifier check in the **combine**
+  (on-chain, `none`/`in`), so no IMT yet.
+
+**Decision:** note model for v1; design the leaf-commitment so an **auth-DB variant** (in-circuit
+SMT) can slot in for keyed/large/shared state, and treat the IMT as the future tool for moving
+nullifier non-membership *into* the circuit. The bounded-growth section (§5.3) is the note
+model's tax we pay consciously.
 
 ### 3.2 The new crate: `zk-jlvm-shielded` (one general circuit)
 
@@ -115,7 +168,13 @@ commitment), now app-agnostic.
 
 Sealed-bid is the right first general app: per-bidder state is **per-instance / single-owner**
 (mechanical to shield), and the *only* shared-state step is **settlement** — a clean
-max / second-price computation — so it isolates exactly one hard case.
+second-price computation — so it isolates exactly one hard case.
+
+**Decided (this RFC):** **Vickrey (second-price)** auction, settled by **reveal-then-tally**.
+Reveal-then-tally keeps v1 simple (no in-circuit max/second-max proof) and is the honest first
+cut: bids are sealed *until the deadline*, which is exactly the property a sealed-bid auction
+needs to kill bid-shading and front-running during bidding. A zero-knowledge settlement proof
+that keeps *losers'* amounts sealed forever is the natural follow-up (noted in §9), not v1.
 
 ### 4.1 Phases
 
@@ -124,27 +183,29 @@ max / second-price computation — so it isolates exactly one hard case.
   `s = { amount, bidder, nonce }` (e.g. `amount > 0`, `amount ≤ provenFunds`) and committed
   it. On-chain: a **commitment** + a **nullifier** (prevents the same bidder double-bidding,
   via a per-auction `nsk`), with the **amount hidden**. `publicOutputs = { event: "bid", auctionId }`.
-- **Settle (the shared-state step).** At the deadline, determine winner + price over the
-  hidden bids. Two options:
-  - **(a) reveal-then-tally** — bidders reveal openings; the effect picks `max` (first-price)
-    or second-max (Vickrey). Simple; hides bids **only until** the deadline.
-  - **(b) settlement proof** — one `zk-jlvm-shielded`-style proof takes all bid commitments +
-    their private openings and proves "`w` is the max bid and `p` is the price" **without
-    revealing the losers' amounts**. Stronger privacy; more circuit work.
+- **Reveal (after deadline).** Each bidder opens their note (`amount`, `nonce`); the chain
+  checks the opening against the recorded commitment. Non-revealers simply forfeit (their
+  sealed bid is discarded) — no griefing of the tally.
+- **Tally (Vickrey).** Over the revealed bids the combine computes `winner = argmax(amount)`
+  and `price = second-highest amount` (the Vickrey clearing price), in plain JSON-Logic
+  (`max`, comparisons) — no proof needed once amounts are public.
 
-### 4.2 Leakage profile (first-price, option b)
+### 4.2 Leakage profile (Vickrey, reveal-then-tally)
 
 | Public | Private |
 | --- | --- |
-| number of bidders, timing | every bid amount |
-| winner identity + clearing price | losers' amounts (stay sealed) |
-| commitments + nullifiers (unlinkable to amounts) | bidder↔amount linkage |
+| number of bidders, timing | every bid amount **during bidding** (sealed until deadline) |
+| after reveal: all *revealed* amounts, winner, clearing price | a bidder who forfeits keeps their amount sealed |
+| commitments + nullifiers (unlinkable to amounts while sealed) | bidder↔amount linkage while sealed |
+
+(A zk settlement proof — §9 — would shrink the "after reveal" column to just *winner + price*,
+keeping losers' amounts sealed forever. That's the privacy upgrade, deferred from v1.)
 
 ### 4.3 Why this exercises the framework well
 
-`place-bid` is the mechanical per-instance case (proves `shieldApp` works); settlement is the
-first **shared-state** case (proves we can handle the hard part with a bounded, well-defined
-computation rather than hand-waving).
+`place-bid` is the mechanical per-instance case (proves `shieldApp` works); reveal-then-tally
+is the simplest correct **shared-state settlement**, so v1 ships an end-to-end private flow
+without first building an in-circuit auction-clearing gadget.
 
 ## 5. The honest limits
 
@@ -192,22 +253,72 @@ No new crypto opcode: `groth16_verify` (proof), `poseidon` (hashing/commitments)
 `poseidon` fold proves too gas-heavy — added behind profiling, not preemptively. The general
 circuit lives in metakit-**sdk** (`zk-jlvm-shielded`), not metakit.
 
-## 8. Phasing
+## 8. Proving cost (estimate)
 
-| Phase | Deliverable |
-| --- | --- |
-| **P0** | this RFC |
-| **P1** | `zk-jlvm-shielded` crate: the general circuit (membership ∧ `jlvm-core` effect ∧ nullifier ∧ new-commitment) + native tests + first conformance vector + GPU-proved Groth16 fixture |
-| **P2** | `shieldApp(def)` in `ottochain-sdk` + a generic `std.shielded.pool` genesis package |
-| **P3** | **sealed-bid auction** worked end-to-end (place-bid via P1; settlement option (a) then (b)) |
-| **P4** | bounded-growth: committed nullifier structure + state rent (shared) |
+Cost of a fused transition = shielded scaffolding + the `jlvm-core` effect + the Groth16 wrap.
+Anchor: the now-sound `zk-shielded` value circuit measured **~133M cycles** for 2-in/2-out (two
+depth-8 Poseidon-Merkle memberships + 4 commitments + 2 nullifiers + per-asset conservation),
+and its Groth16 proof on the **RTX 5090** (`sp1-gpu-server`) completed in single-digit-to-low-
+tens of minutes.
 
-## 9. Open questions
+Decomposition for the 1-in/1-out fused transition:
 
-1. **Fuse vs compose** for P1 (single SNARK vs two glued proofs).
-2. **`exprHash` pinning** granularity — per-pool (one app) vs per-event (a multi-app pool).
-3. **Settlement privacy** for sealed-bid — reveal-tally (a) vs in-circuit max (b) for v1.
-4. **Off-chain state/tree service** — who maintains the Poseidon-Merkle tree + serves paths
-   (indexer responsibility, like a Zcash light-wallet server).
-5. **zk mode + proving cost** — confirm SP1 zk-Groth16 cost on the 5090 for a `jlvm-core`
-   effect-sized guest (the value circuit was ~133M cycles).
+- **Shielded scaffolding** (1 depth-8 membership + old/new commitments + nullifier + owner
+  hash ≈ ~12 Poseidon perms) — *fewer* than zk-shielded's 2-in/2-out (~20+ perms). Poseidon
+  dominates zk-shielded's 133M, so scaffolding ≈ **~60–90M cycles**.
+- **`jlvm-core` effect** — parse the witness JSON + evaluate the effect + RFC-8785 canonicalize
+  the output. For a small app effect (merge/cat/arithmetic) this is **single-digit to low-tens
+  of M cycles**, dominated by JSON parse/canonicalize, not the logic.
+- **2× keccak256** — cheap with SP1's keccak precompile (**< ~1M each**).
+
+So a typical fused transition ≈ **~80–130M cycles** — the *same order* as `zk-shielded`. The
+**Groth16 wrap is a roughly fixed cost** (recursion + final SNARK) that dominates wall-clock
+regardless of guest cycles.
+
+- **On the 5090:** expect **single-digit to ~15 min** per Groth16 proof (the wrap dominates),
+  comparable to the measured `zk-shielded` proof.
+- **On the SP1 prover network:** priced by prover-gas roughly ∝ cycles; a ~100M-cycle program
+  Groth16-wrapped sits in the **same tier as the value circuit** — order **cents–dollars per
+  proof** (exact figure per the current network tariff). Wallets prove off-chain (local GPU or
+  the network); the chain only *verifies* (the cheap `groth16_verify` opcode).
+
+**Caveat — exact `jlvm-core` cycles are currently blocked.** The `zk-jlvm` (and `zk-jlvm-shielded`)
+**guest** can't build here: `jlvm-core` pulls `blst`, whose C backend doesn't cross-compile for
+the SP1 riscv target with the system `cc` (`-mabi=lp64` unrecognized). Fixing it (point the
+guest C build at SP1's clang, or feature-gate `blst` out of the guest) unblocks the precise
+cycle count **and** the GPU fixture. The native constraint system (the `lib`) is unaffected —
+`blst` builds fine on x86 — so `zk-jlvm-shielded-lib` is green today (metakit-sdk #53).
+
+## 9. Phasing
+
+| Phase | Deliverable | Status |
+| --- | --- | --- |
+| **P0** | this RFC | ✅ |
+| **P1** | `zk-jlvm-shielded` **lib**: fused circuit (membership ∧ `jlvm-core` effect ∧ nullifier ∧ new-commitment) + native tests | ✅ metakit-sdk #53 (9/9) |
+| **P1b** | the SP1 **guest** + host + GPU Groth16 fixture + first conformance vector | ⛔ blocked on the `blst`/guest-build fix (also blocks `zk-jlvm`) |
+| **P2** | `shieldApp(def)` in `ottochain-sdk` + a generic `std.shielded.pool` genesis package | |
+| **P3** | **sealed-bid (Vickrey)** worked end-to-end: place-bid (P1) → reveal → tally | |
+| **P4** | bounded-growth: committed nullifier structure + state rent (shared) | |
+
+## 10. Decisions & open questions
+
+**Decided in this RFC:**
+
+- **Fuse, not compose** — P1 is the single fused SNARK (membership ∧ effect ∧ nullifier ∧
+  commitment), as built in `zk-jlvm-shielded-lib`.
+- **Sealed-bid = Vickrey (second-price), reveal-then-tally** for v1 (§4). A zk settlement proof
+  that keeps losers' amounts sealed forever is the deferred privacy upgrade.
+- **State model = note (not auth-DB)** for v1; auth-DB/IMT are the documented paths for
+  keyed/large/shared state and in-circuit nullifier non-membership (§3.1.1).
+- **Off-chain tree = the user wallet** for now — the wallet maintains the Poseidon-Merkle
+  commitment tree, serves its own membership paths, and coordinates any off-chain P2P. An
+  off-chain coordinator, when needed, becomes the **Bridge** (`~/repos/ottochain-services/`)
+  for convenience — a later move, not a v1 dependency.
+
+**Still open:**
+
+1. **`exprHash` pinning** granularity — per-pool (one app) vs per-event (a multi-app pool).
+2. **The `blst`/guest-build fix** (P1b) — SP1-clang for the guest C build vs feature-gating
+   `blst` out of the zkVM target.
+3. **zk-settlement** for sealed-bid — the in-circuit second-price proof that seals losers'
+   amounts permanently (the §4 follow-up).
