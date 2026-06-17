@@ -150,3 +150,7 @@ export {
   type StateCategory,
   type Transition,
 } from './schema/fiber-app.js';
+
+// ─── Privacy: shield any fiber app into a zk-jlvm-shielded private-state pool ──
+// See docs/design/zk-private-contract-state-rfc.md.
+export { shieldApp, SHIELDED_POOL_STATE, type ShieldOptions } from './privacy/shield-app.js';
