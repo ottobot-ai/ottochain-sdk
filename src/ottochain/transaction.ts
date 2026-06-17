@@ -193,7 +193,7 @@ export interface CreateScriptMessage {
  *     },
  *   },
  *   initialState: { value: 0 },
- *   accessControl: { type: 'open' },
+ *   accessControl: { Public: {} },
  * });
  * const signed = await signTransaction(script, privateKey);
  * ```
@@ -204,7 +204,7 @@ export function createScriptPayload(params: CreateScriptParams): CreateScriptMes
       fiberId: params.fiberId,
       scriptProgram: params.scriptProgram,
       initialState: params.initialState ?? null,
-      accessControl: params.accessControl ?? { type: 'open' },
+      accessControl: params.accessControl ?? { Public: {} },
     },
   };
 }

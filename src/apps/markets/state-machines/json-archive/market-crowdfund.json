@@ -49,7 +49,7 @@
           { "var": "state" },
           {
             "status": "OPEN",
-            "launchedAt": { "var": "$timestamp" },
+            "launchedAt": { "var": "$ordinal" },
             "pledges": [],
             "totalPledged": 0,
             "backerCount": 0
@@ -70,7 +70,7 @@
           { "var": "state" },
           {
             "status": "CANCELLED",
-            "cancelledAt": { "var": "$timestamp" }
+            "cancelledAt": { "var": "$ordinal" }
           }
         ]
       },
@@ -90,7 +90,7 @@
               { ">=": [{ "var": "event.amount" }, { "var": "state.minPledge" }] }
             ]
           },
-          { "<=": [{ "var": "$timestamp" }, { "var": "state.deadline" }] }
+          { "<=": [{ "var": "$ordinal" }, { "var": "state.deadline" }] }
         ]
       },
       "effect": {
@@ -105,7 +105,7 @@
                     "backer": { "var": "event.agent" },
                     "amount": { "var": "event.amount" },
                     "rewardTier": { "var": "event.rewardTier" },
-                    "pledgedAt": { "var": "$timestamp" }
+                    "pledgedAt": { "var": "$ordinal" }
                   }
                 ]
               ]
@@ -126,7 +126,7 @@
       "guard": {
         "and": [
           { ">": [{ "var": "event.additionalAmount" }, 0] },
-          { "<=": [{ "var": "$timestamp" }, { "var": "state.deadline" }] },
+          { "<=": [{ "var": "$ordinal" }, { "var": "state.deadline" }] },
           {
             ">": [
               {
@@ -161,7 +161,7 @@
       "guard": {
         "and": [
           { ">=": [{ "var": "state.totalPledged" }, { "var": "state.threshold" }] },
-          { ">=": [{ "var": "$timestamp" }, { "var": "state.deadline" }] }
+          { ">=": [{ "var": "$ordinal" }, { "var": "state.deadline" }] }
         ]
       },
       "effect": {
@@ -169,7 +169,7 @@
           { "var": "state" },
           {
             "status": "FUNDED",
-            "fundedAt": { "var": "$timestamp" },
+            "fundedAt": { "var": "$ordinal" },
             "stretchGoalsReached": {
               "filter": [
                 { "var": "state.stretchGoals" },
@@ -188,7 +188,7 @@
       "guard": {
         "and": [
           { "<": [{ "var": "state.totalPledged" }, { "var": "state.threshold" }] },
-          { ">=": [{ "var": "$timestamp" }, { "var": "state.deadline" }] }
+          { ">=": [{ "var": "$ordinal" }, { "var": "state.deadline" }] }
         ]
       },
       "effect": {
@@ -196,7 +196,7 @@
           { "var": "state" },
           {
             "status": "REFUNDED",
-            "refundedAt": { "var": "$timestamp" },
+            "refundedAt": { "var": "$ordinal" },
             "reason": "threshold_not_met"
           }
         ]

@@ -42,9 +42,13 @@ export type JsonLogicExpression = unknown;
 
 /**
  * Lifecycle status of a fiber.
- * Wire format: plain string.
+ * Wire format: UPPERCASE string (chain `FiberStatus` is enumeratum `Uppercase`):
+ * `ACTIVE` | `ARCHIVED` | `FAILED`. Used both as the `record.status` value and as
+ * the `?status=` query filter on the ML0 fiber endpoints.
+ *
+ * @see modules/models/.../schema/fiber/FiberStatus.scala
  */
-export type FiberStatus = 'Active' | 'Archived' | 'Failed';
+export type FiberStatus = 'ACTIVE' | 'ARCHIVED' | 'FAILED';
 
 // ---------------------------------------------------------------------------
 // Access control

@@ -36,7 +36,7 @@ describe('MetagraphClient.subscribeFiberState', () => {
     stateDataHash: 'hash1',
     sequenceNumber: 1,
     owners: ['owner1'],
-    status: 'Active',
+    status: 'ACTIVE',
     childFiberIds: []
   };
   
@@ -55,7 +55,7 @@ describe('MetagraphClient.subscribeFiberState', () => {
     stateDataHash: 'hash2',
     sequenceNumber: 2,
     owners: ['owner1'],
-    status: 'Active',
+    status: 'ACTIVE',
     childFiberIds: []
   };
   
@@ -74,7 +74,7 @@ describe('MetagraphClient.subscribeFiberState', () => {
     stateDataHash: 'hash3',
     sequenceNumber: 3,
     owners: ['owner1'],
-    status: 'Archived',
+    status: 'ARCHIVED',
     childFiberIds: []
   };
 
@@ -475,7 +475,7 @@ describe('MetagraphClient.waitForState', () => {
       stateDataHash: 'hash5',
       sequenceNumber: 5,
       owners: ['owner1'],
-      status: 'Archived',
+      status: 'ARCHIVED',
       childFiberIds: []
     };
     
@@ -535,7 +535,7 @@ describe('MetagraphClient.waitForState', () => {
       stateDataHash: 'hash3',
       sequenceNumber: 3,
       owners: ['owner1'],
-      status: 'Active',
+      status: 'ACTIVE',
       childFiberIds: []
     };
     
@@ -584,7 +584,7 @@ describe('MetagraphClient.waitForState', () => {
       stateDataHash: 'hash5',
       sequenceNumber: 5,
       owners: ['owner1'],
-      status: 'Archived',
+      status: 'ARCHIVED',
       childFiberIds: []
     };
 
@@ -625,7 +625,7 @@ describe('MetagraphClient.waitForState', () => {
       stateDataHash: 'hash1',
       sequenceNumber: 1,
       owners: ['owner1'],
-      status: 'Active',
+      status: 'ACTIVE',
       childFiberIds: []
     };
 
@@ -667,7 +667,7 @@ describe('MetagraphClient.waitForState', () => {
       stateDataHash: 'hash1',
       sequenceNumber: 1,
       owners: ['owner1'],
-      status: 'Active',
+      status: 'ACTIVE',
       childFiberIds: []
     };
     

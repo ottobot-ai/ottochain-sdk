@@ -110,7 +110,7 @@ export interface MetagraphClientConfig {
  * const onChain = await client.getOnChain();
  *
  * // Get all active state machines
- * const machines = await client.getStateMachines('Active');
+ * const machines = await client.getStateMachines('ACTIVE');
  *
  * // Get event receipts for a fiber
  * const events = await client.getStateMachineEvents(fiberId);

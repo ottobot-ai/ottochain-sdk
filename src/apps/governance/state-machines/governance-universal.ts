@@ -98,7 +98,7 @@ export const govUniversalDef = defineFiberApp({
           {
             status: "VOTING",
             proposal: { var: "event.proposal" },
-            proposedAt: { var: "$timestamp" },
+            proposedAt: { var: "$ordinal" },
             votes: {},
           },
         ],
@@ -157,7 +157,7 @@ export const govUniversalDef = defineFiberApp({
           { var: "state" },
           {
             status: "DISSOLVED",
-            dissolvedAt: { var: "$timestamp" },
+            dissolvedAt: { var: "$ordinal" },
           },
         ],
       },

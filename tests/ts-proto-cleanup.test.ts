@@ -121,13 +121,13 @@ describe('Group 4: FiberStatus Type Distinction', () => {
     expect(content).toContain('FIBER_STATUS_ACTIVE');
   });
 
-  it('wire-format FiberStatus (from src/ottochain/types.ts) should contain Active but NOT FIBER_STATUS_ACTIVE', () => {
+  it('wire-format FiberStatus (from src/ottochain/types.ts) should contain ACTIVE but NOT FIBER_STATUS_ACTIVE', () => {
     // Wire-format types use plain string enums for the metagraph REST API
     const typesPath = join(ROOT, 'src/ottochain/types.ts');
     expect(existsSync(typesPath)).toBe(true);
     const content = readFileSync(typesPath, 'utf8');
     // Should have wire-format string
-    expect(content).toContain("'Active'");
+    expect(content).toContain("'ACTIVE'");
     // Should NOT mix in proto-convention strings
     expect(content).not.toContain('FIBER_STATUS_ACTIVE');
   });

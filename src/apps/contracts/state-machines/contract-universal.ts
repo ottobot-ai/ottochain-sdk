@@ -81,7 +81,7 @@ export const contractUniversalDef = defineFiberApp({
       effect: {
         merge: [
           { var: "state" },
-          { status: "ACTIVE", acceptedAt: { var: "$timestamp" } },
+          { status: "ACTIVE", acceptedAt: { var: "$ordinal" } },
         ],
       },
       dependencies: [],
@@ -94,7 +94,7 @@ export const contractUniversalDef = defineFiberApp({
       effect: {
         merge: [
           { var: "state" },
-          { status: "CANCELLED", cancelledAt: { var: "$timestamp" } },
+          { status: "CANCELLED", cancelledAt: { var: "$ordinal" } },
         ],
       },
       dependencies: [],
@@ -107,7 +107,7 @@ export const contractUniversalDef = defineFiberApp({
       effect: {
         merge: [
           { var: "state" },
-          { status: "COMPLETED", completedAt: { var: "$timestamp" } },
+          { status: "COMPLETED", completedAt: { var: "$ordinal" } },
         ],
       },
       dependencies: [],
@@ -120,7 +120,7 @@ export const contractUniversalDef = defineFiberApp({
       effect: {
         merge: [
           { var: "state" },
-          { status: "CANCELLED", cancelledAt: { var: "$timestamp" } },
+          { status: "CANCELLED", cancelledAt: { var: "$ordinal" } },
         ],
       },
       dependencies: [],

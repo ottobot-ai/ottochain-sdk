@@ -59,7 +59,7 @@
           { "var": "state" },
           {
             "status": "OPEN",
-            "openedAt": { "var": "$timestamp" },
+            "openedAt": { "var": "$ordinal" },
             "orders": [],
             "totalQuantity": 0,
             "currentTier": 0
@@ -80,7 +80,7 @@
           { "var": "state" },
           {
             "status": "CANCELLED",
-            "cancelledAt": { "var": "$timestamp" }
+            "cancelledAt": { "var": "$ordinal" }
           }
         ]
       },
@@ -99,7 +99,7 @@
               { "<=": [{ "var": "event.quantity" }, { "var": "state.maxPerBuyer" }] }
             ]
           },
-          { "<=": [{ "var": "$timestamp" }, { "var": "state.deadline" }] }
+          { "<=": [{ "var": "$ordinal" }, { "var": "state.deadline" }] }
         ]
       },
       "effect": {
@@ -114,7 +114,7 @@
                     "buyer": { "var": "event.agent" },
                     "quantity": { "var": "event.quantity" },
                     "shippingInfo": { "var": "event.shippingInfo" },
-                    "orderedAt": { "var": "$timestamp" }
+                    "orderedAt": { "var": "$ordinal" }
                   }
                 ]
               ]
@@ -139,7 +139,7 @@
           { "var": "state" },
           {
             "status": "THRESHOLD_MET",
-            "thresholdMetAt": { "var": "$timestamp" },
+            "thresholdMetAt": { "var": "$ordinal" },
             "currentTier": {
               "reduce": [
                 { "var": "state.priceTiers" },
@@ -165,7 +165,7 @@
       "guard": {
         "and": [
           { ">": [{ "var": "event.quantity" }, 0] },
-          { "<=": [{ "var": "$timestamp" }, { "var": "state.deadline" }] }
+          { "<=": [{ "var": "$ordinal" }, { "var": "state.deadline" }] }
         ]
       },
       "effect": {
@@ -180,7 +180,7 @@
                     "buyer": { "var": "event.agent" },
                     "quantity": { "var": "event.quantity" },
                     "shippingInfo": { "var": "event.shippingInfo" },
-                    "orderedAt": { "var": "$timestamp" }
+                    "orderedAt": { "var": "$ordinal" }
                   }
                 ]
               ]
@@ -216,14 +216,14 @@
       "to": "PROCESSING",
       "eventName": "finalize",
       "guard": {
-        ">=": [{ "var": "$timestamp" }, { "var": "state.deadline" }]
+        ">=": [{ "var": "$ordinal" }, { "var": "state.deadline" }]
       },
       "effect": {
         "merge": [
           { "var": "state" },
           {
             "status": "PROCESSING",
-            "finalizedAt": { "var": "$timestamp" },
+            "finalizedAt": { "var": "$ordinal" },
             "finalTier": { "var": "state.currentTier" },
             "finalPricePerUnit": {
               "var": {
@@ -250,7 +250,7 @@
           { "var": "state" },
           {
             "status": "FULFILLED",
-            "fulfilledAt": { "var": "$timestamp" },
+            "fulfilledAt": { "var": "$ordinal" },
             "trackingInfo": { "var": "event.trackingInfo" }
           }
         ]
@@ -264,7 +264,7 @@
       "guard": {
         "and": [
           { "<": [{ "var": "state.totalQuantity" }, { "var": "state.minQuantity" }] },
-          { ">=": [{ "var": "$timestamp" }, { "var": "state.deadline" }] }
+          { ">=": [{ "var": "$ordinal" }, { "var": "state.deadline" }] }
         ]
       },
       "effect": {
@@ -272,7 +272,7 @@
           { "var": "state" },
           {
             "status": "REFUNDED",
-            "refundedAt": { "var": "$timestamp" },
+            "refundedAt": { "var": "$ordinal" },
             "reason": "threshold_not_met"
           }
         ]

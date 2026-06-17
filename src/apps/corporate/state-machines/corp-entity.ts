@@ -460,7 +460,7 @@ export const corpEntityDef = defineFiberApp({
           {
             status: "ACTIVE",
             formationDate: { var: "event.approvalDate" },
-            updatedAt: { var: "$timestamp" },
+            updatedAt: { var: "$ordinal" },
           },
         ],
       },
@@ -505,7 +505,7 @@ export const corpEntityDef = defineFiberApp({
                 { var: "state.legalName" },
               ],
             },
-            updatedAt: { var: "$timestamp" },
+            updatedAt: { var: "$ordinal" },
           },
         ],
       },

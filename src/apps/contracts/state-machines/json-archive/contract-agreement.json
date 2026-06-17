@@ -100,7 +100,7 @@
           {
             "status": "ACTIVE",
             "acceptedAt": {
-              "var": "$timestamp"
+              "var": "$ordinal"
             }
           }
         ]
@@ -129,7 +129,7 @@
           {
             "status": "REJECTED",
             "rejectedAt": {
-              "var": "$timestamp"
+              "var": "$ordinal"
             },
             "rejectReason": {
               "var": "event.reason"
@@ -161,7 +161,7 @@
           {
             "status": "CANCELLED",
             "cancelledAt": {
-              "var": "$timestamp"
+              "var": "$ordinal"
             }
           }
         ]
@@ -241,7 +241,7 @@
                       "var": "event.proof"
                     },
                     "submittedAt": {
-                      "var": "$timestamp"
+                      "var": "$ordinal"
                     }
                   }
                 ]
@@ -274,7 +274,7 @@
           {
             "status": "COMPLETED",
             "completedAt": {
-              "var": "$timestamp"
+              "var": "$ordinal"
             }
           }
         ]
@@ -317,7 +317,7 @@
           {
             "status": "DISPUTED",
             "disputedAt": {
-              "var": "$timestamp"
+              "var": "$ordinal"
             },
             "disputeReason": {
               "var": "event.reason"
@@ -369,7 +369,7 @@
           {
             "status": "COMPLETED",
             "resolvedAt": {
-              "var": "$timestamp"
+              "var": "$ordinal"
             },
             "resolution": {
               "var": "event.resolution"
@@ -418,7 +418,7 @@
           {
             "status": "CANCELLED",
             "cancelledAt": {
-              "var": "$timestamp"
+              "var": "$ordinal"
             }
           }
         ]
