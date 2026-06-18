@@ -28,9 +28,11 @@ describe('canonicalize', () => {
       expect(result).toBe('{"text":"caf\u00e9"}');
     });
 
-    it('should handle null values', () => {
+    it('drops null object fields (server-aligned canonicalize, metakit 1.8.x)', () => {
+      // metakit-sdk 1.8.x canonicalize = serializeJcs(dropNullFields): null object-fields are
+      // dropped before RFC 8785, matching the chain, so explicit-null == absent.
       const result = canonicalize({ a: null, b: 1 });
-      expect(result).toBe('{"a":null,"b":1}');
+      expect(result).toBe('{"b":1}');
     });
 
     it('should handle boolean values', () => {
