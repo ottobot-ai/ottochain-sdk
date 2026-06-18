@@ -21,6 +21,11 @@
       "require": "./dist/cjs/ottochain/index.js",
       "types": "./dist/types/ottochain/index.d.ts"
     },
+    "./zk": {
+      "import": "./dist/esm/zk/index.js",
+      "require": "./dist/cjs/zk/index.js",
+      "types": "./dist/types/zk/index.d.ts"
+    },
     "./apps/identity": {
       "import": "./dist/esm/apps/identity/index.js",
       "require": "./dist/cjs/apps/identity/index.js",
@@ -109,6 +114,7 @@
     "@bufbuild/protobuf": "^2.12.0",
     "@constellation-network/metagraph-sdk": "1.8.0-rc.4",
     "@constellation-network/metagraph-sdk-jlvm": "1.8.0-rc.4",
+    "@noble/hashes": "^1.8.0",
     "@stardust-collective/dag4": "^2.6.0",
     "@stardust-collective/dag4-keystore": "^2.6.0",
     "canonicalize": "^3.0.0",
