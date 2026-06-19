@@ -4,6 +4,17 @@
 
 Status: design. Grounded in OttoChain whitepaper v0.4 §6, and in shipped machinery across `metakit-sdk` and `ottochain`. This document **reopens** the previously-declined "client-held private state / client-side-proven logic" path; those declines were feasibility-scoped, and the feasibility has changed.
 
+> **Superseded-by-implementation (2026-06-19).** The semi-private tier (§3.1) has since shipped as the
+> `@ottochain/sdk/zk` slice (`src/zk/`); the worked design-of-record is `docs/design/zk-loan-app.md` +
+> the shipped `src/zk/guard.ts`. The on-chain guard snippets in §3.1–§3.3 below were written before that
+> code landed and carried two errors, **now reconciled to the shipped guard**:
+> 1. `groth16_verify` arg order is **`[vkey, publicValues, proof]`** (not `[proof, publicValues, vkey]`).
+> 2. `publicValues` is an opaque `0x` + 256-hex blob (`exprHash | dataHash | outputHash | ok`), **not** a
+>    readable JSON object — word `w` is read with `cat("0x", substr(publicValues, 64·w + 2, 64))`
+>    (`w`: 0=exprHash, 1=dataHash, 2=outputHash, 3=ok; the `ok` bit is the final hex pair of word 3 == `"01"`).
+>
+> Kept as a design reference for the three-tier model and the still-unbuilt private tier (§3.2).
+
 ---
 
 ## 1. Thesis
@@ -125,10 +136,10 @@ CRITICAL nuance from `docs/signing-and-publishing.md`: because the chain re-fill
 ```jsonc
 { "from":"OPEN", "to":"BID_RECORDED", "eventName":"submitBid",
   "guard": { "and": [
-    { "groth16_verify": [ {"var":"witness.proof"}, {"var":"witness.publicValues"}, {"var":"$VK_ROOT"} ] },
-    { "==": [ {"var":"witness.publicValues.exprHash"},  {"var":"$selfLogicHash"} ] },
-    { "==": [ {"var":"witness.publicValues.outputHash"}, {"var":"$keccakTrue"}    ] },
-    { "var": "witness.publicValues.ok" } ] },
+    { "groth16_verify": [ {"var":"$VK_ROOT"}, {"var":"witness.publicValues"}, {"var":"witness.proof"} ] },
+    { "==": [ { "cat": ["0x", {"substr":[{"var":"witness.publicValues"}, 2, 64]}] },   {"var":"$selfLogicHash"} ] },
+    { "==": [ { "cat": ["0x", {"substr":[{"var":"witness.publicValues"}, 130, 64]}] }, {"var":"$keccakTrue"}    ] },
+    { "==": [ {"substr":[{"var":"witness.publicValues"}, 256, 2]}, "01" ] } ] },
   "effect": { "merge": [ {"var":"state"},
     { "bids": { "append": [ {"var":"state.bids"}, {"var":"event.commitment"} ] } } ] } }
 ```
@@ -164,10 +175,10 @@ To transition: the client runs the readable transition locally (Rust/TS JLVM) to
 ```jsonc
 { "from":"ACTIVE", "to":"ACTIVE", "eventName":"advance",
   "guard": { "and": [
-    { "groth16_verify": [ {"var":"witness.proof"}, {"var":"witness.publicValues"}, {"var":"$VK_ROOT"} ] },
-    { "==": [ {"var":"witness.publicValues.exprHash"},   {"var":"state.logicHash"} ] },
-    { "var": "witness.publicValues.ok" },
-    { "==": [ {"var":"witness.publicValues.outputHash"}, {"var":"event.newCommitment"} ] },
+    { "groth16_verify": [ {"var":"$VK_ROOT"}, {"var":"witness.publicValues"}, {"var":"witness.proof"} ] },
+    { "==": [ { "cat": ["0x", {"substr":[{"var":"witness.publicValues"}, 2, 64]}] },   {"var":"state.logicHash"} ] },
+    { "==": [ {"substr":[{"var":"witness.publicValues"}, 256, 2]}, "01" ] },
+    { "==": [ { "cat": ["0x", {"substr":[{"var":"witness.publicValues"}, 130, 64]}] }, {"var":"event.newCommitment"} ] },
     { "mpt_verify": [ {"var":"event.prevCommitment"}, {"var":"event.merkleProof"}, {"var":"state.stateRoot"} ] },
     { "not": [ { "in": [ {"var":"event.nullifier"}, {"var":"state.nullifierSet"} ] } ] } ] },
   "effect": { "merge": [ {"var":"state"}, {
@@ -192,8 +203,10 @@ Assets map onto the same three settings using the shipped shielded circuit for t
   // publicValues = { anchor, nullifiers:[nf0..], outputCms:[cm0..], fee }
   { "from":"LIVE", "to":"LIVE", "eventName":"shieldedTransfer",
     "guard": { "and": [
-      { "groth16_verify": [ {"var":"witness.proof"}, {"var":"witness.publicValues"}, {"var":"$SHIELDED_VK_ROOT"} ] },
-      { "==": [ {"var":"witness.publicValues.anchor"}, {"var":"state.anchor"} ] },
+      { "groth16_verify": [ {"var":"$SHIELDED_VK_ROOT"}, {"var":"witness.publicValues"}, {"var":"witness.proof"} ] },
+      { "==": [ { "cat": ["0x", {"substr":[{"var":"witness.publicValues"}, 2, 64]}] }, {"var":"state.anchor"} ] },
+      // nullifiers[]/outputCms[] are the shielded circuit's variable-length PV words, decoded by the
+      // shielded policy's own word layout (NOT the fixed 4-word zk-jlvm layout above) — shown illustratively:
       { "all": [ {"var":"witness.publicValues.nullifiers"},
                  { "not": [ { "in": [ {"var":""}, {"var":"state.nullifierSet"} ] } ] } ] } ] },
     "effect": { /* append nullifiers, insert outputCms into the tree, advance anchor */ } }
@@ -299,7 +312,7 @@ sdk.preExecute(guardExpr, fullData);   // evaluateWithGas
 
 ```jsonc
 // semi-private bid in [0, max] vs committed cm — verified with the EXISTING opcode + universal VK_ROOT
-{ "groth16_verify": [ {"var":"witness.proof"}, {"var":"$RANGE_GUEST_VKEY"}, {"var":"witness.publicValues"} ] }
+{ "groth16_verify": [ {"var":"$RANGE_GUEST_VKEY"}, {"var":"witness.publicValues"}, {"var":"witness.proof"} ] }
 ```
 
 **When a native transparent range opcode is worth adding — and only then.** Bulletproofs (674-byte 64-bit proof, ~2.3 ms verify, no setup, but **O(n)** verify), Halo2-IPA (transparent, recursive, non-constant verify), and STARK (transparent, post-quantum, tens-to-hundreds of KB) are all feasible **additive** verifiers — but each is **new audited on-chain code** with verification that **competes poorly** with the constant 250k-gas `groth16_verify`, and each **duplicates** the SP1-guest capability under the existing `VK_ROOT`. **Verdict:** do **not** add one by default. Reserve it strictly for a future **proving-cost-bound** workload (very high-frequency confidential values where the SP1 *prover* — not verifier — dominates), the narrow case where Bulletproofs' cheaper prover and no-RISC-V overhead decide it.
