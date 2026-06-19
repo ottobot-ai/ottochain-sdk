@@ -39,7 +39,9 @@ export type {
   SchemaRef,
   FieldShape,
   MessageShape,
-  SchemaShape,
+  MachineShape,
+  ScriptShape,
+  RegistryShape,
   SchemaBinding,
   RegisteredVersion,
   VersionLineage,
@@ -52,6 +54,7 @@ export type {
   ScriptInvocation,
   CreationReceipt,
   UpgradeReceipt,
+  RejectionReceipt,
   FiberLogEntry,
 
   // Fiber records
@@ -73,15 +76,33 @@ export type {
   UpgradeFiber,
   CreateScript,
   InvokeScript,
-  PublishVersion,
+  UpgradeScript,
+  PublishMachineVersion,
+  PublishScriptVersion,
   SetVersionStatus,
   RegisterAlias,
+  CreateAssetPolicy,
+  MintAsset,
+  ApplyMorphism,
+  AuthorizeCompose,
   OttochainMessage,
   OttochainMessageType,
+
+  // Asset model
+  MorphismKind,
+  MorphismVisibility,
+  TokenBehavior,
+  SupplyPolicy,
+  MorphismSpec,
+  AssetHolder,
+  OriginProvenance,
+  ComponentWitness,
+  AssetRecord,
+  AssetCommit,
 } from './types.js';
 
 // Runtime message type validation
-export { OTTOCHAIN_MESSAGE_TYPES } from './types.js';
+export { OTTOCHAIN_MESSAGE_TYPES, TOKEN_BEHAVIOR_BITS } from './types.js';
 
 // Snapshot decoder
 export type { CurrencySnapshotResponse } from './snapshot.js';
@@ -98,6 +119,8 @@ export {
 // Metagraph client
 export type {
   Checkpoint,
+  StateProof,
+  FeeEstimate,
   MetagraphClientConfig,
   SubscribeOptions,
   FiberStateCallback,
@@ -116,6 +139,10 @@ export {
   createStateMachinePayload,
   createScriptPayload,
   createDataTransactionRequest,
+  createAssetPolicyPayload,
+  createMintAssetPayload,
+  createApplyMorphismPayload,
+  createAuthorizeComposePayload,
 } from './transaction.js';
 
 export type {
@@ -140,7 +167,7 @@ export { buildGenesisManifest, GENESIS_MANIFEST_VERSION } from './genesis-manife
 export type {
   GenesisManifest,
   GenesisPackage,
-  SchemaShape as GenesisSchemaShape,
+  MachineShape as GenesisMachineShape,
   MessageShape as GenesisMessageShape,
   FieldShape as GenesisFieldShape,
   StateMachineDefinition as GenesisStateMachineDefinition,

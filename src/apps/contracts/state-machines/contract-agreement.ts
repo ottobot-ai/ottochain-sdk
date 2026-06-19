@@ -157,7 +157,7 @@ export const contractAgreementDef = defineFiberApp({
       effect: {
         merge: [
           { var: "state" },
-          { status: "ACTIVE", acceptedAt: { var: "$timestamp" } },
+          { status: "ACTIVE", acceptedAt: { var: "$ordinal" } },
         ],
       },
       dependencies: [],
@@ -172,7 +172,7 @@ export const contractAgreementDef = defineFiberApp({
           { var: "state" },
           {
             status: "REJECTED",
-            rejectedAt: { var: "$timestamp" },
+            rejectedAt: { var: "$ordinal" },
             rejectReason: { var: "event.reason" },
           },
         ],
@@ -187,7 +187,7 @@ export const contractAgreementDef = defineFiberApp({
       effect: {
         merge: [
           { var: "state" },
-          { status: "CANCELLED", cancelledAt: { var: "$timestamp" } },
+          { status: "CANCELLED", cancelledAt: { var: "$ordinal" } },
         ],
       },
       dependencies: [],
@@ -229,7 +229,7 @@ export const contractAgreementDef = defineFiberApp({
                   {
                     agent: { var: "event.agent" },
                     proof: { var: "event.proof" },
-                    submittedAt: { var: "$timestamp" },
+                    submittedAt: { var: "$ordinal" },
                   },
                 ],
               ],
@@ -247,7 +247,7 @@ export const contractAgreementDef = defineFiberApp({
       effect: {
         merge: [
           { var: "state" },
-          { status: "COMPLETED", completedAt: { var: "$timestamp" } },
+          { status: "COMPLETED", completedAt: { var: "$ordinal" } },
         ],
       },
       dependencies: [],
@@ -267,7 +267,7 @@ export const contractAgreementDef = defineFiberApp({
           { var: "state" },
           {
             status: "DISPUTED",
-            disputedAt: { var: "$timestamp" },
+            disputedAt: { var: "$ordinal" },
             disputeReason: { var: "event.reason" },
             disputedBy: { var: "event.agent" },
           },
@@ -295,7 +295,7 @@ export const contractAgreementDef = defineFiberApp({
           { var: "state" },
           {
             status: "COMPLETED",
-            resolvedAt: { var: "$timestamp" },
+            resolvedAt: { var: "$ordinal" },
             resolution: { var: "event.resolution" },
             rulingId: { var: "event.rulingId" },
           },
@@ -316,7 +316,7 @@ export const contractAgreementDef = defineFiberApp({
       effect: {
         merge: [
           { var: "state" },
-          { status: "CANCELLED", cancelledAt: { var: "$timestamp" } },
+          { status: "CANCELLED", cancelledAt: { var: "$ordinal" } },
         ],
       },
       dependencies: [],

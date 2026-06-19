@@ -34,7 +34,7 @@
           {
             "status": "VOTING",
             "proposal": { "var": "event.proposal" },
-            "proposedAt": { "var": "$timestamp" },
+            "proposedAt": { "var": "$ordinal" },
             "votes": {}
           }
         ]
@@ -93,7 +93,7 @@
           { "var": "state" },
           {
             "status": "DISSOLVED",
-            "dissolvedAt": { "var": "$timestamp" }
+            "dissolvedAt": { "var": "$ordinal" }
           }
         ]
       },

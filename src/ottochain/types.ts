@@ -42,9 +42,13 @@ export type JsonLogicExpression = unknown;
 
 /**
  * Lifecycle status of a fiber.
- * Wire format: plain string.
+ * Wire format: UPPERCASE string (chain `FiberStatus` is enumeratum `Uppercase`):
+ * `ACTIVE` | `ARCHIVED` | `FAILED`. Used both as the `record.status` value and as
+ * the `?status=` query filter on the ML0 fiber endpoints.
+ *
+ * @see modules/models/.../schema/fiber/FiberStatus.scala
  */
-export type FiberStatus = 'Active' | 'Archived' | 'Failed';
+export type FiberStatus = 'ACTIVE' | 'ARCHIVED' | 'FAILED';
 
 // ---------------------------------------------------------------------------
 // Access control
@@ -133,7 +137,9 @@ export interface SchemaRef {
 /**
  * One field of a {@link MessageShape} — mirrors a protobuf `FieldDescriptorProto`
  * at the field level (name + field number + type).
- * Wire format: `repeated`/`optional` default to `false` and are omittable.
+ * Wire format: `repeated`/`optional` are REQUIRED Booleans with NO chain default. The
+ * SDK MUST send them — they ride inside the signed `MachineShape`/`ScriptShape` payload,
+ * and omitting a no-default field diverges the canonical (decode failure / InvalidSignature).
  *
  * @see modules/models/.../schema/registry/SchemaShape.scala
  */
@@ -141,8 +147,8 @@ export interface FieldShape {
   name: string;
   number: number;
   typeName: string;
-  repeated?: boolean;
-  optional?: boolean;
+  repeated: boolean;
+  optional: boolean;
 }
 
 /**
@@ -156,16 +162,47 @@ export interface MessageShape {
 }
 
 /**
- * The on-chain projection of a version's proto schema: the State message plus one
- * message per command/event (keyed by event name). Publisher-claimed and advisory.
+ * The on-chain projection of a STATE-MACHINE version's proto schema: the State message
+ * plus one message per command/event (keyed by event name). Publisher-claimed and advisory.
+ * (Chain `MachineShape`; supersedes the old loose `SchemaShape`.)
  *
  * @see modules/models/.../schema/registry/SchemaShape.scala
  */
-export interface SchemaShape {
+export interface MachineShape {
   stateMessage: MessageShape;
   /** One message per command/event, keyed by event name. */
   commands: Record<string, MessageShape>;
 }
+
+/**
+ * The on-chain projection of a SCRIPT version's surface. Chain `ScriptShape` is a sealed
+ * ADT with one variant today, `MethodDispatch`, encoded directly as `{ methods: {...} }`
+ * (the `methods` key discriminates from future variants).
+ *
+ * @see modules/models/.../schema/registry/SchemaShape.scala
+ */
+export interface ScriptShape {
+  /** One {@link MessageShape} per callable method, keyed by method name. */
+  methods: Record<string, MessageShape>;
+}
+
+/**
+ * The advisory schema projection stored in a {@link RegisteredVersion}, discriminated by
+ * inner field names (no explicit tag): `machineShape` (state-machine package), `scriptShape`
+ * (script package), or the AssetPolicy fields (`behavior`/`supply`/`morphisms`/`stateShape`).
+ *
+ * @see modules/models/.../schema/registry/SchemaShape.scala (RegistryShape ADT)
+ */
+export type RegistryShape =
+  | { machineShape: MachineShape }
+  | { scriptShape: ScriptShape }
+  // AssetPolicy package projection (asset-model.md §5a).
+  | {
+      behavior: TokenBehavior;
+      supply: SupplyPolicy;
+      morphisms: Record<string, MorphismSpec>;
+      stateShape: MessageShape;
+    };
 
 /**
  * The resolved, pinned binding recorded on a fiber: which registry (name, version) it
@@ -185,8 +222,9 @@ export interface SchemaBinding {
 
 /**
  * One immutable version of a registry entry. The chain commits only the hashes + the
- * typed {@link SchemaShape} projection (never the descriptor or definition bytes).
- * Wire format: `strict` defaults to `false` and is omittable.
+ * typed {@link RegistryShape} projection (never the descriptor or definition bytes).
+ * Wire format: `strict` is a REQUIRED Boolean (the chain has no default — read responses
+ * always carry it, and signed publish messages MUST send it).
  *
  * @see modules/models/.../schema/registry/RegisteredVersion.scala
  */
@@ -196,12 +234,13 @@ export interface RegisteredVersion {
   schemaHash: string;
   /** The verified-binding anchor: `StateMachineDefinition.computeDigest` of the logic. */
   logicHash: string;
-  schemaShape: SchemaShape;
+  /** The kind-correct advisory projection (Machine | Script | AssetPolicy). */
+  shape: RegistryShape;
   status: RegistryStatus;
   /** Snapshot ordinal at which this version was registered. */
   registeredAt: number;
-  /** Opt-in runtime conformance gate (#33); defaults to `false`. */
-  strict?: boolean;
+  /** Opt-in runtime conformance gate (#33). Required on the wire. */
+  strict: boolean;
 }
 
 /**
@@ -229,7 +268,9 @@ export interface VersionLineage {
  */
 export type RegistryTarget =
   | { SchemaPackage: { versions: VersionLineage } }
-  | { InstanceAlias: { fiberId: string } };
+  | { InstanceAlias: { fiberId: string } }
+  // `.asset` name → a versioned asset-policy type (each version's shape is RegistryShape.AssetPolicy).
+  | { AssetPolicyPackage: { versions: VersionLineage } };
 
 /**
  * A single owned entry in the registry namespace: a name -> a discriminated
@@ -326,9 +367,31 @@ export interface UpgradeReceipt {
 }
 
 /**
+ * Emitted when an update that reached `combine` is rejected by a deterministic business rule
+ * (unauthorized, non-monotonic, sequence-number mismatch, conformance violation, reserved label).
+ * The update does NOT mutate state — this is the on-chain, auditable record that it was processed
+ * and rejected, and the ONLY signal distinguishing "submitted-but-rejected" from "not-yet-processed".
+ * `fiberId` is the update's routing id (target fiber, or the registry routing id for registry ops).
+ *
+ * @see modules/models/.../schema/fiber/FiberLogEntry.scala
+ */
+export interface RejectionReceipt {
+  fiberId: string;
+  ordinal: number;
+  /** The rejected update's message name (e.g. "TransitionStateMachine"). */
+  updateType: string;
+  reason: string;
+}
+
+/**
  * Union type for all fiber log entries.
  */
-export type FiberLogEntry = EventReceipt | ScriptInvocation | CreationReceipt | UpgradeReceipt;
+export type FiberLogEntry =
+  | EventReceipt
+  | ScriptInvocation
+  | CreationReceipt
+  | UpgradeReceipt
+  | RejectionReceipt;
 
 // ---------------------------------------------------------------------------
 // Fiber records
@@ -355,6 +418,8 @@ export interface StateMachineFiberRecord {
   childFiberIds: string[];
   /** The resolved, pinned registry binding (#26), present when created from a registered version. */
   schemaBinding?: SchemaBinding;
+  /** DAG addresses authorized to sign transitions (multi-party); seeded from `CreateStateMachine.participants`. */
+  authorizedSigners?: string[];
 }
 
 /**
@@ -372,6 +437,8 @@ export interface ScriptFiberRecord {
   owners: string[];  // Plain string array
   status: FiberStatus;
   lastInvocation?: ScriptInvocation;
+  /** The resolved, pinned registry binding, present when created from a registered version. */
+  schemaBinding?: SchemaBinding;
 }
 
 /**
@@ -400,6 +467,8 @@ export interface OnChain {
   latestLogs: Record<string, FiberLogEntry[]>;
   /** Per-registry-entry commitment hash, keyed by full registry name `labels.tld`. */
   registryCommits: Record<string, string>;
+  /** Per-asset L1 fast-path commit (behavior bits + sequence), keyed by asset UUID. */
+  assetCommits: Record<string, AssetCommit>;
 }
 
 // ---------------------------------------------------------------------------
@@ -416,6 +485,10 @@ export interface CalculatedState {
   registry: Record<string, RegistryEntry>;
   /** Reverse records (#29): fiber UUID -> its canonical registered name. */
   reverseNames: Record<string, string>;
+  /** Asset instances (asset-model §5b): asset UUID -> AssetRecord (a dedicated record, not a fiber). */
+  assets: Record<string, AssetRecord>;
+  /** Used commit-reveal nonces per asset UUID; bounded (pruned past expiresAt in combine). */
+  usedNonces: Record<string, number[]>;
 }
 
 // ---------------------------------------------------------------------------
@@ -468,12 +541,26 @@ export interface CreateScript {
 }
 
 /**
- * Invoke a script script.
+ * Invoke a script method.
  */
 export interface InvokeScript {
   fiberId: string;
   method: string;
   args: JsonLogicValue;
+  targetSequenceNumber: number;
+}
+
+/**
+ * Upgrade an existing script fiber to a different registered version of the SAME package.
+ * The chain verifies `newProgram` hashes to the target version's `logicHash`, applies the
+ * optional `migration` (a JSON-Logic transform of the prior state data), and re-pins the binding.
+ */
+export interface UpgradeScript {
+  fiberId: string;
+  targetRef: SchemaRef;
+  newProgram: JsonLogicExpression;
+  /** Optional JSON-Logic transform applied to the prior state data during upgrade. */
+  migration?: JsonLogicExpression;
   targetSequenceNumber: number;
 }
 
@@ -493,24 +580,48 @@ export interface UpgradeFiber {
 }
 
 /**
- * Create-or-append a registry schema-package version (npm-publish semantics): the first publish
- * for a name claims it and makes the signer the owner; later publishes require an existing owner.
+ * Create-or-append a registry version for a STATE-MACHINE package (npm-publish semantics): the
+ * first publish for a name claims it and makes the signer the owner; later publishes require an
+ * existing owner. The chain split the old `PublishVersion` into machine/script variants — this is
+ * the machine half.
  *
  * Note: `fiberId` is NOT on the wire — the chain derives the routing id from `name`.
  */
-export interface PublishVersion {
+export interface PublishMachineVersion {
   /** Full registry name `labels.tld` (e.g. "order.package"). */
   name: string;
   version: SemVer;
   /** Base64 of the proto FileDescriptorSet; the chain base64-validates + hashes it, then drops the bytes. */
   schemaB64: string;
   /** The typed proto projection the chain stores for discovery (advisory). */
-  schemaShape: SchemaShape;
+  machineShape: MachineShape;
   /** The typed JSON-Logic state machine; hashed into `logicHash` for verified binding (#37). */
   definition: StateMachineDefinition;
-  /** Opt-in runtime conformance gate (#33); defaults to `false`, omittable. */
-  strict?: boolean;
-  /** Optional off-chain links grab-bag set on the entry at first publish; defaults to `{}`, omittable. */
+  /** Opt-in runtime conformance gate (#33). REQUIRED — the chain has no default; omitting it diverges the signed canonical. */
+  strict: boolean;
+  /** Optional off-chain links grab-bag set on the entry at first publish; omittable (`None`). */
+  metadata?: Record<string, string>;
+}
+
+/**
+ * Create-or-append a registry version for a SCRIPT package — parallel to {@link PublishMachineVersion}
+ * but carrying a `scriptProgram` (JSON-Logic) instead of a state-machine `definition`.
+ *
+ * Note: `fiberId` is NOT on the wire — the chain derives the routing id from `name`.
+ */
+export interface PublishScriptVersion {
+  /** Full registry name `labels.tld`. */
+  name: string;
+  version: SemVer;
+  /** Base64 of the proto FileDescriptorSet; the chain base64-validates + hashes it, then drops the bytes. */
+  schemaB64: string;
+  /** The typed method-surface projection the chain stores for discovery (advisory). */
+  scriptShape: ScriptShape;
+  /** The typed JSON-Logic script; hashed into `logicHash` for verified binding (#37). */
+  scriptProgram: JsonLogicExpression;
+  /** Opt-in runtime conformance gate (#33). REQUIRED — omitting it diverges the signed canonical. */
+  strict: boolean;
+  /** Optional off-chain links grab-bag; omittable (`None`). */
   metadata?: Record<string, string>;
 }
 
@@ -539,6 +650,214 @@ export interface RegisterAlias {
   metadata?: Record<string, string>;
 }
 
+// ---------------------------------------------------------------------------
+// Asset model (asset-model.md) — types
+// ---------------------------------------------------------------------------
+
+/**
+ * Typed asset morphism verb. Wire form: the UPPERCASE entry name (also used as a `morphisms` map key).
+ * @see modules/models/.../schema/asset/MorphismKind.scala
+ */
+export type MorphismKind =
+  | 'TRANSFER' | 'BURN' | 'FRACTIONALIZE' | 'COMPOSE' | 'DECOMPOSE' | 'POOL' | 'WRAP' | 'STAKE';
+
+/**
+ * Access-control level of one morphism on an asset policy. Wire form: UPPERCASE entry name.
+ * @see modules/models/.../schema/asset/MorphismVisibility.scala
+ */
+export type MorphismVisibility = 'PUBLIC' | 'GOVERNED' | 'DISABLED';
+
+/**
+ * A token's 5-bit behavioral capability surface, packed into a single Int (the wire form):
+ * `T=16` transferable, `S=8` splittable, `C=4` combinable, `E=2` expirable, `G=1` governable
+ * (e.g. NFT=16, Fungible=28, FullFeatured=31). Matches `AssetCommit.behavior`.
+ * @see modules/models/.../schema/asset/TokenBehavior.scala
+ */
+export type TokenBehavior = number;
+
+/** Bit weights for {@link TokenBehavior} (T=16, S=8, C=4, E=2, G=1). */
+export const TOKEN_BEHAVIOR_BITS = {
+  transferable: 16,
+  splittable: 8,
+  combinable: 4,
+  expirable: 2,
+  governable: 1,
+} as const;
+
+/**
+ * Supply authority for an asset policy version (orthogonal to instance {@link TokenBehavior}).
+ * All fields omittable (`None`).
+ * @see modules/models/.../schema/asset/SupplyPolicy.scala
+ */
+export interface SupplyPolicy {
+  /** Hard cap on derived total supply; omit = uncapped. */
+  maxSupply?: number;
+  /** JSON-Logic predicate gating new supply; omit = minting closed after genesis. */
+  mintPolicy?: JsonLogicExpression;
+  /** JSON-Logic predicate gating destruction; omit = no burning. */
+  burnPolicy?: JsonLogicExpression;
+  /** Fractional precision for splittable fungibles; omit/0 for NFTs. */
+  decimals?: number;
+}
+
+/**
+ * Per-morphism policy spec, layered on the morphism's fixed structural domain guard.
+ * `visibility` is REQUIRED; the allowlist/guard refinements are omittable.
+ * @see modules/models/.../schema/asset/MorphismSpec.scala
+ */
+export interface MorphismSpec {
+  visibility: MorphismVisibility;
+  /** Counter-party policy allowlist (registry names); omit = any. */
+  allowedPolicies?: string[];
+  /** Counter-party behavior-bitmask allowlist (packed {@link TokenBehavior} ints); omit = any. */
+  allowedTypes?: number[];
+  /** Optional extra JSON-Logic predicate — the `witness`-gated guard lives here. */
+  guard?: JsonLogicExpression;
+}
+
+/**
+ * Who holds an asset instance: an ordinary wallet, or a live fiber (escrow / pool / vault).
+ * Wire form: single-key variant `{"Wallet":{"address":..}}` / `{"Fiber":{"fiberId":..}}`.
+ * @see modules/models/.../schema/asset/AssetHolder.scala
+ */
+export type AssetHolder =
+  | { Wallet: { address: string } }
+  | { Fiber: { fiberId: string } };
+
+/**
+ * Cross-chain provenance for a bridged-in (wrapped) asset (the IBC denom-trace analogue).
+ * @see modules/models/.../schema/asset/OriginProvenance.scala
+ */
+export interface OriginProvenance {
+  originChainId: string;
+  originAssetRef: string;
+  fullPath: string[];
+  attestationHash: string;
+}
+
+/**
+ * The committed snapshot of ONE component consumed into a composite at `Compose` — the reveal
+ * witness that makes `Decompose` a faithful retraction (rides `ApplyMorphism.priorComponents`).
+ * @see modules/models/.../schema/asset/ComponentWitness.scala
+ */
+export interface ComponentWitness {
+  assetId: string;
+  schemaBinding: SchemaBinding;
+  behavior: TokenBehavior;
+  holder: AssetHolder;
+  amount: number;
+  expiresAt?: number;
+  componentFiberIds?: string[];
+  componentsCommitment?: string;
+  provenance?: OriginProvenance;
+}
+
+/**
+ * An asset INSTANCE record (NOT a fiber). Lives in {@link CalculatedState} `assets`; its behavior
+ * lives in the bound policy version, pinned via {@link SchemaBinding}.
+ * @see modules/models/.../schema/Records.scala (AssetRecord)
+ */
+export interface AssetRecord {
+  assetId: string;
+  schemaBinding: SchemaBinding;
+  behavior: TokenBehavior;
+  holder: AssetHolder;
+  amount: number;
+  sequenceNumber: number;
+  creationOrdinal: number;
+  latestUpdateOrdinal: number;
+  expiresAt?: number;
+  /** Present iff this is a composite (stored verbatim for retraction). */
+  componentFiberIds?: string[];
+  /** Digest of the canonical component-witness list; present iff composite. */
+  componentsCommitment?: string;
+  /** Set on a component folded into a composite. */
+  parentCompositeId?: string;
+  provenance?: OriginProvenance;
+}
+
+/**
+ * The on-chain L1 fast-path commit for an asset instance — a safe subset (packed behavior bits +
+ * sequence) so L1 can structurally reject impossible morphisms without a `CalculatedState`
+ * round-trip. `behavior` is advisory/stale; the combiner re-derives from `CalculatedState.assets`.
+ * @see modules/models/.../schema/OnChain.scala (AssetCommit)
+ */
+export interface AssetCommit {
+  /** Packed {@link TokenBehavior} bits (advisory). */
+  behavior: TokenBehavior;
+  sequenceNumber: number;
+  recordHash: string;
+  /** Phase-6 interop double-wrap fast-reject discriminator. */
+  origin?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Asset model — signed operations (asset-model.md §7)
+// ---------------------------------------------------------------------------
+
+/**
+ * Publish an asset-policy PACKAGE version (npm-publish semantics, parallel to {@link PublishMachineVersion}).
+ * `morphisms` is REQUIRED (presence required; emptiness is meaningful, never decoder-defaulted).
+ * Note: `fiberId` is NOT on the wire — the chain derives the routing id from `name`.
+ */
+export interface CreateAssetPolicy {
+  name: string;
+  version: SemVer;
+  behavior: TokenBehavior;
+  supply: SupplyPolicy;
+  /** Per-kind morphism specs, keyed by the UPPERCASE {@link MorphismKind}. Required (may be empty). */
+  morphisms: Record<string, MorphismSpec>;
+  stateShape: MessageShape;
+  metadata?: Record<string, string>;
+}
+
+/** Mint a new asset INSTANCE against a resolved policy version. */
+export interface MintAsset {
+  assetId: string;
+  policyRef: SchemaRef;
+  holder: AssetHolder;
+  amount: number;
+  expiresAt?: number;
+  provenance?: OriginProvenance;
+  /**
+   * ZkVerify-gated mint: optional proof / Merkle-membership witness the policy's `mintPolicy` guard
+   * reads under the reserved `witness` context key (e.g. `groth16_verify` / `pmt_verify`).
+   */
+  witness?: JsonLogicValue;
+}
+
+/**
+ * Apply a typed morphism to an asset instance. Sequenced by `(assetId, targetSequenceNumber)`.
+ * Optional fields carry per-kind directives (recipient for Transfer/Wrap; otherAssetIds + compositeId
+ * for Compose; shardIds for Fractionalize; nonce for a commit-reveal symmetric Compose;
+ * priorComponents is the Decompose reveal witness).
+ */
+export interface ApplyMorphism {
+  assetId: string;
+  kind: MorphismKind;
+  targetSequenceNumber: number;
+  recipient?: AssetHolder;
+  otherAssetIds?: string[];
+  compositeId?: string;
+  shardIds?: string[];
+  nonce?: number;
+  priorComponents?: ComponentWitness[];
+  /** ZkVerify-gated morphism: optional witness a `Governed` morphism's guard reads (see {@link MorphismSpec}). */
+  witness?: JsonLogicValue;
+}
+
+/**
+ * Authorize a counter-party policy to Compose with this asset (the commit half of the commit-reveal
+ * symmetric-compose handshake). `nonce` and `expiresAt` are REQUIRED (no sentinel defaults).
+ */
+export interface AuthorizeCompose {
+  assetId: string;
+  partnerPolicyId: string;
+  nonce: number;
+  expiresAt: number;
+  targetSequenceNumber: number;
+}
+
 /**
  * Union type for all ottochain messages.
  * JSON is wrapped as `{ MessageName: { ...fields } }`.
@@ -550,9 +869,15 @@ export type OttochainMessage =
   | { UpgradeFiber: UpgradeFiber }
   | { CreateScript: CreateScript }
   | { InvokeScript: InvokeScript }
-  | { PublishVersion: PublishVersion }
+  | { UpgradeScript: UpgradeScript }
+  | { PublishMachineVersion: PublishMachineVersion }
+  | { PublishScriptVersion: PublishScriptVersion }
   | { SetVersionStatus: SetVersionStatus }
-  | { RegisterAlias: RegisterAlias };
+  | { RegisterAlias: RegisterAlias }
+  | { CreateAssetPolicy: CreateAssetPolicy }
+  | { MintAsset: MintAsset }
+  | { ApplyMorphism: ApplyMorphism }
+  | { AuthorizeCompose: AuthorizeCompose };
 
 /**
  * Names of all valid OttochainMessage types.
@@ -565,9 +890,15 @@ export const OTTOCHAIN_MESSAGE_TYPES = [
   'UpgradeFiber',
   'CreateScript',
   'InvokeScript',
-  'PublishVersion',
+  'UpgradeScript',
+  'PublishMachineVersion',
+  'PublishScriptVersion',
   'SetVersionStatus',
   'RegisterAlias',
+  'CreateAssetPolicy',
+  'MintAsset',
+  'ApplyMorphism',
+  'AuthorizeCompose',
 ] as const;
 
 /**

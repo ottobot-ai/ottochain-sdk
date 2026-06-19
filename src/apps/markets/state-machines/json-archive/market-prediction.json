@@ -64,7 +64,7 @@
           { "var": "state" },
           {
             "status": "OPEN",
-            "openedAt": { "var": "$timestamp" },
+            "openedAt": { "var": "$ordinal" },
             "positions": {},
             "totalPool": 0
           }
@@ -84,7 +84,7 @@
           { "var": "state" },
           {
             "status": "CANCELLED",
-            "cancelledAt": { "var": "$timestamp" },
+            "cancelledAt": { "var": "$ordinal" },
             "reason": { "var": "event.reason" }
           }
         ]
@@ -102,7 +102,7 @@
           {
             "or": [
               { "!": [{ "var": "state.deadline" }] },
-              { "<=": [{ "var": "$timestamp" }, { "var": "state.deadline" }] }
+              { "<=": [{ "var": "$ordinal" }, { "var": "state.deadline" }] }
             ]
           }
         ]
@@ -143,7 +143,7 @@
           {
             "and": [
               { "var": "state.deadline" },
-              { ">=": [{ "var": "$timestamp" }, { "var": "state.deadline" }] }
+              { ">=": [{ "var": "$ordinal" }, { "var": "state.deadline" }] }
             ]
           }
         ]
@@ -153,7 +153,7 @@
           { "var": "state" },
           {
             "status": "CLOSED",
-            "closedAt": { "var": "$timestamp" }
+            "closedAt": { "var": "$ordinal" }
           }
         ]
       },
@@ -176,7 +176,7 @@
                 "oracle": { "var": "event.agent" },
                 "outcome": { "var": "event.outcome" },
                 "proof": { "var": "event.proof" },
-                "submittedAt": { "var": "$timestamp" }
+                "submittedAt": { "var": "$ordinal" }
               }
             ]
           }
@@ -215,7 +215,7 @@
                     "oracle": { "var": "event.agent" },
                     "outcome": { "var": "event.outcome" },
                     "proof": { "var": "event.proof" },
-                    "submittedAt": { "var": "$timestamp" }
+                    "submittedAt": { "var": "$ordinal" }
                   }
                 ]
               ]
@@ -240,7 +240,7 @@
           { "var": "state" },
           {
             "status": "SETTLED",
-            "settledAt": { "var": "$timestamp" },
+            "settledAt": { "var": "$ordinal" },
             "finalOutcome": { "var": "event.outcome" },
             "claims": []
           }
@@ -275,7 +275,7 @@
           { "var": "state" },
           {
             "status": "DISPUTED",
-            "disputedAt": { "var": "$timestamp" },
+            "disputedAt": { "var": "$ordinal" },
             "disputedBy": { "var": "event.agent" },
             "disputeStake": { "var": "event.stake" },
             "disputeReason": { "var": "event.reason" }
@@ -294,7 +294,7 @@
           { "var": "state" },
           {
             "status": "SETTLED",
-            "settledAt": { "var": "$timestamp" },
+            "settledAt": { "var": "$ordinal" },
             "finalOutcome": { "var": "event.outcome" },
             "rulingId": { "var": "event.rulingId" },
             "claims": []
@@ -325,7 +325,7 @@
           { "var": "state" },
           {
             "status": "REFUNDED",
-            "refundedAt": { "var": "$timestamp" },
+            "refundedAt": { "var": "$ordinal" },
             "reason": "oracle_invalidation"
           }
         ]
@@ -379,7 +379,7 @@
                   {
                     "agent": { "var": "event.agent" },
                     "amount": { "var": "event.amount" },
-                    "claimedAt": { "var": "$timestamp" }
+                    "claimedAt": { "var": "$ordinal" }
                   }
                 ]
               ]

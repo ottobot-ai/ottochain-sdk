@@ -141,7 +141,7 @@ export const marketCrowdfundDef = defineFiberApp({
           { var: "state" },
           {
             status: "OPEN",
-            launchedAt: { var: "$timestamp" },
+            launchedAt: { var: "$ordinal" },
             pledges: [],
             totalPledged: 0,
             backerCount: 0,
@@ -158,7 +158,7 @@ export const marketCrowdfundDef = defineFiberApp({
       effect: {
         merge: [
           { var: "state" },
-          { status: "CANCELLED", cancelledAt: { var: "$timestamp" } },
+          { status: "CANCELLED", cancelledAt: { var: "$ordinal" } },
         ],
       },
       dependencies: [],
@@ -177,7 +177,7 @@ export const marketCrowdfundDef = defineFiberApp({
               { ">=": [{ var: "event.amount" }, { var: "state.minPledge" }] },
             ],
           },
-          { "<=": [{ var: "$timestamp" }, { var: "state.deadline" }] },
+          { "<=": [{ var: "$ordinal" }, { var: "state.deadline" }] },
         ],
       },
       effect: {
@@ -192,7 +192,7 @@ export const marketCrowdfundDef = defineFiberApp({
                     backer: { var: "event.agent" },
                     amount: { var: "event.amount" },
                     rewardTier: { var: "event.rewardTier" },
-                    pledgedAt: { var: "$timestamp" },
+                    pledgedAt: { var: "$ordinal" },
                   },
                 ],
               ],
@@ -213,7 +213,7 @@ export const marketCrowdfundDef = defineFiberApp({
       guard: {
         and: [
           { ">": [{ var: "event.additionalAmount" }, 0] },
-          { "<=": [{ var: "$timestamp" }, { var: "state.deadline" }] },
+          { "<=": [{ var: "$ordinal" }, { var: "state.deadline" }] },
           {
             ">": [
               {
@@ -251,7 +251,7 @@ export const marketCrowdfundDef = defineFiberApp({
       guard: {
         and: [
           { ">=": [{ var: "state.totalPledged" }, { var: "state.threshold" }] },
-          { ">=": [{ var: "$timestamp" }, { var: "state.deadline" }] },
+          { ">=": [{ var: "$ordinal" }, { var: "state.deadline" }] },
         ],
       },
       effect: {
@@ -259,7 +259,7 @@ export const marketCrowdfundDef = defineFiberApp({
           { var: "state" },
           {
             status: "FUNDED",
-            fundedAt: { var: "$timestamp" },
+            fundedAt: { var: "$ordinal" },
             stretchGoalsReached: {
               filter: [
                 { var: "state.stretchGoals" },
@@ -278,7 +278,7 @@ export const marketCrowdfundDef = defineFiberApp({
       guard: {
         and: [
           { "<": [{ var: "state.totalPledged" }, { var: "state.threshold" }] },
-          { ">=": [{ var: "$timestamp" }, { var: "state.deadline" }] },
+          { ">=": [{ var: "$ordinal" }, { var: "state.deadline" }] },
         ],
       },
       effect: {
@@ -286,7 +286,7 @@ export const marketCrowdfundDef = defineFiberApp({
           { var: "state" },
           {
             status: "REFUNDED",
-            refundedAt: { var: "$timestamp" },
+            refundedAt: { var: "$ordinal" },
             reason: "threshold_not_met",
           },
         ],

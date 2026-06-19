@@ -9,7 +9,7 @@
  * package at genesis.
  *
  * DESIGN — content, not consensus hashes:
- * The manifest ships CONTENT only: the `schemaShape` (the typed, proto-faithful
+ * The manifest ships CONTENT only: the `machineShape` (the typed, proto-faithful
  * projection of the app's state message) and the `definition` (the JSON-Logic
  * `StateMachineDefinition`, verbatim — the same object the chain decodes for any
  * fiber). The CHAIN computes the consensus values itself from this content:
@@ -37,7 +37,7 @@
  * payloads. Deriving per-event command shapes is a flagged follow-up.
  *
  * The JSON shape emitted here is built to deserialize against the chain's circe
- * codecs (`SchemaShape` / `FieldShape` / `MessageShape` and
+ * codecs (`MachineShape` / `FieldShape` / `MessageShape` and
  * `StateMachineDefinition`), whose magnolia config is camelCase with defaults.
  *
  * @packageDocumentation
@@ -71,10 +71,10 @@ export interface MessageShape {
 
 /**
  * The typed, proto-faithful projection of a registered schema. Matches the
- * chain's `SchemaShape`: the state message plus one message per command/event,
+ * chain's `MachineShape`: the state message plus one message per command/event,
  * keyed by event name.
  */
-export interface SchemaShape {
+export interface MachineShape {
   stateMessage: MessageShape;
   commands: Record<string, MessageShape>;
 }
@@ -114,7 +114,7 @@ export interface GenesisPackage {
   /** Free-form notes map (<=8 entries, key <=32 chars, value <=128 chars). */
   metadata: Record<string, string>;
   /** Typed, proto-faithful projection of the app's schema. */
-  schemaShape: SchemaShape;
+  machineShape: MachineShape;
   /** The JSON-Logic state-machine definition, verbatim. */
   definition: StateMachineDefinition;
 }
@@ -259,7 +259,7 @@ export function buildGenesisManifest(): GenesisManifest {
       semver: '1.0.0',
       strict: false,
       metadata: {},
-      schemaShape: { stateMessage: identityStateMessage, commands: {} },
+      machineShape: { stateMessage: identityStateMessage, commands: {} },
       definition: toWireDefinition(identityUniversalDef),
     },
     {
@@ -267,7 +267,7 @@ export function buildGenesisManifest(): GenesisManifest {
       semver: '1.0.0',
       strict: false,
       metadata: {},
-      schemaShape: { stateMessage: governanceStateMessage, commands: {} },
+      machineShape: { stateMessage: governanceStateMessage, commands: {} },
       definition: toWireDefinition(govUniversalDef),
     },
     {
@@ -275,7 +275,7 @@ export function buildGenesisManifest(): GenesisManifest {
       semver: '1.0.0',
       strict: false,
       metadata: {},
-      schemaShape: { stateMessage: marketStateMessage, commands: {} },
+      machineShape: { stateMessage: marketStateMessage, commands: {} },
       definition: toWireDefinition(marketUniversalDef),
     },
   ];

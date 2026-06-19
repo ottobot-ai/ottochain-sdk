@@ -43,7 +43,7 @@
           { "var": "state" },
           {
             "status": "OPEN",
-            "openedAt": { "var": "$timestamp" }
+            "openedAt": { "var": "$ordinal" }
           }
         ]
       },
@@ -59,7 +59,7 @@
           { "var": "state" },
           {
             "status": "CANCELLED",
-            "cancelledAt": { "var": "$timestamp" }
+            "cancelledAt": { "var": "$ordinal" }
           }
         ]
       },
@@ -97,7 +97,7 @@
           { "var": "state" },
           {
             "status": "CLOSED",
-            "closedAt": { "var": "$timestamp" }
+            "closedAt": { "var": "$ordinal" }
           }
         ]
       },
@@ -113,7 +113,7 @@
           { "var": "state" },
           {
             "status": "SETTLED",
-            "settledAt": { "var": "$timestamp" }
+            "settledAt": { "var": "$ordinal" }
           }
         ]
       },
@@ -129,7 +129,7 @@
           { "var": "state" },
           {
             "status": "CANCELLED",
-            "cancelledAt": { "var": "$timestamp" }
+            "cancelledAt": { "var": "$ordinal" }
           }
         ]
       },

@@ -61,7 +61,7 @@
                       "var": "event.payload"
                     },
                     "executedAt": {
-                      "var": "$timestamp"
+                      "var": "$ordinal"
                     }
                   }
                 ]
@@ -102,7 +102,7 @@
               "var": "event.newOwner"
             },
             "transferInitiatedAt": {
-              "var": "$timestamp"
+              "var": "$ordinal"
             }
           }
         ]
@@ -148,7 +148,7 @@
                       "var": "state.pendingOwner"
                     },
                     "at": {
-                      "var": "$timestamp"
+                      "var": "$ordinal"
                     }
                   }
                 ]
@@ -213,7 +213,7 @@
           },
           {
             "dissolvedAt": {
-              "var": "$timestamp"
+              "var": "$ordinal"
             },
             "status": "DISSOLVED"
           }

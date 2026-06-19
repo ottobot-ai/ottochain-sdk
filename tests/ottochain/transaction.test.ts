@@ -60,24 +60,24 @@ describe('transaction helpers', () => {
         fiberId: 'script-fiber',
         scriptProgram: { methods: { inc: { '+': [{ var: 'state.value' }, 1] } } },
         initialState: { value: 0 },
-        accessControl: { type: 'open' },
+        accessControl: { Public: {} },
       });
       expect(result).toEqual({
         CreateScript: {
           fiberId: 'script-fiber',
           scriptProgram: { methods: { inc: { '+': [{ var: 'state.value' }, 1] } } },
           initialState: { value: 0 },
-          accessControl: { type: 'open' },
+          accessControl: { Public: {} },
         },
       });
     });
 
-    it('defaults accessControl to open', () => {
+    it('defaults accessControl to Public', () => {
       const result = createScriptPayload({
         fiberId: 'f',
         scriptProgram: {},
       });
-      expect(result.CreateScript.accessControl).toEqual({ type: 'open' });
+      expect(result.CreateScript.accessControl).toEqual({ Public: {} });
     });
 
     it('defaults initialState to null', () => {

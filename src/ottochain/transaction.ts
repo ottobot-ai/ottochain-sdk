@@ -7,6 +7,12 @@
 
 import { getPublicKeyId } from '@constellation-network/metagraph-sdk';
 import type { Signed } from '@constellation-network/metagraph-sdk';
+import type {
+  CreateAssetPolicy,
+  MintAsset,
+  ApplyMorphism,
+  AuthorizeCompose,
+} from './types.js';
 import { signDataUpdate } from '../signing.js';
 
 // ============================================================================
@@ -37,6 +43,13 @@ export interface CreateStateMachineMessage {
 
 /**
  * Create a new state machine fiber payload.
+ *
+ * @remarks
+ * `params.definition` is signed VERBATIM. Pass the output of `toProtoDefinition(def)` (the
+ * allowlisted wire shape) — NOT a raw `FiberAppDefinition`: extra authoring fields
+ * (`createSchema` / `stateSchema` / `eventSchemas` / per-transition `emits`) would be signed
+ * but re-encoded away by the chain, diverging the canonical → opaque `InvalidSignature`.
+ * See `tests/ottochain/signing-parity.test.ts`.
  *
  * @param params - State machine creation parameters
  * @returns A CreateStateMachine message ready for signing
@@ -193,7 +206,7 @@ export interface CreateScriptMessage {
  *     },
  *   },
  *   initialState: { value: 0 },
- *   accessControl: { type: 'open' },
+ *   accessControl: { Public: {} },
  * });
  * const signed = await signTransaction(script, privateKey);
  * ```
@@ -204,7 +217,7 @@ export function createScriptPayload(params: CreateScriptParams): CreateScriptMes
       fiberId: params.fiberId,
       scriptProgram: params.scriptProgram,
       initialState: params.initialState ?? null,
-      accessControl: params.accessControl ?? { type: 'open' },
+      accessControl: params.accessControl ?? { Public: {} },
     },
   };
 }
@@ -246,6 +259,39 @@ export function createInvokeScriptPayload(params: InvokeScriptParams): InvokeScr
       targetSequenceNumber: params.targetSequenceNumber,
     },
   };
+}
+
+// ============================================================================
+// Asset Operations (asset-model.md §7)
+// ============================================================================
+//
+// Thin typed wrappers: the chain message types ({@link CreateAssetPolicy}, etc.) already model
+// every field (required vs `Option`), so these builders just apply the `{ MessageName: ... }`
+// envelope, for API parity with the state-machine/script `create*Payload` helpers. Sign the result
+// with {@link signTransaction} (the canonical `JCS(dropNulls)` path drops any omitted optionals).
+
+/** Wrap a {@link CreateAssetPolicy} (publish an asset-policy package version). */
+export function createAssetPolicyPayload(
+  params: CreateAssetPolicy,
+): { CreateAssetPolicy: CreateAssetPolicy } {
+  return { CreateAssetPolicy: params };
+}
+
+/** Wrap a {@link MintAsset} (mint a new asset instance against a resolved policy version). */
+export function createMintAssetPayload(params: MintAsset): { MintAsset: MintAsset } {
+  return { MintAsset: params };
+}
+
+/** Wrap an {@link ApplyMorphism} (apply a typed morphism to an asset instance). */
+export function createApplyMorphismPayload(params: ApplyMorphism): { ApplyMorphism: ApplyMorphism } {
+  return { ApplyMorphism: params };
+}
+
+/** Wrap an {@link AuthorizeCompose} (commit half of the symmetric-compose handshake). */
+export function createAuthorizeComposePayload(
+  params: AuthorizeCompose,
+): { AuthorizeCompose: AuthorizeCompose } {
+  return { AuthorizeCompose: params };
 }
 
 /**

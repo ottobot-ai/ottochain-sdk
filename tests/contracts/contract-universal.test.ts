@@ -94,7 +94,7 @@ describe('Contract Universal State Machine', () => {
       expect(acceptTransition!.effect.merge[0]).toEqual({ var: 'state' });
       expect(acceptTransition!.effect.merge[1]).toEqual({
         status: 'ACTIVE',
-        acceptedAt: { var: '$timestamp' }
+        acceptedAt: { var: '$ordinal' }
       });
     });
 
@@ -108,7 +108,7 @@ describe('Contract Universal State Machine', () => {
         expect(transition.effect.merge[0]).toEqual({ var: 'state' });
         expect(transition.effect.merge[1]).toEqual({
           status: 'CANCELLED',
-          cancelledAt: { var: '$timestamp' }
+          cancelledAt: { var: '$ordinal' }
         });
       });
     });
@@ -122,7 +122,7 @@ describe('Contract Universal State Machine', () => {
       expect(completeTransition!.effect.merge[0]).toEqual({ var: 'state' });
       expect(completeTransition!.effect.merge[1]).toEqual({
         status: 'COMPLETED',
-        completedAt: { var: '$timestamp' }
+        completedAt: { var: '$ordinal' }
       });
     });
   });

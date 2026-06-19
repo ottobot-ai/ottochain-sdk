@@ -58,12 +58,12 @@
                 "var": "event.agent"
               },
               "proposedAt": {
-                "var": "$timestamp"
+                "var": "$ordinal"
               },
               "expiresAt": {
                 "+": [
                   {
-                    "var": "$timestamp"
+                    "var": "$ordinal"
                   },
                   {
                     "var": "state.proposalTTLMs"
@@ -78,7 +78,7 @@
                   "var": "event.agent"
                 },
                 {
-                  "var": "$timestamp"
+                  "var": "$ordinal"
                 }
               ]
             }
@@ -146,7 +146,7 @@
                   "var": "event.agent"
                 },
                 {
-                  "var": "$timestamp"
+                  "var": "$ordinal"
                 }
               ]
             }
@@ -197,7 +197,7 @@
                       "var": "state.signatures"
                     },
                     "executedAt": {
-                      "var": "$timestamp"
+                      "var": "$ordinal"
                     }
                   }
                 ]
@@ -225,7 +225,7 @@
           {
             ">": [
               {
-                "var": "$timestamp"
+                "var": "$ordinal"
               },
               {
                 "var": "state.proposal.expiresAt"
@@ -263,7 +263,7 @@
                       },
                       {
                         "cancelledAt": {
-                          "var": "$timestamp"
+                          "var": "$ordinal"
                         }
                       }
                     ]
@@ -312,12 +312,12 @@
                 "var": "event.agent"
               },
               "proposedAt": {
-                "var": "$timestamp"
+                "var": "$ordinal"
               },
               "expiresAt": {
                 "+": [
                   {
-                    "var": "$timestamp"
+                    "var": "$ordinal"
                   },
                   {
                     "var": "state.proposalTTLMs"
@@ -332,7 +332,7 @@
                   "var": "event.agent"
                 },
                 {
-                  "var": "$timestamp"
+                  "var": "$ordinal"
                 }
               ]
             }
@@ -391,12 +391,12 @@
                 "var": "event.agent"
               },
               "proposedAt": {
-                "var": "$timestamp"
+                "var": "$ordinal"
               },
               "expiresAt": {
                 "+": [
                   {
-                    "var": "$timestamp"
+                    "var": "$ordinal"
                   },
                   {
                     "var": "state.proposalTTLMs"
@@ -411,7 +411,7 @@
                   "var": "event.agent"
                 },
                 {
-                  "var": "$timestamp"
+                  "var": "$ordinal"
                 }
               ]
             }
@@ -478,12 +478,12 @@
                 "var": "event.agent"
               },
               "proposedAt": {
-                "var": "$timestamp"
+                "var": "$ordinal"
               },
               "expiresAt": {
                 "+": [
                   {
-                    "var": "$timestamp"
+                    "var": "$ordinal"
                   },
                   {
                     "var": "state.proposalTTLMs"
@@ -498,7 +498,7 @@
                   "var": "event.agent"
                 },
                 {
-                  "var": "$timestamp"
+                  "var": "$ordinal"
                 }
               ]
             }
@@ -649,7 +649,7 @@
           },
           {
             "dissolvedAt": {
-              "var": "$timestamp"
+              "var": "$ordinal"
             },
             "status": "DISSOLVED"
           }

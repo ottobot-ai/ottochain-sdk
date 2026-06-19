@@ -203,7 +203,7 @@ export const identityAgentDef = defineFiberApp({
       effect: {
         merge: [
           { var: "state" },
-          { status: "ACTIVE", activatedAt: { var: "$timestamp" } },
+          { status: "ACTIVE", activatedAt: { var: "$ordinal" } },
         ],
       },
     },
@@ -260,7 +260,7 @@ export const identityAgentDef = defineFiberApp({
       effect: {
         merge: [
           { var: "state" },
-          { status: "SUSPENDED", suspendedAt: { var: "$timestamp" } },
+          { status: "SUSPENDED", suspendedAt: { var: "$ordinal" } },
         ],
       },
     },
@@ -272,7 +272,7 @@ export const identityAgentDef = defineFiberApp({
       effect: {
         merge: [
           { var: "state" },
-          { status: "PROBATION", probationStartedAt: { var: "$timestamp" } },
+          { status: "PROBATION", probationStartedAt: { var: "$ordinal" } },
         ],
       },
     },
