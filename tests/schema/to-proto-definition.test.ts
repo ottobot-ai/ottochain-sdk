@@ -40,18 +40,13 @@ describe('toProtoDefinition', () => {
     }
   });
 
-  it('preserves metadata unchanged', () => {
+  it('does NOT project FiberAppMetadata onto the wire (keeps logicHash packaging-independent)', () => {
     const proto = toProtoDefinition(contractAgreementDef);
 
-    expect(proto.metadata).toBeDefined();
-    expect(proto.metadata?.name).toBe(contractAgreementDef.metadata.name);
-    expect(proto.metadata?.version).toBe(contractAgreementDef.metadata.version);
-    // crossReferences should be preserved (metadata is unstructured)
-    if (contractAgreementDef.metadata.crossReferences) {
-      expect(proto.metadata?.crossReferences).toEqual(
-        contractAgreementDef.metadata.crossReferences
-      );
-    }
+    // FiberAppMetadata (name/app/type/version/description/crossReferences) is SDK packaging info.
+    // Projecting it would make the on-chain canonical + the registry logicHash depend on packaging
+    // fields, so it is deliberately omitted — the chain `metadata` stays absent (`None`).
+    expect(proto.metadata).toBeUndefined();
   });
 
   it('handles definition without optional fields', () => {
@@ -82,7 +77,7 @@ describe('toProtoDefinition', () => {
     expect(proto.states).toBeDefined();
     expect(proto.initialState).toBe('INIT');
     expect(proto.transitions).toHaveLength(1);
-    expect(proto.metadata?.name).toBe('minimal');
+    expect(proto.metadata).toBeUndefined();
   });
 
   it('includes transition guards and effects when present', () => {

@@ -198,9 +198,9 @@ export const daoTokenDef = defineFiberApp({
               actionType: { var: "event.actionType" },
               payload: { var: "event.payload" },
               proposer: { var: "event.agent" },
-              proposedAt: { var: "$timestamp" },
+              proposedAt: { var: "$ordinal" },
               votingEndsAt: {
-                "+": [{ var: "$timestamp" }, { var: "state.votingPeriodMs" }],
+                "+": [{ var: "$ordinal" }, { var: "state.votingPeriodMs" }],
               },
               snapshotBlock: { var: "event.snapshotBlock" },
             },
@@ -232,7 +232,7 @@ export const daoTokenDef = defineFiberApp({
           },
           {
             "<=": [
-              { var: "$timestamp" },
+              { var: "$ordinal" },
               { var: "state.proposal.votingEndsAt" },
             ],
           },
@@ -303,7 +303,7 @@ export const daoTokenDef = defineFiberApp({
                             { var: "event.agent" },
                           ],
                         },
-                        votedAt: { var: "$timestamp" },
+                        votedAt: { var: "$ordinal" },
                       },
                     ],
                   },
@@ -324,7 +324,7 @@ export const daoTokenDef = defineFiberApp({
         and: [
           {
             ">": [
-              { var: "$timestamp" },
+              { var: "$ordinal" },
               { var: "state.proposal.votingEndsAt" },
             ],
           },
@@ -351,9 +351,9 @@ export const daoTokenDef = defineFiberApp({
               merge: [
                 { var: "state.proposal" },
                 {
-                  queuedAt: { var: "$timestamp" },
+                  queuedAt: { var: "$ordinal" },
                   executableAt: {
-                    "+": [{ var: "$timestamp" }, { var: "state.timelockMs" }],
+                    "+": [{ var: "$ordinal" }, { var: "state.timelockMs" }],
                   },
                 },
               ],
@@ -369,7 +369,7 @@ export const daoTokenDef = defineFiberApp({
       to: "ACTIVE",
       eventName: "execute",
       guard: {
-        ">=": [{ var: "$timestamp" }, { var: "state.proposal.executableAt" }],
+        ">=": [{ var: "$ordinal" }, { var: "state.proposal.executableAt" }],
       },
       effect: {
         merge: [
@@ -384,7 +384,7 @@ export const daoTokenDef = defineFiberApp({
                       { var: "state.proposal" },
                       {
                         votes: { var: "state.votes" },
-                        executedAt: { var: "$timestamp" },
+                        executedAt: { var: "$ordinal" },
                       },
                     ],
                   },
@@ -408,7 +408,7 @@ export const daoTokenDef = defineFiberApp({
         and: [
           {
             ">": [
-              { var: "$timestamp" },
+              { var: "$ordinal" },
               { var: "state.proposal.votingEndsAt" },
             ],
           },
@@ -449,7 +449,7 @@ export const daoTokenDef = defineFiberApp({
                       { var: "state.proposal" },
                       {
                         votes: { var: "state.votes" },
-                        rejectedAt: { var: "$timestamp" },
+                        rejectedAt: { var: "$ordinal" },
                       },
                     ],
                   },
@@ -480,7 +480,7 @@ export const daoTokenDef = defineFiberApp({
                   {
                     merge: [
                       { var: "state.proposal" },
-                      { cancelledAt: { var: "$timestamp" } },
+                      { cancelledAt: { var: "$ordinal" } },
                     ],
                   },
                 ],

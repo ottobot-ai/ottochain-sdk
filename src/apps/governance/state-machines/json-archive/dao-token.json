@@ -76,12 +76,12 @@
                 "var": "event.agent"
               },
               "proposedAt": {
-                "var": "$timestamp"
+                "var": "$ordinal"
               },
               "votingEndsAt": {
                 "+": [
                   {
-                    "var": "$timestamp"
+                    "var": "$ordinal"
                   },
                   {
                     "var": "state.votingPeriodMs"
@@ -141,7 +141,7 @@
           {
             "<=": [
               {
-                "var": "$timestamp"
+                "var": "$ordinal"
               },
               {
                 "var": "state.proposal.votingEndsAt"
@@ -262,7 +262,7 @@
                           ]
                         },
                         "votedAt": {
-                          "var": "$timestamp"
+                          "var": "$ordinal"
                         }
                       }
                     ]
@@ -284,7 +284,7 @@
           {
             ">": [
               {
-                "var": "$timestamp"
+                "var": "$ordinal"
               },
               {
                 "var": "state.proposal.votingEndsAt"
@@ -336,12 +336,12 @@
                 },
                 {
                   "queuedAt": {
-                    "var": "$timestamp"
+                    "var": "$ordinal"
                   },
                   "executableAt": {
                     "+": [
                       {
-                        "var": "$timestamp"
+                        "var": "$ordinal"
                       },
                       {
                         "var": "state.timelockMs"
@@ -363,7 +363,7 @@
       "guard": {
         ">=": [
           {
-            "var": "$timestamp"
+            "var": "$ordinal"
           },
           {
             "var": "state.proposal.executableAt"
@@ -392,7 +392,7 @@
                           "var": "state.votes"
                         },
                         "executedAt": {
-                          "var": "$timestamp"
+                          "var": "$ordinal"
                         }
                       }
                     ]
@@ -422,7 +422,7 @@
           {
             ">": [
               {
-                "var": "$timestamp"
+                "var": "$ordinal"
               },
               {
                 "var": "state.proposal.votingEndsAt"
@@ -487,7 +487,7 @@
                           "var": "state.votes"
                         },
                         "rejectedAt": {
-                          "var": "$timestamp"
+                          "var": "$ordinal"
                         }
                       }
                     ]
@@ -535,7 +535,7 @@
                       },
                       {
                         "cancelledAt": {
-                          "var": "$timestamp"
+                          "var": "$ordinal"
                         }
                       }
                     ]

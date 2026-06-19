@@ -299,7 +299,7 @@ describe('Contracts State Machine Conversion', () => {
                 [{
                   "agent": { "var": "event.agent" },
                   "proof": { "var": "event.proof" },
-                  "submittedAt": { "var": "$timestamp" }
+                  "submittedAt": { "var": "$ordinal" }
                 }]
               ]
             }
@@ -319,7 +319,7 @@ describe('Contracts State Machine Conversion', () => {
           { "var": "state" },
           {
             "status": "REJECTED",
-            "rejectedAt": { "var": "$timestamp" },
+            "rejectedAt": { "var": "$ordinal" },
             "rejectReason": { "var": "event.reason" }
           }
         ]
@@ -350,7 +350,7 @@ describe('Contracts State Machine Conversion', () => {
       expect(autoReleaseTransition?.guard).toEqual({
         "or": [
           signerIsParty('state.depositor'),
-          { ">=": [{ "var": "$timestamp" }, { "var": "state.releaseDeadline" }] }
+          { ">=": [{ "var": "$ordinal" }, { "var": "state.releaseDeadline" }] }
         ]
       });
     });

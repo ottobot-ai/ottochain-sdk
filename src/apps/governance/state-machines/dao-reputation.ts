@@ -187,9 +187,9 @@ export const daoReputationDef = defineFiberApp({
               actionType: { var: "event.actionType" },
               payload: { var: "event.payload" },
               proposer: { var: "event.agent" },
-              proposedAt: { var: "$timestamp" },
+              proposedAt: { var: "$ordinal" },
               deadline: {
-                "+": [{ var: "$timestamp" }, { var: "state.votingPeriodMs" }],
+                "+": [{ var: "$ordinal" }, { var: "state.votingPeriodMs" }],
               },
             },
             votes: { for: [], against: [], abstain: [] },
@@ -214,7 +214,7 @@ export const daoReputationDef = defineFiberApp({
           { "!": [signerInSet("state.votes.for")] },
           { "!": [signerInSet("state.votes.against")] },
           { "!": [signerInSet("state.votes.abstain")] },
-          { "<=": [{ var: "$timestamp" }, { var: "state.proposal.deadline" }] },
+          { "<=": [{ var: "$ordinal" }, { var: "state.proposal.deadline" }] },
         ],
       },
       effect: {
@@ -278,7 +278,7 @@ export const daoReputationDef = defineFiberApp({
       eventName: "execute",
       guard: {
         and: [
-          { ">": [{ var: "$timestamp" }, { var: "state.proposal.deadline" }] },
+          { ">": [{ var: "$ordinal" }, { var: "state.proposal.deadline" }] },
           {
             ">": [
               { size: { var: "state.votes.for" } },
@@ -310,7 +310,7 @@ export const daoReputationDef = defineFiberApp({
                     type: "executed",
                     proposal: { var: "state.proposal" },
                     votes: { var: "state.votes" },
-                    at: { var: "$timestamp" },
+                    at: { var: "$ordinal" },
                   },
                 ],
               ],
@@ -336,7 +336,7 @@ export const daoReputationDef = defineFiberApp({
       eventName: "reject",
       guard: {
         and: [
-          { ">": [{ var: "$timestamp" }, { var: "state.proposal.deadline" }] },
+          { ">": [{ var: "$ordinal" }, { var: "state.proposal.deadline" }] },
           {
             or: [
               {
@@ -372,7 +372,7 @@ export const daoReputationDef = defineFiberApp({
                     type: "rejected",
                     proposal: { var: "state.proposal" },
                     votes: { var: "state.votes" },
-                    at: { var: "$timestamp" },
+                    at: { var: "$ordinal" },
                   },
                 ],
               ],
@@ -411,7 +411,7 @@ export const daoReputationDef = defineFiberApp({
               setKey: [
                 { var: "state.memberJoinedAt" },
                 { var: "event.agent" },
-                { var: "$timestamp" },
+                { var: "$ordinal" },
               ],
             },
           },
@@ -465,9 +465,9 @@ export const daoReputationDef = defineFiberApp({
                 proposeThreshold: { var: "event.proposeThreshold" },
               },
               proposer: { var: "event.agent" },
-              proposedAt: { var: "$timestamp" },
+              proposedAt: { var: "$ordinal" },
               deadline: {
-                "+": [{ var: "$timestamp" }, { var: "state.votingPeriodMs" }],
+                "+": [{ var: "$ordinal" }, { var: "state.votingPeriodMs" }],
               },
             },
             votes: { for: [], against: [], abstain: [] },

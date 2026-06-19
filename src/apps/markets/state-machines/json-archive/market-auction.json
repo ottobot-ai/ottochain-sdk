@@ -54,7 +54,7 @@
           { "var": "state" },
           {
             "status": "OPEN",
-            "openedAt": { "var": "$timestamp" },
+            "openedAt": { "var": "$ordinal" },
             "bids": [],
             "highBid": null,
             "highBidder": null
@@ -75,7 +75,7 @@
           { "var": "state" },
           {
             "status": "CANCELLED",
-            "cancelledAt": { "var": "$timestamp" }
+            "cancelledAt": { "var": "$ordinal" }
           }
         ]
       },
@@ -103,7 +103,7 @@
           {
             "or": [
               { "!": [{ "var": "state.deadline" }] },
-              { "<=": [{ "var": "$timestamp" }, { "var": "state.deadline" }] }
+              { "<=": [{ "var": "$ordinal" }, { "var": "state.deadline" }] }
             ]
           }
         ]
@@ -119,14 +119,14 @@
                   {
                     "bidder": { "var": "event.agent" },
                     "amount": { "var": "event.amount" },
-                    "bidAt": { "var": "$timestamp" }
+                    "bidAt": { "var": "$ordinal" }
                   }
                 ]
               ]
             },
             "highBid": { "var": "event.amount" },
             "highBidder": { "var": "event.agent" },
-            "lastBidAt": { "var": "$timestamp" }
+            "lastBidAt": { "var": "$ordinal" }
           }
         ]
       },
@@ -142,7 +142,7 @@
           {
             "and": [
               { "var": "state.deadline" },
-              { ">=": [{ "var": "$timestamp" }, { "var": "state.deadline" }] }
+              { ">=": [{ "var": "$ordinal" }, { "var": "state.deadline" }] }
             ]
           }
         ]
@@ -152,7 +152,7 @@
           { "var": "state" },
           {
             "status": "CLOSING",
-            "closedAt": { "var": "$timestamp" }
+            "closedAt": { "var": "$ordinal" }
           }
         ]
       },
@@ -178,7 +178,7 @@
           { "var": "state" },
           {
             "status": "SETTLED",
-            "settledAt": { "var": "$timestamp" },
+            "settledAt": { "var": "$ordinal" },
             "winner": { "var": "state.highBidder" },
             "finalPrice": { "var": "state.highBid" }
           }
@@ -206,7 +206,7 @@
           { "var": "state" },
           {
             "status": "NO_SALE",
-            "closedAt": { "var": "$timestamp" },
+            "closedAt": { "var": "$ordinal" },
             "reason": {
               "if": [
                 { "!": [{ "var": "state.highBidder" }] },

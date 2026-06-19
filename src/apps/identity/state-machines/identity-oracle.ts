@@ -198,7 +198,7 @@ export const identityOracleDef = defineFiberApp({
             status: "REGISTERED",
             address: { var: "event.agent" },
             stake: { var: "event.stake" },
-            registeredAt: { var: "$timestamp" },
+            registeredAt: { var: "$ordinal" },
             reputation: {
               accuracy: 100,
               totalResolutions: 0,
@@ -224,7 +224,7 @@ export const identityOracleDef = defineFiberApp({
       effect: {
         merge: [
           { var: "state" },
-          { status: "ACTIVE", activatedAt: { var: "$timestamp" } },
+          { status: "ACTIVE", activatedAt: { var: "$ordinal" } },
         ],
       },
     },
@@ -243,7 +243,7 @@ export const identityOracleDef = defineFiberApp({
           { var: "state" },
           {
             stake: { "+": [{ var: "state.stake" }, { var: "event.amount" }] },
-            lastStakeAt: { var: "$timestamp" },
+            lastStakeAt: { var: "$ordinal" },
           },
         ],
       },
@@ -274,7 +274,7 @@ export const identityOracleDef = defineFiberApp({
                 },
               ],
             },
-            lastResolutionAt: { var: "$timestamp" },
+            lastResolutionAt: { var: "$ordinal" },
           },
         ],
       },
@@ -304,12 +304,12 @@ export const identityOracleDef = defineFiberApp({
                     reason: { var: "event.reason" },
                     amount: { var: "event.amount" },
                     marketId: { var: "event.marketId" },
-                    slashedAt: { var: "$timestamp" },
+                    slashedAt: { var: "$ordinal" },
                   },
                 ],
               ],
             },
-            slashedAt: { var: "$timestamp" },
+            slashedAt: { var: "$ordinal" },
           },
         ],
       },
@@ -327,7 +327,7 @@ export const identityOracleDef = defineFiberApp({
       effect: {
         merge: [
           { var: "state" },
-          { status: "ACTIVE", reactivatedAt: { var: "$timestamp" } },
+          { status: "ACTIVE", reactivatedAt: { var: "$ordinal" } },
         ],
       },
     },
@@ -341,7 +341,7 @@ export const identityOracleDef = defineFiberApp({
           { var: "state" },
           {
             status: "WITHDRAWN",
-            withdrawnAt: { var: "$timestamp" },
+            withdrawnAt: { var: "$ordinal" },
             finalStake: { var: "state.stake" },
           },
         ],
@@ -357,7 +357,7 @@ export const identityOracleDef = defineFiberApp({
           { var: "state" },
           {
             status: "WITHDRAWN",
-            withdrawnAt: { var: "$timestamp" },
+            withdrawnAt: { var: "$ordinal" },
             finalStake: { var: "state.stake" },
           },
         ],

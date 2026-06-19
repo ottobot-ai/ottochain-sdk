@@ -132,7 +132,7 @@ export const daoSingleDef = defineFiberApp({
                     id: { var: "event.actionId" },
                     type: { var: "event.actionType" },
                     payload: { var: "event.payload" },
-                    executedAt: { var: "$timestamp" },
+                    executedAt: { var: "$ordinal" },
                   },
                 ],
               ],
@@ -154,7 +154,7 @@ export const daoSingleDef = defineFiberApp({
           { var: "state" },
           {
             pendingOwner: { var: "event.newOwner" },
-            transferInitiatedAt: { var: "$timestamp" },
+            transferInitiatedAt: { var: "$ordinal" },
           },
         ],
       },
@@ -180,7 +180,7 @@ export const daoSingleDef = defineFiberApp({
                   {
                     from: { var: "state.owner" },
                     to: { var: "state.pendingOwner" },
-                    at: { var: "$timestamp" },
+                    at: { var: "$ordinal" },
                   },
                 ],
               ],
@@ -218,7 +218,7 @@ export const daoSingleDef = defineFiberApp({
         merge: [
           { var: "state" },
           {
-            dissolvedAt: { var: "$timestamp" },
+            dissolvedAt: { var: "$ordinal" },
             status: "DISSOLVED",
           },
         ],

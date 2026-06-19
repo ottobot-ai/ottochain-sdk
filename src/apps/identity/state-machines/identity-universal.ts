@@ -99,7 +99,7 @@ export const identityUniversalDef = defineFiberApp({
       effect: {
         merge: [
           { var: "state" },
-          { status: "ACTIVE", activatedAt: { var: "$timestamp" } },
+          { status: "ACTIVE", activatedAt: { var: "$ordinal" } },
         ],
       },
     },
@@ -112,7 +112,7 @@ export const identityUniversalDef = defineFiberApp({
         merge: [
           { var: "state" },
           {
-            updatedAt: { var: "$timestamp" },
+            updatedAt: { var: "$ordinal" },
             metadata: { var: "event.metadata" },
           },
         ],
@@ -126,7 +126,7 @@ export const identityUniversalDef = defineFiberApp({
       effect: {
         merge: [
           { var: "state" },
-          { status: "INACTIVE", deactivatedAt: { var: "$timestamp" } },
+          { status: "INACTIVE", deactivatedAt: { var: "$ordinal" } },
         ],
       },
     },

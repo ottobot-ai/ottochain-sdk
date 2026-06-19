@@ -651,7 +651,7 @@ export const corpSecuritiesDef = defineFiberApp({
               },
               {
                 ">=": [
-                  { var: "$timestamp" },
+                  { var: "$ordinal" },
                   { var: "state.restrictions.restrictionEndDate" },
                 ],
               },

@@ -64,12 +64,12 @@
                 "var": "event.agent"
               },
               "proposedAt": {
-                "var": "$timestamp"
+                "var": "$ordinal"
               },
               "deadline": {
                 "+": [
                   {
-                    "var": "$timestamp"
+                    "var": "$ordinal"
                   },
                   {
                     "var": "state.votingPeriodMs"
@@ -148,7 +148,7 @@
           {
             "<=": [
               {
-                "var": "$timestamp"
+                "var": "$ordinal"
               },
               {
                 "var": "state.proposal.deadline"
@@ -260,7 +260,7 @@
           {
             ">": [
               {
-                "var": "$timestamp"
+                "var": "$ordinal"
               },
               {
                 "var": "state.proposal.deadline"
@@ -325,7 +325,7 @@
                       "var": "state.votes"
                     },
                     "at": {
-                      "var": "$timestamp"
+                      "var": "$ordinal"
                     }
                   }
                 ]
@@ -359,7 +359,7 @@
           {
             ">": [
               {
-                "var": "$timestamp"
+                "var": "$ordinal"
               },
               {
                 "var": "state.proposal.deadline"
@@ -428,7 +428,7 @@
                       "var": "state.votes"
                     },
                     "at": {
-                      "var": "$timestamp"
+                      "var": "$ordinal"
                     }
                   }
                 ]
@@ -500,7 +500,7 @@
                   "var": "event.agent"
                 },
                 {
-                  "var": "$timestamp"
+                  "var": "$ordinal"
                 }
               ]
             }
@@ -592,12 +592,12 @@
                 "var": "event.agent"
               },
               "proposedAt": {
-                "var": "$timestamp"
+                "var": "$ordinal"
               },
               "deadline": {
                 "+": [
                   {
-                    "var": "$timestamp"
+                    "var": "$ordinal"
                   },
                   {
                     "var": "state.votingPeriodMs"

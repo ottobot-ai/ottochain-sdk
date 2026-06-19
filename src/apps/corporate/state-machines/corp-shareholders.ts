@@ -686,7 +686,7 @@ export const corpShareholdersDef = defineFiberApp({
             status: "RECORD_DATE_SET",
             recordDate: {
               date: { var: "event.recordDate" },
-              setByBoardOn: { var: "$timestamp" },
+              setByBoardOn: { var: "$ordinal" },
               resolutionRef: { var: "event.resolutionRef" },
             },
           },
@@ -987,7 +987,7 @@ export const corpShareholdersDef = defineFiberApp({
                       var: "event.cumulativeVoteAllocation",
                     },
                     viaProxy: { var: "event.viaProxy" },
-                    timestamp: { var: "$timestamp" },
+                    timestamp: { var: "$ordinal" },
                   },
                 ],
               ],

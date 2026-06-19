@@ -162,7 +162,7 @@ export const marketGroupBuyDef = defineFiberApp({
           { var: "state" },
           {
             status: "OPEN",
-            openedAt: { var: "$timestamp" },
+            openedAt: { var: "$ordinal" },
             orders: [],
             totalQuantity: 0,
             currentTier: 0,
@@ -179,7 +179,7 @@ export const marketGroupBuyDef = defineFiberApp({
       effect: {
         merge: [
           { var: "state" },
-          { status: "CANCELLED", cancelledAt: { var: "$timestamp" } },
+          { status: "CANCELLED", cancelledAt: { var: "$ordinal" } },
         ],
       },
       dependencies: [],
@@ -199,7 +199,7 @@ export const marketGroupBuyDef = defineFiberApp({
               },
             ],
           },
-          { "<=": [{ var: "$timestamp" }, { var: "state.deadline" }] },
+          { "<=": [{ var: "$ordinal" }, { var: "state.deadline" }] },
         ],
       },
       effect: {
@@ -214,7 +214,7 @@ export const marketGroupBuyDef = defineFiberApp({
                     buyer: { var: "event.agent" },
                     quantity: { var: "event.quantity" },
                     shippingInfo: { var: "event.shippingInfo" },
-                    orderedAt: { var: "$timestamp" },
+                    orderedAt: { var: "$ordinal" },
                   },
                 ],
               ],
@@ -239,7 +239,7 @@ export const marketGroupBuyDef = defineFiberApp({
           { var: "state" },
           {
             status: "THRESHOLD_MET",
-            thresholdMetAt: { var: "$timestamp" },
+            thresholdMetAt: { var: "$ordinal" },
             currentTier: {
               reduce: [
                 { var: "state.priceTiers" },
@@ -270,7 +270,7 @@ export const marketGroupBuyDef = defineFiberApp({
       guard: {
         and: [
           { ">": [{ var: "event.quantity" }, 0] },
-          { "<=": [{ var: "$timestamp" }, { var: "state.deadline" }] },
+          { "<=": [{ var: "$ordinal" }, { var: "state.deadline" }] },
         ],
       },
       effect: {
@@ -285,7 +285,7 @@ export const marketGroupBuyDef = defineFiberApp({
                     buyer: { var: "event.agent" },
                     quantity: { var: "event.quantity" },
                     shippingInfo: { var: "event.shippingInfo" },
-                    orderedAt: { var: "$timestamp" },
+                    orderedAt: { var: "$ordinal" },
                   },
                 ],
               ],
@@ -325,13 +325,13 @@ export const marketGroupBuyDef = defineFiberApp({
       from: "THRESHOLD_MET",
       to: "PROCESSING",
       eventName: "finalize",
-      guard: { ">=": [{ var: "$timestamp" }, { var: "state.deadline" }] },
+      guard: { ">=": [{ var: "$ordinal" }, { var: "state.deadline" }] },
       effect: {
         merge: [
           { var: "state" },
           {
             status: "PROCESSING",
-            finalizedAt: { var: "$timestamp" },
+            finalizedAt: { var: "$ordinal" },
             finalTier: { var: "state.currentTier" },
             finalPricePerUnit: {
               var: {
@@ -357,7 +357,7 @@ export const marketGroupBuyDef = defineFiberApp({
           { var: "state" },
           {
             status: "FULFILLED",
-            fulfilledAt: { var: "$timestamp" },
+            fulfilledAt: { var: "$ordinal" },
             trackingInfo: { var: "event.trackingInfo" },
           },
         ],
@@ -373,7 +373,7 @@ export const marketGroupBuyDef = defineFiberApp({
           {
             "<": [{ var: "state.totalQuantity" }, { var: "state.minQuantity" }],
           },
-          { ">=": [{ var: "$timestamp" }, { var: "state.deadline" }] },
+          { ">=": [{ var: "$ordinal" }, { var: "state.deadline" }] },
         ],
       },
       effect: {
@@ -381,7 +381,7 @@ export const marketGroupBuyDef = defineFiberApp({
           { var: "state" },
           {
             status: "REFUNDED",
-            refundedAt: { var: "$timestamp" },
+            refundedAt: { var: "$ordinal" },
             reason: "threshold_not_met",
           },
         ],

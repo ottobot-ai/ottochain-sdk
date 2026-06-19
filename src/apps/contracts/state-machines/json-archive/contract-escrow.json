@@ -128,7 +128,7 @@
               "var": "event.amount"
             },
             "fundedAt": {
-              "var": "$timestamp"
+              "var": "$ordinal"
             }
           }
         ]
@@ -163,7 +163,7 @@
           },
           {
             "activatedAt": {
-              "var": "$timestamp"
+              "var": "$ordinal"
             }
           }
         ]
@@ -201,13 +201,13 @@
                 "var": "event.reason"
               },
               "requestedAt": {
-                "var": "$timestamp"
+                "var": "$ordinal"
               }
             },
             "releaseDeadline": {
               "+": [
                 {
-                  "var": "$timestamp"
+                  "var": "$ordinal"
                 },
                 {
                   "var": "state.releaseWindowMs"
@@ -238,7 +238,7 @@
           {
             ">=": [
               {
-                "var": "$timestamp"
+                "var": "$ordinal"
               },
               {
                 "var": "state.releaseDeadline"
@@ -254,7 +254,7 @@
           },
           {
             "releasedAt": {
-              "var": "$timestamp"
+              "var": "$ordinal"
             },
             "releasedTo": {
               "var": "state.beneficiary"
@@ -283,7 +283,7 @@
           {
             "<": [
               {
-                "var": "$timestamp"
+                "var": "$ordinal"
               },
               {
                 "var": "state.releaseDeadline"
@@ -299,7 +299,7 @@
           },
           {
             "disputedAt": {
-              "var": "$timestamp"
+              "var": "$ordinal"
             }
           }
         ]
@@ -362,7 +362,7 @@
           {
             ">=": [
               {
-                "var": "$timestamp"
+                "var": "$ordinal"
               },
               {
                 "var": "state.expiresAt"
@@ -378,7 +378,7 @@
           },
           {
             "refundedAt": {
-              "var": "$timestamp"
+              "var": "$ordinal"
             }
           }
         ]
@@ -406,7 +406,7 @@
           },
           {
             "refundedAt": {
-              "var": "$timestamp"
+              "var": "$ordinal"
             }
           }
         ]

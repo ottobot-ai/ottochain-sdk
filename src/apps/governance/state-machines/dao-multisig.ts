@@ -172,13 +172,13 @@ export const daoMultisigDef = defineFiberApp({
               actionType: { var: "event.actionType" },
               payload: { var: "event.payload" },
               proposer: { var: "event.agent" },
-              proposedAt: { var: "$timestamp" },
+              proposedAt: { var: "$ordinal" },
               expiresAt: {
-                "+": [{ var: "$timestamp" }, { var: "state.proposalTTLMs" }],
+                "+": [{ var: "$ordinal" }, { var: "state.proposalTTLMs" }],
               },
             },
             signatures: {
-              setKey: [{}, { var: "event.agent" }, { var: "$timestamp" }],
+              setKey: [{}, { var: "event.agent" }, { var: "$ordinal" }],
             },
           },
         ],
@@ -214,7 +214,7 @@ export const daoMultisigDef = defineFiberApp({
               setKey: [
                 { var: "state.signatures" },
                 { var: "event.agent" },
-                { var: "$timestamp" },
+                { var: "$ordinal" },
               ],
             },
           },
@@ -246,7 +246,7 @@ export const daoMultisigDef = defineFiberApp({
                     type: { var: "state.proposal.actionType" },
                     payload: { var: "state.proposal.payload" },
                     signatures: { var: "state.signatures" },
-                    executedAt: { var: "$timestamp" },
+                    executedAt: { var: "$ordinal" },
                   },
                 ],
               ],
@@ -266,7 +266,7 @@ export const daoMultisigDef = defineFiberApp({
       eventName: "cancel",
       guard: {
         or: [
-          { ">": [{ var: "$timestamp" }, { var: "state.proposal.expiresAt" }] },
+          { ">": [{ var: "$ordinal" }, { var: "state.proposal.expiresAt" }] },
           signerIsParty("state.proposal.proposer"),
         ],
       },
@@ -281,7 +281,7 @@ export const daoMultisigDef = defineFiberApp({
                   {
                     merge: [
                       { var: "state.proposal" },
-                      { cancelledAt: { var: "$timestamp" } },
+                      { cancelledAt: { var: "$ordinal" } },
                     ],
                   },
                 ],
@@ -309,13 +309,13 @@ export const daoMultisigDef = defineFiberApp({
               actionType: "add_signer",
               payload: { newSigner: { var: "event.newSigner" } },
               proposer: { var: "event.agent" },
-              proposedAt: { var: "$timestamp" },
+              proposedAt: { var: "$ordinal" },
               expiresAt: {
-                "+": [{ var: "$timestamp" }, { var: "state.proposalTTLMs" }],
+                "+": [{ var: "$ordinal" }, { var: "state.proposalTTLMs" }],
               },
             },
             signatures: {
-              setKey: [{}, { var: "event.agent" }, { var: "$timestamp" }],
+              setKey: [{}, { var: "event.agent" }, { var: "$ordinal" }],
             },
           },
         ],
@@ -347,13 +347,13 @@ export const daoMultisigDef = defineFiberApp({
               actionType: "remove_signer",
               payload: { removeSigner: { var: "event.removeSigner" } },
               proposer: { var: "event.agent" },
-              proposedAt: { var: "$timestamp" },
+              proposedAt: { var: "$ordinal" },
               expiresAt: {
-                "+": [{ var: "$timestamp" }, { var: "state.proposalTTLMs" }],
+                "+": [{ var: "$ordinal" }, { var: "state.proposalTTLMs" }],
               },
             },
             signatures: {
-              setKey: [{}, { var: "event.agent" }, { var: "$timestamp" }],
+              setKey: [{}, { var: "event.agent" }, { var: "$ordinal" }],
             },
           },
         ],
@@ -386,13 +386,13 @@ export const daoMultisigDef = defineFiberApp({
               actionType: "change_threshold",
               payload: { newThreshold: { var: "event.newThreshold" } },
               proposer: { var: "event.agent" },
-              proposedAt: { var: "$timestamp" },
+              proposedAt: { var: "$ordinal" },
               expiresAt: {
-                "+": [{ var: "$timestamp" }, { var: "state.proposalTTLMs" }],
+                "+": [{ var: "$ordinal" }, { var: "state.proposalTTLMs" }],
               },
             },
             signatures: {
-              setKey: [{}, { var: "event.agent" }, { var: "$timestamp" }],
+              setKey: [{}, { var: "event.agent" }, { var: "$ordinal" }],
             },
           },
         ],
@@ -487,7 +487,7 @@ export const daoMultisigDef = defineFiberApp({
       effect: {
         merge: [
           { var: "state" },
-          { dissolvedAt: { var: "$timestamp" }, status: "DISSOLVED" },
+          { dissolvedAt: { var: "$ordinal" }, status: "DISSOLVED" },
         ],
       },
       dependencies: [],

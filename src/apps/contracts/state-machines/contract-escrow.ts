@@ -218,7 +218,7 @@ export const contractEscrowDef = defineFiberApp({
       effect: {
         merge: [
           { var: "state" },
-          { balance: { var: "event.amount" }, fundedAt: { var: "$timestamp" } },
+          { balance: { var: "event.amount" }, fundedAt: { var: "$ordinal" } },
         ],
       },
       dependencies: [],
@@ -234,7 +234,7 @@ export const contractEscrowDef = defineFiberApp({
         ],
       },
       effect: {
-        merge: [{ var: "state" }, { activatedAt: { var: "$timestamp" } }],
+        merge: [{ var: "state" }, { activatedAt: { var: "$ordinal" } }],
       },
       dependencies: [],
     },
@@ -251,10 +251,10 @@ export const contractEscrowDef = defineFiberApp({
               requestedBy: { var: "event.agent" },
               amount: { var: "event.amount" },
               reason: { var: "event.reason" },
-              requestedAt: { var: "$timestamp" },
+              requestedAt: { var: "$ordinal" },
             },
             releaseDeadline: {
-              "+": [{ var: "$timestamp" }, { var: "state.releaseWindowMs" }],
+              "+": [{ var: "$ordinal" }, { var: "state.releaseWindowMs" }],
             },
           },
         ],
@@ -268,14 +268,14 @@ export const contractEscrowDef = defineFiberApp({
       guard: {
         or: [
           signerIsParty("state.depositor"),
-          { ">=": [{ var: "$timestamp" }, { var: "state.releaseDeadline" }] },
+          { ">=": [{ var: "$ordinal" }, { var: "state.releaseDeadline" }] },
         ],
       },
       effect: {
         merge: [
           { var: "state" },
           {
-            releasedAt: { var: "$timestamp" },
+            releasedAt: { var: "$ordinal" },
             releasedTo: { var: "state.beneficiary" },
           },
         ],
@@ -289,11 +289,11 @@ export const contractEscrowDef = defineFiberApp({
       guard: {
         and: [
           signerIsParty("state.depositor"),
-          { "<": [{ var: "$timestamp" }, { var: "state.releaseDeadline" }] },
+          { "<": [{ var: "$ordinal" }, { var: "state.releaseDeadline" }] },
         ],
       },
       effect: {
-        merge: [{ var: "state" }, { disputedAt: { var: "$timestamp" } }],
+        merge: [{ var: "state" }, { disputedAt: { var: "$ordinal" } }],
       },
       spawns: {
         sm: "Judiciary",
@@ -332,11 +332,11 @@ export const contractEscrowDef = defineFiberApp({
       guard: {
         or: [
           { var: "event.mutualConsent" },
-          { ">=": [{ var: "$timestamp" }, { var: "state.expiresAt" }] },
+          { ">=": [{ var: "$ordinal" }, { var: "state.expiresAt" }] },
         ],
       },
       effect: {
-        merge: [{ var: "state" }, { refundedAt: { var: "$timestamp" } }],
+        merge: [{ var: "state" }, { refundedAt: { var: "$ordinal" } }],
       },
       dependencies: [],
     },
@@ -346,7 +346,7 @@ export const contractEscrowDef = defineFiberApp({
       eventName: "cancel",
       guard: signerIsParty("state.depositor"),
       effect: {
-        merge: [{ var: "state" }, { refundedAt: { var: "$timestamp" } }],
+        merge: [{ var: "state" }, { refundedAt: { var: "$ordinal" } }],
       },
       dependencies: [],
     },

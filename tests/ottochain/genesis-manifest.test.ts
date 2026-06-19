@@ -86,14 +86,14 @@ describe('genesis manifest', () => {
       expect(typeof pkg.strict).toBe('boolean');
       expect(pkg.strict).toBe(false);
       expect(pkg.metadata).toEqual({});
-      expect(pkg.schemaShape).toBeDefined();
+      expect(pkg.machineShape).toBeDefined();
       expect(pkg.definition).toBeDefined();
     }
   });
 
-  it('every schemaShape.stateMessage has a non-empty, well-formed field list', () => {
+  it('every machineShape.stateMessage has a non-empty, well-formed field list', () => {
     for (const pkg of manifest.packages) {
-      const sm: MessageShape = pkg.schemaShape.stateMessage;
+      const sm: MessageShape = pkg.machineShape.stateMessage;
       expect(sm.typeName.trim().length).toBeGreaterThan(0);
       expect(sm.fields.length).toBeGreaterThan(0);
 
@@ -114,18 +114,18 @@ describe('genesis manifest', () => {
 
   it('commands are empty for this first cut (flagged follow-up)', () => {
     for (const pkg of manifest.packages) {
-      expect(pkg.schemaShape.commands).toEqual({});
+      expect(pkg.machineShape.commands).toEqual({});
     }
   });
 
   it('stateMessage typeNames match the chain conformance suite', () => {
-    expect(byName.get('std.identity.package')!.schemaShape.stateMessage.typeName).toBe(
+    expect(byName.get('std.identity.package')!.machineShape.stateMessage.typeName).toBe(
       'ottochain.apps.identity.v1.Identity',
     );
-    expect(byName.get('std.governance.package')!.schemaShape.stateMessage.typeName).toBe(
+    expect(byName.get('std.governance.package')!.machineShape.stateMessage.typeName).toBe(
       'ottochain.apps.governance.v1.Proposal',
     );
-    expect(byName.get('std.markets.package')!.schemaShape.stateMessage.typeName).toBe(
+    expect(byName.get('std.markets.package')!.machineShape.stateMessage.typeName).toBe(
       'ottochain.apps.markets.v1.Market',
     );
   });

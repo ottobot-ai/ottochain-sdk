@@ -287,8 +287,9 @@ export interface ProtoStateMachineDefinition {
     eventName: string;
     guard?: unknown;
     effect?: unknown;
-    dependencies?: unknown[];
-    emits?: unknown[];
+    // Always present, always a UUID-string array (chain `Set[UUID]`, required-no-default).
+    // No `emits` — the chain `Transition` has no such field; declared emits are stripped here.
+    dependencies: string[];
   }>;
   metadata?: Record<string, unknown>;
 }
@@ -318,8 +319,13 @@ export function toProtoDefinition<T extends FiberAppDefinition>(
       eventName: t.eventName,
       guard: t.guard,   // Required - Scala has no default
       effect: t.effect, // Required - Scala has no default
-      // dependencies has default Set.empty in Scala, so omit if empty
-      ...(t.dependencies?.length && { dependencies: [...t.dependencies] }),
+      // Chain `Transition.dependencies: Set[UUID]` is REQUIRED (no Scala default), and each
+      // element must be a fiber UUID string. A `DependencySpec` object is a build-time-only
+      // authoring affordance with no wire representation (concrete dependency UUIDs are per
+      // instance, not part of the definition template), so drop non-string entries. Always
+      // emit the array — omitting a no-default field diverges the canonical and the chain
+      // rejects the whole update (InvalidSignature / decode failure).
+      dependencies: (t.dependencies ?? []).filter((d): d is string => typeof d === 'string'),
     })),
   };
 
@@ -331,10 +337,12 @@ export function toProtoDefinition<T extends FiberAppDefinition>(
     };
   }
 
-  // Pass metadata through unchanged - it's an optional unstructured object
-  if (def.metadata) {
-    protoDef.metadata = def.metadata as unknown as Record<string, unknown>;
-  }
+  // NOTE: `def.metadata` is the SDK's FiberAppMetadata (name/app/type/version — app-routing
+  // packaging info), NOT chain metadata. Projecting it onto the wire would make the on-chain
+  // canonical + the registry `logicHash` depend on packaging fields (changing `description` would
+  // change the signed digest of an otherwise-identical machine), so it is deliberately NOT emitted
+  // (the chain's `StateMachineDefinition.metadata` stays absent → `None`). A caller that genuinely
+  // needs on-chain metadata sets `ProtoStateMachineDefinition.metadata` explicitly after conversion.
 
   return protoDef;
 }

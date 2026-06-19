@@ -143,7 +143,7 @@ export const marketAuctionDef = defineFiberApp({
           { var: "state" },
           {
             status: "OPEN",
-            openedAt: { var: "$timestamp" },
+            openedAt: { var: "$ordinal" },
             bids: [],
             highBid: null,
             highBidder: null,
@@ -160,7 +160,7 @@ export const marketAuctionDef = defineFiberApp({
       effect: {
         merge: [
           { var: "state" },
-          { status: "CANCELLED", cancelledAt: { var: "$timestamp" } },
+          { status: "CANCELLED", cancelledAt: { var: "$ordinal" } },
         ],
       },
       dependencies: [],
@@ -192,7 +192,7 @@ export const marketAuctionDef = defineFiberApp({
           {
             or: [
               { "!": [{ var: "state.deadline" }] },
-              { "<=": [{ var: "$timestamp" }, { var: "state.deadline" }] },
+              { "<=": [{ var: "$ordinal" }, { var: "state.deadline" }] },
             ],
           },
         ],
@@ -208,14 +208,14 @@ export const marketAuctionDef = defineFiberApp({
                   {
                     bidder: { var: "event.agent" },
                     amount: { var: "event.amount" },
-                    bidAt: { var: "$timestamp" },
+                    bidAt: { var: "$ordinal" },
                   },
                 ],
               ],
             },
             highBid: { var: "event.amount" },
             highBidder: { var: "event.agent" },
-            lastBidAt: { var: "$timestamp" },
+            lastBidAt: { var: "$ordinal" },
           },
         ],
       },
@@ -231,7 +231,7 @@ export const marketAuctionDef = defineFiberApp({
           {
             and: [
               { var: "state.deadline" },
-              { ">=": [{ var: "$timestamp" }, { var: "state.deadline" }] },
+              { ">=": [{ var: "$ordinal" }, { var: "state.deadline" }] },
             ],
           },
         ],
@@ -239,7 +239,7 @@ export const marketAuctionDef = defineFiberApp({
       effect: {
         merge: [
           { var: "state" },
-          { status: "CLOSING", closedAt: { var: "$timestamp" } },
+          { status: "CLOSING", closedAt: { var: "$ordinal" } },
         ],
       },
       dependencies: [],
@@ -266,7 +266,7 @@ export const marketAuctionDef = defineFiberApp({
           { var: "state" },
           {
             status: "SETTLED",
-            settledAt: { var: "$timestamp" },
+            settledAt: { var: "$ordinal" },
             winner: { var: "state.highBidder" },
             finalPrice: { var: "state.highBid" },
           },
@@ -296,7 +296,7 @@ export const marketAuctionDef = defineFiberApp({
           { var: "state" },
           {
             status: "NO_SALE",
-            closedAt: { var: "$timestamp" },
+            closedAt: { var: "$ordinal" },
             reason: {
               if: [
                 { "!": [{ var: "state.highBidder" }] },

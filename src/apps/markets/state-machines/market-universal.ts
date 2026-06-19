@@ -95,7 +95,7 @@ export const marketUniversalDef = defineFiberApp({
       effect: {
         merge: [
           { var: "state" },
-          { status: "OPEN", openedAt: { var: "$timestamp" } },
+          { status: "OPEN", openedAt: { var: "$ordinal" } },
         ],
       },
       dependencies: [],
@@ -108,7 +108,7 @@ export const marketUniversalDef = defineFiberApp({
       effect: {
         merge: [
           { var: "state" },
-          { status: "CANCELLED", cancelledAt: { var: "$timestamp" } },
+          { status: "CANCELLED", cancelledAt: { var: "$ordinal" } },
         ],
       },
       dependencies: [],
@@ -138,7 +138,7 @@ export const marketUniversalDef = defineFiberApp({
       effect: {
         merge: [
           { var: "state" },
-          { status: "CLOSED", closedAt: { var: "$timestamp" } },
+          { status: "CLOSED", closedAt: { var: "$ordinal" } },
         ],
       },
       dependencies: [],
@@ -151,7 +151,7 @@ export const marketUniversalDef = defineFiberApp({
       effect: {
         merge: [
           { var: "state" },
-          { status: "SETTLED", settledAt: { var: "$timestamp" } },
+          { status: "SETTLED", settledAt: { var: "$ordinal" } },
         ],
       },
       dependencies: [],
@@ -164,7 +164,7 @@ export const marketUniversalDef = defineFiberApp({
       effect: {
         merge: [
           { var: "state" },
-          { status: "CANCELLED", cancelledAt: { var: "$timestamp" } },
+          { status: "CANCELLED", cancelledAt: { var: "$ordinal" } },
         ],
       },
       dependencies: [],

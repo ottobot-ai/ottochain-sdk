@@ -183,7 +183,7 @@ describe('Contracts Conversion Requirements', () => {
           { "var": "state" },
           {
             "status": "ACTIVE",
-            "acceptedAt": { "var": "$timestamp" }
+            "acceptedAt": { "var": "$ordinal" }
           }
         ]
       });
@@ -336,10 +336,10 @@ describe('Contracts Conversion Requirements', () => {
       expect(Array.isArray(effect.merge[1].completions.cat)).toBe(true);
     });
 
-    it('should handle timestamp variables ($timestamp)', () => {
+    it('should handle timestamp variables ($ordinal)', () => {
       const transitions = contractAgreementDef.transitions;
       const hasTimestamp = transitions.some(t => 
-        JSON.stringify(t.effect).includes('$timestamp')
+        JSON.stringify(t.effect).includes('$ordinal')
       );
       expect(hasTimestamp).toBe(true);
     });

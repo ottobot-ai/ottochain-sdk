@@ -61,7 +61,7 @@
                     "var": "event.role"
                   },
                   "addedAt": {
-                    "var": "$timestamp"
+                    "var": "$ordinal"
                   }
                 }
               ]
@@ -140,12 +140,12 @@
                 "var": "event.agent"
               },
               "proposedAt": {
-                "var": "$timestamp"
+                "var": "$ordinal"
               },
               "deadline": {
                 "+": [
                   {
-                    "var": "$timestamp"
+                    "var": "$ordinal"
                   },
                   {
                     "var": "state.votingPeriodMs"
@@ -210,7 +210,7 @@
                     "var": "event.vote"
                   },
                   "votedAt": {
-                    "var": "$timestamp"
+                    "var": "$ordinal"
                   }
                 }
               ]
@@ -272,7 +272,7 @@
                     },
                     "outcome": "passed",
                     "finalizedAt": {
-                      "var": "$timestamp"
+                      "var": "$ordinal"
                     }
                   }
                 ]
@@ -327,7 +327,7 @@
                     },
                     "outcome": "failed",
                     "finalizedAt": {
-                      "var": "$timestamp"
+                      "var": "$ordinal"
                     }
                   }
                 ]
@@ -374,7 +374,7 @@
                 "var": "event.claim"
               },
               "filedAt": {
-                "var": "$timestamp"
+                "var": "$ordinal"
               },
               "evidence": []
             },
@@ -438,7 +438,7 @@
                             "var": "event.content"
                           },
                           "at": {
-                            "var": "$timestamp"
+                            "var": "$ordinal"
                           }
                         }
                       ]
@@ -523,7 +523,7 @@
                     "var": "event.ruling"
                   },
                   "votedAt": {
-                    "var": "$timestamp"
+                    "var": "$ordinal"
                   }
                 }
               ]
@@ -573,7 +573,7 @@
                       "var": "event.remedy"
                     },
                     "resolvedAt": {
-                      "var": "$timestamp"
+                      "var": "$ordinal"
                     }
                   }
                 ]
@@ -614,7 +614,7 @@
           },
           {
             "dissolvedAt": {
-              "var": "$timestamp"
+              "var": "$ordinal"
             }
           }
         ]

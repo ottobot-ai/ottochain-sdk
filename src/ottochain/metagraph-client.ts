@@ -4,7 +4,7 @@
  * Client for interacting with ottochain ML0 custom routes (/v1 prefix)
  * and framework snapshot endpoints.
  *
- * @see modules/l0/src/main/scala/xyz/kd5ujc/metagraph_l0/ML0CustomRoutes.scala
+ * @see modules/l0/src/main/scala/xyz/kd5ujc/metagraph_l0/ML0Routes.scala
  * @see modules/data_l1/src/main/scala/xyz/kd5ujc/data_l1/DataL1CustomRoutes.scala
  * @packageDocumentation
  */
@@ -20,6 +20,7 @@ import type {
   EventReceipt,
   ScriptInvocation,
   FiberStatus,
+  RegistryEntry,
 } from './types.js';
 import type { CurrencySnapshotResponse } from './snapshot.js';
 import { extractOnChainState } from './snapshot.js';
@@ -30,6 +31,30 @@ import { extractOnChainState } from './snapshot.js';
 export interface Checkpoint {
   ordinal: number;
   state: CalculatedState;
+}
+
+/**
+ * A light-client state proof for one field of a fiber/asset record, verifiable against the
+ * consensus-signed committed-state root (Merkle-Patricia inclusion). Returned by the `state-proof`
+ * endpoints.
+ */
+export interface StateProof {
+  /** The record (or projected field) the proof attests to. */
+  record: unknown;
+  /** The committed-state combined root (= the snapshot's `calculatedStateProof`). */
+  committedRoot: string;
+  /** The Merkle-Patricia trie root. */
+  mptRoot: string;
+  ordinal: number;
+  /** The Merkle-Patricia inclusion proof. */
+  proof: unknown;
+}
+
+/** A fee/gas estimate for a transition or script invocation (shape is advisory / may evolve). */
+export interface FeeEstimate {
+  gas?: number;
+  fee?: number;
+  [key: string]: unknown;
 }
 
 /**
@@ -110,7 +135,7 @@ export interface MetagraphClientConfig {
  * const onChain = await client.getOnChain();
  *
  * // Get all active state machines
- * const machines = await client.getStateMachines('Active');
+ * const machines = await client.getStateMachines('ACTIVE');
  *
  * // Get event receipts for a fiber
  * const events = await client.getStateMachineEvents(fiberId);
@@ -217,6 +242,80 @@ export class MetagraphClient {
     return this.ml0.get<ScriptInvocation[]>(
       `/data-application/v1/scripts/${scriptId}/invocations`
     );
+  }
+
+  // -------------------------------------------------------------------------
+  // Registry, audit, state-proofs, fee estimates (ML0 /data-application/v1/*)
+  // -------------------------------------------------------------------------
+
+  /** Get the metagraph version string. */
+  async getVersion(): Promise<string> {
+    return this.ml0.get<string>('/data-application/v1/version');
+  }
+
+  /** Get the full registry namespace, keyed by full registry name `labels.tld`. */
+  async getRegistry(): Promise<Record<string, RegistryEntry>> {
+    return this.ml0.get<Record<string, RegistryEntry>>('/data-application/v1/registry');
+  }
+
+  /** Resolve a single registry entry by full name (`labels.tld`), or null if unregistered. */
+  async getRegistryEntry(name: string): Promise<RegistryEntry | null> {
+    try {
+      return await this.ml0.get<RegistryEntry>(
+        `/data-application/v1/registry/${encodeURIComponent(name)}`
+      );
+    } catch (error) {
+      if (error instanceof NetworkError && error.statusCode === 404) return null;
+      throw error;
+    }
+  }
+
+  /** Reverse-resolve a fiber UUID to its canonical registered name (#29), or null. */
+  async getReverseName(fiberId: string): Promise<string | null> {
+    try {
+      return await this.ml0.get<string>(`/data-application/v1/registry/reverse/${fiberId}`);
+    } catch (error) {
+      if (error instanceof NetworkError && error.statusCode === 404) return null;
+      throw error;
+    }
+  }
+
+  /** Get the rendered audit-trail lines for a state-machine fiber. */
+  async getStateMachineAudit(fiberId: string): Promise<string[]> {
+    return this.ml0.get<string[]>(`/data-application/v1/state-machines/${fiberId}/audit`);
+  }
+
+  /** Light-client state proof for a field of a state-machine fiber, against the committed root. */
+  async getStateMachineStateProof(fiberId: string, field: string): Promise<StateProof> {
+    return this.ml0.get<StateProof>(
+      `/data-application/v1/state-machines/${fiberId}/state-proof?field=${encodeURIComponent(field)}`
+    );
+  }
+
+  /** Light-client state proof for a field of a script fiber. */
+  async getScriptStateProof(fiberId: string, field: string): Promise<StateProof> {
+    return this.ml0.get<StateProof>(
+      `/data-application/v1/scripts/${fiberId}/state-proof?field=${encodeURIComponent(field)}`
+    );
+  }
+
+  /** Light-client state proof for a field of an asset instance. */
+  async getAssetStateProof(assetId: string, field: string): Promise<StateProof> {
+    return this.ml0.get<StateProof>(
+      `/data-application/v1/assets/${assetId}/state-proof?field=${encodeURIComponent(field)}`
+    );
+  }
+
+  /** Estimate the fee/gas for a transition event on a state-machine fiber. */
+  async estimateTransitionFee(fiberId: string, eventName: string): Promise<FeeEstimate> {
+    return this.ml0.get<FeeEstimate>(
+      `/data-application/v1/state-machines/${fiberId}/estimate-fee?event=${encodeURIComponent(eventName)}`
+    );
+  }
+
+  /** Estimate the fee/gas for invoking a script fiber. */
+  async estimateScriptFee(fiberId: string): Promise<FeeEstimate> {
+    return this.ml0.get<FeeEstimate>(`/data-application/v1/scripts/${fiberId}/estimate-fee`);
   }
 
   // -------------------------------------------------------------------------

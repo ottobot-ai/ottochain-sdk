@@ -194,9 +194,8 @@ describe('LendingZkLoan toProtoDefinition wire shape', () => {
     expect(json).toContain('$ordinal');
   });
 
-  it('preserves the metadata (name/version/crossReferences) unchanged', () => {
-    expect(proto.metadata?.name).toBe('LendingZkLoan');
-    expect(proto.metadata?.version).toBe('1.0.0');
-    expect(proto.metadata?.crossReferences).toEqual(lendingZkLoanDef.metadata.crossReferences);
+  it('strips FiberAppMetadata from the wire proto (no metadata leak — chain-aligned)', () => {
+    // toProtoDefinition drops metadata (name/version/crossReferences) so it never rides on-chain.
+    expect(proto.metadata).toBeUndefined();
   });
 });

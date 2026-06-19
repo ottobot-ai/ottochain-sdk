@@ -199,7 +199,7 @@ export const marketPredictionDef = defineFiberApp({
           { var: "state" },
           {
             status: "OPEN",
-            openedAt: { var: "$timestamp" },
+            openedAt: { var: "$ordinal" },
             positions: {},
             totalPool: 0,
           },
@@ -217,7 +217,7 @@ export const marketPredictionDef = defineFiberApp({
           { var: "state" },
           {
             status: "CANCELLED",
-            cancelledAt: { var: "$timestamp" },
+            cancelledAt: { var: "$ordinal" },
             reason: { var: "event.reason" },
           },
         ],
@@ -235,7 +235,7 @@ export const marketPredictionDef = defineFiberApp({
           {
             or: [
               { "!": [{ var: "state.deadline" }] },
-              { "<=": [{ var: "$timestamp" }, { var: "state.deadline" }] },
+              { "<=": [{ var: "$ordinal" }, { var: "state.deadline" }] },
             ],
           },
         ],
@@ -276,7 +276,7 @@ export const marketPredictionDef = defineFiberApp({
           {
             and: [
               { var: "state.deadline" },
-              { ">=": [{ var: "$timestamp" }, { var: "state.deadline" }] },
+              { ">=": [{ var: "$ordinal" }, { var: "state.deadline" }] },
             ],
           },
         ],
@@ -284,7 +284,7 @@ export const marketPredictionDef = defineFiberApp({
       effect: {
         merge: [
           { var: "state" },
-          { status: "CLOSED", closedAt: { var: "$timestamp" } },
+          { status: "CLOSED", closedAt: { var: "$ordinal" } },
         ],
       },
       dependencies: [],
@@ -304,7 +304,7 @@ export const marketPredictionDef = defineFiberApp({
                 oracle: { var: "event.agent" },
                 outcome: { var: "event.outcome" },
                 proof: { var: "event.proof" },
-                submittedAt: { var: "$timestamp" },
+                submittedAt: { var: "$ordinal" },
               },
             ],
           },
@@ -343,7 +343,7 @@ export const marketPredictionDef = defineFiberApp({
                     oracle: { var: "event.agent" },
                     outcome: { var: "event.outcome" },
                     proof: { var: "event.proof" },
-                    submittedAt: { var: "$timestamp" },
+                    submittedAt: { var: "$ordinal" },
                   },
                 ],
               ],
@@ -365,7 +365,7 @@ export const marketPredictionDef = defineFiberApp({
           { var: "state" },
           {
             status: "SETTLED",
-            settledAt: { var: "$timestamp" },
+            settledAt: { var: "$ordinal" },
             finalOutcome: { var: "event.outcome" },
             claims: [],
           },
@@ -400,7 +400,7 @@ export const marketPredictionDef = defineFiberApp({
           { var: "state" },
           {
             status: "DISPUTED",
-            disputedAt: { var: "$timestamp" },
+            disputedAt: { var: "$ordinal" },
             disputedBy: { var: "event.agent" },
             disputeStake: { var: "event.stake" },
             disputeReason: { var: "event.reason" },
@@ -419,7 +419,7 @@ export const marketPredictionDef = defineFiberApp({
           { var: "state" },
           {
             status: "SETTLED",
-            settledAt: { var: "$timestamp" },
+            settledAt: { var: "$ordinal" },
             finalOutcome: { var: "event.outcome" },
             rulingId: { var: "event.rulingId" },
             claims: [],
@@ -450,7 +450,7 @@ export const marketPredictionDef = defineFiberApp({
           { var: "state" },
           {
             status: "REFUNDED",
-            refundedAt: { var: "$timestamp" },
+            refundedAt: { var: "$ordinal" },
             reason: "oracle_invalidation",
           },
         ],
@@ -509,7 +509,7 @@ export const marketPredictionDef = defineFiberApp({
                   {
                     agent: { var: "event.agent" },
                     amount: { var: "event.amount" },
-                    claimedAt: { var: "$timestamp" },
+                    claimedAt: { var: "$ordinal" },
                   },
                 ],
               ],
