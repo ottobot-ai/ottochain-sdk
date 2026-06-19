@@ -1,4 +1,5 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
+import { actorIsSigner, signerInSet } from "../../../schema/guards.js";
 
 /**
  * Reputation-based governance. Minimum reputation required for participation.
@@ -210,19 +211,9 @@ export const daoReputationDef = defineFiberApp({
               { var: "state.voteThreshold" },
             ],
           },
-          {
-            "!": [{ in: [{ var: "event.agent" }, { var: "state.votes.for" }] }],
-          },
-          {
-            "!": [
-              { in: [{ var: "event.agent" }, { var: "state.votes.against" }] },
-            ],
-          },
-          {
-            "!": [
-              { in: [{ var: "event.agent" }, { var: "state.votes.abstain" }] },
-            ],
-          },
+          { "!": [signerInSet("state.votes.for")] },
+          { "!": [signerInSet("state.votes.against")] },
+          { "!": [signerInSet("state.votes.abstain")] },
           { "<=": [{ var: "$ordinal" }, { var: "state.proposal.deadline" }] },
         ],
       },
@@ -285,21 +276,23 @@ export const daoReputationDef = defineFiberApp({
       from: "VOTING",
       to: "ACTIVE",
       eventName: "execute",
+      // A2 fix: votes.for/against/abstain are arrays of voter addresses; count with
+      // `length` (size is not a JLVM opcode).
       guard: {
         and: [
           { ">": [{ var: "$ordinal" }, { var: "state.proposal.deadline" }] },
           {
             ">": [
-              { size: { var: "state.votes.for" } },
-              { size: { var: "state.votes.against" } },
+              { length: [{ var: "state.votes.for" }] },
+              { length: [{ var: "state.votes.against" }] },
             ],
           },
           {
             ">=": [
               {
                 "+": [
-                  { size: { var: "state.votes.for" } },
-                  { size: { var: "state.votes.against" } },
+                  { length: [{ var: "state.votes.for" }] },
+                  { length: [{ var: "state.votes.against" }] },
                 ],
               },
               { var: "state.quorum" },
@@ -326,16 +319,18 @@ export const daoReputationDef = defineFiberApp({
             },
             proposal: null,
             votes: null,
+            // A3 fix: transition-level `emits` is dropped by the chain; emit from INSIDE the effect
+            // under the reserved `_emit` key (extracted as an EmittedEvent, stripped from state).
+            _emit: [
+              {
+                name: "proposal_executed",
+                data: { action: "increase", agents: { var: "state.votes.for" } },
+                destination: "Reputation",
+              },
+            ],
           },
         ],
       },
-      emits: [
-        {
-          event: "proposal_executed",
-          to: "Reputation",
-          payload: { action: "increase", agents: { var: "state.votes.for" } },
-        },
-      ],
       dependencies: [],
     },
     // VOTING → ACTIVE: reject (voting ended, for <= against or quorum not met)
@@ -343,6 +338,8 @@ export const daoReputationDef = defineFiberApp({
       from: "VOTING",
       to: "ACTIVE",
       eventName: "reject",
+      // A2 fix: count the array-shaped vote tallies with `length` (size is not a JLVM
+      // opcode).
       guard: {
         and: [
           { ">": [{ var: "$ordinal" }, { var: "state.proposal.deadline" }] },
@@ -350,16 +347,16 @@ export const daoReputationDef = defineFiberApp({
             or: [
               {
                 "<=": [
-                  { size: { var: "state.votes.for" } },
-                  { size: { var: "state.votes.against" } },
+                  { length: [{ var: "state.votes.for" }] },
+                  { length: [{ var: "state.votes.against" }] },
                 ],
               },
               {
                 "<": [
                   {
                     "+": [
-                      { size: { var: "state.votes.for" } },
-                      { size: { var: "state.votes.against" } },
+                      { length: [{ var: "state.votes.for" }] },
+                      { length: [{ var: "state.votes.against" }] },
                     ],
                   },
                   { var: "state.quorum" },
@@ -398,8 +395,17 @@ export const daoReputationDef = defineFiberApp({
       from: "ACTIVE",
       to: "ACTIVE",
       eventName: "join",
+      // S1/A2: bind event.agent to a verified signer (actorIsSigner) so the member is appended to the
+      // array and keyed into memberJoinedAt under a CHAIN-VERIFIED address (set is the rc.5 map-write
+      // opcode), and dedup on that bound actor.
+      // TODO(#24): event.agentReputation is self-asserted. Replace the reputation clause with
+      // signerHasReputation(registryReputationPath(<registryDep>), "state.memberThreshold") once
+      // runtime-updatable dependencies (#24) let a std-app bind the identity-registry instance — the
+      // same gate as corp-board's removal-resolution. The registry foundation + read helper already
+      // exist (src/apps/identity/state-machines/identity-registry.ts, guards.signerHasReputation).
       guard: {
         and: [
+          actorIsSigner(),
           {
             ">=": [
               { var: "event.agentReputation" },
@@ -417,7 +423,7 @@ export const daoReputationDef = defineFiberApp({
               cat: [{ var: "state.members" }, [{ var: "event.agent" }]],
             },
             memberJoinedAt: {
-              setKey: [
+              set: [
                 { var: "state.memberJoinedAt" },
                 { var: "event.agent" },
                 { var: "$ordinal" },
@@ -433,7 +439,7 @@ export const daoReputationDef = defineFiberApp({
       from: "ACTIVE",
       to: "ACTIVE",
       eventName: "leave",
-      guard: { in: [{ var: "event.agent" }, { var: "state.members" }] },
+      guard: signerInSet("state.members"),
       effect: {
         merge: [
           { var: "state" },

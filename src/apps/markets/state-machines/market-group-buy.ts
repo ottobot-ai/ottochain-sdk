@@ -1,4 +1,5 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
+import { signerIsParty, signerIsAnyParty } from "../../../schema/guards.js";
 
 /**
  * Collective purchasing with quantity thresholds and tiered pricing.
@@ -155,7 +156,7 @@ export const marketGroupBuyDef = defineFiberApp({
       from: "PROPOSED",
       to: "OPEN",
       eventName: "open",
-      guard: { "===": [{ var: "event.agent" }, { var: "state.organizer" }] },
+      guard: signerIsParty("state.organizer"),
       effect: {
         merge: [
           { var: "state" },
@@ -174,7 +175,7 @@ export const marketGroupBuyDef = defineFiberApp({
       from: "PROPOSED",
       to: "CANCELLED",
       eventName: "cancel",
-      guard: { "===": [{ var: "event.agent" }, { var: "state.organizer" }] },
+      guard: signerIsParty("state.organizer"),
       effect: {
         merge: [
           { var: "state" },
@@ -350,12 +351,7 @@ export const marketGroupBuyDef = defineFiberApp({
       from: "PROCESSING",
       to: "FULFILLED",
       eventName: "fulfill",
-      guard: {
-        or: [
-          { "===": [{ var: "event.agent" }, { var: "state.vendor" }] },
-          { "===": [{ var: "event.agent" }, { var: "state.organizer" }] },
-        ],
-      },
+      guard: signerIsAnyParty(["state.vendor", "state.organizer"]),
       effect: {
         merge: [
           { var: "state" },
@@ -401,12 +397,14 @@ export const marketGroupBuyDef = defineFiberApp({
           {
             ">": [
               {
-                size: {
-                  filter: [
-                    { var: "state.orders" },
-                    { "===": [{ var: "buyer" }, { var: "event.agent" }] },
-                  ],
-                },
+                length: [
+                  {
+                    filter: [
+                      { var: "state.orders" },
+                      { "===": [{ var: "buyer" }, { var: "event.agent" }] },
+                    ],
+                  },
+                ],
               },
               0,
             ],

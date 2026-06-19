@@ -1,4 +1,5 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
+import { signerIsParty, signerIsAnyParty } from "../../../schema/guards.js";
 
 /**
  * Two-party agreement with mutual completion attestation and dispute resolution.
@@ -36,7 +37,7 @@ export const contractAgreementDef = defineFiberApp({
   },
 
   createSchema: {
-    required: ["proposer", "counterparty"] as const,
+    required: ["proposer", "counterparty", "arbitrator"] as const,
     properties: {
       proposer: {
         type: "address",
@@ -48,6 +49,12 @@ export const contractAgreementDef = defineFiberApp({
         description: "DAG address of the counterparty",
         immutable: true,
       },
+      arbitrator: {
+        type: "address",
+        description:
+          "DAG address of the arbitrator authorized to resolve a dispute",
+        immutable: true,
+      },
     },
   },
 
@@ -56,6 +63,7 @@ export const contractAgreementDef = defineFiberApp({
       status: { type: "string" },
       proposer: { type: "address" },
       counterparty: { type: "address" },
+      arbitrator: { type: "address", immutable: true },
       completions: { type: "array" },
       acceptedAt: { type: "integer", nullable: true },
       rejectedAt: { type: "integer", nullable: true },
@@ -80,9 +88,6 @@ export const contractAgreementDef = defineFiberApp({
     dispute: { properties: { reason: { type: "string" } } },
     resolve: {
       properties: {
-        judicialRuling: { type: "boolean", nullable: true },
-        proposerApproves: { type: "boolean", nullable: true },
-        counterpartyApproves: { type: "boolean", nullable: true },
         resolution: { type: "string" },
         rulingId: { type: "string", nullable: true },
       },
@@ -153,7 +158,7 @@ export const contractAgreementDef = defineFiberApp({
       from: "PROPOSED",
       to: "ACTIVE",
       eventName: "accept",
-      guard: { "===": [{ var: "event.agent" }, { var: "state.counterparty" }] },
+      guard: signerIsParty("state.counterparty"),
       effect: {
         merge: [
           { var: "state" },
@@ -166,7 +171,7 @@ export const contractAgreementDef = defineFiberApp({
       from: "PROPOSED",
       to: "REJECTED",
       eventName: "reject",
-      guard: { "===": [{ var: "event.agent" }, { var: "state.counterparty" }] },
+      guard: signerIsParty("state.counterparty"),
       effect: {
         merge: [
           { var: "state" },
@@ -183,7 +188,7 @@ export const contractAgreementDef = defineFiberApp({
       from: "PROPOSED",
       to: "CANCELLED",
       eventName: "cancel",
-      guard: { "===": [{ var: "event.agent" }, { var: "state.proposer" }] },
+      guard: signerIsParty("state.proposer"),
       effect: {
         merge: [
           { var: "state" },
@@ -198,14 +203,7 @@ export const contractAgreementDef = defineFiberApp({
       eventName: "submit_completion",
       guard: {
         and: [
-          {
-            or: [
-              { "===": [{ var: "event.agent" }, { var: "state.proposer" }] },
-              {
-                "===": [{ var: "event.agent" }, { var: "state.counterparty" }],
-              },
-            ],
-          },
+          signerIsAnyParty(["state.proposer", "state.counterparty"]),
           {
             "!": [
               {
@@ -243,7 +241,7 @@ export const contractAgreementDef = defineFiberApp({
       from: "ACTIVE",
       to: "COMPLETED",
       eventName: "finalize",
-      guard: { ">=": [{ size: { var: "state.completions" } }, 2] },
+      guard: { ">=": [{ length: [{ var: "state.completions" }] }, 2] },
       effect: {
         merge: [
           { var: "state" },
@@ -256,12 +254,7 @@ export const contractAgreementDef = defineFiberApp({
       from: "ACTIVE",
       to: "DISPUTED",
       eventName: "dispute",
-      guard: {
-        or: [
-          { "===": [{ var: "event.agent" }, { var: "state.proposer" }] },
-          { "===": [{ var: "event.agent" }, { var: "state.counterparty" }] },
-        ],
-      },
+      guard: signerIsAnyParty(["state.proposer", "state.counterparty"]),
       effect: {
         merge: [
           { var: "state" },
@@ -279,13 +272,14 @@ export const contractAgreementDef = defineFiberApp({
       from: "DISPUTED",
       to: "COMPLETED",
       eventName: "resolve",
+      // authority gate — an ARBITER/SLASHER attestation check layers on additively when the identity registry lands (see docs/design/app-hardening-identity-integration.md §4.2)
       guard: {
         or: [
-          { var: "event.judicialRuling" },
+          signerIsParty("state.arbitrator"),
           {
             and: [
-              { "===": [{ var: "event.proposerApproves" }, true] },
-              { "===": [{ var: "event.counterpartyApproves" }, true] },
+              signerIsParty("state.proposer"),
+              signerIsParty("state.counterparty"),
             ],
           },
         ],
@@ -297,7 +291,14 @@ export const contractAgreementDef = defineFiberApp({
             status: "COMPLETED",
             resolvedAt: { var: "$ordinal" },
             resolution: { var: "event.resolution" },
-            rulingId: { var: "event.rulingId" },
+            // rulingId is recorded only on the arbitrator-resolved path
+            rulingId: {
+              if: [
+                signerIsParty("state.arbitrator"),
+                { var: "event.rulingId" },
+                null,
+              ],
+            },
           },
         ],
       },
@@ -307,12 +308,7 @@ export const contractAgreementDef = defineFiberApp({
       from: "ACTIVE",
       to: "CANCELLED",
       eventName: "cancel",
-      guard: {
-        or: [
-          { "===": [{ var: "event.agent" }, { var: "state.proposer" }] },
-          { "===": [{ var: "event.agent" }, { var: "state.counterparty" }] },
-        ],
-      },
+      guard: signerIsAnyParty(["state.proposer", "state.counterparty"]),
       effect: {
         merge: [
           { var: "state" },

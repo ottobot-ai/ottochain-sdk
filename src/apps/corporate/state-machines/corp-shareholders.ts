@@ -1,4 +1,6 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
+import { signerIsParty, depInState } from "../../../schema/guards.js";
+import { addDependency } from "../../../schema/effects.js";
 
 /**
  * Shareholder meeting state machine managing annual/special meetings, record dates, proxy periods, voting, and certification of results.
@@ -37,7 +39,7 @@ export const corpShareholdersDef = defineFiberApp({
   },
 
   createSchema: {
-    required: ["meetingId", "entityId"] as const,
+    required: ["meetingId", "entityId", "registrar"] as const,
     properties: {
       meetingId: {
         type: "string",
@@ -47,6 +49,12 @@ export const corpShareholdersDef = defineFiberApp({
       entityId: {
         type: "string",
         description: "Reference to parent corporate-entity",
+        immutable: true,
+      },
+      registrar: {
+        type: "address",
+        description:
+          "State-pinned DAG address of the transfer agent / registrar authorized to register the eligible-shareholder roster of record. Verified against proofs[].address.",
         immutable: true,
       },
       meetingType: {
@@ -78,6 +86,7 @@ export const corpShareholdersDef = defineFiberApp({
     properties: {
       meetingId: { type: "string", immutable: true },
       entityId: { type: "string", immutable: true },
+      registrar: { type: "address", immutable: true },
       meetingType: { type: "string" },
       fiscalYear: { type: "integer" },
       scheduledDate: { type: "string", format: "date-time" },
@@ -147,12 +156,16 @@ export const corpShareholdersDef = defineFiberApp({
       },
       createdAt: { type: "timestamp", computed: true },
       updatedAt: { type: "timestamp", computed: true },
+      // Two-phase scheduling (#24): propose_schedule_annual binds the board-resolution fiber + records the
+      // pending meeting here; schedule_annual asserts the bound resolution is EXECUTED, then clears this.
+      pendingschedule_annual: { type: "object", nullable: true, computed: true },
     },
   },
 
   eventSchemas: {
-    schedule_annual: {
-      description: "Schedule an annual shareholder meeting",
+    propose_schedule_annual: {
+      description:
+        "Phase 1 of annual-meeting scheduling: bind the executing board-resolution fiber (#24 _addDependency) and record the pending meeting",
       required: [
         "meetingId",
         "entityId",
@@ -167,6 +180,23 @@ export const corpShareholdersDef = defineFiberApp({
         scheduledDate: { type: "string", format: "date-time" },
         location: { type: "object" },
         boardResolutionRef: { type: "string" },
+      },
+    },
+    schedule_annual: {
+      description:
+        "Phase 2 of annual-meeting scheduling: execute once the bound board resolution is EXECUTED",
+      required: [
+        "meetingId",
+        "entityId",
+        "fiscalYear",
+        "scheduledDate",
+      ] as const,
+      properties: {
+        meetingId: { type: "string" },
+        entityId: { type: "string" },
+        fiscalYear: { type: "integer" },
+        scheduledDate: { type: "string", format: "date-time" },
+        location: { type: "object" },
       },
     },
     schedule_special: {
@@ -215,6 +245,11 @@ export const corpShareholdersDef = defineFiberApp({
             properties: {
               shareholderId: { type: "string" },
               name: { type: "string" },
+              address: {
+                type: "address",
+                description:
+                  "DAG wallet address of record for this shareholder; the only key a verified signer can vote under.",
+              },
               shareholdings: { type: "array" },
             },
           },
@@ -380,6 +415,11 @@ export const corpShareholdersDef = defineFiberApp({
       properties: {
         shareholderId: { type: "string" },
         name: { type: "string" },
+        address: {
+          type: "address",
+          description:
+            "State-pinned DAG wallet address of record; cast_vote requires this address ∈ proofs[].address.",
+        },
         shareholdings: {
           type: "array",
           items: {
@@ -617,19 +657,52 @@ export const corpShareholdersDef = defineFiberApp({
 
   transitions: [
     // Initial creation transitions (from: null means creation)
-    // schedule_annual -> SCHEDULED
+    // SCHEDULED -> SCHEDULED (propose_schedule_annual) — phase 1 (#24): bind the executing board-resolution
+    // fiber and record the pending meeting, so the next transition can read the resolution's state.
+    {
+      from: "SCHEDULED",
+      to: "SCHEDULED",
+      eventName: "propose_schedule_annual",
+      guard: { "==": [1, 1] },
+      effect: {
+        merge: [
+          { var: "state" },
+          {
+            pendingschedule_annual: {
+              meetingId: { var: "event.meetingId" },
+              entityId: { var: "event.entityId" },
+              fiscalYear: { var: "event.fiscalYear" },
+              scheduledDate: { var: "event.scheduledDate" },
+              location: { var: "event.location" },
+              ref: { var: "event.boardResolutionRef" },
+              proposedAt: { var: "$ordinal" },
+            },
+          },
+          // bind the resolution fiber so schedule_annual can assert its state next transition
+          addDependency({ var: "event.boardResolutionRef" }),
+        ],
+      },
+      dependencies: [],
+    },
+
+    // SCHEDULED -> SCHEDULED (schedule_annual) — phase 2 (#24): execute once the bound board resolution is
+    // EXECUTED. depInState replaces the dropped object-form dependency (which silently never gated).
     {
       from: "SCHEDULED",
       to: "SCHEDULED",
       eventName: "schedule_annual",
-      guard: { "==": [1, 1] },
-      dependencies: [
-        {
-          machine: "corporate-resolution",
-          instanceRef: { var: "event.boardResolutionRef" },
-          requiredState: "EXECUTED",
-        },
-      ],
+      guard: {
+        and: [
+          // the proposal must target this meeting, and its bound resolution must be EXECUTED
+          {
+            "==": [
+              { var: "state.pendingschedule_annual.meetingId" },
+              { var: "event.meetingId" },
+            ],
+          },
+          depInState("state.pendingschedule_annual.ref", "EXECUTED"),
+        ],
+      },
       effect: {
         merge: [
           { var: "state" },
@@ -642,12 +715,19 @@ export const corpShareholdersDef = defineFiberApp({
             location: { var: "event.location" },
             calledBy: {
               type: "BOARD",
-              resolutionRef: { var: "event.boardResolutionRef" },
+              resolutionRef: { var: "state.pendingschedule_annual.ref" },
             },
+            // clear the consumed proposal
+            pendingschedule_annual: null,
+          },
+          {
+            _emit: [
+              { name: "SHAREHOLDER_MEETING_SCHEDULED", data: { var: "event" }, destination: "external" },
+            ],
           },
         ],
       },
-      emits: ["SHAREHOLDER_MEETING_SCHEDULED"],
+      dependencies: [],
     },
 
     // schedule_special -> SCHEDULED
@@ -668,9 +748,13 @@ export const corpShareholdersDef = defineFiberApp({
               type: { var: "event.calledByType" },
             },
           },
+          {
+            _emit: [
+              { name: "SPECIAL_MEETING_SCHEDULED", data: { var: "event" }, destination: "external" },
+            ],
+          },
         ],
       },
-      emits: ["SPECIAL_MEETING_SCHEDULED"],
     },
 
     // SCHEDULED -> RECORD_DATE_SET
@@ -690,9 +774,13 @@ export const corpShareholdersDef = defineFiberApp({
               resolutionRef: { var: "event.resolutionRef" },
             },
           },
+          {
+            _emit: [
+              { name: "RECORD_DATE_SET", data: { var: "event" }, destination: "external" },
+            ],
+          },
         ],
       },
-      emits: ["RECORD_DATE_SET"],
     },
 
     // RECORD_DATE_SET -> RECORD_DATE_SET (register_eligible_shareholders)
@@ -700,7 +788,8 @@ export const corpShareholdersDef = defineFiberApp({
       from: "RECORD_DATE_SET",
       to: "RECORD_DATE_SET",
       eventName: "register_eligible_shareholders",
-      guard: { "==": [1, 1] },
+      // authority gate — only the pinned registrar may set the roster of record; an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: signerIsParty("state.registrar"),
       effect: {
         merge: [
           { var: "state" },
@@ -749,9 +838,13 @@ export const corpShareholdersDef = defineFiberApp({
               ],
             },
           },
+          {
+            _emit: [
+              { name: "PROXY_PERIOD_OPENED", data: { var: "event" }, destination: "external" },
+            ],
+          },
         ],
       },
-      emits: ["PROXY_PERIOD_OPENED"],
     },
 
     // add_agenda_item (can be from multiple states)
@@ -765,12 +858,12 @@ export const corpShareholdersDef = defineFiberApp({
           { var: "state" },
           {
             agenda: {
-              cat: [
+              merge: [
                 { var: "state.agenda" },
                 [
                   {
                     itemId: { var: "event.itemId" },
-                    itemNumber: { "+": [{ var: "state.agenda.length" }, 1] },
+                    itemNumber: { "+": [{ length: [{ var: "state.agenda" }] }, 1] },
                     title: { var: "event.title" },
                     description: { var: "event.description" },
                     type: { var: "event.type" },
@@ -798,12 +891,12 @@ export const corpShareholdersDef = defineFiberApp({
           { var: "state" },
           {
             agenda: {
-              cat: [
+              merge: [
                 { var: "state.agenda" },
                 [
                   {
                     itemId: { var: "event.itemId" },
-                    itemNumber: { "+": [{ var: "state.agenda.length" }, 1] },
+                    itemNumber: { "+": [{ length: [{ var: "state.agenda" }] }, 1] },
                     title: { var: "event.title" },
                     description: { var: "event.description" },
                     type: { var: "event.type" },
@@ -831,12 +924,12 @@ export const corpShareholdersDef = defineFiberApp({
           { var: "state" },
           {
             agenda: {
-              cat: [
+              merge: [
                 { var: "state.agenda" },
                 [
                   {
                     itemId: { var: "event.itemId" },
-                    itemNumber: { "+": [{ var: "state.agenda.length" }, 1] },
+                    itemNumber: { "+": [{ length: [{ var: "state.agenda" }] }, 1] },
                     title: { var: "event.title" },
                     description: { var: "event.description" },
                     type: { var: "event.type" },
@@ -887,9 +980,13 @@ export const corpShareholdersDef = defineFiberApp({
               ],
             },
           },
+          {
+            _emit: [
+              { name: "SHAREHOLDER_MEETING_OPENED", data: { var: "event" }, destination: "external" },
+            ],
+          },
         ],
       },
-      emits: ["SHAREHOLDER_MEETING_OPENED"],
     },
 
     // IN_SESSION -> VOTING
@@ -927,15 +1024,26 @@ export const corpShareholdersDef = defineFiberApp({
       from: "VOTING",
       to: "VOTING",
       eventName: "cast_vote",
+      // authority gate — the roster entry identified by event.shareholderId must carry an address that signed (address ∈ proofs[].address), so the recorded shareholderId is provably the matched entry's, not a forged one; an identity attestation layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
       guard: {
         and: [
           {
             some: [
               { var: "state.eligibleVoters" },
               {
-                "==": [
-                  { var: ".shareholderId" },
-                  { var: "event.shareholderId" },
+                and: [
+                  {
+                    "==": [
+                      { var: "shareholderId" },
+                      { var: "event.shareholderId" },
+                    ],
+                  },
+                  {
+                    in: [
+                      { var: "address" },
+                      { map: [{ var: "proofs" }, { var: "address" }] },
+                    ],
+                  },
                 ],
               },
             ],
@@ -948,13 +1056,13 @@ export const corpShareholdersDef = defineFiberApp({
                   and: [
                     {
                       "==": [
-                        { var: ".shareholderId" },
+                        { var: "shareholderId" },
                         { var: "event.shareholderId" },
                       ],
                     },
                     {
                       "==": [
-                        { var: ".agendaItemId" },
+                        { var: "agendaItemId" },
                         { var: "event.agendaItemId" },
                       ],
                     },
@@ -970,7 +1078,7 @@ export const corpShareholdersDef = defineFiberApp({
           { var: "state" },
           {
             votes: {
-              cat: [
+              merge: [
                 { var: "state.votes" },
                 [
                   {
@@ -999,7 +1107,7 @@ export const corpShareholdersDef = defineFiberApp({
                   if: [
                     {
                       "==": [
-                        { var: ".shareholderId" },
+                        { var: "shareholderId" },
                         { var: "event.shareholderId" },
                       ],
                     },
@@ -1072,9 +1180,13 @@ export const corpShareholdersDef = defineFiberApp({
               ],
             },
           },
+          {
+            _emit: [
+              { name: "MEETING_RESULTS_CERTIFIED", data: { var: "event" }, destination: "external" },
+            ],
+          },
         ],
       },
-      emits: ["MEETING_RESULTS_CERTIFIED"],
     },
 
     // IN_SESSION -> CLOSED (adjourn_without_action)
@@ -1095,9 +1207,13 @@ export const corpShareholdersDef = defineFiberApp({
               ],
             },
           },
+          {
+            _emit: [
+              { name: "MEETING_ADJOURNED", data: { var: "event" }, destination: "external" },
+            ],
+          },
         ],
       },
-      emits: ["MEETING_ADJOURNED"],
     },
 
     // VOTING -> CLOSED (adjourn_without_action)
@@ -1118,9 +1234,13 @@ export const corpShareholdersDef = defineFiberApp({
               ],
             },
           },
+          {
+            _emit: [
+              { name: "MEETING_ADJOURNED", data: { var: "event" }, destination: "external" },
+            ],
+          },
         ],
       },
-      emits: ["MEETING_ADJOURNED"],
     },
   ],
 });

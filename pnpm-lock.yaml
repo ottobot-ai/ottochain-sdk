@@ -12,8 +12,14 @@ importers:
         specifier: ^2.12.0
         version: 2.12.0
       '@constellation-network/metagraph-sdk':
-        specifier: ^0.2.0
-        version: 0.2.0
+        specifier: 1.8.0-rc.5
+        version: 1.8.0-rc.5
+      '@constellation-network/metagraph-sdk-jlvm':
+        specifier: 1.8.0-rc.5
+        version: 1.8.0-rc.5
+      '@noble/hashes':
+        specifier: ^1.8.0
+        version: 1.8.0
       '@stardust-collective/dag4':
         specifier: ^2.6.0
         version: 2.8.1
@@ -823,8 +829,16 @@ packages:
     resolution: {integrity: sha512-4u7w8jcoCUFWhjWnASYzZHAP34OqOtuFBN87nQmFvqda03YU0T6z+yB4w0gSAMpekiRqqGk5rt+qSlW+a2vSEg==}
     engines: {node: '>=22.12.0'}
 
-  '@constellation-network/metagraph-sdk@0.2.0':
-    resolution: {integrity: sha512-QpQwk3JW0fsP/sc/ke12TYEKUkFdEmOhcNLY3C41vncb6Pjxc+PoAJsNbp18BfXsjphZXeOL83aps6XRA07OPQ==}
+  '@constellation-network/metagraph-sdk-core@1.8.0-rc.5':
+    resolution: {integrity: sha512-B+3afI/xOOE/mH7NbdUwXiX9GuA/rFMWci1OHnU+kFKTfVV1sHnxsIelKhm/bcG/N/AsxzQ8IpesJwKZr4FPpA==}
+    engines: {node: '>=20.19.0'}
+
+  '@constellation-network/metagraph-sdk-jlvm@1.8.0-rc.5':
+    resolution: {integrity: sha512-IHiGMdlyyW9v4b8kyRQNCAwdKBKd5CI8EzUgJtk/JlO19eHZ69hYjPDDX4Pkwe7OqClAY8WBqDXC/5ZLn2+15A==}
+    engines: {node: '>=20.19.0'}
+
+  '@constellation-network/metagraph-sdk@1.8.0-rc.5':
+    resolution: {integrity: sha512-/3zAJ+IaSl8l9MMVkjudAjeoh1QiR4r47jt+aIuy4b0o2sL1rueDGC5itTDb8+qY/A499JoWk+2abR4zZni9TA==}
     engines: {node: '>=20.19.0'}
 
   '@conventional-changelog/git-client@2.6.0':
@@ -1602,10 +1616,6 @@ packages:
 
   caniuse-lite@1.0.30001781:
     resolution: {integrity: sha512-RdwNCyMsNBftLjW6w01z8bKEvT6e/5tpPVEgtn22TiLGlstHOVecsX2KHFkD5e/vRnIE4EGzpuIODb3mtswtkw==}
-
-  canonicalize@2.1.0:
-    resolution: {integrity: sha512-F705O3xrsUtgt98j7leetNhTWPe+5S72rlL5O4jA1pKqBVQ/dT1O1D6PFxmSXvc0SUOinWS57DKx0I3CHrXJHQ==}
-    hasBin: true
 
   canonicalize@3.0.0:
     resolution: {integrity: sha512-yYLfHyDMIXRyRqsKBRLX023riFLpXY2YOfdtqKXZRZy9qsfOJ9U+4F9YZL7MEzL5+ziN2x2nlBvY/Voi3EBljA==}
@@ -4488,12 +4498,21 @@ snapshots:
       conventional-commits-parser: 6.3.0
       picocolors: 1.1.1
 
-  '@constellation-network/metagraph-sdk@0.2.0':
+  '@constellation-network/metagraph-sdk-core@1.8.0-rc.5':
     dependencies:
       '@noble/curves': 2.0.1
       '@noble/hashes': 2.0.1
       bs58: 6.0.0
-      canonicalize: 2.1.0
+
+  '@constellation-network/metagraph-sdk-jlvm@1.8.0-rc.5':
+    dependencies:
+      '@noble/curves': 2.0.1
+      '@noble/hashes': 2.0.1
+
+  '@constellation-network/metagraph-sdk@1.8.0-rc.5':
+    dependencies:
+      '@constellation-network/metagraph-sdk-core': 1.8.0-rc.5
+      '@noble/hashes': 2.0.1
 
   '@conventional-changelog/git-client@2.6.0(conventional-commits-parser@6.3.0)':
     dependencies:
@@ -5475,8 +5494,6 @@ snapshots:
   camelcase@6.3.0: {}
 
   caniuse-lite@1.0.30001781: {}
-
-  canonicalize@2.1.0: {}
 
   canonicalize@3.0.0: {}
 

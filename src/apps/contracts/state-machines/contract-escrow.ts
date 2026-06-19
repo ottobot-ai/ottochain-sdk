@@ -1,4 +1,5 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
+import { signerIsParty } from "../../../schema/guards.js";
 
 /**
  * Asset custody with conditional release, dispute resolution, and split payments.
@@ -41,7 +42,7 @@ export const contractEscrowDef = defineFiberApp({
   },
 
   createSchema: {
-    required: ["depositor", "beneficiary", "requiredAmount"] as const,
+    required: ["depositor", "beneficiary", "requiredAmount", "arbiter"] as const,
     properties: {
       depositor: {
         type: "address",
@@ -50,6 +51,12 @@ export const contractEscrowDef = defineFiberApp({
       beneficiary: {
         type: "address",
         description: "DAG address of the beneficiary",
+      },
+      arbiter: {
+        type: "address",
+        description:
+          "DAG address of the arbiter authorized to rule on a dispute",
+        immutable: true,
       },
       requiredAmount: {
         type: "number",
@@ -78,6 +85,7 @@ export const contractEscrowDef = defineFiberApp({
     properties: {
       depositor: { type: "address" },
       beneficiary: { type: "address" },
+      arbiter: { type: "address", immutable: true },
       requiredAmount: { type: "number" },
       balance: { type: "number" },
       fundedAt: { type: "integer", nullable: true },
@@ -113,16 +121,11 @@ export const contractEscrowDef = defineFiberApp({
     dispute: {},
     ruling: {
       properties: {
-        judicialRuling: { type: "boolean" },
         splits: { type: "array" },
         rulingId: { type: "string" },
       },
     },
-    refund: {
-      properties: {
-        mutualConsent: { type: "boolean", nullable: true },
-      },
-    },
+    refund: {},
     cancel: {},
   },
 
@@ -210,7 +213,7 @@ export const contractEscrowDef = defineFiberApp({
       eventName: "deposit",
       guard: {
         and: [
-          { "===": [{ var: "event.agent" }, { var: "state.depositor" }] },
+          signerIsParty("state.depositor"),
           { ">=": [{ var: "event.amount" }, { var: "state.requiredAmount" }] },
         ],
       },
@@ -228,7 +231,7 @@ export const contractEscrowDef = defineFiberApp({
       eventName: "activate",
       guard: {
         or: [
-          { "===": [{ var: "event.agent" }, { var: "state.beneficiary" }] },
+          signerIsParty("state.beneficiary"),
           { var: "state.autoActivate" },
         ],
       },
@@ -241,7 +244,7 @@ export const contractEscrowDef = defineFiberApp({
       from: "ACTIVE",
       to: "RELEASING",
       eventName: "request_release",
-      guard: { "===": [{ var: "event.agent" }, { var: "state.beneficiary" }] },
+      guard: signerIsParty("state.beneficiary"),
       effect: {
         merge: [
           { var: "state" },
@@ -266,7 +269,7 @@ export const contractEscrowDef = defineFiberApp({
       eventName: "approve_release",
       guard: {
         or: [
-          { "===": [{ var: "event.agent" }, { var: "state.depositor" }] },
+          signerIsParty("state.depositor"),
           { ">=": [{ var: "$ordinal" }, { var: "state.releaseDeadline" }] },
         ],
       },
@@ -287,24 +290,37 @@ export const contractEscrowDef = defineFiberApp({
       eventName: "dispute",
       guard: {
         and: [
-          { "===": [{ var: "event.agent" }, { var: "state.depositor" }] },
+          signerIsParty("state.depositor"),
           { "<": [{ var: "$ordinal" }, { var: "state.releaseDeadline" }] },
         ],
       },
       effect: {
-        merge: [{ var: "state" }, { disputedAt: { var: "$ordinal" } }],
-      },
-      spawns: {
-        sm: "Judiciary",
-        initialData: {
-          caseType: "escrow_dispute",
-          plaintiff: { var: "state.depositor" },
-          defendant: { var: "state.beneficiary" },
-          claim: {
-            escrowId: { var: "fiberId" },
-            amount: { var: "state.balance" },
+        merge: [
+          { var: "state" },
+          { disputedAt: { var: "$ordinal" } },
+          {
+            // A3 fix: transition-level `spawns` is dropped by the chain. No Judiciary state machine is
+            // defined to inline under `_spawn`, and escrow already resolves disputes via its own pinned
+            // `arbiter` (the `ruling` transition) — the spawned Judiciary was fire-and-forget (never read
+            // by escrow). So the dispute case is surfaced to the judiciary subsystem as an `_emit`
+            // notification instead of a child fiber.
+            _emit: [
+              {
+                name: "dispute_opened",
+                data: {
+                  caseType: "escrow_dispute",
+                  plaintiff: { var: "state.depositor" },
+                  defendant: { var: "state.beneficiary" },
+                  claim: {
+                    escrowId: { var: "machineId" },
+                    amount: { var: "state.balance" },
+                  },
+                },
+                destination: "Judiciary",
+              },
+            ],
           },
-        },
+        ],
       },
       dependencies: [],
     },
@@ -312,7 +328,29 @@ export const contractEscrowDef = defineFiberApp({
       from: "DISPUTED",
       to: "SPLIT",
       eventName: "ruling",
-      guard: { var: "event.judicialRuling" },
+      // authority gate — an ARBITER/SLASHER attestation check layers on additively when the identity registry lands (see docs/design/app-hardening-identity-integration.md §4.2)
+      guard: {
+        and: [
+          signerIsParty("state.arbiter"),
+          {
+            "===": [
+              {
+                reduce: [
+                  { var: "event.splits" },
+                  {
+                    "+": [
+                      { var: "accumulator" },
+                      { var: "current.amount" },
+                    ],
+                  },
+                  0,
+                ],
+              },
+              { var: "state.balance" },
+            ],
+          },
+        ],
+      },
       effect: {
         merge: [
           { var: "state" },
@@ -328,9 +366,15 @@ export const contractEscrowDef = defineFiberApp({
       from: "ACTIVE",
       to: "REFUNDED",
       eventName: "refund",
+      // authority gate — an ARBITER/SLASHER attestation check layers on additively when the identity registry lands (see docs/design/app-hardening-identity-integration.md §4.2)
       guard: {
         or: [
-          { var: "event.mutualConsent" },
+          {
+            and: [
+              signerIsParty("state.depositor"),
+              signerIsParty("state.beneficiary"),
+            ],
+          },
           { ">=": [{ var: "$ordinal" }, { var: "state.expiresAt" }] },
         ],
       },
@@ -343,7 +387,7 @@ export const contractEscrowDef = defineFiberApp({
       from: "CREATED",
       to: "REFUNDED",
       eventName: "cancel",
-      guard: { "===": [{ var: "event.agent" }, { var: "state.depositor" }] },
+      guard: signerIsParty("state.depositor"),
       effect: {
         merge: [{ var: "state" }, { refundedAt: { var: "$ordinal" } }],
       },

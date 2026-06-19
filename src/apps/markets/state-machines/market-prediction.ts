@@ -1,4 +1,5 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
+import { signerIsParty, signerInSet } from "../../../schema/guards.js";
 
 /**
  * Binary or multi-outcome prediction market with oracle resolution and position staking.
@@ -18,11 +19,17 @@ export const marketPredictionDef = defineFiberApp({
   },
 
   createSchema: {
-    required: ["creator", "outcomes", "oracles", "quorum"] as const,
+    required: ["creator", "outcomes", "oracles", "quorum", "arbiter"] as const,
     properties: {
       creator: {
         type: "address",
         description: "DAG address of the market creator",
+        immutable: true,
+      },
+      arbiter: {
+        type: "address",
+        description:
+          "DAG address of the arbiter authorized to rule on a disputed resolution",
         immutable: true,
       },
       outcomes: {
@@ -48,6 +55,7 @@ export const marketPredictionDef = defineFiberApp({
     properties: {
       status: { type: "string", computed: true },
       creator: { type: "address", immutable: true },
+      arbiter: { type: "address", immutable: true },
       outcomes: { type: "array", immutable: true },
       oracles: { type: "array", immutable: true },
       quorum: { type: "number", immutable: true },
@@ -85,7 +93,6 @@ export const marketPredictionDef = defineFiberApp({
     },
     finalize: {
       description: "Finalize market after quorum reached",
-      properties: { outcome: { type: "string" } },
     },
     dispute: {
       description: "Dispute the resolution",
@@ -98,8 +105,7 @@ export const marketPredictionDef = defineFiberApp({
     ruling: {
       description: "Judicial ruling on dispute",
       properties: {
-        judicialRuling: { type: "boolean" },
-        outcome: { type: "string" },
+        finalOutcome: { type: "string" },
         rulingId: { type: "string" },
       },
     },
@@ -192,7 +198,7 @@ export const marketPredictionDef = defineFiberApp({
       from: "PROPOSED",
       to: "OPEN",
       eventName: "open",
-      guard: { "===": [{ var: "event.agent" }, { var: "state.creator" }] },
+      guard: signerIsParty("state.creator"),
       effect: {
         merge: [
           { var: "state" },
@@ -210,7 +216,7 @@ export const marketPredictionDef = defineFiberApp({
       from: "PROPOSED",
       to: "CANCELLED",
       eventName: "cancel",
-      guard: { "===": [{ var: "event.agent" }, { var: "state.creator" }] },
+      guard: signerIsParty("state.creator"),
       effect: {
         merge: [
           { var: "state" },
@@ -271,7 +277,7 @@ export const marketPredictionDef = defineFiberApp({
       eventName: "close",
       guard: {
         or: [
-          { "===": [{ var: "event.agent" }, { var: "state.creator" }] },
+          signerIsParty("state.creator"),
           {
             and: [
               { var: "state.deadline" },
@@ -292,7 +298,7 @@ export const marketPredictionDef = defineFiberApp({
       from: "CLOSED",
       to: "RESOLVING",
       eventName: "submit_resolution",
-      guard: { in: [{ var: "event.agent" }, { var: "state.oracles" }] },
+      guard: signerInSet("state.oracles"),
       effect: {
         merge: [
           { var: "state" },
@@ -317,7 +323,7 @@ export const marketPredictionDef = defineFiberApp({
       eventName: "submit_resolution",
       guard: {
         and: [
-          { in: [{ var: "event.agent" }, { var: "state.oracles" }] },
+          signerInSet("state.oracles"),
           {
             "!": [
               {
@@ -356,8 +362,17 @@ export const marketPredictionDef = defineFiberApp({
       from: "RESOLVING",
       to: "SETTLED",
       eventName: "finalize",
+      // authority gate — an ARBITER/SLASHER attestation check layers on additively when the identity registry lands (see docs/design/app-hardening-identity-integration.md §4.2)
       guard: {
-        ">=": [{ size: { var: "state.resolutions" } }, { var: "state.quorum" }],
+        and: [
+          signerInSet("state.oracles"),
+          {
+            ">=": [
+              { count: { var: "state.resolutions" } },
+              { var: "state.quorum" },
+            ],
+          },
+        ],
       },
       effect: {
         merge: [
@@ -365,7 +380,8 @@ export const marketPredictionDef = defineFiberApp({
           {
             status: "SETTLED",
             settledAt: { var: "$ordinal" },
-            finalOutcome: { var: "event.outcome" },
+            // finalOutcome derives from the quorum-agreed resolution, not a raw event field
+            finalOutcome: { var: "state.resolutions.0.outcome" },
             claims: [],
           },
         ],
@@ -381,12 +397,14 @@ export const marketPredictionDef = defineFiberApp({
           {
             ">": [
               {
-                size: {
-                  filter: [
-                    { var: "state.positions" },
-                    { "===": [{ var: "agent" }, { var: "event.agent" }] },
-                  ],
-                },
+                length: [
+                  {
+                    filter: [
+                      { var: "state.positions" },
+                      { "===": [{ var: "agent" }, { var: "event.agent" }] },
+                    ],
+                  },
+                ],
               },
               0,
             ],
@@ -412,14 +430,20 @@ export const marketPredictionDef = defineFiberApp({
       from: "DISPUTED",
       to: "SETTLED",
       eventName: "ruling",
-      guard: { var: "event.judicialRuling" },
+      // authority gate — an ARBITER/SLASHER attestation check layers on additively when the identity registry lands (see docs/design/app-hardening-identity-integration.md §4.2)
+      guard: {
+        and: [
+          signerIsParty("state.arbiter"),
+          { in: [{ var: "event.finalOutcome" }, { var: "state.outcomes" }] },
+        ],
+      },
       effect: {
         merge: [
           { var: "state" },
           {
             status: "SETTLED",
             settledAt: { var: "$ordinal" },
-            finalOutcome: { var: "event.outcome" },
+            finalOutcome: { var: "event.finalOutcome" },
             rulingId: { var: "event.rulingId" },
             claims: [],
           },
@@ -434,12 +458,14 @@ export const marketPredictionDef = defineFiberApp({
       guard: {
         ">=": [
           {
-            size: {
-              filter: [
-                { var: "state.resolutions" },
-                { "===": [{ var: "outcome" }, "INVALID"] },
-              ],
-            },
+            length: [
+              {
+                filter: [
+                  { var: "state.resolutions" },
+                  { "===": [{ var: "outcome" }, "INVALID"] },
+                ],
+              },
+            ],
           },
           { var: "state.quorum" },
         ],
@@ -465,22 +491,24 @@ export const marketPredictionDef = defineFiberApp({
           {
             ">": [
               {
-                size: {
-                  filter: [
-                    { var: "state.positions" },
-                    {
-                      and: [
-                        { "===": [{ var: "agent" }, { var: "event.agent" }] },
-                        {
-                          "===": [
-                            { var: "outcome" },
-                            { var: "state.finalOutcome" },
-                          ],
-                        },
-                      ],
-                    },
-                  ],
-                },
+                length: [
+                  {
+                    filter: [
+                      { var: "state.positions" },
+                      {
+                        and: [
+                          { "===": [{ var: "agent" }, { var: "event.agent" }] },
+                          {
+                            "===": [
+                              { var: "outcome" },
+                              { var: "state.finalOutcome" },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
               },
               0,
             ],

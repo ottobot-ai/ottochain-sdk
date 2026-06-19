@@ -156,6 +156,19 @@ describe('DAOReputation State Machine', () => {
       expect(guardStr).toContain('quorum');
     });
 
+    it('should count array-shaped vote tallies with length, not size (A2)', () => {
+      // votes.for/against/abstain are arrays; size is not a JLVM opcode.
+      for (const name of ['execute', 'reject']) {
+        const transition = daoReputationDef.transitions.find(
+          (t) => t.eventName === name
+        );
+        const guardStr = JSON.stringify(transition!.guard);
+        expect(guardStr).toContain('length');
+        expect(guardStr).toContain('votes.for');
+        expect(guardStr).not.toMatch(/"size":/);
+      }
+    });
+
     it('should guard join to membership reputation threshold', () => {
       const joinTransition = daoReputationDef.transitions.find(
         (t) => t.eventName === 'join'
@@ -171,8 +184,12 @@ describe('DAOReputation State Machine', () => {
         (t) => t.eventName === 'leave'
       );
 
-      expect(leaveTransition!.guard).toHaveProperty('in');
+      // Membership authorization binds to the chain-verified signers (proofs),
+      // not the forgeable event.agent payload field (F1 fix).
+      expect(leaveTransition!.guard).toHaveProperty('some');
       const guardStr = JSON.stringify(leaveTransition!.guard);
+      expect(guardStr).toContain('proofs');
+      expect(guardStr).not.toContain('event.agent');
       expect(guardStr).toContain('members');
     });
   });
@@ -213,11 +230,12 @@ describe('DAOReputation State Machine', () => {
     it('should emit proposal_executed event', () => {
       const executeTransition = daoReputationDef.transitions.find(
         (t) => t.eventName === 'execute'
-      ) as { emits?: Array<{ event: string; to: string }> } | undefined;
+      );
 
-      expect(executeTransition!.emits).toBeDefined();
-      expect(executeTransition!.emits![0].event).toBe('proposal_executed');
-      expect(executeTransition!.emits![0].to).toBe('Reputation');
+      const effectStr = JSON.stringify(executeTransition!.effect);
+      expect(effectStr).toContain('_emit');
+      expect(effectStr).toContain('proposal_executed');
+      expect(effectStr).toContain('Reputation');
     });
 
     it('should add member on join', () => {

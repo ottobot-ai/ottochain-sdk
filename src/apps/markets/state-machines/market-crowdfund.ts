@@ -1,4 +1,5 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
+import { signerIsParty, signerIsNotParty } from "../../../schema/guards.js";
 
 /**
  * All-or-nothing crowdfunding with threshold, deadline, and stretch goals.
@@ -135,7 +136,7 @@ export const marketCrowdfundDef = defineFiberApp({
       from: "PROPOSED",
       to: "OPEN",
       eventName: "launch",
-      guard: { "===": [{ var: "event.agent" }, { var: "state.creator" }] },
+      guard: signerIsParty("state.creator"),
       effect: {
         merge: [
           { var: "state" },
@@ -154,7 +155,7 @@ export const marketCrowdfundDef = defineFiberApp({
       from: "PROPOSED",
       to: "CANCELLED",
       eventName: "cancel",
-      guard: { "===": [{ var: "event.agent" }, { var: "state.creator" }] },
+      guard: signerIsParty("state.creator"),
       effect: {
         merge: [
           { var: "state" },
@@ -170,7 +171,7 @@ export const marketCrowdfundDef = defineFiberApp({
       guard: {
         and: [
           { ">": [{ var: "event.amount" }, 0] },
-          { "!==": [{ var: "event.agent" }, { var: "state.creator" }] },
+          signerIsNotParty("state.creator"),
           {
             or: [
               { "!": [{ var: "state.minPledge" }] },
@@ -217,12 +218,14 @@ export const marketCrowdfundDef = defineFiberApp({
           {
             ">": [
               {
-                size: {
-                  filter: [
-                    { var: "state.pledges" },
-                    { "===": [{ var: "backer" }, { var: "event.agent" }] },
-                  ],
-                },
+                length: [
+                  {
+                    filter: [
+                      { var: "state.pledges" },
+                      { "===": [{ var: "backer" }, { var: "event.agent" }] },
+                    ],
+                  },
+                ],
               },
               0,
             ],
@@ -302,12 +305,14 @@ export const marketCrowdfundDef = defineFiberApp({
           {
             ">": [
               {
-                size: {
-                  filter: [
-                    { var: "state.pledges" },
-                    { "===": [{ var: "backer" }, { var: "event.agent" }] },
-                  ],
-                },
+                length: [
+                  {
+                    filter: [
+                      { var: "state.pledges" },
+                      { "===": [{ var: "backer" }, { var: "event.agent" }] },
+                    ],
+                  },
+                ],
               },
               0,
             ],

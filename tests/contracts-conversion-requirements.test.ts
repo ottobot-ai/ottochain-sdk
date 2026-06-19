@@ -16,11 +16,12 @@
  */
 
 import { defineFiberApp } from '../src/schema/fiber-app.js';
+import { signerIsParty, signerIsAnyParty } from '../src/schema/guards.js';
 
 // These imports will FAIL initially since the conversion hasn't been done
 import {
   contractAgreementDef,
-  contractEscrowDef, 
+  contractEscrowDef,
   contractUniversalDef
 } from '../src/apps/contracts/state-machines';
 
@@ -146,13 +147,8 @@ describe('Contracts Conversion Requirements', () => {
         t => t.eventName === 'accept'
       );
       
-      // Must match exactly from JSON
-      expect(acceptTransition?.guard).toEqual({
-        "===": [
-          { "var": "event.agent" },
-          { "var": "state.counterparty" }
-        ]
-      });
+      // Authorization now binds to the verified signer (proofs[].address)
+      expect(acceptTransition?.guard).toEqual(signerIsParty('state.counterparty'));
     });
 
     it('should preserve complex nested JSON Logic', () => {
@@ -160,15 +156,11 @@ describe('Contracts Conversion Requirements', () => {
         t => t.eventName === 'submit_completion'
       );
       
-      // Complex guard with and/or/! operations must be preserved exactly
+      // Complex guard: the party-authorization OR is now the signer helper;
+      // the dedup (! in completions) clause is preserved exactly.
       expect(submitTransition?.guard).toEqual({
         "and": [
-          {
-            "or": [
-              { "===": [{ "var": "event.agent" }, { "var": "state.proposer" }] },
-              { "===": [{ "var": "event.agent" }, { "var": "state.counterparty" }] }
-            ]
-          },
+          signerIsAnyParty(['state.proposer', 'state.counterparty']),
           {
             "!": [{
               "in": [
@@ -204,7 +196,7 @@ describe('Contracts Conversion Requirements', () => {
       
       expect(depositTransition?.guard).toEqual({
         "and": [
-          { "===": [{ "var": "event.agent" }, { "var": "state.depositor" }] },
+          signerIsParty('state.depositor'),
           { ">=": [{ "var": "event.amount" }, { "var": "state.requiredAmount" }] }
         ]
       });
@@ -241,23 +233,18 @@ describe('Contracts Conversion Requirements', () => {
   });
 
   describe('Requirement 5: Preserve ALL Functionality', () => {
-    it('should preserve spawns configuration for judiciary', () => {
+    it('should preserve the judiciary dispute case as a _emit notification (A3)', () => {
       const disputeTransition = contractEscrowDef.transitions.find(
         t => t.eventName === 'dispute'
       );
-      
-      expect(disputeTransition?.spawns).toEqual({
-        "sm": "Judiciary",
-        "initialData": {
-          "caseType": "escrow_dispute", 
-          "plaintiff": { "var": "state.depositor" },
-          "defendant": { "var": "state.beneficiary" },
-          "claim": {
-            "escrowId": { "var": "fiberId" },
-            "amount": { "var": "state.balance" }
-          }
-        }
-      });
+
+      // transition-level `spawns` is dropped by the chain; the case data is preserved under _emit
+      expect(disputeTransition?.spawns).toBeUndefined();
+      const effectStr = JSON.stringify(disputeTransition?.effect);
+      expect(effectStr).toContain('dispute_opened');
+      expect(effectStr).toContain('escrow_dispute');
+      expect(effectStr).toContain('state.depositor');
+      expect(effectStr).toContain('state.beneficiary');
     });
 
     it('should preserve all final state markings', () => {

@@ -151,6 +151,32 @@ export {
   type Transition,
 } from './schema/fiber-app.js';
 
+// Canonical authorization-guard builders (bind to verified signers, not attacker payloads).
+export {
+  type GuardRule,
+  signerIsParty,
+  signerIsAnyParty,
+  signerInSet,
+  signerIsNotParty,
+  signerHasEntry,
+  assetSignerIs,
+  // effect-key coupling (S1): bind a dynamic map key to a verified signer
+  actorIsSigner,
+  actorInSet,
+  actorHasEntry,
+  // identity-registry reads (static machines.<uuid> path)
+  signerHasReputation,
+  signerHasRole,
+  // identity-registry reads (runtime-bound registry id, #24)
+  signerHasReputationVia,
+  signerHasRoleVia,
+  // cross-fiber state gate (runtime-bound dependency, #24) — replaces object-form deps
+  depInState,
+} from './schema/guards.js';
+
+// Reserved EFFECT-directive builders (dynamic dependencies, #24).
+export { addDependency, setDependencyActive } from './schema/effects.js';
+
 // ─── Privacy: shield any fiber app into a zk-jlvm-shielded private-state pool ──
 // See docs/design/zk-private-contract-state-rfc.md.
 export { shieldApp, SHIELDED_POOL_STATE, type ShieldOptions } from './privacy/shield-app.js';

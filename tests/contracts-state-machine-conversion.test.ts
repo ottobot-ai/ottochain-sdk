@@ -16,11 +16,12 @@
  * - Type safety
  */
 
-import { 
-  contractAgreementDef, 
-  contractEscrowDef, 
-  contractUniversalDef 
+import {
+  contractAgreementDef,
+  contractEscrowDef,
+  contractUniversalDef
 } from '../src/apps/contracts/state-machines';
+import { signerIsParty, signerIsAnyParty } from '../src/schema/guards.js';
 
 describe('Contracts State Machine Conversion', () => {
   
@@ -113,12 +114,7 @@ describe('Contracts State Machine Conversion', () => {
       );
       expect(submitCompletionTransition?.guard).toEqual({
         "and": [
-          {
-            "or": [
-              { "===": [{ "var": "event.agent" }, { "var": "state.proposer" }] },
-              { "===": [{ "var": "event.agent" }, { "var": "state.counterparty" }] }
-            ]
-          },
+          signerIsAnyParty(['state.proposer', 'state.counterparty']),
           {
             "!": [{
               "in": [
@@ -154,28 +150,21 @@ describe('Contracts State Machine Conversion', () => {
       expect(depositTransition).toBeDefined();
       expect(depositTransition?.guard).toEqual({
         "and": [
-          { "===": [{ "var": "event.agent" }, { "var": "state.depositor" }] },
+          signerIsParty('state.depositor'),
           { ">=": [{ "var": "event.amount" }, { "var": "state.requiredAmount" }] }
         ]
       });
     });
 
-    it('should have spawns configuration for dispute transition', () => {
+    it('should surface the dispute case via _emit (A3: transition-level spawns is dropped)', () => {
       const disputeTransition = contractEscrowDef.transitions.find(
         t => t.from === 'RELEASING' && t.to === 'DISPUTED' && t.eventName === 'dispute'
       );
-      expect(disputeTransition?.spawns).toEqual({
-        "sm": "Judiciary",
-        "initialData": {
-          "caseType": "escrow_dispute",
-          "plaintiff": { "var": "state.depositor" },
-          "defendant": { "var": "state.beneficiary" },
-          "claim": {
-            "escrowId": { "var": "fiberId" },
-            "amount": { "var": "state.balance" }
-          }
-        }
-      });
+      expect(disputeTransition?.spawns).toBeUndefined();
+      const effectStr = JSON.stringify(disputeTransition?.effect);
+      expect(effectStr).toContain('dispute_opened');
+      expect(effectStr).toContain('escrow_dispute');
+      expect(effectStr).toContain('Judiciary');
     });
 
     it('should have create schema with escrow-specific fields', () => {
@@ -283,7 +272,7 @@ describe('Contracts State Machine Conversion', () => {
       );
       expect(finalizeTransition?.guard).toEqual({
         ">=": [
-          { "size": { "var": "state.completions" } },
+          { "length": [{ "var": "state.completions" }] },
           2
         ]
       });
@@ -330,17 +319,19 @@ describe('Contracts State Machine Conversion', () => {
       });
     });
 
-    it('should handle dispute resolution with judicial ruling', () => {
+    it('should resolve a dispute via the pinned arbitrator OR both parties (S2 fix)', () => {
       const resolveTransition = contractAgreementDef.transitions.find(
         t => t.from === 'DISPUTED' && t.to === 'COMPLETED' && t.eventName === 'resolve'
       );
+      // The bare forgeable booleans (event.judicialRuling / *Approves) are gone;
+      // authority binds to verified signers (proofs[].address).
       expect(resolveTransition?.guard).toEqual({
         "or": [
-          { "var": "event.judicialRuling" },
+          signerIsParty('state.arbitrator'),
           {
             "and": [
-              { "===": [{ "var": "event.proposerApproves" }, true] },
-              { "===": [{ "var": "event.counterpartyApproves" }, true] }
+              signerIsParty('state.proposer'),
+              signerIsParty('state.counterparty')
             ]
           }
         ]
@@ -353,7 +344,7 @@ describe('Contracts State Machine Conversion', () => {
       );
       expect(autoReleaseTransition?.guard).toEqual({
         "or": [
-          { "===": [{ "var": "event.agent" }, { "var": "state.depositor" }] },
+          signerIsParty('state.depositor'),
           { ">=": [{ "var": "$ordinal" }, { "var": "state.releaseDeadline" }] }
         ]
       });

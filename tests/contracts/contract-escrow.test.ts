@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck — tests access guard properties dynamically
 import { contractEscrowDef } from '../../src/apps/contracts/state-machines/contract-escrow.js';
+import { signerIsParty } from '../../src/schema/guards.js';
 
 describe('Contract Escrow State Machine', () => {
   describe('Definition Structure', () => {
@@ -91,7 +92,8 @@ describe('Contract Escrow State Machine', () => {
       
       expect(disputeTransition).toBeDefined();
       expect(disputeTransition!.guard).toBeDefined();
-      expect(disputeTransition!.spawns).toBeDefined();
+      // A3 fix: the dropped transition-level `spawns` is now a `_emit` dispute_opened notification
+      expect(JSON.stringify(disputeTransition!.effect)).toContain('dispute_opened');
     });
 
     it('should allow ruling transition from DISPUTED to SPLIT', () => {
@@ -138,12 +140,7 @@ describe('Contract Escrow State Machine', () => {
         t => t.from === 'ACTIVE' && t.to === 'RELEASING' && t.eventName === 'request_release'
       );
       
-      expect(requestTransition!.guard).toEqual({
-        '===': [
-          { var: 'event.agent' },
-          { var: 'state.beneficiary' }
-        ]
-      });
+      expect(requestTransition!.guard).toEqual(signerIsParty('state.beneficiary'));
     });
 
     it('should preserve time-based approval logic for approve_release', () => {
@@ -204,15 +201,18 @@ describe('Contract Escrow State Machine', () => {
   });
 
   describe('Spawn Logic Preservation', () => {
-    it('should preserve judiciary spawn for dispute transition', () => {
+    it('should surface the judiciary dispute case via the _emit effect directive (A3)', () => {
       const disputeTransition = contractEscrowDef.transitions.find(
         t => t.from === 'RELEASING' && t.to === 'DISPUTED' && t.eventName === 'dispute'
       );
-      
-      expect(disputeTransition!.spawns).toBeDefined();
-      expect(disputeTransition!.spawns!.sm).toBe('Judiciary');
-      expect(disputeTransition!.spawns!.initialData).toBeDefined();
-      expect(disputeTransition!.spawns!.initialData.caseType).toBe('escrow_dispute');
+
+      // transition-level `spawns` is dropped by the chain; the case rides as a _emit to "Judiciary"
+      expect(disputeTransition!.spawns).toBeUndefined();
+      const effectStr = JSON.stringify(disputeTransition!.effect);
+      expect(effectStr).toContain('_emit');
+      expect(effectStr).toContain('dispute_opened');
+      expect(effectStr).toContain('escrow_dispute');
+      expect(effectStr).toContain('Judiciary');
     });
   });
 
@@ -222,6 +222,9 @@ describe('Contract Escrow State Machine', () => {
       expect(contractEscrowDef.createSchema.required).toContain('depositor');
       expect(contractEscrowDef.createSchema.required).toContain('beneficiary');
       expect(contractEscrowDef.createSchema.required).toContain('requiredAmount');
+      // S2 settlement-bypass fix: the arbiter is a state-pinned authority.
+      expect(contractEscrowDef.createSchema.required).toContain('arbiter');
+      expect(contractEscrowDef.createSchema.properties.arbiter.type).toBe('address');
     });
 
     it('should define state schema with escrow-specific types', () => {
@@ -246,12 +249,61 @@ describe('Contract Escrow State Machine', () => {
   describe('Cross-References', () => {
     it('should preserve cross-reference metadata', () => {
       const crossRefs = contractEscrowDef.metadata.crossReferences;
-      
+
       expect(crossRefs).toHaveProperty('contractId');
       expect(crossRefs).toHaveProperty('marketId');
       expect(crossRefs).toHaveProperty('insuranceId');
       expect(crossRefs).toHaveProperty('arbitrationPoolId');
       expect(crossRefs).toHaveProperty('treasuryId');
+    });
+  });
+
+  describe('S2 settlement-bypass hardening', () => {
+    const sigParty = (v: string) => ({
+      in: [{ var: v }, { map: [{ var: 'proofs' }, { var: 'address' }] }],
+    });
+
+    it('ruling: signer must be the pinned arbiter AND splits must conserve the balance', () => {
+      const ruling = contractEscrowDef.transitions.find(
+        t => t.from === 'DISPUTED' && t.to === 'SPLIT' && t.eventName === 'ruling'
+      );
+      expect(ruling!.guard).toHaveProperty('and');
+      // disjunct 1: the arbiter is a verified signer (no bare event.judicialRuling)
+      expect(ruling!.guard.and[0]).toEqual(sigParty('state.arbiter'));
+      // disjunct 2: Σ event.splits[].amount === state.balance (conservation)
+      expect(ruling!.guard.and[1]).toEqual({
+        '===': [
+          {
+            reduce: [
+              { var: 'event.splits' },
+              { '+': [{ var: 'accumulator' }, { var: 'current.amount' }] },
+              0,
+            ],
+          },
+          { var: 'state.balance' },
+        ],
+      });
+      // forgeable field removed from the guard and the event schema
+      expect(JSON.stringify(ruling!.guard)).not.toContain('judicialRuling');
+      expect(contractEscrowDef.eventSchemas.ruling.properties).not.toHaveProperty(
+        'judicialRuling'
+      );
+    });
+
+    it('refund: requires true mutual consent (both parties sign) OR expiry', () => {
+      const refund = contractEscrowDef.transitions.find(
+        t => t.from === 'ACTIVE' && t.to === 'REFUNDED' && t.eventName === 'refund'
+      );
+      expect(refund!.guard).toHaveProperty('or');
+      expect(refund!.guard.or[0]).toEqual({
+        and: [sigParty('state.depositor'), sigParty('state.beneficiary')],
+      });
+      expect(refund!.guard.or[1]).toEqual({
+        '>=': [{ var: '$ordinal' }, { var: 'state.expiresAt' }],
+      });
+      // the forgeable consent boolean is removed from the guard and the schema
+      expect(JSON.stringify(refund!.guard)).not.toContain('mutualConsent');
+      expect(contractEscrowDef.eventSchemas.refund).toEqual({});
     });
   });
 });

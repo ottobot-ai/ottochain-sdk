@@ -21,6 +21,11 @@
       "require": "./dist/cjs/ottochain/index.js",
       "types": "./dist/types/ottochain/index.d.ts"
     },
+    "./zk": {
+      "import": "./dist/esm/zk/index.js",
+      "require": "./dist/cjs/zk/index.js",
+      "types": "./dist/types/zk/index.d.ts"
+    },
     "./apps/identity": {
       "import": "./dist/esm/apps/identity/index.js",
       "require": "./dist/cjs/apps/identity/index.js",
@@ -35,6 +40,11 @@
       "import": "./dist/esm/apps/markets/index.js",
       "require": "./dist/cjs/apps/markets/index.js",
       "types": "./dist/types/apps/markets/index.d.ts"
+    },
+    "./apps/lending": {
+      "import": "./dist/esm/apps/lending/index.js",
+      "require": "./dist/cjs/apps/lending/index.js",
+      "types": "./dist/types/apps/lending/index.d.ts"
     },
     "./apps/oracles": {
       "import": "./dist/esm/apps/oracles/index.js",
@@ -108,7 +118,9 @@
   },
   "dependencies": {
     "@bufbuild/protobuf": "^2.12.0",
-    "@constellation-network/metagraph-sdk": "^0.2.0",
+    "@constellation-network/metagraph-sdk": "1.8.0-rc.5",
+    "@constellation-network/metagraph-sdk-jlvm": "1.8.0-rc.5",
+    "@noble/hashes": "^1.8.0",
     "@stardust-collective/dag4": "^2.6.0",
     "@stardust-collective/dag4-keystore": "^2.6.0",
     "canonicalize": "^3.0.0",

@@ -1,4 +1,5 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
+import { signerIsParty } from "../../../schema/guards.js";
 
 /**
  * Single owner controls all actions. Simplest governance model.
@@ -118,7 +119,7 @@ export const daoSingleDef = defineFiberApp({
       from: "ACTIVE",
       to: "ACTIVE",
       eventName: "execute",
-      guard: { "===": [{ var: "event.agent" }, { var: "state.owner" }] },
+      guard: signerIsParty("state.owner"),
       effect: {
         merge: [
           { var: "state" },
@@ -136,10 +137,18 @@ export const daoSingleDef = defineFiberApp({
                 ],
               ],
             },
+            // A3 fix: transition-level `emits` is dropped by the chain; emit from INSIDE the effect
+            // under the reserved `_emit` key (extracted as an EmittedEvent, stripped from state).
+            _emit: [
+              {
+                name: "action_executed",
+                data: { actionId: { var: "event.actionId" } },
+                destination: "external",
+              },
+            ],
           },
         ],
       },
-      emits: [{ event: "action_executed", to: "external" }],
       dependencies: [],
     },
     // ACTIVE → TRANSFERRING: transfer_ownership (owner only)
@@ -147,7 +156,7 @@ export const daoSingleDef = defineFiberApp({
       from: "ACTIVE",
       to: "TRANSFERRING",
       eventName: "transfer_ownership",
-      guard: { "===": [{ var: "event.agent" }, { var: "state.owner" }] },
+      guard: signerIsParty("state.owner"),
       effect: {
         merge: [
           { var: "state" },
@@ -164,7 +173,7 @@ export const daoSingleDef = defineFiberApp({
       from: "TRANSFERRING",
       to: "ACTIVE",
       eventName: "accept_ownership",
-      guard: { "===": [{ var: "event.agent" }, { var: "state.pendingOwner" }] },
+      guard: signerIsParty("state.pendingOwner"),
       effect: {
         merge: [
           { var: "state" },
@@ -184,10 +193,18 @@ export const daoSingleDef = defineFiberApp({
                 ],
               ],
             },
+            // A3 fix: transition-level `emits` is dropped by the chain; emit from INSIDE the effect
+            // under the reserved `_emit` key (extracted as an EmittedEvent, stripped from state).
+            _emit: [
+              {
+                name: "ownership_transferred",
+                data: { var: "event" },
+                destination: "Identity",
+              },
+            ],
           },
         ],
       },
-      emits: [{ event: "ownership_transferred", to: "Identity" }],
       dependencies: [],
     },
     // TRANSFERRING → ACTIVE: cancel_transfer (owner only)
@@ -195,7 +212,7 @@ export const daoSingleDef = defineFiberApp({
       from: "TRANSFERRING",
       to: "ACTIVE",
       eventName: "cancel_transfer",
-      guard: { "===": [{ var: "event.agent" }, { var: "state.owner" }] },
+      guard: signerIsParty("state.owner"),
       effect: {
         merge: [
           { var: "state" },
@@ -212,7 +229,7 @@ export const daoSingleDef = defineFiberApp({
       from: "ACTIVE",
       to: "DISSOLVED",
       eventName: "dissolve",
-      guard: { "===": [{ var: "event.agent" }, { var: "state.owner" }] },
+      guard: signerIsParty("state.owner"),
       effect: {
         merge: [
           { var: "state" },

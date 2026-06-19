@@ -1,4 +1,6 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
+import { signerIsParty, depInState } from "../../../schema/guards.js";
+import { addDependency } from "../../../schema/effects.js";
 
 /**
  * Securities state machine tracking the lifecycle of equity from authorization through issuance, transfer, and retirement.
@@ -35,6 +37,7 @@ export const corpSecuritiesDef = defineFiberApp({
     required: [
       "securityId",
       "entityId",
+      "issuerAddress",
       "shareClass",
       "shareClassName",
       "shareCount",
@@ -49,6 +52,12 @@ export const corpSecuritiesDef = defineFiberApp({
       entityId: {
         type: "string",
         description: "Reference to parent corporate-entity",
+        immutable: true,
+      },
+      issuerAddress: {
+        type: "address",
+        description:
+          "State-pinned DAG address of the issuing authority (the corporation / transfer agent). Verified against proofs[].address to gate issuer-privileged transitions.",
         immutable: true,
       },
       shareClass: {
@@ -74,6 +83,7 @@ export const corpSecuritiesDef = defineFiberApp({
     properties: {
       securityId: { type: "string", immutable: true },
       entityId: { type: "string", immutable: true },
+      issuerAddress: { type: "address", immutable: true },
       shareClass: { type: "string" },
       shareClassName: { type: "string" },
       certificateNumber: {
@@ -147,6 +157,15 @@ export const corpSecuritiesDef = defineFiberApp({
       },
       createdAt: { type: "timestamp", computed: true },
       updatedAt: { type: "timestamp", computed: true },
+      // Two-phase resolution gating (#24): each propose_<X> binds the executing resolution (and, for
+      // issuance, the parent entity) fiber via _addDependency and records the pending action here; the
+      // gated <X> then asserts the bound dependency state via depInState and clears the pending object.
+      // The dropped object-form dependencies (which the chain silently never gated) are replaced this way.
+      pendingIssue: { type: "object", nullable: true, computed: true },
+      pendingRepurchase: { type: "object", nullable: true, computed: true },
+      pendingReissue: { type: "object", nullable: true, computed: true },
+      pendingRetire: { type: "object", nullable: true, computed: true },
+      pendingDividend: { type: "object", nullable: true, computed: true },
     },
   },
 
@@ -173,6 +192,15 @@ export const corpSecuritiesDef = defineFiberApp({
         charterProvision: { type: "string" },
       },
     },
+    propose_issue: {
+      description:
+        "Phase 1 of issuance (#24): bind the executing board resolution + parent entity fibers (_addDependency) and record the pending issuance",
+      required: ["holderId", "boardResolutionRef"] as const,
+      properties: {
+        holderId: { type: "string" },
+        boardResolutionRef: { type: "string" },
+      },
+    },
     issue_shares: {
       description: "Issue shares to a holder",
       required: [
@@ -181,13 +209,17 @@ export const corpSecuritiesDef = defineFiberApp({
         "holderName",
         "issuanceDate",
         "form",
-        "boardResolutionRef",
         "consideration",
       ] as const,
       properties: {
         holderId: { type: "string" },
         holderType: { type: "string" },
         holderName: { type: "string" },
+        holderWallet: {
+          type: "address",
+          description:
+            "DAG wallet address the holder controls; pinned so holder-initiated transfer/repurchase can be authorized via proofs[].address.",
+        },
         address: { type: "object" },
         issuanceDate: { type: "string", format: "date" },
         issuancePrice: { type: "number" },
@@ -196,7 +228,6 @@ export const corpSecuritiesDef = defineFiberApp({
           enum: ["CERTIFICATED", "BOOK_ENTRY", "DRS"] as const,
         },
         certificateNumber: { type: "string" },
-        boardResolutionRef: { type: "string" },
         consideration: { type: "object" },
         isRestricted: { type: "boolean", default: false },
         restrictionType: { type: "array" },
@@ -240,23 +271,40 @@ export const corpSecuritiesDef = defineFiberApp({
         toHolderId: { type: "string" },
         toHolderName: { type: "string" },
         toHolderType: { type: "string" },
+        toHolderWallet: {
+          type: "address",
+          description: "DAG wallet address the new holder controls.",
+        },
         toAddress: { type: "object" },
         completedDate: { type: "string", format: "date" },
         costBasis: { type: "number" },
       },
     },
+    propose_repurchase: {
+      description:
+        "Phase 1 of repurchase (#24): bind the executing board resolution fiber (_addDependency) and record the pending repurchase",
+      required: ["repurchaseDate", "boardResolutionRef"] as const,
+      properties: {
+        repurchaseDate: { type: "string", format: "date" },
+        boardResolutionRef: { type: "string" },
+      },
+    },
     repurchase: {
       description: "Company repurchases shares from holder",
-      required: [
-        "repurchaseDate",
-        "pricePerShare",
-        "boardResolutionRef",
-      ] as const,
+      required: ["repurchaseDate", "pricePerShare"] as const,
       properties: {
         repurchaseDate: { type: "string", format: "date" },
         pricePerShare: { type: "number" },
-        boardResolutionRef: { type: "string" },
         repurchaseAgreementRef: { type: "string" },
+      },
+    },
+    propose_reissue: {
+      description:
+        "Phase 1 of treasury reissue (#24): bind the executing board resolution fiber (_addDependency) and record the pending reissue",
+      required: ["holderId", "boardResolutionRef"] as const,
+      properties: {
+        holderId: { type: "string" },
+        boardResolutionRef: { type: "string" },
       },
     },
     reissue_from_treasury: {
@@ -266,29 +314,35 @@ export const corpSecuritiesDef = defineFiberApp({
         "holderName",
         "holderType",
         "reissueDate",
-        "boardResolutionRef",
       ] as const,
       properties: {
         holderId: { type: "string" },
         holderName: { type: "string" },
         holderType: { type: "string" },
+        holderWallet: {
+          type: "address",
+          description: "DAG wallet address the reissued holder controls.",
+        },
         address: { type: "object" },
         reissueDate: { type: "string", format: "date" },
         issuancePrice: { type: "number" },
+      },
+    },
+    propose_retire: {
+      description:
+        "Phase 1 of retirement (#24): bind the executing board resolution fiber (_addDependency) and record the pending retirement (from ISSUED or TREASURY)",
+      required: ["retiredDate", "boardResolutionRef"] as const,
+      properties: {
+        retiredDate: { type: "string", format: "date" },
         boardResolutionRef: { type: "string" },
       },
     },
     retire: {
       description: "Retire shares (cancel them)",
-      required: [
-        "retiredDate",
-        "retirementMethod",
-        "boardResolutionRef",
-      ] as const,
+      required: ["retiredDate", "retirementMethod"] as const,
       properties: {
         retiredDate: { type: "string", format: "date" },
         retirementMethod: { type: "string" },
-        boardResolutionRef: { type: "string" },
         repurchasePrice: { type: "number" },
       },
     },
@@ -312,6 +366,15 @@ export const corpSecuritiesDef = defineFiberApp({
         newShareCount: { type: "integer" },
       },
     },
+    propose_dividend: {
+      description:
+        "Phase 1 of dividend declaration (#24): bind the executing board resolution fiber (_addDependency) and record the pending declaration",
+      required: ["actionId", "resolutionRef"] as const,
+      properties: {
+        actionId: { type: "string" },
+        resolutionRef: { type: "string" },
+      },
+    },
     declare_dividend: {
       description:
         "Record dividend declaration affecting this lot (for stock dividends)",
@@ -320,7 +383,6 @@ export const corpSecuritiesDef = defineFiberApp({
         "dividendType",
         "recordDate",
         "paymentDate",
-        "resolutionRef",
       ] as const,
       properties: {
         actionId: { type: "string" },
@@ -329,7 +391,6 @@ export const corpSecuritiesDef = defineFiberApp({
         paymentDate: { type: "string", format: "date" },
         cashAmount: { type: "number" },
         stockShares: { type: "integer" },
-        resolutionRef: { type: "string" },
       },
     },
     remove_restriction: {
@@ -356,6 +417,12 @@ export const corpSecuritiesDef = defineFiberApp({
         },
         name: { type: "string" },
         taxId: { type: "string", nullable: true },
+        walletAddress: {
+          type: "address",
+          nullable: true,
+          description:
+            "State-pinned DAG wallet address controlled by this holder; verified against proofs[].address to gate holder-initiated transfer/repurchase.",
+        },
         address: { type: "object", nullable: true },
         acquisitionDate: { type: "string", format: "date" },
         acquisitionMethod: {
@@ -555,7 +622,8 @@ export const corpSecuritiesDef = defineFiberApp({
       from: "AUTHORIZED",
       to: "AUTHORIZED",
       eventName: "authorize_shares",
-      guard: { "==": [1, 1] },
+      // authority gate — an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: signerIsParty("state.issuerAddress"),
       effect: {
         merge: [
           { var: "state" },
@@ -578,24 +646,54 @@ export const corpSecuritiesDef = defineFiberApp({
       },
     },
 
-    // AUTHORIZED -> ISSUED
+    // AUTHORIZED -> AUTHORIZED (propose_issue) — phase 1 (#24): bind the executing resolution + parent
+    // entity fibers and record the pending issuance, so issue_shares can read their state next transition.
+    {
+      from: "AUTHORIZED",
+      to: "AUTHORIZED",
+      eventName: "propose_issue",
+      // authority gate — an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: signerIsParty("state.issuerAddress"),
+      effect: {
+        merge: [
+          { var: "state" },
+          {
+            pendingIssue: {
+              holderId: { var: "event.holderId" },
+              ref: { var: "event.boardResolutionRef" },
+              proposedAt: { var: "$ordinal" },
+            },
+          },
+          // bind the resolution fiber so issue_shares can assert its state next transition
+          addDependency({ var: "event.boardResolutionRef" }),
+          // bind the parent entity fiber so issue_shares can assert it is ACTIVE
+          addDependency({ var: "state.entityId" }),
+        ],
+      },
+      dependencies: [],
+    },
+
+    // AUTHORIZED -> ISSUED — phase 2 (#24): issue once the bound resolution is EXECUTED and the parent
+    // entity is ACTIVE. depInState replaces the dropped object-form dependencies (which never gated).
     {
       from: "AUTHORIZED",
       to: "ISSUED",
       eventName: "issue_shares",
-      guard: { "==": [1, 1] },
-      dependencies: [
-        {
-          machine: "corporate-resolution",
-          instanceRef: { var: "event.boardResolutionRef" },
-          requiredState: "EXECUTED",
-        },
-        {
-          machine: "corporate-entity",
-          instanceRef: { var: "state.entityId" },
-          requiredState: "ACTIVE",
-        },
-      ],
+      // authority gate — an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: {
+        and: [
+          signerIsParty("state.issuerAddress"),
+          // the proposal must target this holder, and its bound resolution must be EXECUTED
+          {
+            "==": [
+              { var: "state.pendingIssue.holderId" },
+              { var: "event.holderId" },
+            ],
+          },
+          depInState("state.pendingIssue.ref", "EXECUTED"),
+          depInState("state.entityId", "ACTIVE"),
+        ],
+      },
       effect: {
         merge: [
           { var: "state" },
@@ -609,6 +707,7 @@ export const corpSecuritiesDef = defineFiberApp({
               holderId: { var: "event.holderId" },
               holderType: { var: "event.holderType" },
               name: { var: "event.holderName" },
+              walletAddress: { var: "event.holderWallet" },
               address: { var: "event.address" },
               acquisitionDate: { var: "event.issuanceDate" },
               acquisitionMethod: "ORIGINAL_ISSUANCE",
@@ -625,15 +724,22 @@ export const corpSecuritiesDef = defineFiberApp({
               legends: { var: "event.legends" },
             },
             issuanceDetails: {
-              boardResolutionRef: { var: "event.boardResolutionRef" },
+              boardResolutionRef: { var: "state.pendingIssue.ref" },
               consideration: { var: "event.consideration" },
               exemptionUsed: { var: "event.exemptionUsed" },
               accreditedInvestor: { var: "event.accreditedInvestor" },
             },
+            // clear the consumed proposal
+            pendingIssue: null,
+          },
+          {
+            _emit: [
+              { name: "SHARES_ISSUED", data: { var: "event" }, destination: "external" },
+            ],
           },
         ],
       },
-      emits: ["SHARES_ISSUED"],
+      dependencies: [],
     },
 
     // ISSUED -> TRANSFERRED
@@ -643,6 +749,8 @@ export const corpSecuritiesDef = defineFiberApp({
       eventName: "initiate_transfer",
       guard: {
         and: [
+          // authority gate — an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+          signerIsParty("state.holder.walletAddress"),
           {
             or: [
               { "==": [{ var: "state.restrictions.isRestricted" }, false] },
@@ -666,7 +774,7 @@ export const corpSecuritiesDef = defineFiberApp({
           {
             status: "TRANSFERRED",
             transferHistory: {
-              cat: [
+              merge: [
                 { var: "state.transferHistory" },
                 [
                   {
@@ -682,9 +790,13 @@ export const corpSecuritiesDef = defineFiberApp({
               ],
             },
           },
+          {
+            _emit: [
+              { name: "TRANSFER_INITIATED", data: { var: "event" }, destination: "external" },
+            ],
+          },
         ],
       },
-      emits: ["TRANSFER_INITIATED"],
     },
 
     // TRANSFERRED -> ISSUED
@@ -692,7 +804,8 @@ export const corpSecuritiesDef = defineFiberApp({
       from: "TRANSFERRED",
       to: "ISSUED",
       eventName: "complete_transfer",
-      guard: { "==": [1, 1] },
+      // authority gate — an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: signerIsParty("state.issuerAddress"),
       effect: {
         merge: [
           { var: "state" },
@@ -702,6 +815,7 @@ export const corpSecuritiesDef = defineFiberApp({
               holderId: { var: "event.toHolderId" },
               holderType: { var: "event.toHolderType" },
               name: { var: "event.toHolderName" },
+              walletAddress: { var: "event.toHolderWallet" },
               address: { var: "event.toAddress" },
               acquisitionDate: { var: "event.completedDate" },
               acquisitionMethod: "PURCHASE",
@@ -715,31 +829,66 @@ export const corpSecuritiesDef = defineFiberApp({
               ],
             },
           },
+          {
+            _emit: [
+              { name: "TRANSFER_COMPLETED", data: { var: "event" }, destination: "external" },
+            ],
+          },
         ],
       },
-      emits: ["TRANSFER_COMPLETED"],
     },
 
-    // ISSUED -> TREASURY
+    // ISSUED -> ISSUED (propose_repurchase) — phase 1 (#24): bind the executing resolution fiber and
+    // record the pending repurchase, so repurchase can read the resolution's state next transition.
+    {
+      from: "ISSUED",
+      to: "ISSUED",
+      eventName: "propose_repurchase",
+      // authority gate — the selling holder must sign; an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: signerIsParty("state.holder.walletAddress"),
+      effect: {
+        merge: [
+          { var: "state" },
+          {
+            pendingRepurchase: {
+              repurchaseDate: { var: "event.repurchaseDate" },
+              ref: { var: "event.boardResolutionRef" },
+              proposedAt: { var: "$ordinal" },
+            },
+          },
+          // bind the resolution fiber so repurchase can assert its state next transition
+          addDependency({ var: "event.boardResolutionRef" }),
+        ],
+      },
+      dependencies: [],
+    },
+
+    // ISSUED -> TREASURY — phase 2 (#24): repurchase once the bound resolution is EXECUTED.
     {
       from: "ISSUED",
       to: "TREASURY",
       eventName: "repurchase",
-      guard: { "==": [1, 1] },
-      dependencies: [
-        {
-          machine: "corporate-resolution",
-          instanceRef: { var: "event.boardResolutionRef" },
-          requiredState: "EXECUTED",
-        },
-      ],
+      // authority gate — the selling holder must sign; an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: {
+        and: [
+          signerIsParty("state.holder.walletAddress"),
+          // the proposal must match this repurchase, and its bound resolution must be EXECUTED
+          {
+            "==": [
+              { var: "state.pendingRepurchase.repurchaseDate" },
+              { var: "event.repurchaseDate" },
+            ],
+          },
+          depInState("state.pendingRepurchase.ref", "EXECUTED"),
+        ],
+      },
       effect: {
         merge: [
           { var: "state" },
           {
             status: "TREASURY",
             transferHistory: {
-              cat: [
+              merge: [
                 { var: "state.transferHistory" },
                 [
                   {
@@ -769,25 +918,63 @@ export const corpSecuritiesDef = defineFiberApp({
                 ],
               },
             },
+            // clear the consumed proposal
+            pendingRepurchase: null,
+          },
+          {
+            _emit: [
+              { name: "SHARES_REPURCHASED", data: { var: "event" }, destination: "external" },
+            ],
           },
         ],
       },
-      emits: ["SHARES_REPURCHASED"],
+      dependencies: [],
     },
 
-    // TREASURY -> ISSUED
+    // TREASURY -> TREASURY (propose_reissue) — phase 1 (#24): bind the executing resolution fiber and
+    // record the pending reissue, so reissue_from_treasury can read the resolution's state next transition.
+    {
+      from: "TREASURY",
+      to: "TREASURY",
+      eventName: "propose_reissue",
+      // authority gate — an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: signerIsParty("state.issuerAddress"),
+      effect: {
+        merge: [
+          { var: "state" },
+          {
+            pendingReissue: {
+              holderId: { var: "event.holderId" },
+              ref: { var: "event.boardResolutionRef" },
+              proposedAt: { var: "$ordinal" },
+            },
+          },
+          // bind the resolution fiber so reissue_from_treasury can assert its state next transition
+          addDependency({ var: "event.boardResolutionRef" }),
+        ],
+      },
+      dependencies: [],
+    },
+
+    // TREASURY -> ISSUED — phase 2 (#24): reissue once the bound resolution is EXECUTED.
     {
       from: "TREASURY",
       to: "ISSUED",
       eventName: "reissue_from_treasury",
-      guard: { "==": [1, 1] },
-      dependencies: [
-        {
-          machine: "corporate-resolution",
-          instanceRef: { var: "event.boardResolutionRef" },
-          requiredState: "EXECUTED",
-        },
-      ],
+      // authority gate — an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: {
+        and: [
+          signerIsParty("state.issuerAddress"),
+          // the proposal must target this holder, and its bound resolution must be EXECUTED
+          {
+            "==": [
+              { var: "state.pendingReissue.holderId" },
+              { var: "event.holderId" },
+            ],
+          },
+          depInState("state.pendingReissue.ref", "EXECUTED"),
+        ],
+      },
       effect: {
         merge: [
           { var: "state" },
@@ -797,6 +984,7 @@ export const corpSecuritiesDef = defineFiberApp({
               holderId: { var: "event.holderId" },
               holderType: { var: "event.holderType" },
               name: { var: "event.holderName" },
+              walletAddress: { var: "event.holderWallet" },
               address: { var: "event.address" },
               acquisitionDate: { var: "event.reissueDate" },
               acquisitionMethod: "PURCHASE",
@@ -807,25 +995,88 @@ export const corpSecuritiesDef = defineFiberApp({
                 ],
               },
             },
+            // clear the consumed proposal
+            pendingReissue: null,
+          },
+          {
+            _emit: [
+              { name: "TREASURY_SHARES_REISSUED", data: { var: "event" }, destination: "external" },
+            ],
           },
         ],
       },
-      emits: ["TREASURY_SHARES_REISSUED"],
+      dependencies: [],
     },
 
-    // ISSUED -> RETIRED
+    // ISSUED -> ISSUED (propose_retire) — phase 1 (#24): bind the executing resolution fiber and record
+    // the pending retirement, so the retire transition can read the resolution's state next transition.
+    {
+      from: "ISSUED",
+      to: "ISSUED",
+      eventName: "propose_retire",
+      // authority gate — an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: signerIsParty("state.issuerAddress"),
+      effect: {
+        merge: [
+          { var: "state" },
+          {
+            pendingRetire: {
+              retiredDate: { var: "event.retiredDate" },
+              ref: { var: "event.boardResolutionRef" },
+              proposedAt: { var: "$ordinal" },
+            },
+          },
+          // bind the resolution fiber so retire can assert its state next transition
+          addDependency({ var: "event.boardResolutionRef" }),
+        ],
+      },
+      dependencies: [],
+    },
+
+    // TREASURY -> TREASURY (propose_retire) — phase 1 (#24): the treasury-side counterpart, binding the
+    // executing resolution fiber and recording the pending retirement before retire executes.
+    {
+      from: "TREASURY",
+      to: "TREASURY",
+      eventName: "propose_retire",
+      // authority gate — an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: signerIsParty("state.issuerAddress"),
+      effect: {
+        merge: [
+          { var: "state" },
+          {
+            pendingRetire: {
+              retiredDate: { var: "event.retiredDate" },
+              ref: { var: "event.boardResolutionRef" },
+              proposedAt: { var: "$ordinal" },
+            },
+          },
+          // bind the resolution fiber so retire can assert its state next transition
+          addDependency({ var: "event.boardResolutionRef" }),
+        ],
+      },
+      dependencies: [],
+    },
+
+    // ISSUED -> RETIRED — phase 2 (#24): retire once the bound resolution is EXECUTED.
     {
       from: "ISSUED",
       to: "RETIRED",
       eventName: "retire",
-      guard: { "==": [1, 1] },
-      dependencies: [
-        {
-          machine: "corporate-resolution",
-          instanceRef: { var: "event.boardResolutionRef" },
-          requiredState: "EXECUTED",
-        },
-      ],
+      // authority gate — an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: {
+        and: [
+          signerIsParty("state.issuerAddress"),
+          // the proposal must match this retirement, and its bound resolution must be EXECUTED
+          {
+            "==": [
+              { var: "state.pendingRetire.retiredDate" },
+              { var: "event.retiredDate" },
+            ],
+          },
+          depInState("state.pendingRetire.ref", "EXECUTED"),
+        ],
+      },
       effect: {
         merge: [
           { var: "state" },
@@ -835,28 +1086,41 @@ export const corpSecuritiesDef = defineFiberApp({
               retiredDate: { var: "event.retiredDate" },
               retirementMethod: { var: "event.retirementMethod" },
               repurchasePrice: { var: "event.repurchasePrice" },
-              boardResolutionRef: { var: "event.boardResolutionRef" },
+              boardResolutionRef: { var: "state.pendingRetire.ref" },
             },
             holder: null,
+            // clear the consumed proposal
+            pendingRetire: null,
+          },
+          {
+            _emit: [
+              { name: "SHARES_RETIRED", data: { var: "event" }, destination: "external" },
+            ],
           },
         ],
       },
-      emits: ["SHARES_RETIRED"],
+      dependencies: [],
     },
 
-    // TREASURY -> RETIRED
+    // TREASURY -> RETIRED — phase 2 (#24): retire once the bound resolution is EXECUTED.
     {
       from: "TREASURY",
       to: "RETIRED",
       eventName: "retire",
-      guard: { "==": [1, 1] },
-      dependencies: [
-        {
-          machine: "corporate-resolution",
-          instanceRef: { var: "event.boardResolutionRef" },
-          requiredState: "EXECUTED",
-        },
-      ],
+      // authority gate — an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: {
+        and: [
+          signerIsParty("state.issuerAddress"),
+          // the proposal must match this retirement, and its bound resolution must be EXECUTED
+          {
+            "==": [
+              { var: "state.pendingRetire.retiredDate" },
+              { var: "event.retiredDate" },
+            ],
+          },
+          depInState("state.pendingRetire.ref", "EXECUTED"),
+        ],
+      },
       effect: {
         merge: [
           { var: "state" },
@@ -866,13 +1130,20 @@ export const corpSecuritiesDef = defineFiberApp({
               retiredDate: { var: "event.retiredDate" },
               retirementMethod: { var: "event.retirementMethod" },
               repurchasePrice: { var: "event.repurchasePrice" },
-              boardResolutionRef: { var: "event.boardResolutionRef" },
+              boardResolutionRef: { var: "state.pendingRetire.ref" },
             },
             holder: null,
+            // clear the consumed proposal
+            pendingRetire: null,
+          },
+          {
+            _emit: [
+              { name: "SHARES_RETIRED", data: { var: "event" }, destination: "external" },
+            ],
           },
         ],
       },
-      emits: ["SHARES_RETIRED"],
+      dependencies: [],
     },
 
     // ISSUED -> ISSUED (stock_split)
@@ -880,13 +1151,14 @@ export const corpSecuritiesDef = defineFiberApp({
       from: "ISSUED",
       to: "ISSUED",
       eventName: "stock_split",
-      guard: { "==": [1, 1] },
+      // authority gate — an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: signerIsParty("state.issuerAddress"),
       effect: {
         merge: [
           { var: "state" },
           {
             corporateActions: {
-              cat: [
+              merge: [
                 { var: "state.corporateActions" },
                 [
                   {
@@ -903,24 +1175,60 @@ export const corpSecuritiesDef = defineFiberApp({
             },
             shareCount: { var: "event.newShareCount" },
           },
+          {
+            _emit: [
+              { name: "STOCK_SPLIT_APPLIED", data: { var: "event" }, destination: "external" },
+            ],
+          },
         ],
       },
-      emits: ["STOCK_SPLIT_APPLIED"],
     },
 
-    // ISSUED -> ISSUED (declare_dividend) - stock dividend handling
+    // ISSUED -> ISSUED (propose_dividend) — phase 1 (#24): bind the executing resolution fiber and record
+    // the pending declaration, so declare_dividend can read the resolution's state next transition.
+    {
+      from: "ISSUED",
+      to: "ISSUED",
+      eventName: "propose_dividend",
+      // authority gate — an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: signerIsParty("state.issuerAddress"),
+      effect: {
+        merge: [
+          { var: "state" },
+          {
+            pendingDividend: {
+              actionId: { var: "event.actionId" },
+              ref: { var: "event.resolutionRef" },
+              proposedAt: { var: "$ordinal" },
+            },
+          },
+          // bind the resolution fiber so declare_dividend can assert its state next transition
+          addDependency({ var: "event.resolutionRef" }),
+        ],
+      },
+      dependencies: [],
+    },
+
+    // ISSUED -> ISSUED (declare_dividend) — phase 2 (#24): stock dividend handling once the bound
+    // resolution is EXECUTED.
     {
       from: "ISSUED",
       to: "ISSUED",
       eventName: "declare_dividend",
-      guard: { "==": [1, 1] },
-      dependencies: [
-        {
-          machine: "corporate-resolution",
-          instanceRef: { var: "event.resolutionRef" },
-          requiredState: "EXECUTED",
-        },
-      ],
+      // authority gate — an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: {
+        and: [
+          signerIsParty("state.issuerAddress"),
+          // the proposal must target this action, and its bound resolution must be EXECUTED
+          {
+            "==": [
+              { var: "state.pendingDividend.actionId" },
+              { var: "event.actionId" },
+            ],
+          },
+          depInState("state.pendingDividend.ref", "EXECUTED"),
+        ],
+      },
       effect: {
         if: [
           { "==": [{ var: "event.dividendType" }, "STOCK"] },
@@ -929,7 +1237,7 @@ export const corpSecuritiesDef = defineFiberApp({
               { var: "state" },
               {
                 corporateActions: {
-                  cat: [
+                  merge: [
                     { var: "state.corporateActions" },
                     [
                       {
@@ -943,7 +1251,7 @@ export const corpSecuritiesDef = defineFiberApp({
                             { var: "event.stockShares" },
                           ],
                         },
-                        resolutionRef: { var: "event.resolutionRef" },
+                        resolutionRef: { var: "state.pendingDividend.ref" },
                       },
                     ],
                   ],
@@ -954,12 +1262,21 @@ export const corpSecuritiesDef = defineFiberApp({
                     { var: "event.stockShares" },
                   ],
                 },
+                // clear the consumed proposal
+                pendingDividend: null,
               },
             ],
           },
-          { var: "state" },
+          {
+            merge: [
+              { var: "state" },
+              // cash dividend: no share change, but still clear the consumed proposal
+              { pendingDividend: null },
+            ],
+          },
         ],
       },
+      dependencies: [],
     },
 
     // ISSUED -> ISSUED (remove_restriction)
@@ -967,7 +1284,8 @@ export const corpSecuritiesDef = defineFiberApp({
       from: "ISSUED",
       to: "ISSUED",
       eventName: "remove_restriction",
-      guard: { "==": [1, 1] },
+      // authority gate — an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: signerIsParty("state.issuerAddress"),
       effect: {
         merge: [
           { var: "state" },
@@ -1008,9 +1326,13 @@ export const corpSecuritiesDef = defineFiberApp({
               ],
             },
           },
+          {
+            _emit: [
+              { name: "RESTRICTION_REMOVED", data: { var: "event" }, destination: "external" },
+            ],
+          },
         ],
       },
-      emits: ["RESTRICTION_REMOVED"],
     },
   ],
 });

@@ -1,4 +1,6 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
+import { signerIsParty, depInState } from "../../../schema/guards.js";
+import { addDependency } from "../../../schema/effects.js";
 
 /**
  * Master corporate record tracking the lifecycle of a business entity from incorporation through dissolution.
@@ -47,11 +49,44 @@ export const corpEntityDef = defineFiberApp({
   },
 
   createSchema: {
-    required: ["entityId", "legalName", "entityType", "jurisdiction"] as const,
+    required: [
+      "entityId",
+      "legalName",
+      "entityType",
+      "jurisdiction",
+      "charterAuthority",
+      "boardAuthority",
+      "shareholderAuthority",
+      "stateAuthority",
+    ] as const,
     properties: {
       entityId: {
         type: "string",
         description: "Unique identifier for this corporate entity",
+        immutable: true,
+      },
+      charterAuthority: {
+        type: "address",
+        description:
+          "State-pinned DAG address authorized to amend the charter (legal identity). Verified against proofs[].address.",
+        immutable: true,
+      },
+      boardAuthority: {
+        type: "address",
+        description:
+          "State-pinned DAG address of the board authority (governs registered-agent changes, suspension/reinstatement, and the board half of voluntary dissolution). Verified against proofs[].address.",
+        immutable: true,
+      },
+      shareholderAuthority: {
+        type: "address",
+        description:
+          "State-pinned DAG address of the shareholder authority (the shareholder half of voluntary dissolution). Verified against proofs[].address.",
+        immutable: true,
+      },
+      stateAuthority: {
+        type: "address",
+        description:
+          "State-pinned DAG address of the chartering jurisdiction/registrar that may administratively dissolve a suspended entity. Verified against proofs[].address.",
         immutable: true,
       },
       legalName: {
@@ -142,6 +177,10 @@ export const corpEntityDef = defineFiberApp({
   stateSchema: {
     properties: {
       entityId: { type: "string", immutable: true },
+      charterAuthority: { type: "address", immutable: true },
+      boardAuthority: { type: "address", immutable: true },
+      shareholderAuthority: { type: "address", immutable: true },
+      stateAuthority: { type: "address", immutable: true },
       legalName: { type: "string" },
       tradeName: { type: "string", nullable: true },
       entityType: { type: "string" },
@@ -180,6 +219,13 @@ export const corpEntityDef = defineFiberApp({
       },
       createdAt: { type: "timestamp", computed: true },
       updatedAt: { type: "timestamp", computed: true },
+      // Two-phase amendment (#24): propose_amend_charter binds the resolution fiber + records the
+      // pending amendment here; amend_charter asserts the bound resolution is EXECUTED, then clears this.
+      pendingAmendCharter: { type: "object", nullable: true, computed: true },
+      // Two-phase voluntary dissolution (#24): propose_dissolve_voluntary binds the board + shareholder
+      // resolution fibers + records the pending dissolution here; dissolve_voluntary asserts both bound
+      // resolutions are EXECUTED, then clears this.
+      pendingDissolveVoluntary: { type: "object", nullable: true, computed: true },
     },
   },
 
@@ -197,9 +243,9 @@ export const corpEntityDef = defineFiberApp({
         },
       },
     },
-    amend_charter: {
+    propose_amend_charter: {
       description:
-        "Amend the certificate/articles of incorporation (requires shareholder approval for most amendments)",
+        "Phase 1 of a charter amendment: bind the approving resolution fiber (#24 _addDependency) and record the pending amendment",
       required: [
         "amendmentId",
         "description",
@@ -223,6 +269,38 @@ export const corpEntityDef = defineFiberApp({
         resolutionRef: {
           type: "string",
           description: "Reference to board/shareholder resolution",
+        },
+        effectiveDate: { type: "string", format: "date" },
+        filedDate: { type: "string", format: "date" },
+        newShareAuthorization: {
+          type: "object",
+          nullable: true,
+          description: "If increasing/changing authorized shares",
+        },
+        newLegalName: { type: "string", nullable: true },
+      },
+    },
+    amend_charter: {
+      description:
+        "Phase 2 of a charter amendment: apply once the bound approving resolution is EXECUTED",
+      required: [
+        "amendmentId",
+        "description",
+        "amendmentType",
+        "effectiveDate",
+        "filedDate",
+      ] as const,
+      properties: {
+        amendmentId: { type: "string" },
+        description: { type: "string" },
+        amendmentType: {
+          type: "string",
+          enum: [
+            "NAME_CHANGE",
+            "SHARE_AUTHORIZATION",
+            "PURPOSE_CHANGE",
+            "OTHER",
+          ] as const,
         },
         effectiveDate: { type: "string", format: "date" },
         filedDate: { type: "string", format: "date" },
@@ -314,8 +392,9 @@ export const corpEntityDef = defineFiberApp({
         penaltiesPaid: { type: "number", nullable: true },
       },
     },
-    dissolve_voluntary: {
-      description: "Voluntary dissolution approved by board and shareholders",
+    propose_dissolve_voluntary: {
+      description:
+        "Phase 1 of voluntary dissolution: bind the executing board + shareholder resolution fibers (#24 _addDependency) and record the pending dissolution",
       required: [
         "dissolutionDate",
         "boardResolutionRef",
@@ -325,6 +404,19 @@ export const corpEntityDef = defineFiberApp({
         dissolutionDate: { type: "string", format: "date" },
         boardResolutionRef: { type: "string" },
         shareholderResolutionRef: { type: "string" },
+        windingUpPlan: {
+          type: "string",
+          description: "Reference to winding up plan",
+        },
+        certificateOfDissolution: { type: "string" },
+      },
+    },
+    dissolve_voluntary: {
+      description:
+        "Phase 2 of voluntary dissolution: execute once both bound resolutions are EXECUTED",
+      required: ["dissolutionDate"] as const,
+      properties: {
+        dissolutionDate: { type: "string", format: "date" },
         windingUpPlan: {
           type: "string",
           description: "Reference to winding up plan",
@@ -449,8 +541,8 @@ export const corpEntityDef = defineFiberApp({
           { "!=": [{ var: "state.legalName" }, null] },
           { "!=": [{ var: "state.jurisdiction.state" }, null] },
           { "!=": [{ var: "state.registeredAgent" }, null] },
-          { ">": [{ var: "state.incorporators.length" }, 0] },
-          { ">": [{ var: "state.shareStructure.classes.length" }, 0] },
+          { ">": [{ length: [{ var: "state.incorporators" }] }, 0] },
+          { ">": [{ length: [{ var: "state.shareStructure.classes" }] }, 0] },
           { ">": [{ var: "state.shareStructure.totalAuthorized" }, 0] },
         ],
       },
@@ -462,37 +554,77 @@ export const corpEntityDef = defineFiberApp({
             formationDate: { var: "event.approvalDate" },
             updatedAt: { var: "$ordinal" },
           },
+          {
+            _emit: [
+              { name: "CORPORATION_FORMED", data: { var: "event" }, destination: "external" },
+            ],
+          },
         ],
       },
-      emits: ["CORPORATION_FORMED"],
     },
 
-    // ACTIVE -> ACTIVE (amend_charter)
+    // ACTIVE -> ACTIVE (propose_amend_charter) — phase 1 (#24): bind the approving resolution fiber and
+    // record the pending amendment, so amend_charter can read the resolution's state next transition.
+    {
+      from: "ACTIVE",
+      to: "ACTIVE",
+      eventName: "propose_amend_charter",
+      // authority gate — an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: signerIsParty("state.charterAuthority"),
+      effect: {
+        merge: [
+          { var: "state" },
+          {
+            pendingAmendCharter: {
+              amendmentId: { var: "event.amendmentId" },
+              description: { var: "event.description" },
+              effectiveDate: { var: "event.effectiveDate" },
+              filedDate: { var: "event.filedDate" },
+              newLegalName: { var: "event.newLegalName" },
+              ref: { var: "event.resolutionRef" },
+              proposedAt: { var: "$ordinal" },
+            },
+          },
+          // bind the resolution fiber so amend_charter can assert its state next transition
+          addDependency({ var: "event.resolutionRef" }),
+        ],
+      },
+      dependencies: [],
+    },
+
+    // ACTIVE -> ACTIVE (amend_charter) — phase 2 (#24): apply once the bound approving resolution is
+    // EXECUTED. depInState replaces the dropped object-form dependency (which silently never gated).
     {
       from: "ACTIVE",
       to: "ACTIVE",
       eventName: "amend_charter",
-      guard: { "!=": [{ var: "event.resolutionRef" }, null] },
-      dependencies: [
-        {
-          machine: "corporate-resolution",
-          instanceRef: { var: "event.resolutionRef" },
-          requiredState: "EXECUTED",
-        },
-      ],
+      // authority gate — an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: {
+        and: [
+          signerIsParty("state.charterAuthority"),
+          // the proposal must target this amendment, and its bound resolution must be EXECUTED
+          {
+            "==": [
+              { var: "state.pendingAmendCharter.amendmentId" },
+              { var: "event.amendmentId" },
+            ],
+          },
+          depInState("state.pendingAmendCharter.ref", "EXECUTED"),
+        ],
+      },
       effect: {
         merge: [
           { var: "state" },
           {
             charterAmendments: {
-              cat: [
+              merge: [
                 { var: "state.charterAmendments" },
                 [
                   {
                     amendmentId: { var: "event.amendmentId" },
                     description: { var: "event.description" },
                     effectiveDate: { var: "event.effectiveDate" },
-                    resolutionRef: { var: "event.resolutionRef" },
+                    resolutionRef: { var: "state.pendingAmendCharter.ref" },
                     filedDate: { var: "event.filedDate" },
                   },
                 ],
@@ -506,10 +638,17 @@ export const corpEntityDef = defineFiberApp({
               ],
             },
             updatedAt: { var: "$ordinal" },
+            // clear the consumed proposal
+            pendingAmendCharter: null,
+          },
+          {
+            _emit: [
+              { name: "CHARTER_AMENDED", data: { var: "event" }, destination: "external" },
+            ],
           },
         ],
       },
-      emits: ["CHARTER_AMENDED"],
+      dependencies: [],
     },
 
     // ACTIVE -> ACTIVE (update_share_class)
@@ -522,7 +661,7 @@ export const corpEntityDef = defineFiberApp({
           { var: "state.charterAmendments" },
           {
             "==": [
-              { var: ".amendmentId" },
+              { var: "amendmentId" },
               { var: "event.charterAmendmentRef" },
             ],
           },
@@ -543,7 +682,7 @@ export const corpEntityDef = defineFiberApp({
                         if: [
                           {
                             "==": [
-                              { var: ".classId" },
+                              { var: "classId" },
                               { var: "event.classId" },
                             ],
                           },
@@ -581,7 +720,8 @@ export const corpEntityDef = defineFiberApp({
       from: "ACTIVE",
       to: "ACTIVE",
       eventName: "update_registered_agent",
-      guard: { "==": [1, 1] },
+      // authority gate — an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: signerIsParty("state.boardAuthority"),
       effect: {
         merge: [
           { var: "state" },
@@ -594,9 +734,13 @@ export const corpEntityDef = defineFiberApp({
               effectiveDate: { var: "event.effectiveDate" },
             },
           },
+          {
+            _emit: [
+              { name: "REGISTERED_AGENT_CHANGED", data: { var: "event" }, destination: "external" },
+            ],
+          },
         ],
       },
-      emits: ["REGISTERED_AGENT_CHANGED"],
     },
 
     // ACTIVE -> SUSPENDED
@@ -604,7 +748,8 @@ export const corpEntityDef = defineFiberApp({
       from: "ACTIVE",
       to: "SUSPENDED",
       eventName: "suspend",
-      guard: { "==": [1, 1] },
+      // authority gate — state-initiated enforcement; an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: signerIsParty("state.stateAuthority"),
       effect: {
         merge: [
           { var: "state" },
@@ -613,9 +758,13 @@ export const corpEntityDef = defineFiberApp({
             suspensionReason: { var: "event.reason" },
             suspensionDate: { var: "event.suspensionDate" },
           },
+          {
+            _emit: [
+              { name: "CORPORATION_SUSPENDED", data: { var: "event" }, destination: "external" },
+            ],
+          },
         ],
       },
-      emits: ["CORPORATION_SUSPENDED"],
     },
 
     // SUSPENDED -> ACTIVE
@@ -623,7 +772,8 @@ export const corpEntityDef = defineFiberApp({
       from: "SUSPENDED",
       to: "ACTIVE",
       eventName: "reinstate",
-      guard: { "==": [1, 1] },
+      // authority gate — an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: signerIsParty("state.boardAuthority"),
       effect: {
         merge: [
           { var: "state" },
@@ -632,29 +782,74 @@ export const corpEntityDef = defineFiberApp({
             suspensionReason: null,
             suspensionDate: null,
           },
+          {
+            _emit: [
+              { name: "CORPORATION_REINSTATED", data: { var: "event" }, destination: "external" },
+            ],
+          },
         ],
       },
-      emits: ["CORPORATION_REINSTATED"],
     },
 
-    // ACTIVE -> DISSOLVED (voluntary)
+    // ACTIVE -> ACTIVE (propose_dissolve_voluntary) — phase 1 (#24): bind BOTH executing resolution
+    // fibers (board + shareholder) and record the pending dissolution, so dissolve_voluntary can read
+    // both resolutions' states next transition.
+    {
+      from: "ACTIVE",
+      to: "ACTIVE",
+      eventName: "propose_dissolve_voluntary",
+      // authority gate — both the board and shareholder authorities must sign; identity role attestations (BOARD_MEMBER/...) layer on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: {
+        and: [
+          signerIsParty("state.boardAuthority"),
+          signerIsParty("state.shareholderAuthority"),
+        ],
+      },
+      effect: {
+        merge: [
+          { var: "state" },
+          {
+            pendingDissolveVoluntary: {
+              dissolutionDate: { var: "event.dissolutionDate" },
+              boardRef: { var: "event.boardResolutionRef" },
+              shareholderRef: { var: "event.shareholderResolutionRef" },
+              proposedAt: { var: "$ordinal" },
+            },
+          },
+          // bind both resolution fibers so dissolve_voluntary can assert their states next transition
+          {
+            _addDependency: [
+              { fiberId: { var: "event.boardResolutionRef" } },
+              { fiberId: { var: "event.shareholderResolutionRef" } },
+            ],
+          },
+        ],
+      },
+      dependencies: [],
+    },
+
+    // ACTIVE -> DISSOLVED (dissolve_voluntary) — phase 2 (#24): execute once BOTH bound resolutions are
+    // EXECUTED. depInState replaces the dropped object-form dependencies (which silently never gated).
     {
       from: "ACTIVE",
       to: "DISSOLVED",
       eventName: "dissolve_voluntary",
-      guard: { "==": [1, 1] },
-      dependencies: [
-        {
-          machine: "corporate-resolution",
-          instanceRef: { var: "event.boardResolutionRef" },
-          requiredState: "EXECUTED",
-        },
-        {
-          machine: "corporate-resolution",
-          instanceRef: { var: "event.shareholderResolutionRef" },
-          requiredState: "EXECUTED",
-        },
-      ],
+      // authority gate — both the board and shareholder authorities must sign; identity role attestations (BOARD_MEMBER/...) layer on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: {
+        and: [
+          signerIsParty("state.boardAuthority"),
+          signerIsParty("state.shareholderAuthority"),
+          // the proposal must target this dissolution, and its bound resolutions must both be EXECUTED
+          {
+            "==": [
+              { var: "state.pendingDissolveVoluntary.dissolutionDate" },
+              { var: "event.dissolutionDate" },
+            ],
+          },
+          depInState("state.pendingDissolveVoluntary.boardRef", "EXECUTED"),
+          depInState("state.pendingDissolveVoluntary.shareholderRef", "EXECUTED"),
+        ],
+      },
       effect: {
         merge: [
           { var: "state" },
@@ -662,10 +857,17 @@ export const corpEntityDef = defineFiberApp({
             status: "DISSOLVED",
             dissolutionDate: { var: "event.dissolutionDate" },
             dissolutionReason: "VOLUNTARY",
+            // clear the consumed proposal
+            pendingDissolveVoluntary: null,
+          },
+          {
+            _emit: [
+              { name: "CORPORATION_DISSOLVED", data: { var: "event" }, destination: "external" },
+            ],
           },
         ],
       },
-      emits: ["CORPORATION_DISSOLVED"],
+      dependencies: [],
     },
 
     // SUSPENDED -> DISSOLVED (administrative)
@@ -673,7 +875,8 @@ export const corpEntityDef = defineFiberApp({
       from: "SUSPENDED",
       to: "DISSOLVED",
       eventName: "dissolve_administrative",
-      guard: { "==": [1, 1] },
+      // authority gate — state-initiated dissolution; an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: signerIsParty("state.stateAuthority"),
       effect: {
         merge: [
           { var: "state" },
@@ -684,9 +887,13 @@ export const corpEntityDef = defineFiberApp({
               cat: ["ADMINISTRATIVE: ", { var: "event.reason" }],
             },
           },
+          {
+            _emit: [
+              { name: "CORPORATION_DISSOLVED", data: { var: "event" }, destination: "external" },
+            ],
+          },
         ],
       },
-      emits: ["CORPORATION_DISSOLVED"],
     },
   ],
 });

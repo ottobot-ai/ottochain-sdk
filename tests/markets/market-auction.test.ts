@@ -35,7 +35,26 @@ describe('MarketAuction State Machine', () => {
     const bid = marketAuctionDef.transitions.find(t => t.eventName === 'bid');
     expect(bid).toBeDefined();
     const guardStr = JSON.stringify(bid?.guard);
-    expect(guardStr).toContain('!==');
+    // Anti-self check binds to the VERIFIED signer set (proofs[].address), not the
+    // forgeable event.agent — signerIsNotParty('state.seller').
+    expect(guardStr).toContain('state.seller');
+    expect(guardStr).toContain('proofs');
+    expect(bid?.guard).toEqual(
+      expect.objectContaining({
+        and: expect.arrayContaining([
+          {
+            '!': [
+              {
+                in: [
+                  { var: 'state.seller' },
+                  { map: [{ var: 'proofs' }, { var: 'address' }] },
+                ],
+              },
+            ],
+          },
+        ]),
+      })
+    );
   });
 
   it('should require bid amount >= minBid with increment', () => {

@@ -1,4 +1,11 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
+import {
+  actorHasEntry,
+  signerHasEntry,
+  signerInSet,
+  signerIsAnyParty,
+  signerIsNotParty,
+} from "../../../schema/guards.js";
 
 /**
  * Simple org governance: manage members, update rules, resolve disputes.
@@ -94,11 +101,9 @@ export const govSimpleDef = defineFiberApp({
       },
     },
     finalize: {
-      description: "Finalize the voting period",
-      required: ["forCount"] as const,
-      properties: {
-        forCount: { type: "number" },
-      },
+      description:
+        "Finalize the voting period (for-count derived from recorded ballots)",
+      properties: {},
     },
     file_dispute: {
       description: "File a dispute against a member",
@@ -127,11 +132,9 @@ export const govSimpleDef = defineFiberApp({
       },
     },
     dissolve: {
-      description: "Dissolve the organization (requires 90% approval)",
-      required: ["approvalCount"] as const,
-      properties: {
-        approvalCount: { type: "number" },
-      },
+      description:
+        "Dissolve the organization (requires every member to sign this op — verified unanimity)",
+      properties: {},
     },
   },
 
@@ -182,13 +185,13 @@ export const govSimpleDef = defineFiberApp({
       from: "ACTIVE",
       to: "ACTIVE",
       eventName: "add_member",
-      guard: { in: [{ var: "event.agent" }, { var: "state.admins" }] },
+      guard: signerInSet("state.admins"),
       effect: {
         merge: [
           { var: "state" },
           {
             members: {
-              setKey: [
+              set: [
                 { var: "state.members" },
                 { var: "event.member" },
                 { role: { var: "event.role" }, addedAt: { var: "$ordinal" } },
@@ -204,13 +207,13 @@ export const govSimpleDef = defineFiberApp({
       from: "ACTIVE",
       to: "ACTIVE",
       eventName: "remove_member",
-      guard: { in: [{ var: "event.agent" }, { var: "state.admins" }] },
+      guard: signerInSet("state.admins"),
       effect: {
         merge: [
           { var: "state" },
           {
             members: {
-              deleteKey: [{ var: "state.members" }, { var: "event.member" }],
+              unset: [{ var: "state.members" }, { var: "event.member" }],
             },
           },
         ],
@@ -222,7 +225,9 @@ export const govSimpleDef = defineFiberApp({
       from: "ACTIVE",
       to: "VOTING",
       eventName: "propose",
-      guard: { getKey: [{ var: "state.members" }, { var: "event.agent" }] },
+      // S1/A2 coupled fix: a CHAIN-VERIFIED signer must be a member (getKey is not a
+      // JLVM opcode; signerHasEntry checks signer ∈ keys(state.members) via `has`).
+      guard: signerHasEntry("state.members"),
       effect: {
         merge: [
           { var: "state" },
@@ -248,12 +253,14 @@ export const govSimpleDef = defineFiberApp({
       from: "VOTING",
       to: "VOTING",
       eventName: "vote",
+      // S1/A2 coupled fix: bind event.agent to a verified signer who is a member (actorHasEntry),
+      // and block a re-vote by that SAME bound actor — so the ballot is recorded under, and deduped
+      // on, the chain-verified voter. Without the binding, signerHasEntry only proves SOME signer is a
+      // member, letting one member stuff votes under arbitrary keys (set is the rc.5 map-write opcode).
       guard: {
         and: [
-          { getKey: [{ var: "state.members" }, { var: "event.agent" }] },
-          {
-            "!": [{ getKey: [{ var: "state.votes" }, { var: "event.agent" }] }],
-          },
+          actorHasEntry("state.members"),
+          { "!": [{ has: [{ var: "state.votes" }, { var: "event.agent" }] }] },
         ],
       },
       effect: {
@@ -261,7 +268,7 @@ export const govSimpleDef = defineFiberApp({
           { var: "state" },
           {
             votes: {
-              setKey: [
+              set: [
                 { var: "state.votes" },
                 { var: "event.agent" },
                 { vote: { var: "event.vote" }, votedAt: { var: "$ordinal" } },
@@ -277,12 +284,24 @@ export const govSimpleDef = defineFiberApp({
       from: "VOTING",
       to: "ACTIVE",
       eventName: "finalize",
+      // S2/A2 coupled fix: the for-count is DERIVED from recorded ballots in
+      // state.votes (length of the "for" entries), never read from the attacker's
+      // event.forCount. members is a Map so its count is length(keys(members)).
       guard: {
         ">=": [
-          { var: "event.forCount" },
+          {
+            length: [
+              {
+                filter: [
+                  { values: [{ var: "state.votes" }] },
+                  { "===": [{ var: "vote" }, "for"] },
+                ],
+              },
+            ],
+          },
           {
             "*": [
-              { size: { var: "state.members" } },
+              { length: [{ keys: [{ var: "state.members" }] }] },
               { var: "state.passingThreshold" },
             ],
           },
@@ -323,12 +342,23 @@ export const govSimpleDef = defineFiberApp({
       from: "VOTING",
       to: "ACTIVE",
       eventName: "finalize",
+      // S2/A2 coupled fix (failed arm): derive the for-count from recorded ballots in
+      // state.votes; never from event.forCount. members count = length(keys(members)).
       guard: {
         "<": [
-          { var: "event.forCount" },
+          {
+            length: [
+              {
+                filter: [
+                  { values: [{ var: "state.votes" }] },
+                  { "===": [{ var: "vote" }, "for"] },
+                ],
+              },
+            ],
+          },
           {
             "*": [
-              { size: { var: "state.members" } },
+              { length: [{ keys: [{ var: "state.members" }] }] },
               { var: "state.passingThreshold" },
             ],
           },
@@ -363,7 +393,9 @@ export const govSimpleDef = defineFiberApp({
       from: "ACTIVE",
       to: "DISPUTE",
       eventName: "file_dispute",
-      guard: { getKey: [{ var: "state.members" }, { var: "event.agent" }] },
+      // S1/A2 coupled fix: only a CHAIN-VERIFIED member may file (getKey is not a JLVM
+      // opcode; signerHasEntry checks signer ∈ keys(state.members) via `has`).
+      guard: signerHasEntry("state.members"),
       effect: {
         merge: [
           { var: "state" },
@@ -387,16 +419,10 @@ export const govSimpleDef = defineFiberApp({
       from: "DISPUTE",
       to: "DISPUTE",
       eventName: "submit_evidence",
-      guard: {
-        or: [
-          {
-            "===": [{ var: "event.agent" }, { var: "state.dispute.plaintiff" }],
-          },
-          {
-            "===": [{ var: "event.agent" }, { var: "state.dispute.defendant" }],
-          },
-        ],
-      },
+      guard: signerIsAnyParty([
+        "state.dispute.plaintiff",
+        "state.dispute.defendant",
+      ]),
       effect: {
         merge: [
           { var: "state" },
@@ -430,18 +456,16 @@ export const govSimpleDef = defineFiberApp({
       from: "DISPUTE",
       to: "DISPUTE",
       eventName: "vote",
+      // S1/A2 coupled fix: bind event.agent to a verified member (actorHasEntry), exclude the parties,
+      // and block a re-vote by that SAME bound actor — so the dispute ballot is recorded under, and
+      // deduped on, the chain-verified voter (set is the rc.5 map-write opcode; signerIsNotParty still
+      // excludes any signer who is a party, which covers the bound actor).
       guard: {
         and: [
-          { getKey: [{ var: "state.members" }, { var: "event.agent" }] },
-          {
-            "!==": [{ var: "event.agent" }, { var: "state.dispute.plaintiff" }],
-          },
-          {
-            "!==": [{ var: "event.agent" }, { var: "state.dispute.defendant" }],
-          },
-          {
-            "!": [{ getKey: [{ var: "state.votes" }, { var: "event.agent" }] }],
-          },
+          actorHasEntry("state.members"),
+          signerIsNotParty("state.dispute.plaintiff"),
+          signerIsNotParty("state.dispute.defendant"),
+          { "!": [{ has: [{ var: "state.votes" }, { var: "event.agent" }] }] },
         ],
       },
       effect: {
@@ -449,7 +473,7 @@ export const govSimpleDef = defineFiberApp({
           { var: "state" },
           {
             votes: {
-              setKey: [
+              set: [
                 { var: "state.votes" },
                 { var: "event.agent" },
                 {
@@ -468,9 +492,11 @@ export const govSimpleDef = defineFiberApp({
       from: "DISPUTE",
       to: "ACTIVE",
       eventName: "resolve",
+      // A2 fix: count recorded ballots. votes is a Map, and `length` rejects Maps, so
+      // count its keys: length(keys(state.votes)). (size is not a JLVM opcode.)
       guard: {
         ">=": [
-          { size: { var: "state.votes" } },
+          { length: [{ keys: [{ var: "state.votes" }] }] },
           { var: "state.disputeQuorum" },
         ],
       },
@@ -504,10 +530,24 @@ export const govSimpleDef = defineFiberApp({
       from: "ACTIVE",
       to: "DISSOLVED",
       eventName: "dissolve",
+      // S2/A2 coupled fix: dissolution must not trust an attacker-supplied
+      // approvalCount. Derive consent from the CHAIN-VERIFIED signers — every member
+      // (a key in state.members) must be among proofs[].address, with a non-empty
+      // belt. members is a Map, so iterate keys(members); size is not a JLVM opcode.
       guard: {
-        ">=": [
-          { var: "event.approvalCount" },
-          { "*": [{ size: { var: "state.members" } }, 0.9] },
+        and: [
+          { ">": [{ length: [{ keys: [{ var: "state.members" }] }] }, 0] },
+          {
+            all: [
+              { keys: [{ var: "state.members" }] },
+              {
+                in: [
+                  { var: "" },
+                  { map: [{ var: "proofs" }, { var: "address" }] },
+                ],
+              },
+            ],
+          },
         ],
       },
       effect: {

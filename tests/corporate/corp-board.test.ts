@@ -164,49 +164,49 @@ describe('CorpBoard State Machine', () => {
       const transition = corpBoardDef.transitions.find(
         t => t.eventName === 'elect_director'
       );
-      expect(transition?.emits).toContain('DIRECTOR_ELECTED');
+      expect(JSON.stringify(transition?.effect)).toContain('DIRECTOR_ELECTED');
     });
 
     it('should emit DIRECTOR_RESIGNED on resign_director', () => {
       const transition = corpBoardDef.transitions.find(
         t => t.from === 'ACTIVE' && t.eventName === 'resign_director'
       );
-      expect(transition?.emits).toContain('DIRECTOR_RESIGNED');
+      expect(JSON.stringify(transition?.effect)).toContain('DIRECTOR_RESIGNED');
     });
 
     it('should emit DIRECTOR_REMOVED on remove_for_cause', () => {
       const transition = corpBoardDef.transitions.find(
         t => t.eventName === 'remove_for_cause'
       );
-      expect(transition?.emits).toContain('DIRECTOR_REMOVED');
+      expect(JSON.stringify(transition?.effect)).toContain('DIRECTOR_REMOVED');
     });
 
     it('should emit BOARD_MEETING_SCHEDULED on call_meeting', () => {
       const transition = corpBoardDef.transitions.find(
         t => t.eventName === 'call_meeting'
       );
-      expect(transition?.emits).toContain('BOARD_MEETING_SCHEDULED');
+      expect(JSON.stringify(transition?.effect)).toContain('BOARD_MEETING_SCHEDULED');
     });
 
     it('should emit BOARD_MEETING_OPENED on open_meeting', () => {
       const transition = corpBoardDef.transitions.find(
         t => t.eventName === 'open_meeting'
       );
-      expect(transition?.emits).toContain('BOARD_MEETING_OPENED');
+      expect(JSON.stringify(transition?.effect)).toContain('BOARD_MEETING_OPENED');
     });
 
     it('should emit BOARD_QUORUM_LOST on quorum_lost', () => {
       const transition = corpBoardDef.transitions.find(
         t => t.eventName === 'quorum_lost'
       );
-      expect(transition?.emits).toContain('BOARD_QUORUM_LOST');
+      expect(JSON.stringify(transition?.effect)).toContain('BOARD_QUORUM_LOST');
     });
 
     it('should emit BOARD_MEETING_ADJOURNED on adjourn', () => {
       const transition = corpBoardDef.transitions.find(
         t => t.from === 'IN_MEETING' && t.eventName === 'adjourn'
       );
-      expect(transition?.emits).toContain('BOARD_MEETING_ADJOURNED');
+      expect(JSON.stringify(transition?.effect)).toContain('BOARD_MEETING_ADJOURNED');
     });
   });
 
@@ -317,13 +317,62 @@ describe('CorpBoard State Machine', () => {
     });
   });
 
-  describe('Dependencies', () => {
-    it('should have dependencies on remove_for_cause transition', () => {
+  describe('Two-phase for-cause removal (#24)', () => {
+    it('propose_removal binds the removal resolution via _addDependency', () => {
+      const propose = corpBoardDef.transitions.find(
+        t => t.eventName === 'propose_removal'
+      );
+      expect(propose).toBeDefined();
+      const effectStr = JSON.stringify(propose?.effect);
+      expect(effectStr).toContain('_addDependency');
+      expect(effectStr).toContain('removalResolutionRef');
+    });
+
+    it('remove_for_cause gates on the bound resolution reaching EXECUTED (depInState), not a dropped object-dep', () => {
       const transition = corpBoardDef.transitions.find(
         t => t.eventName === 'remove_for_cause'
       );
-      expect(transition?.dependencies).toBeDefined();
-      expect(transition?.dependencies?.length).toBeGreaterThan(0);
+      const guardStr = JSON.stringify(transition?.guard);
+      // dynamic currentStateId assert on the bound resolution + the recorded proposal match
+      expect(guardStr).toContain('EXECUTED');
+      expect(guardStr).toContain('pendingRemoval');
+      // the dropped object-form dependency is gone — gating now lives in the guard
+      expect(transition?.dependencies).toEqual([]);
+    });
+  });
+
+  describe('Authorization (identity hardening)', () => {
+    const guardOf = (eventName: string) =>
+      JSON.stringify(corpBoardDef.transitions.find(t => t.eventName === eventName)?.guard);
+
+    it('should pin authorizedRemovers as a required address-set createSchema/stateSchema field', () => {
+      expect(corpBoardDef.createSchema.required).toContain('authorizedRemovers');
+      expect(corpBoardDef.createSchema.properties.authorizedRemovers.type).toBe('array');
+      expect(corpBoardDef.createSchema.properties.authorizedRemovers.items).toEqual({ type: 'address' });
+      expect(corpBoardDef.stateSchema.properties.authorizedRemovers).toBeDefined();
+    });
+
+    it('should gate remove_for_cause on a verified member of state.authorizedRemovers', () => {
+      const g = guardOf('remove_for_cause');
+      expect(g).toContain('state.authorizedRemovers');
+      expect(g).toContain('proofs');
+      // director lookup retained as a key only
+      expect(g).toContain('state.directors');
+    });
+
+    it('now implements the #24 resolution-EXECUTED assert (no longer deferred)', () => {
+      // The runtime-dep resolution-state assert is LIVE (#24): propose_removal binds the resolution via
+      // _addDependency and remove_for_cause asserts it reached EXECUTED via depInState — the dropped
+      // object-form dependency is gone.
+      const transition = corpBoardDef.transitions.find(t => t.eventName === 'remove_for_cause');
+      expect(transition?.dependencies).toEqual([]);
+      expect(JSON.stringify(transition?.guard)).toContain('EXECUTED');
+    });
+
+    it('should gate elect_director vacancy solely on state.seats.vacant and not event.isFillingVacancy', () => {
+      const g = guardOf('elect_director');
+      expect(g).toContain('state.seats.vacant');
+      expect(g).not.toContain('event.isFillingVacancy');
     });
   });
 });
