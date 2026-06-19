@@ -1,8 +1,25 @@
 # App Hardening via Identity Integration + a Map-Write Opcode
 
-**Status:** design spec for sign-off. Closes the *design-gated* remainder of the FiberEngine ↔ std-app
-security & alignment audit (`docs/reviews/fiber-app-alignment-audit-2026-06.md`) — the parts the
+**Status:** ratified + partially implemented. Closes the *design-gated* remainder of the FiberEngine ↔
+std-app security & alignment audit (`docs/reviews/fiber-app-alignment-audit-2026-06.md`) — the parts the
 remediation waves correctly *deferred* because they require protocol/data-model decisions, now decided.
+
+**Implementation status (2026-06):**
+- §2 `set`/`unset` opcodes: **published** (metakit-sdk 1.8.0-rc.5) and **consumed** — the SDK is bumped
+  to rc.5 and the governance/markets/contracts map-writes are renamed (`getKey`→`get`/`has`,
+  `setKey`→`set`, `deleteKey`→`unset`, `size`→`length`/`length[keys]`). The audit's **A2
+  `unknown-operator` lint class is now ZERO.**
+- §3–§4 identity foundation: **built + validated** — `identity-registry` fiber (reputation + flat
+  per-role attestation maps, set/unset writes), the `signerHasReputation` / `signerHasRole` read helpers,
+  and the `actorIsSigner` / `actorInSet` / `actorHasEntry` effect-key **coupling** helpers (the S1
+  binding that makes a dynamic `event.agent` map key safe). NOTE: roles are **flat per-role maps**, not a
+  nested `roles[addr][ROLE]` map — metakit `get`/`has` on a null inner map *throw*, so a nested read
+  would error for any unattested signer; flat maps keep read+write total and fail-closed.
+- §5 per-app **consumption** of the registry (read another fiber's reputation/role) and §6 dynamic deps:
+  **gated on #24** — a std-app definition cannot today bind a specific registry *instance* (`machines.<id>`
+  keys are static in the AST; the registry UUID is instance/genesis-specific). Same gate as corp-board's
+  removal-resolution `TODO(#24)`. The SDK ships the **integration toolkit** (`registryReputationPath` /
+  `registryRolePath` path-builders + the read helpers); concrete per-app wiring lands with #24.
 
 **Decisions locked (this doc implements them):**
 1. **Dicts stay primary.** The map-write gap is fixed with a metakit **opcode**, not an SDK map→array
