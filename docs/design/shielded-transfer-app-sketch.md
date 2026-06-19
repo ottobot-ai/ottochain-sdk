@@ -11,6 +11,15 @@
 > Companion docs: [`metakit-privacy-extensions-handoff.md`](./metakit-privacy-extensions-handoff.md)
 > (the P0–P3 privacy roadmap this realizes) and the circuit itself in
 > `metakit-sdk/rust/zk-shielded`.
+>
+> **As-built note (2026-06-19).** The privacy app that actually shipped took the *general private
+> contract state* path, not this value-transfer flavor: `src/privacy/shield-app.ts` (a `shieldApp()`
+> builder over the **`zk-jlvm-shielded`** circuit, PR #212) + the companion RFC
+> [`zk-private-contract-state-rfc.md`](./zk-private-contract-state-rfc.md). This sketch's
+> **value-transfer variant over `zk-shielded`** is genuinely **not yet built**, so it stays valid as
+> forward design — read it as the value-typed special case of the shipped general machine. The
+> `zk-shielded` soundness fixes it cites (intra-transfer nullifier uniqueness, per-asset conservation)
+> have since landed in the circuit.
 
 ## 0. Thesis: privacy is an app, not a pile of opcodes
 
@@ -232,8 +241,10 @@ anchor window, and accounts the fee. `merge` overlays the returned object on cur
         [ {"var":"event.public.newRoot"} ] ] },   // window trimmed to rootWindow (§6.3)
 
     // transparent fee, per asset
-    "feesAccrued": { "setKey": [ {"var":"state.feesAccrued"}, {"var":"event.public.feeAsset"},
-                       {"+":[ {"if":[{"var":"state.feesAccrued"},{"var":"state.feesAccrued"},0]}, {"var":"event.public.fee"} ]} ] },
+    "feesAccrued": { "set": [ {"var":"state.feesAccrued"}, {"var":"event.public.feeAsset"},
+                       {"+":[ {"if":[ {"has":[{"var":"state.feesAccrued"},{"var":"event.public.feeAsset"}]},
+                                      {"get":[{"var":"state.feesAccrued"},{"var":"event.public.feeAsset"}]}, 0 ]},
+                              {"var":"event.public.fee"} ]} ] },
     "transfers":   { "+": [ {"var":"state.transfers"}, 1 ] }
   }
 ] }
@@ -290,9 +301,15 @@ This conforms to the chain side without changes:
   conformance gate is opt-in per registered version).
 
 The guard/effect JSON-Logic above is the only "new" content — and it uses opcodes the chain
-already ships (`groth16_verify`, `poseidon`, `none`, `in`, `cat`, `merge`, `setKey`,
+already ships (`groth16_verify`, `poseidon`, `none`, `in`, `cat`, `merge`, `set`, `get`, `has`,
 `reduce`). So **the manifest is the entire on-chain footprint**; there is no Scala change to
 register this app.
+
+> **Opcode note (rc.5):** map writes use **`set [map, key, value]`** and reads use
+> **`get [map, key]`** / **`has [map, key]`**. There is **no** `setKey`/`getKey` opcode — metakit
+> silently mis-decodes those as literal maps (`KNOWN_BAD_OPERATORS` in `src/schema/guard-lint.ts`,
+> the A2 drift class), so `lint-apps` rejects them. An earlier draft of the fee-accrual effect used
+> `setKey`; corrected above.
 
 ## 5. End-to-end flow
 
