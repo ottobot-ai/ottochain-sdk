@@ -492,7 +492,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description HashResult: { "protocol message hash": <hash>, "protocol message": <message> } */
+            /** @description HashResult: { "messageHash": <hash>, "message": <message> } */
             200: {
                 headers: {
                     [name: string]: unknown;
