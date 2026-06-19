@@ -41,6 +41,11 @@
       "require": "./dist/cjs/apps/markets/index.js",
       "types": "./dist/types/apps/markets/index.d.ts"
     },
+    "./apps/lending": {
+      "import": "./dist/esm/apps/lending/index.js",
+      "require": "./dist/cjs/apps/lending/index.js",
+      "types": "./dist/types/apps/lending/index.d.ts"
+    },
     "./apps/oracles": {
       "import": "./dist/esm/apps/oracles/index.js",
       "require": "./dist/cjs/apps/oracles/index.js",
