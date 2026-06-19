@@ -153,3 +153,87 @@ export const signerHasReputation = (
  */
 export const signerHasRole = (roleMapVar: string): GuardRule =>
   signerHasEntry(roleMapVar);
+
+/**
+ * DYNAMIC identity-registry reputation gate — for when the registry instance is bound at RUNTIME via the
+ * fiber-engine `_addDependency` directive (#24) rather than hardcoded into the `machines.<uuid>` path.
+ * `registryIdVar` is a state/event path holding the registry fiber id (e.g. `"state.registryId"`); the
+ * read addresses `machines[<that id>].state.reputations[<signer>]` with dynamic `get`s. Guarded by a
+ * presence check so an UNBOUND registry yields a clean `false` (fail-closed) instead of an evaluation
+ * error. REQUIRES the registry dependency to have been added in a PRIOR transition (`_addDependency`),
+ * because the `machines` context is built before the effect runs (two-phase: bind, then read).
+ */
+export const signerHasReputationVia = (
+  registryIdVar: string,
+  thresholdVar: string,
+): GuardRule => ({
+  if: [
+    { has: [{ var: "machines" }, { var: registryIdVar }] },
+    {
+      some: [
+        { map: [{ var: "proofs" }, { var: "address" }] },
+        {
+          ">=": [
+            {
+              get: [
+                {
+                  get: [
+                    {
+                      get: [
+                        { get: [{ var: "machines" }, { var: registryIdVar }] },
+                        "state",
+                      ],
+                    },
+                    "reputations",
+                  ],
+                },
+                { var: "" },
+              ],
+            },
+            { var: thresholdVar },
+          ],
+        },
+      ],
+    },
+    false,
+  ],
+});
+
+/**
+ * DYNAMIC identity-registry role gate — the runtime-bound (`_addDependency`, #24) counterpart of
+ * {@link signerHasRole}. `registryIdVar` is a state/event path holding the registry fiber id;
+ * `roleField` is the registry's flat per-role state map name (`"arbiters"` / `"slashers"` / `"issuers"` /
+ * `"boardMembers"` — see REGISTRY_ROLE_MAP). Reads `machines[<id>].state.<roleField>[<signer>]`, guarded
+ * by a presence check so an UNBOUND registry yields a clean `false`. Same two-phase requirement as
+ * {@link signerHasReputationVia}.
+ */
+export const signerHasRoleVia = (
+  registryIdVar: string,
+  roleField: string,
+): GuardRule => ({
+  if: [
+    { has: [{ var: "machines" }, { var: registryIdVar }] },
+    {
+      some: [
+        { map: [{ var: "proofs" }, { var: "address" }] },
+        {
+          has: [
+            {
+              get: [
+                {
+                  get: [
+                    { get: [{ var: "machines" }, { var: registryIdVar }] },
+                    "state",
+                  ],
+                },
+                roleField,
+              ],
+            },
+            { var: "" },
+          ],
+        },
+      ],
+    },
+    false,
+  ],
+});

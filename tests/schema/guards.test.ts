@@ -12,7 +12,10 @@ import {
   actorHasEntry,
   signerHasReputation,
   signerHasRole,
+  signerHasReputationVia,
+  signerHasRoleVia,
 } from '../../src/schema/guards';
+import { addDependency, setDependencyActive } from '../../src/schema/effects';
 
 const apply = (rule: unknown, data: unknown): unknown => jsonLogic.apply(rule as object, data as object);
 
@@ -160,5 +163,43 @@ describe('schema/guards — authorization binds to verified signers, not event/w
     expect(apply(g, ctx(['0xBB'], { '0xBB': true }))).toBe(true); // signer holds ARBITER
     expect(apply(g, ctx(['0xBB'], { '0xAA': true }))).toBe(false); // signer lacks ARBITER
     expect(apply(g, ctx(['0xBB'], {}))).toBe(false); // empty role map → fail-closed (no throw)
+  });
+
+  it('signerHasReputationVia reads a RUNTIME-bound registry id and fail-closes when unbound (#24)', () => {
+    const g = signerHasReputationVia('state.registryId', 'state.bar');
+    const ctx = (reps: Record<string, number> | undefined) => ({
+      proofs: [{ address: '0xBB' }],
+      state: { registryId: 'reg-1', bar: 10 },
+      machines: reps === undefined ? {} : { 'reg-1': { state: { reputations: reps } } },
+    });
+    expect(apply(g, ctx({ '0xBB': 12 }))).toBe(true); // bound, 12 >= 10
+    expect(apply(g, ctx({ '0xBB': 5 }))).toBe(false); // bound, 5 < 10
+    expect(apply(g, ctx({ '0xZZ': 99 }))).toBe(false); // signer unregistered
+    expect(apply(g, ctx(undefined))).toBe(false); // registry NOT bound → clean false, not an error
+  });
+
+  it('signerHasRoleVia reads a RUNTIME-bound registry role map, fail-closing when unbound (#24)', () => {
+    const g = signerHasRoleVia('state.registryId', 'arbiters');
+    const ctx = (arb: Record<string, true> | undefined) => ({
+      proofs: [{ address: '0xBB' }],
+      state: { registryId: 'reg-1' },
+      machines: arb === undefined ? {} : { 'reg-1': { state: { arbiters: arb } } },
+    });
+    expect(apply(g, ctx({ '0xBB': true }))).toBe(true); // signer holds ARBITER
+    expect(apply(g, ctx({ '0xAA': true }))).toBe(false); // signer lacks it
+    expect(apply(g, ctx(undefined))).toBe(false); // registry NOT bound → clean false
+  });
+
+  it('addDependency / setDependencyActive build the #24 effect directives', () => {
+    expect(addDependency({ var: 'event.registryId' })).toEqual({
+      _addDependency: [{ fiberId: { var: 'event.registryId' } }],
+    });
+    expect(addDependency('reg-uuid')).toEqual({ _addDependency: [{ fiberId: 'reg-uuid' }] });
+    expect(setDependencyActive({ var: 'state.registryId' }, false)).toEqual({
+      _setDependencyActive: [{ fiberId: { var: 'state.registryId' }, active: false }],
+    });
+    // the directive merges into a state-update map; the _-key is what the engine extracts
+    const effect = { merge: [{ var: 'state' }, { boundAt: 1, ...addDependency('reg-uuid') }] };
+    expect(JSON.stringify(effect)).toContain('_addDependency');
   });
 });

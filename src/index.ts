@@ -160,4 +160,17 @@ export {
   signerIsNotParty,
   signerHasEntry,
   assetSignerIs,
+  // effect-key coupling (S1): bind a dynamic map key to a verified signer
+  actorIsSigner,
+  actorInSet,
+  actorHasEntry,
+  // identity-registry reads (static machines.<uuid> path)
+  signerHasReputation,
+  signerHasRole,
+  // identity-registry reads (runtime-bound registry id, #24)
+  signerHasReputationVia,
+  signerHasRoleVia,
 } from './schema/guards.js';
+
+// Reserved EFFECT-directive builders (dynamic dependencies, #24).
+export { addDependency, setDependencyActive } from './schema/effects.js';
