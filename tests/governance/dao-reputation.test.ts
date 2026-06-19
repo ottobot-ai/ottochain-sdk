@@ -230,11 +230,12 @@ describe('DAOReputation State Machine', () => {
     it('should emit proposal_executed event', () => {
       const executeTransition = daoReputationDef.transitions.find(
         (t) => t.eventName === 'execute'
-      ) as { emits?: Array<{ event: string; to: string }> } | undefined;
+      );
 
-      expect(executeTransition!.emits).toBeDefined();
-      expect(executeTransition!.emits![0].event).toBe('proposal_executed');
-      expect(executeTransition!.emits![0].to).toBe('Reputation');
+      const effectStr = JSON.stringify(executeTransition!.effect);
+      expect(effectStr).toContain('_emit');
+      expect(effectStr).toContain('proposal_executed');
+      expect(effectStr).toContain('Reputation');
     });
 
     it('should add member on join', () => {

@@ -92,7 +92,8 @@ describe('Contract Escrow State Machine', () => {
       
       expect(disputeTransition).toBeDefined();
       expect(disputeTransition!.guard).toBeDefined();
-      expect(disputeTransition!.spawns).toBeDefined();
+      // A3 fix: the dropped transition-level `spawns` is now a `_emit` dispute_opened notification
+      expect(JSON.stringify(disputeTransition!.effect)).toContain('dispute_opened');
     });
 
     it('should allow ruling transition from DISPUTED to SPLIT', () => {
@@ -200,15 +201,18 @@ describe('Contract Escrow State Machine', () => {
   });
 
   describe('Spawn Logic Preservation', () => {
-    it('should preserve judiciary spawn for dispute transition', () => {
+    it('should surface the judiciary dispute case via the _emit effect directive (A3)', () => {
       const disputeTransition = contractEscrowDef.transitions.find(
         t => t.from === 'RELEASING' && t.to === 'DISPUTED' && t.eventName === 'dispute'
       );
-      
-      expect(disputeTransition!.spawns).toBeDefined();
-      expect(disputeTransition!.spawns!.sm).toBe('Judiciary');
-      expect(disputeTransition!.spawns!.initialData).toBeDefined();
-      expect(disputeTransition!.spawns!.initialData.caseType).toBe('escrow_dispute');
+
+      // transition-level `spawns` is dropped by the chain; the case rides as a _emit to "Judiciary"
+      expect(disputeTransition!.spawns).toBeUndefined();
+      const effectStr = JSON.stringify(disputeTransition!.effect);
+      expect(effectStr).toContain('_emit');
+      expect(effectStr).toContain('dispute_opened');
+      expect(effectStr).toContain('escrow_dispute');
+      expect(effectStr).toContain('Judiciary');
     });
   });
 

@@ -52,6 +52,13 @@ describe('CorpShareholders State Machine', () => {
   });
 
   describe('State Transitions', () => {
+    it('should allow propose_schedule_annual transition from SCHEDULED to SCHEDULED', () => {
+      const transition = corpShareholdersDef.transitions.find(
+        t => t.from === 'SCHEDULED' && t.to === 'SCHEDULED' && t.eventName === 'propose_schedule_annual'
+      );
+      expect(transition).toBeDefined();
+    });
+
     it('should allow schedule_annual transition from SCHEDULED to SCHEDULED', () => {
       const transition = corpShareholdersDef.transitions.find(
         t => t.from === 'SCHEDULED' && t.to === 'SCHEDULED' && t.eventName === 'schedule_annual'
@@ -171,49 +178,49 @@ describe('CorpShareholders State Machine', () => {
       const transition = corpShareholdersDef.transitions.find(
         t => t.eventName === 'schedule_annual'
       );
-      expect(transition?.emits).toContain('SHAREHOLDER_MEETING_SCHEDULED');
+      expect(JSON.stringify(transition?.effect)).toContain('SHAREHOLDER_MEETING_SCHEDULED');
     });
 
     it('should emit SPECIAL_MEETING_SCHEDULED on schedule_special', () => {
       const transition = corpShareholdersDef.transitions.find(
         t => t.eventName === 'schedule_special'
       );
-      expect(transition?.emits).toContain('SPECIAL_MEETING_SCHEDULED');
+      expect(JSON.stringify(transition?.effect)).toContain('SPECIAL_MEETING_SCHEDULED');
     });
 
     it('should emit RECORD_DATE_SET on set_record_date', () => {
       const transition = corpShareholdersDef.transitions.find(
         t => t.eventName === 'set_record_date'
       );
-      expect(transition?.emits).toContain('RECORD_DATE_SET');
+      expect(JSON.stringify(transition?.effect)).toContain('RECORD_DATE_SET');
     });
 
     it('should emit PROXY_PERIOD_OPENED on open_proxy_period', () => {
       const transition = corpShareholdersDef.transitions.find(
         t => t.eventName === 'open_proxy_period'
       );
-      expect(transition?.emits).toContain('PROXY_PERIOD_OPENED');
+      expect(JSON.stringify(transition?.effect)).toContain('PROXY_PERIOD_OPENED');
     });
 
     it('should emit SHAREHOLDER_MEETING_OPENED on open_meeting', () => {
       const transition = corpShareholdersDef.transitions.find(
         t => t.eventName === 'open_meeting'
       );
-      expect(transition?.emits).toContain('SHAREHOLDER_MEETING_OPENED');
+      expect(JSON.stringify(transition?.effect)).toContain('SHAREHOLDER_MEETING_OPENED');
     });
 
     it('should emit MEETING_RESULTS_CERTIFIED on certify_results', () => {
       const transition = corpShareholdersDef.transitions.find(
         t => t.eventName === 'certify_results'
       );
-      expect(transition?.emits).toContain('MEETING_RESULTS_CERTIFIED');
+      expect(JSON.stringify(transition?.effect)).toContain('MEETING_RESULTS_CERTIFIED');
     });
 
     it('should emit MEETING_ADJOURNED on adjourn_without_action', () => {
       const transition = corpShareholdersDef.transitions.find(
         t => t.from === 'IN_SESSION' && t.eventName === 'adjourn_without_action'
       );
-      expect(transition?.emits).toContain('MEETING_ADJOURNED');
+      expect(JSON.stringify(transition?.effect)).toContain('MEETING_ADJOURNED');
     });
   });
 
@@ -274,6 +281,7 @@ describe('CorpShareholders State Machine', () => {
 
     it('should define eventSchemas for all events', () => {
       expect(corpShareholdersDef.eventSchemas).toBeDefined();
+      expect(corpShareholdersDef.eventSchemas.propose_schedule_annual).toBeDefined();
       expect(corpShareholdersDef.eventSchemas.schedule_annual).toBeDefined();
       expect(corpShareholdersDef.eventSchemas.schedule_special).toBeDefined();
       expect(corpShareholdersDef.eventSchemas.set_record_date).toBeDefined();
@@ -293,7 +301,12 @@ describe('CorpShareholders State Machine', () => {
       expect(corpShareholdersDef.eventSchemas.schedule_annual.required).toContain('entityId');
       expect(corpShareholdersDef.eventSchemas.schedule_annual.required).toContain('fiscalYear');
       expect(corpShareholdersDef.eventSchemas.schedule_annual.required).toContain('scheduledDate');
-      expect(corpShareholdersDef.eventSchemas.schedule_annual.required).toContain('boardResolutionRef');
+    });
+
+    it('should carry boardResolutionRef on the propose_schedule_annual (phase 1) event', () => {
+      // boardResolutionRef moved to phase 1 (#24): propose_schedule_annual binds it via _addDependency
+      expect(corpShareholdersDef.eventSchemas.propose_schedule_annual.required).toContain('boardResolutionRef');
+      expect(corpShareholdersDef.eventSchemas.propose_schedule_annual.required).toContain('meetingId');
     });
 
     it('should have required fields for cast_vote event', () => {
@@ -361,13 +374,27 @@ describe('CorpShareholders State Machine', () => {
     });
   });
 
-  describe('Dependencies', () => {
-    it('should have dependencies on schedule_annual transition', () => {
+  describe('Two-phase annual-meeting scheduling (#24)', () => {
+    it('propose_schedule_annual binds the board resolution via _addDependency', () => {
+      const propose = corpShareholdersDef.transitions.find(
+        t => t.eventName === 'propose_schedule_annual'
+      );
+      expect(propose).toBeDefined();
+      const effectStr = JSON.stringify(propose?.effect);
+      expect(effectStr).toContain('_addDependency');
+      expect(effectStr).toContain('boardResolutionRef');
+    });
+
+    it('schedule_annual gates on the bound resolution reaching EXECUTED (depInState), not a dropped object-dep', () => {
       const transition = corpShareholdersDef.transitions.find(
         t => t.eventName === 'schedule_annual'
       );
-      expect(transition?.dependencies).toBeDefined();
-      expect(transition?.dependencies?.length).toBeGreaterThan(0);
+      const guardStr = JSON.stringify(transition?.guard);
+      // dynamic currentStateId assert on the bound resolution + the recorded proposal match
+      expect(guardStr).toContain('EXECUTED');
+      expect(guardStr).toContain('pendingschedule_annual');
+      // the dropped object-form dependency is gone — gating now lives in the guard
+      expect(transition?.dependencies).toEqual([]);
     });
   });
 

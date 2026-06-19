@@ -233,23 +233,18 @@ describe('Contracts Conversion Requirements', () => {
   });
 
   describe('Requirement 5: Preserve ALL Functionality', () => {
-    it('should preserve spawns configuration for judiciary', () => {
+    it('should preserve the judiciary dispute case as a _emit notification (A3)', () => {
       const disputeTransition = contractEscrowDef.transitions.find(
         t => t.eventName === 'dispute'
       );
-      
-      expect(disputeTransition?.spawns).toEqual({
-        "sm": "Judiciary",
-        "initialData": {
-          "caseType": "escrow_dispute", 
-          "plaintiff": { "var": "state.depositor" },
-          "defendant": { "var": "state.beneficiary" },
-          "claim": {
-            "escrowId": { "var": "fiberId" },
-            "amount": { "var": "state.balance" }
-          }
-        }
-      });
+
+      // transition-level `spawns` is dropped by the chain; the case data is preserved under _emit
+      expect(disputeTransition?.spawns).toBeUndefined();
+      const effectStr = JSON.stringify(disputeTransition?.effect);
+      expect(effectStr).toContain('dispute_opened');
+      expect(effectStr).toContain('escrow_dispute');
+      expect(effectStr).toContain('state.depositor');
+      expect(effectStr).toContain('state.beneficiary');
     });
 
     it('should preserve all final state markings', () => {

@@ -295,19 +295,32 @@ export const contractEscrowDef = defineFiberApp({
         ],
       },
       effect: {
-        merge: [{ var: "state" }, { disputedAt: { var: "$ordinal" } }],
-      },
-      spawns: {
-        sm: "Judiciary",
-        initialData: {
-          caseType: "escrow_dispute",
-          plaintiff: { var: "state.depositor" },
-          defendant: { var: "state.beneficiary" },
-          claim: {
-            escrowId: { var: "fiberId" },
-            amount: { var: "state.balance" },
+        merge: [
+          { var: "state" },
+          { disputedAt: { var: "$ordinal" } },
+          {
+            // A3 fix: transition-level `spawns` is dropped by the chain. No Judiciary state machine is
+            // defined to inline under `_spawn`, and escrow already resolves disputes via its own pinned
+            // `arbiter` (the `ruling` transition) — the spawned Judiciary was fire-and-forget (never read
+            // by escrow). So the dispute case is surfaced to the judiciary subsystem as an `_emit`
+            // notification instead of a child fiber.
+            _emit: [
+              {
+                name: "dispute_opened",
+                data: {
+                  caseType: "escrow_dispute",
+                  plaintiff: { var: "state.depositor" },
+                  defendant: { var: "state.beneficiary" },
+                  claim: {
+                    escrowId: { var: "machineId" },
+                    amount: { var: "state.balance" },
+                  },
+                },
+                destination: "Judiciary",
+              },
+            ],
           },
-        },
+        ],
       },
       dependencies: [],
     },

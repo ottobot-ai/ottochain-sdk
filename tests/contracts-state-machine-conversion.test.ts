@@ -156,22 +156,15 @@ describe('Contracts State Machine Conversion', () => {
       });
     });
 
-    it('should have spawns configuration for dispute transition', () => {
+    it('should surface the dispute case via _emit (A3: transition-level spawns is dropped)', () => {
       const disputeTransition = contractEscrowDef.transitions.find(
         t => t.from === 'RELEASING' && t.to === 'DISPUTED' && t.eventName === 'dispute'
       );
-      expect(disputeTransition?.spawns).toEqual({
-        "sm": "Judiciary",
-        "initialData": {
-          "caseType": "escrow_dispute",
-          "plaintiff": { "var": "state.depositor" },
-          "defendant": { "var": "state.beneficiary" },
-          "claim": {
-            "escrowId": { "var": "fiberId" },
-            "amount": { "var": "state.balance" }
-          }
-        }
-      });
+      expect(disputeTransition?.spawns).toBeUndefined();
+      const effectStr = JSON.stringify(disputeTransition?.effect);
+      expect(effectStr).toContain('dispute_opened');
+      expect(effectStr).toContain('escrow_dispute');
+      expect(effectStr).toContain('Judiciary');
     });
 
     it('should have create schema with escrow-specific fields', () => {

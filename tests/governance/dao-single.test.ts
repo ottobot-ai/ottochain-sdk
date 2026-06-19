@@ -194,10 +194,11 @@ describe('SingleOwnerDAO State Machine', () => {
     it('should emit ownership_transferred event', () => {
       const acceptTransition = daoSingleDef.transitions.find(
         (t) => t.eventName === 'accept_ownership'
-      ) as { emits?: Array<{ event: string }> } | undefined;
+      );
 
-      expect(acceptTransition!.emits).toBeDefined();
-      expect(acceptTransition!.emits![0].event).toBe('ownership_transferred');
+      const effectStr = JSON.stringify(acceptTransition!.effect);
+      expect(effectStr).toContain('_emit');
+      expect(effectStr).toContain('ownership_transferred');
     });
 
     it('should set dissolvedAt on dissolve', () => {

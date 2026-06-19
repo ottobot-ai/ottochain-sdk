@@ -193,10 +193,18 @@ export const daoSingleDef = defineFiberApp({
                 ],
               ],
             },
+            // A3 fix: transition-level `emits` is dropped by the chain; emit from INSIDE the effect
+            // under the reserved `_emit` key (extracted as an EmittedEvent, stripped from state).
+            _emit: [
+              {
+                name: "ownership_transferred",
+                data: { var: "event" },
+                destination: "Identity",
+              },
+            ],
           },
         ],
       },
-      emits: [{ event: "ownership_transferred", to: "Identity" }],
       dependencies: [],
     },
     // TRANSFERRING → ACTIVE: cancel_transfer (owner only)

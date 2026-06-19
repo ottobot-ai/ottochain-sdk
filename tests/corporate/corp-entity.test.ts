@@ -126,28 +126,28 @@ describe('CorpEntity State Machine', () => {
       const transition = corpEntityDef.transitions.find(
         t => t.eventName === 'incorporate'
       );
-      expect(transition?.emits).toContain('CORPORATION_FORMED');
+      expect(JSON.stringify(transition?.effect)).toContain('CORPORATION_FORMED');
     });
 
     it('should emit CHARTER_AMENDED on amend_charter', () => {
       const transition = corpEntityDef.transitions.find(
         t => t.eventName === 'amend_charter'
       );
-      expect(transition?.emits).toContain('CHARTER_AMENDED');
+      expect(JSON.stringify(transition?.effect)).toContain('CHARTER_AMENDED');
     });
 
     it('should emit CORPORATION_SUSPENDED on suspend', () => {
       const transition = corpEntityDef.transitions.find(
         t => t.eventName === 'suspend'
       );
-      expect(transition?.emits).toContain('CORPORATION_SUSPENDED');
+      expect(JSON.stringify(transition?.effect)).toContain('CORPORATION_SUSPENDED');
     });
 
     it('should emit CORPORATION_DISSOLVED on voluntary dissolution', () => {
       const transition = corpEntityDef.transitions.find(
         t => t.eventName === 'dissolve_voluntary'
       );
-      expect(transition?.emits).toContain('CORPORATION_DISSOLVED');
+      expect(JSON.stringify(transition?.effect)).toContain('CORPORATION_DISSOLVED');
     });
   });
 
@@ -249,20 +249,52 @@ describe('CorpEntity State Machine', () => {
     });
   });
 
-  describe('Dependencies', () => {
-    it('should have dependencies on dissolve_voluntary transition', () => {
-      const transition = corpEntityDef.transitions.find(
-        t => t.eventName === 'dissolve_voluntary'
+  describe('Two-phase resolution gating (#24)', () => {
+    it('propose_amend_charter binds the approving resolution via _addDependency', () => {
+      const propose = corpEntityDef.transitions.find(
+        t => t.eventName === 'propose_amend_charter'
       );
-      expect(transition?.dependencies).toBeDefined();
-      expect(transition?.dependencies?.length).toBeGreaterThan(0);
+      expect(propose).toBeDefined();
+      const effectStr = JSON.stringify(propose?.effect);
+      expect(effectStr).toContain('_addDependency');
+      expect(effectStr).toContain('event.resolutionRef');
     });
 
-    it('should have dependencies on amend_charter transition', () => {
+    it('amend_charter gates on the bound resolution reaching EXECUTED (depInState), not a dropped object-dep', () => {
       const transition = corpEntityDef.transitions.find(
         t => t.eventName === 'amend_charter'
       );
-      expect(transition?.dependencies).toBeDefined();
+      const guardStr = JSON.stringify(transition?.guard);
+      // dynamic currentStateId assert on the bound resolution + the recorded proposal match
+      expect(guardStr).toContain('EXECUTED');
+      expect(guardStr).toContain('pendingAmendCharter');
+      // the dropped object-form dependency is gone — gating now lives in the guard
+      expect(transition?.dependencies).toEqual([]);
+    });
+
+    it('propose_dissolve_voluntary binds BOTH executing resolutions via _addDependency', () => {
+      const propose = corpEntityDef.transitions.find(
+        t => t.eventName === 'propose_dissolve_voluntary'
+      );
+      expect(propose).toBeDefined();
+      const effectStr = JSON.stringify(propose?.effect);
+      expect(effectStr).toContain('_addDependency');
+      expect(effectStr).toContain('event.boardResolutionRef');
+      expect(effectStr).toContain('event.shareholderResolutionRef');
+    });
+
+    it('dissolve_voluntary gates on BOTH bound resolutions reaching EXECUTED (depInState), not dropped object-deps', () => {
+      const transition = corpEntityDef.transitions.find(
+        t => t.eventName === 'dissolve_voluntary'
+      );
+      const guardStr = JSON.stringify(transition?.guard);
+      expect(guardStr).toContain('EXECUTED');
+      expect(guardStr).toContain('pendingDissolveVoluntary');
+      // both bound resolutions are asserted via depInState
+      expect(guardStr).toContain('pendingDissolveVoluntary.boardRef');
+      expect(guardStr).toContain('pendingDissolveVoluntary.shareholderRef');
+      // the dropped object-form dependencies are gone — gating now lives in the guard
+      expect(transition?.dependencies).toEqual([]);
     });
   });
 

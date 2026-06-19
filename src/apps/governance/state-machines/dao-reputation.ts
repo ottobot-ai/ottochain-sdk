@@ -319,16 +319,18 @@ export const daoReputationDef = defineFiberApp({
             },
             proposal: null,
             votes: null,
+            // A3 fix: transition-level `emits` is dropped by the chain; emit from INSIDE the effect
+            // under the reserved `_emit` key (extracted as an EmittedEvent, stripped from state).
+            _emit: [
+              {
+                name: "proposal_executed",
+                data: { action: "increase", agents: { var: "state.votes.for" } },
+                destination: "Reputation",
+              },
+            ],
           },
         ],
       },
-      emits: [
-        {
-          event: "proposal_executed",
-          to: "Reputation",
-          payload: { action: "increase", agents: { var: "state.votes.for" } },
-        },
-      ],
       dependencies: [],
     },
     // VOTING → ACTIVE: reject (voting ended, for <= against or quorum not met)
