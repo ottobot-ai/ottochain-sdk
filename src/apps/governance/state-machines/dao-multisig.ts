@@ -252,10 +252,18 @@ export const daoMultisigDef = defineFiberApp({
             },
             proposal: null,
             signatures: {},
+            // A3 fix: transition-level `emits` is dropped by the chain; emit from INSIDE the effect
+            // under the reserved `_emit` key (extracted as an EmittedEvent, stripped from state).
+            _emit: [
+              {
+                name: "multisig_executed",
+                data: { proposalId: { var: "state.proposal.id" } },
+                destination: "external",
+              },
+            ],
           },
         ],
       },
-      emits: [{ event: "multisig_executed", to: "external" }],
       dependencies: [],
     },
     // PENDING → ACTIVE: cancel (expired or proposer)

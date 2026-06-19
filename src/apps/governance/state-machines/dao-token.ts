@@ -400,10 +400,18 @@ export const daoTokenDef = defineFiberApp({
             },
             proposal: null,
             votes: null,
+            // A3 fix: transition-level `emits` is dropped by the chain; emit from INSIDE the effect
+            // under the reserved `_emit` key (extracted as an EmittedEvent, stripped from state).
+            _emit: [
+              {
+                name: "proposal_executed",
+                data: { proposalId: { var: "state.proposal.id" } },
+                destination: "external",
+              },
+            ],
           },
         ],
       },
-      emits: [{ event: "proposal_executed", to: "external" }],
       dependencies: [],
     },
     // VOTING → ACTIVE: reject (voting ended, failed quorum or for <= against)
