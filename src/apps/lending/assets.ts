@@ -332,8 +332,9 @@ export function debtPolicy(
       maxSupply: null,
       // Proof-gated mint: principal is minted only if the eligibility proof verifies.
       mintPolicy: mintGuard,
-      // Repayment burns the debt; only the holder (borrower) may burn theirs.
-      burnPolicy: { "===": [{ var: "event.agent" }, { var: "holder.Wallet.address" }] },
+      // Repayment burns the debt; only the holder (borrower) may burn theirs. The asset context has
+      // no `event` key — bind to the verified `signers` (chain-derived from the op's proofs).
+      burnPolicy: { in: [{ var: "holder.Wallet.address" }, { var: "signers" }] },
       decimals: 2,
     },
     morphisms: {

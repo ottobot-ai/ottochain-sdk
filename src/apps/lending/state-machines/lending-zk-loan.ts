@@ -270,7 +270,7 @@ export const lendingZkLoanDef = defineFiberApp({
       eventName: "lock_collateral",
       guard: {
         and: [
-          { "===": [{ var: "event.agent" }, { var: "state.borrower" }] },
+          { in: [{ var: "state.borrower" }, { map: [{ var: "proofs" }, { var: "address" }] }] },
           { "===": [{ var: "event.assetId" }, { var: "state.collateralAssetId" }] },
         ],
       },
@@ -290,8 +290,8 @@ export const lendingZkLoanDef = defineFiberApp({
       eventName: "cancel",
       guard: {
         or: [
-          { "===": [{ var: "event.agent" }, { var: "state.borrower" }] },
-          { "===": [{ var: "event.agent" }, { var: "state.lender" }] },
+          { in: [{ var: "state.borrower" }, { map: [{ var: "proofs" }, { var: "address" }] }] },
+          { in: [{ var: "state.lender" }, { map: [{ var: "proofs" }, { var: "address" }] }] },
         ],
       },
       effect: {
@@ -326,7 +326,7 @@ export const lendingZkLoanDef = defineFiberApp({
       eventName: "originate",
       guard: {
         and: [
-          { "===": [{ var: "event.agent" }, { var: "state.lender" }] },
+          { in: [{ var: "state.lender" }, { map: [{ var: "proofs" }, { var: "address" }] }] },
           {
             groth16_verify: [
               { var: "state.lendingRuleVKey" },
@@ -371,7 +371,7 @@ export const lendingZkLoanDef = defineFiberApp({
       from: "ACTIVE",
       to: "REPAID",
       eventName: "repay",
-      guard: { "===": [{ var: "event.agent" }, { var: "state.borrower" }] },
+      guard: { in: [{ var: "state.borrower" }, { map: [{ var: "proofs" }, { var: "address" }] }] },
       effect: {
         merge: [
           { var: "state" },
@@ -418,7 +418,7 @@ export const lendingZkLoanDef = defineFiberApp({
       from: "DEFAULTED",
       to: "LIQUIDATED",
       eventName: "liquidate",
-      guard: { "===": [{ var: "event.agent" }, { var: "state.lender" }] },
+      guard: { in: [{ var: "state.lender" }, { map: [{ var: "proofs" }, { var: "address" }] }] },
       effect: {
         merge: [
           { var: "state" },

@@ -65,9 +65,10 @@ describe('lending/credit-scoring — creditScore IS identity reputation', () => 
     expect(alice).toBe(exprHash(reputationCreditRule({ ...base, borrowerId: 'did:otto:alice' })));
   });
 
-  it('reputationAuthorityClause emits a schnorr_verify over the reputation signature', () => {
-    expect(reputationAuthorityClause()).toEqual({
-      schnorr_verify: [{ var: 'repPubKey' }, { var: 'scoreCommit' }, { var: 'repSig' }],
+  it('reputationAuthorityClause pins the authority pubkey as a literal (never witness-supplied)', () => {
+    const authorityPubKey = `0x${'ab'.repeat(32)}`;
+    expect(reputationAuthorityClause(authorityPubKey)).toEqual({
+      schnorr_verify: [authorityPubKey, { var: 'scoreCommit' }, { var: 'repSig' }],
     });
   });
 });

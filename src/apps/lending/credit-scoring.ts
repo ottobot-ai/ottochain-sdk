@@ -93,17 +93,22 @@ export function buildCreditDataContext(args: {
 /**
  * OPTIONAL hardening — an authority-attested credit clause. ANDed into a rule, it makes the SP1 guest
  * verify (in zero knowledge) the reputation issuer's Schnorr signature over the score, so the score is
- * not merely borrower-supplied but ATTESTED. `pubKey`/the signed message are bound in the private data
- * context (`repPubKey`, `repSig`, and a `scoreCommit` the message covers); the issuer key is pinned
- * public. Returns the `schnorr_verify` clause to AND into {@link reputationCreditRule}'s output.
+ * not merely borrower-supplied but ATTESTED.
+ *
+ * SECURITY: the authority's `authorityPubKey` MUST be a LITERAL pinned in the rule (it is part of the
+ * rule's keccak `logicHash`, so pinning it binds it) — NEVER read from the borrower's witness/private
+ * data, or the borrower could supply their own keypair and self-attest any score. Only the signature
+ * `repSig` and the signed `scoreCommit` ride on the (private) witness; the signature binds them to the
+ * pinned key. `scoreCommit` should commit the pinned `subject` + the proof's `dataHash` so a signature
+ * cannot be replayed for a different borrower/score.
  *
  * NOTE: producing a real signature + proof is required to exercise this end-to-end; the builder pins
  * the structure so the on-chain rule and the prover agree. See the JLVM `schnorr_verify` opcode.
  */
-export function reputationAuthorityClause(): JsonLogicRule {
+export function reputationAuthorityClause(authorityPubKey: string): JsonLogicRule {
   return {
     schnorr_verify: [
-      { var: "repPubKey" }, // the reputation authority's public key (pinned in the data context)
+      authorityPubKey, // the reputation authority's public key — PINNED literal, not witness-supplied
       { var: "scoreCommit" }, // the signed message: a commitment over (subject, creditScore)
       { var: "repSig" }, // the authority's signature over scoreCommit
     ],

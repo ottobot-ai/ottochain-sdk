@@ -97,10 +97,13 @@ describe('LendingZkLoan state machine', () => {
     it('is an AND of the lender check, groth16_verify, and the public-value bindings', () => {
       expect(guardJson).toHaveProperty('and');
       const clauses = guardJson.and;
-      // 5 clauses: agent==lender, groth16_verify, exprHash bind, outputHash bind, ok bit.
+      // 5 clauses: lender-is-a-verified-signer, groth16_verify, exprHash bind, outputHash bind, ok bit.
       expect(clauses.length).toBe(5);
-      // clause 1: only the lender may originate
-      expect(clauses[0]).toHaveProperty('===');
+      // clause 1: only the lender may originate — bound to the chain-verified proofs[].address, NOT a
+      // forgeable event.agent payload field.
+      expect(clauses[0]).toEqual({
+        in: [{ var: 'state.lender' }, { map: [{ var: 'proofs' }, { var: 'address' }] }],
+      });
       // clause 2: groth16_verify over witness.{publicValues,proof} with the pinned vkey
       expect(clauses[1]).toHaveProperty('groth16_verify');
       const g = (clauses[1] as { groth16_verify: unknown[] }).groth16_verify;
