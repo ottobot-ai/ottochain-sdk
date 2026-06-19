@@ -5,6 +5,7 @@ import {
   signerIsAnyParty,
   signerInSet,
   signerIsNotParty,
+  signerHasEntry,
   assetSignerIs,
 } from '../../src/schema/guards';
 
@@ -66,6 +67,19 @@ describe('schema/guards — authorization binds to verified signers, not event/w
     expect(apply(g, ctx(['0xnotmember']))).toBe(false); // a non-member signed
     // a forged event.agent claiming membership is ignored
     expect(apply(g, ctx(['0xnotmember'], { agent: '0xm1' }))).toBe(false);
+  });
+
+  it('signerHasEntry passes when a verified signer is a key in the state map', () => {
+    const g = signerHasEntry('state.members');
+    const ctx = (signers: string[]) => ({
+      state: { members: { '0xm1': { rep: 5 }, '0xm2': { rep: 3 } } },
+      proofs: signers.map((a) => ({ address: a })),
+    });
+    expect(g).toEqual({
+      some: [{ map: [{ var: 'proofs' }, { var: 'address' }] }, { has: [{ var: 'state.members' }, { var: '' }] }],
+    });
+    expect(apply(g, ctx(['0xm2']))).toBe(true); // a member signed
+    expect(apply(g, ctx(['0xnotmember']))).toBe(false); // a non-member signed
   });
 
   it('signerIsNotParty blocks only when the pinned party actually signed', () => {

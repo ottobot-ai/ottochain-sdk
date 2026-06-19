@@ -45,6 +45,18 @@ export const signerInSet = (setVar: string): GuardRule => ({
 export const signerIsNotParty = (partyVar: string): GuardRule => ({ '!': [signerIsParty(partyVar)] });
 
 /**
+ * FIBER-transition authorization / dedup over a state MAP keyed by address: at least one VERIFIED signer
+ * is a key in `mapVar` (e.g. `"state.members"`, `"state.balances"`). The replay-safe replacement for the
+ * forgeable `{"getKey":[{"var":mapVar}, {"var":"event.agent"}]}` membership/presence check (note metakit
+ * has no `getKey`; use `get`/`has`). For a "no signer has acted yet" dedup, negate: `{"!":[signerHasEntry(...)]}`.
+ * For a per-actor VALUE threshold (e.g. balance >= N), build the `some` directly:
+ * `{"some":[{"map":[proofs,address]},{">=":[{"get":[mapVar,{"var":""}]}, N]}]}`.
+ */
+export const signerHasEntry = (mapVar: string): GuardRule => ({
+  some: [{ map: [{ var: 'proofs' }, { var: 'address' }] }, { has: [{ var: mapVar }, { var: '' }] }],
+});
+
+/**
  * ASSET-op authorization (mintPolicy / burnPolicy / MorphismSpec.guard): the address at `addressVar`
  * (e.g. `"holder.Wallet.address"`) MUST be among the op's verified `signers`. The asset context has no
  * `event` or `proofs` — it injects `signers` directly.

@@ -158,5 +158,6 @@ export {
   signerIsAnyParty,
   signerInSet,
   signerIsNotParty,
+  signerHasEntry,
   assetSignerIs,
 } from './schema/guards.js';
