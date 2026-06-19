@@ -64,3 +64,44 @@ export const signerHasEntry = (mapVar: string): GuardRule => ({
 export const assetSignerIs = (addressVar: string): GuardRule => ({
   in: [{ var: addressVar }, { var: 'signers' }],
 });
+
+/**
+ * EFFECT-KEY BINDING: prove the event's claimed actor (`actorVar`, default `event.agent`) is a
+ * CHAIN-VERIFIED signer, so that field is SAFE to use as a dynamic map key / array element in the
+ * EFFECT (`{"set":[map,{"var":"event.agent"},v]}`, `{"cat":[arr,[{"var":"event.agent"}]]}`).
+ *
+ * This is the coupling clause for the map-write remediation: a guard may authorize via membership /
+ * balance / reputation, but if the EFFECT writes under `event.agent` WITHOUT this clause, an attacker
+ * sets `event.agent` to a victim's address and writes under the victim's key (security class S1).
+ * Pair it with the authorization check expressed on the SAME `actorVar` — together they prove the actor
+ * both signed and is authorized, and the effect can only write under that one verified key.
+ * Structurally identical to {@link signerIsParty}; named for intent + greppability at write sites.
+ */
+export const actorIsSigner = (actorVar = 'event.agent'): GuardRule => signerIsParty(actorVar);
+
+/**
+ * IDENTITY-REGISTRY reputation gate: at least one VERIFIED signer has a reputation in the registry map
+ * at `repMapVar` (a declared-dependency read, e.g. `"machines.<registryDep>.state.reputations"`, shaped
+ * `{ <address>: int }`) that is `>=` the bar read from `thresholdVar` (a state path, e.g.
+ * `"state.voteThreshold"`). A missing entry reads as null → 0 numerically, so unregistered signers
+ * fail-closed for any positive bar. The replay-safe replacement for the forgeable
+ * `{">=":[{"var":"event.agentReputation"}, bar]}` (security class S1). See
+ * docs/design/app-hardening-identity-integration.md §3–§4.1.
+ */
+export const signerHasReputation = (repMapVar: string, thresholdVar: string): GuardRule => ({
+  some: [
+    { map: [{ var: 'proofs' }, { var: 'address' }] },
+    { '>=': [{ get: [{ var: repMapVar }, { var: '' }] }, { var: thresholdVar }] },
+  ],
+});
+
+/**
+ * IDENTITY-REGISTRY role gate: at least one VERIFIED signer holds an active role attestation, i.e. is a
+ * key in the registry's flat per-role map at `roleMapVar` (a declared-dependency read, e.g.
+ * `"machines.<registryDep>.state.arbiters"` / `".slashers"` / `".issuers"` / `".boardMembers"`, each
+ * shaped `{ <address>: true }`). The replay-safe replacement for bare `event.judicialRuling` / role
+ * escapes and `{"==":[1,1]}` missing-auth (security class S2). Roles are FLAT per-role maps (not a
+ * nested `roles[addr][ROLE]`) because metakit `get`/`has` on a null inner map ERROR rather than
+ * returning null; a flat map keeps the read total + fail-closed. See app-hardening §4.2.
+ */
+export const signerHasRole = (roleMapVar: string): GuardRule => signerHasEntry(roleMapVar);

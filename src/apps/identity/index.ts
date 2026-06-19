@@ -71,9 +71,14 @@ export {
   IDENTITY_TRANSITIONS,
   AGENT_TRANSITIONS,
   ATTESTATION_DELTAS,
+  REGISTRY_ROLES,
+  REGISTRY_ROLE_MAP,
+  registryRolePath,
+  registryReputationPath,
   canTransition,
   getReputationDelta,
 } from "./constants.js";
+export type { RegistryRole } from "./constants.js";
 
 // ---------------------------------------------------------------------------
 // Configuration Defaults
@@ -100,23 +105,30 @@ import {
   identityUniversalDef,
   identityAgentDef,
   identityOracleDef,
+  identityRegistryDef,
 } from "./state-machines/index.js";
 import type { FiberAppDefinition } from "../../schema/fiber-app.js";
 
-export { identityUniversalDef, identityAgentDef, identityOracleDef };
+export {
+  identityUniversalDef,
+  identityAgentDef,
+  identityOracleDef,
+  identityRegistryDef,
+};
 
 /** All identity state machine definitions */
 export const IDENTITY_DEFINITIONS = {
   universal: identityUniversalDef,
   agent: identityAgentDef,
   oracle: identityOracleDef,
+  registry: identityRegistryDef,
 } as const;
 
 export type IdentityDefType = keyof typeof IDENTITY_DEFINITIONS;
 
 /**
  * Get an identity state machine definition by type.
- * @param type - 'universal' | 'agent' | 'oracle' (default: 'agent')
+ * @param type - 'universal' | 'agent' | 'oracle' | 'registry' (default: 'agent')
  */
 export function getIdentityDefinition(
   type: IdentityDefType = "agent",

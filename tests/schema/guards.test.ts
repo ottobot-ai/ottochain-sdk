@@ -7,6 +7,9 @@ import {
   signerIsNotParty,
   signerHasEntry,
   assetSignerIs,
+  actorIsSigner,
+  signerHasReputation,
+  signerHasRole,
 } from '../../src/schema/guards';
 
 const apply = (rule: unknown, data: unknown): unknown => jsonLogic.apply(rule as object, data as object);
@@ -88,5 +91,46 @@ describe('schema/guards — authorization binds to verified signers, not event/w
     expect(apply(g, ctx(['0xother']))).toBe(true); // author did not sign → allowed
     expect(apply(g, ctx(['0xauthor']))).toBe(false); // author signed → blocked (no self-action)
     expect(g).toEqual({ '!': [signerIsParty('state.author')] });
+  });
+
+  it('actorIsSigner binds event.agent to a verified signer (effect-key coupling)', () => {
+    const g = actorIsSigner();
+    expect(g).toEqual(signerIsParty('event.agent'));
+    // attacker signs with 0xbad but claims to act as the victim 0xvictim
+    expect(apply(g, fiberCtx(['0xbad'], { agent: '0xvictim' }))).toBe(false);
+    // the claimed actor actually signed → safe to use event.agent as a map key
+    expect(apply(g, fiberCtx(['0xvictim'], { agent: '0xvictim' }))).toBe(true);
+    // a custom actor field is supported
+    expect(actorIsSigner('event.delegateFrom')).toEqual(signerIsParty('event.delegateFrom'));
+  });
+
+  it('signerHasReputation gates on a registry-map read bound to the signer', () => {
+    const g = signerHasReputation('machines.reg.state.reputations', 'state.voteThreshold');
+    expect(g).toEqual({
+      some: [
+        { map: [{ var: 'proofs' }, { var: 'address' }] },
+        { '>=': [{ get: [{ var: 'machines.reg.state.reputations' }, { var: '' }] }, { var: 'state.voteThreshold' }] },
+      ],
+    });
+    const ctx = (signers: string[], reps: Record<string, number>) => ({
+      state: { voteThreshold: 15 },
+      proofs: signers.map((a) => ({ address: a })),
+      machines: { reg: { state: { reputations: reps } } },
+    });
+    expect(apply(g, ctx(['0xBB'], { '0xBB': 20 }))).toBe(true); // signer rep 20 >= 15
+    expect(apply(g, ctx(['0xBB'], { '0xBB': 10 }))).toBe(false); // signer rep 10 < 15
+    expect(apply(g, ctx(['0xBB'], { '0xZZ': 99 }))).toBe(false); // signer unregistered → null→0 < 15
+  });
+
+  it('signerHasRole gates on registry per-role map membership bound to the signer', () => {
+    const g = signerHasRole('machines.reg.state.arbiters');
+    expect(g).toEqual(signerHasEntry('machines.reg.state.arbiters'));
+    const ctx = (signers: string[], arbiters: Record<string, true>) => ({
+      proofs: signers.map((a) => ({ address: a })),
+      machines: { reg: { state: { arbiters } } },
+    });
+    expect(apply(g, ctx(['0xBB'], { '0xBB': true }))).toBe(true); // signer holds ARBITER
+    expect(apply(g, ctx(['0xBB'], { '0xAA': true }))).toBe(false); // signer lacks ARBITER
+    expect(apply(g, ctx(['0xBB'], {}))).toBe(false); // empty role map → fail-closed (no throw)
   });
 });

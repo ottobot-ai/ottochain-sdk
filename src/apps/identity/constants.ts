@@ -60,6 +60,52 @@ export const ATTESTATION_DELTAS: Record<AttestationType, number> = {
   [AttestationType.UNRECOGNIZED]: 0,
 };
 
+// ---------------------------------------------------------------------------
+// Identity Registry — role attestations
+// ---------------------------------------------------------------------------
+
+/**
+ * Role-attestation types issued by the identity registry (identity-registry fiber).
+ * These are the ecosystem-wide authority roles consumer apps gate on via the registry
+ * dependency + `signerHasRole` (see docs/design/app-hardening-identity-integration.md §4.2).
+ */
+export const REGISTRY_ROLES = {
+  ARBITER: "ARBITER",
+  SLASHER: "SLASHER",
+  ISSUER: "ISSUER",
+  BOARD_MEMBER: "BOARD_MEMBER",
+} as const;
+
+export type RegistryRole = keyof typeof REGISTRY_ROLES;
+
+/**
+ * Maps each role to the registry's flat per-role state-map field. A consumer app reads
+ * `machines.<registryDep>.state.<field>` (a `{ <address>: true }` map) and binds membership to a
+ * verified signer with `signerHasRole`. Kept in lock-step with the identity-registry stateSchema.
+ */
+export const REGISTRY_ROLE_MAP: Record<RegistryRole, string> = {
+  ARBITER: "arbiters",
+  SLASHER: "slashers",
+  ISSUER: "issuers",
+  BOARD_MEMBER: "boardMembers",
+} as const;
+
+/**
+ * Build the `machines.<registryDep>.state.<roleMap>` var path a consumer guard reads to check a role,
+ * e.g. `registryRolePath("reg-uuid", "ARBITER")` → `"machines.reg-uuid.state.arbiters"`.
+ */
+export function registryRolePath(registryDep: string, role: RegistryRole): string {
+  return `machines.${registryDep}.state.${REGISTRY_ROLE_MAP[role]}`;
+}
+
+/**
+ * Build the `machines.<registryDep>.state.reputations` var path a consumer guard reads for a
+ * reputation gate (`signerHasReputation`).
+ */
+export function registryReputationPath(registryDep: string): string {
+  return `machines.${registryDep}.state.reputations`;
+}
+
 /**
  * Check if a transition is valid for the given state.
  */
