@@ -170,6 +170,8 @@ export {
   // identity-registry reads (runtime-bound registry id, #24)
   signerHasReputationVia,
   signerHasRoleVia,
+  // cross-fiber state gate (runtime-bound dependency, #24) — replaces object-form deps
+  depInState,
 } from './schema/guards.js';
 
 // Reserved EFFECT-directive builders (dynamic dependencies, #24).

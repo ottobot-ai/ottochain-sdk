@@ -237,3 +237,27 @@ export const signerHasRoleVia = (
     false,
   ],
 });
+
+/**
+ * CROSS-FIBER STATE GATE — assert a RUNTIME-bound dependency fiber is in a required lifecycle state. The
+ * replay-safe replacement for the dropped object-form dependency
+ * `{machine, instanceRef, requiredState}` (which the chain silently drops — `requiredState` gating never
+ * happens). `refVar` is a state/event path holding the dependency's fiber id; reads
+ * `machines[<refVar>].currentStateId == requiredState`, guarded by a presence check so an UNBOUND
+ * dependency yields a clean `false` (fail-closed). TWO-PHASE (#24): the dependency fiber must have been
+ * bound by an `_addDependency` in a PRIOR transition (the `machines` context is built before the effect),
+ * so a single gated transition is split into a bind step then this assert step. See
+ * docs/design/app-hardening-identity-integration.md §5–§6.
+ */
+export const depInState = (refVar: string, requiredState: string): GuardRule => ({
+  if: [
+    { has: [{ var: "machines" }, { var: refVar }] },
+    {
+      "==": [
+        { get: [{ get: [{ var: "machines" }, { var: refVar }] }, "currentStateId"] },
+        requiredState,
+      ],
+    },
+    false,
+  ],
+});

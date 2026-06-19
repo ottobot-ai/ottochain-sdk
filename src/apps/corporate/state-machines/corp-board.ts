@@ -1,5 +1,6 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
-import { signerInSet } from "../../../schema/guards.js";
+import { signerInSet, depInState } from "../../../schema/guards.js";
+import { addDependency } from "../../../schema/effects.js";
 
 /**
  * Board of directors state machine managing director seats, meetings, quorum, and formal board actions.
@@ -158,6 +159,9 @@ export const corpBoardDef = defineFiberApp({
       },
       createdAt: { type: "timestamp", computed: true },
       updatedAt: { type: "timestamp", computed: true },
+      // Two-phase removal (#24): propose_removal binds the resolution fiber + records the pending
+      // removal here; remove_for_cause asserts the bound resolution is EXECUTED, then clears this.
+      pendingRemoval: { type: "object", nullable: true, computed: true },
     },
   },
 
@@ -204,19 +208,22 @@ export const corpBoardDef = defineFiberApp({
         },
       },
     },
-    remove_for_cause: {
+    propose_removal: {
       description:
-        "Remove a director for cause (requires board or shareholder action depending on bylaws)",
-      required: [
-        "directorId",
-        "cause",
-        "removalResolutionRef",
-        "effectiveDate",
-      ] as const,
+        "Phase 1 of for-cause removal: bind the executing resolution fiber (#24 _addDependency) and record the pending removal",
+      required: ["directorId", "cause", "removalResolutionRef"] as const,
       properties: {
         directorId: { type: "string" },
         cause: { type: "string" },
         removalResolutionRef: { type: "string" },
+      },
+    },
+    remove_for_cause: {
+      description:
+        "Phase 2 of for-cause removal: execute once the bound removal resolution is EXECUTED",
+      required: ["directorId", "effectiveDate"] as const,
+      properties: {
+        directorId: { type: "string" },
         effectiveDate: { type: "string", format: "date" },
       },
     },
@@ -504,9 +511,13 @@ export const corpBoardDef = defineFiberApp({
               ],
             },
           },
+          {
+            _emit: [
+              { name: "DIRECTOR_ELECTED", data: { var: "event" }, destination: "external" },
+            ],
+          },
         ],
       },
-      emits: ["DIRECTOR_ELECTED"],
     },
 
     // ACTIVE -> ACTIVE (resign_director) and IN_MEETING -> ACTIVE (resign_director)
@@ -564,9 +575,13 @@ export const corpBoardDef = defineFiberApp({
               ],
             },
           },
+          {
+            _emit: [
+              { name: "DIRECTOR_RESIGNED", data: { var: "event" }, destination: "external" },
+            ],
+          },
         ],
       },
-      emits: ["DIRECTOR_RESIGNED"],
     },
     {
       from: "IN_MEETING",
@@ -622,21 +637,74 @@ export const corpBoardDef = defineFiberApp({
               ],
             },
           },
+          {
+            _emit: [
+              { name: "DIRECTOR_RESIGNED", data: { var: "event" }, destination: "external" },
+            ],
+          },
         ],
       },
-      emits: ["DIRECTOR_RESIGNED"],
     },
 
-    // ACTIVE -> ACTIVE (remove_for_cause)
+    // ACTIVE -> ACTIVE (propose_removal) — phase 1 (#24): bind the executing resolution fiber and
+    // record the pending removal, so the next transition can read the resolution's state.
+    {
+      from: "ACTIVE",
+      to: "ACTIVE",
+      eventName: "propose_removal",
+      guard: {
+        and: [
+          signerInSet("state.authorizedRemovers"),
+          {
+            some: [
+              { var: "state.directors" },
+              {
+                and: [
+                  { "==": [{ var: "directorId" }, { var: "event.directorId" }] },
+                  { "==": [{ var: "status" }, "ACTIVE"] },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      effect: {
+        merge: [
+          { var: "state" },
+          {
+            pendingRemoval: {
+              directorId: { var: "event.directorId" },
+              cause: { var: "event.cause" },
+              resolutionRef: { var: "event.removalResolutionRef" },
+              proposedAt: { var: "$ordinal" },
+            },
+          },
+          // bind the resolution fiber so remove_for_cause can assert its state next transition
+          addDependency({ var: "event.removalResolutionRef" }),
+        ],
+      },
+      dependencies: [],
+    },
+
+    // ACTIVE -> ACTIVE (remove_for_cause) — phase 2 (#24): execute once the bound removal resolution is
+    // EXECUTED. depInState replaces the dropped object-form dependency (which silently never gated).
     {
       from: "ACTIVE",
       to: "ACTIVE",
       eventName: "remove_for_cause",
-      // authority gate — a member of the pinned authorizedRemovers set must sign; an identity role attestation (BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
-      // TODO(#24): also assert machines.<removalResolutionRef>.currentStateId == "EXECUTED" once runtime-updatable dependencies land; the resolution UUID must ride as a bare-string dependency. Static deps cannot key on event.removalResolutionRef today.
+      // authority gate — a member of the pinned authorizedRemovers set must sign; an identity role
+      // attestation (BOARD_MEMBER/...) layers on additively when the identity registry lands (§4.2).
       guard: {
         and: [
           signerInSet("state.authorizedRemovers"),
+          // the proposal must target this director, and its bound resolution must be EXECUTED
+          {
+            "==": [
+              { var: "state.pendingRemoval.directorId" },
+              { var: "event.directorId" },
+            ],
+          },
+          depInState("state.pendingRemoval.resolutionRef", "EXECUTED"),
           // event.directorId is the lookup key only — the director must exist and be ACTIVE
           {
             some: [
@@ -653,13 +721,6 @@ export const corpBoardDef = defineFiberApp({
           },
         ],
       },
-      dependencies: [
-        {
-          machine: "corporate-resolution",
-          instanceRef: { var: "event.removalResolutionRef" },
-          requiredState: "EXECUTED",
-        },
-      ],
       effect: {
         merge: [
           { var: "state" },
@@ -698,10 +759,17 @@ export const corpBoardDef = defineFiberApp({
                 },
               ],
             },
+            // clear the consumed proposal
+            pendingRemoval: null,
+          },
+          {
+            _emit: [
+              { name: "DIRECTOR_REMOVED", data: { var: "event" }, destination: "external" },
+            ],
           },
         ],
       },
-      emits: ["DIRECTOR_REMOVED"],
+      dependencies: [],
     },
 
     // ACTIVE -> ACTIVE (designate_chair)
@@ -796,9 +864,13 @@ export const corpBoardDef = defineFiberApp({
               quorumCount: 0,
             },
           },
+          {
+            _emit: [
+              { name: "BOARD_MEETING_SCHEDULED", data: { var: "event" }, destination: "external" },
+            ],
+          },
         ],
       },
-      emits: ["BOARD_MEETING_SCHEDULED"],
     },
 
     // ACTIVE -> ACTIVE (record_attendance)
@@ -878,9 +950,13 @@ export const corpBoardDef = defineFiberApp({
               ],
             },
           },
+          {
+            _emit: [
+              { name: "BOARD_MEETING_OPENED", data: { var: "event" }, destination: "external" },
+            ],
+          },
         ],
       },
-      emits: ["BOARD_MEETING_OPENED"],
     },
 
     // IN_MEETING -> IN_MEETING (director_departs)
@@ -937,9 +1013,16 @@ export const corpBoardDef = defineFiberApp({
       eventName: "quorum_lost",
       guard: { "==": [{ var: "state.currentMeeting.quorumPresent" }, false] },
       effect: {
-        merge: [{ var: "state" }, { status: "QUORUM_LOST" }],
+        merge: [
+          { var: "state" },
+          { status: "QUORUM_LOST" },
+          {
+            _emit: [
+              { name: "BOARD_QUORUM_LOST", data: { var: "event" }, destination: "external" },
+            ],
+          },
+        ],
       },
-      emits: ["BOARD_QUORUM_LOST"],
     },
 
     // QUORUM_LOST -> IN_MEETING
@@ -949,9 +1032,16 @@ export const corpBoardDef = defineFiberApp({
       eventName: "quorum_restored",
       guard: { "==": [{ var: "state.currentMeeting.quorumPresent" }, true] },
       effect: {
-        merge: [{ var: "state" }, { status: "IN_MEETING" }],
+        merge: [
+          { var: "state" },
+          { status: "IN_MEETING" },
+          {
+            _emit: [
+              { name: "BOARD_QUORUM_RESTORED", data: { var: "event" }, destination: "external" },
+            ],
+          },
+        ],
       },
-      emits: ["BOARD_QUORUM_RESTORED"],
     },
 
     // IN_MEETING -> ACTIVE (adjourn)
@@ -985,9 +1075,13 @@ export const corpBoardDef = defineFiberApp({
               ],
             },
           },
+          {
+            _emit: [
+              { name: "BOARD_MEETING_ADJOURNED", data: { var: "event" }, destination: "external" },
+            ],
+          },
         ],
       },
-      emits: ["BOARD_MEETING_ADJOURNED"],
     },
 
     // QUORUM_LOST -> ACTIVE (adjourn)
@@ -1021,9 +1115,13 @@ export const corpBoardDef = defineFiberApp({
               ],
             },
           },
+          {
+            _emit: [
+              { name: "BOARD_MEETING_ADJOURNED", data: { var: "event" }, destination: "external" },
+            ],
+          },
         ],
       },
-      emits: ["BOARD_MEETING_ADJOURNED"],
     },
 
     // ACTIVE -> ACTIVE (update_seats)
