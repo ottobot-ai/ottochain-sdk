@@ -4,7 +4,7 @@
  */
 
 export interface paths {
-    "/v1/version": {
+    "/data-application/v1/version": {
         parameters: {
             query?: never;
             header?: never;
@@ -12,7 +12,7 @@ export interface paths {
             cookie?: never;
         };
         /** Service identity + build metadata */
-        get: operations["getV1Version"];
+        get: operations["getData-applicationV1Version"];
         put?: never;
         post?: never;
         delete?: never;
@@ -21,7 +21,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/util/hash": {
+    "/data-application/v1/util/hash": {
         parameters: {
             query?: never;
             header?: never;
@@ -31,14 +31,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Canonical hash of a signed message */
-        post: operations["postV1UtilHash"];
+        post: operations["postData-applicationV1UtilHash"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/v1/onchain": {
+    "/data-application/v1/onchain": {
         parameters: {
             query?: never;
             header?: never;
@@ -46,7 +46,7 @@ export interface paths {
             cookie?: never;
         };
         /** Current on-chain state */
-        get: operations["getV1Onchain"];
+        get: operations["getData-applicationV1Onchain"];
         put?: never;
         post?: never;
         delete?: never;
@@ -55,7 +55,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/checkpoint": {
+    "/data-application/v1/checkpoint": {
         parameters: {
             query?: never;
             header?: never;
@@ -63,7 +63,7 @@ export interface paths {
             cookie?: never;
         };
         /** Current checkpoint (calculated state snapshot) */
-        get: operations["getV1Checkpoint"];
+        get: operations["getData-applicationV1Checkpoint"];
         put?: never;
         post?: never;
         delete?: never;
@@ -72,7 +72,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/state-machines": {
+    "/data-application/v1/state-machines": {
         parameters: {
             query?: never;
             header?: never;
@@ -80,7 +80,7 @@ export interface paths {
             cookie?: never;
         };
         /** List state machines (optionally filtered by status) */
-        get: operations["getV1State-machines"];
+        get: operations["getData-applicationV1State-machines"];
         put?: never;
         post?: never;
         delete?: never;
@@ -89,7 +89,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/state-machines/{id}": {
+    "/data-application/v1/state-machines/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -97,7 +97,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get a state machine by id */
-        get: operations["getV1State-machinesId"];
+        get: operations["getData-applicationV1State-machinesId"];
         put?: never;
         post?: never;
         delete?: never;
@@ -106,7 +106,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/state-machines/{id}/events": {
+    "/data-application/v1/state-machines/{id}/events": {
         parameters: {
             query?: never;
             header?: never;
@@ -114,7 +114,7 @@ export interface paths {
             cookie?: never;
         };
         /** Event receipts for a state machine */
-        get: operations["getV1State-machinesIdEvents"];
+        get: operations["getData-applicationV1State-machinesIdEvents"];
         put?: never;
         post?: never;
         delete?: never;
@@ -123,7 +123,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/state-machines/{id}/audit": {
+    "/data-application/v1/state-machines/{id}/audit": {
         parameters: {
             query?: never;
             header?: never;
@@ -131,7 +131,7 @@ export interface paths {
             cookie?: never;
         };
         /** Audit trail for a state machine */
-        get: operations["getV1State-machinesIdAudit"];
+        get: operations["getData-applicationV1State-machinesIdAudit"];
         put?: never;
         post?: never;
         delete?: never;
@@ -140,7 +140,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/state-machines/{id}/estimate-fee": {
+    "/data-application/v1/state-machines/{id}/estimate-fee": {
         parameters: {
             query?: never;
             header?: never;
@@ -148,7 +148,7 @@ export interface paths {
             cookie?: never;
         };
         /** Static fee estimate for a transition */
-        get: operations["getV1State-machinesIdEstimate-fee"];
+        get: operations["getData-applicationV1State-machinesIdEstimate-fee"];
         put?: never;
         post?: never;
         delete?: never;
@@ -157,7 +157,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/state-machines/{id}/state-proof": {
+    "/data-application/v1/state-machines/{id}/state-proof": {
         parameters: {
             query?: never;
             header?: never;
@@ -165,7 +165,7 @@ export interface paths {
             cookie?: never;
         };
         /** Committed-state Merkle proof for a state machine */
-        get: operations["getV1State-machinesIdState-proof"];
+        get: operations["getData-applicationV1State-machinesIdState-proof"];
         put?: never;
         post?: never;
         delete?: never;
@@ -174,7 +174,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/scripts": {
+    "/data-application/v1/scripts": {
         parameters: {
             query?: never;
             header?: never;
@@ -182,7 +182,7 @@ export interface paths {
             cookie?: never;
         };
         /** List scripts (optionally filtered by status) */
-        get: operations["getV1Scripts"];
+        get: operations["getData-applicationV1Scripts"];
         put?: never;
         post?: never;
         delete?: never;
@@ -191,7 +191,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/scripts/{id}": {
+    "/data-application/v1/scripts/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -199,7 +199,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get a script by id */
-        get: operations["getV1ScriptsId"];
+        get: operations["getData-applicationV1ScriptsId"];
         put?: never;
         post?: never;
         delete?: never;
@@ -208,7 +208,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/scripts/{id}/invocations": {
+    "/data-application/v1/scripts/{id}/invocations": {
         parameters: {
             query?: never;
             header?: never;
@@ -216,7 +216,7 @@ export interface paths {
             cookie?: never;
         };
         /** Invocation history for a script */
-        get: operations["getV1ScriptsIdInvocations"];
+        get: operations["getData-applicationV1ScriptsIdInvocations"];
         put?: never;
         post?: never;
         delete?: never;
@@ -225,7 +225,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/scripts/{id}/estimate-fee": {
+    "/data-application/v1/scripts/{id}/estimate-fee": {
         parameters: {
             query?: never;
             header?: never;
@@ -233,7 +233,7 @@ export interface paths {
             cookie?: never;
         };
         /** Static fee estimate for a script invocation */
-        get: operations["getV1ScriptsIdEstimate-fee"];
+        get: operations["getData-applicationV1ScriptsIdEstimate-fee"];
         put?: never;
         post?: never;
         delete?: never;
@@ -242,7 +242,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/scripts/{id}/state-proof": {
+    "/data-application/v1/scripts/{id}/state-proof": {
         parameters: {
             query?: never;
             header?: never;
@@ -250,7 +250,7 @@ export interface paths {
             cookie?: never;
         };
         /** Committed-state Merkle proof for a script */
-        get: operations["getV1ScriptsIdState-proof"];
+        get: operations["getData-applicationV1ScriptsIdState-proof"];
         put?: never;
         post?: never;
         delete?: never;
@@ -259,7 +259,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/assets/{id}/state-proof": {
+    "/data-application/v1/assets/{id}/state-proof": {
         parameters: {
             query?: never;
             header?: never;
@@ -267,7 +267,7 @@ export interface paths {
             cookie?: never;
         };
         /** Custody (committed-state) Merkle proof for an asset */
-        get: operations["getV1AssetsIdState-proof"];
+        get: operations["getData-applicationV1AssetsIdState-proof"];
         put?: never;
         post?: never;
         delete?: never;
@@ -276,7 +276,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/registry": {
+    "/data-application/v1/registry": {
         parameters: {
             query?: never;
             header?: never;
@@ -284,7 +284,7 @@ export interface paths {
             cookie?: never;
         };
         /** All registered package versions */
-        get: operations["getV1Registry"];
+        get: operations["getData-applicationV1Registry"];
         put?: never;
         post?: never;
         delete?: never;
@@ -293,7 +293,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/registry/reverse/{id}": {
+    "/data-application/v1/registry/reverse/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -301,7 +301,7 @@ export interface paths {
             cookie?: never;
         };
         /** Reverse-lookup a registry name by id */
-        get: operations["getV1RegistryReverseId"];
+        get: operations["getData-applicationV1RegistryReverseId"];
         put?: never;
         post?: never;
         delete?: never;
@@ -310,7 +310,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/registry/{name}": {
+    "/data-application/v1/registry/{name}": {
         parameters: {
             query?: never;
             header?: never;
@@ -318,7 +318,7 @@ export interface paths {
             cookie?: never;
         };
         /** Resolve a registry entry by name */
-        get: operations["getV1RegistryName"];
+        get: operations["getData-applicationV1RegistryName"];
         put?: never;
         post?: never;
         delete?: never;
@@ -327,7 +327,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/webhooks/subscribe": {
+    "/data-application/v1/webhooks/subscribe": {
         parameters: {
             query?: never;
             header?: never;
@@ -337,14 +337,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Register a webhook subscriber */
-        post: operations["postV1WebhooksSubscribe"];
+        post: operations["postData-applicationV1WebhooksSubscribe"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/v1/webhooks/subscribe/{id}": {
+    "/data-application/v1/webhooks/subscribe/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -355,13 +355,13 @@ export interface paths {
         put?: never;
         post?: never;
         /** Unregister a webhook subscriber */
-        delete: operations["deleteV1WebhooksSubscribeId"];
+        delete: operations["deleteData-applicationV1WebhooksSubscribeId"];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/v1/webhooks/subscribers": {
+    "/data-application/v1/webhooks/subscribers": {
         parameters: {
             query?: never;
             header?: never;
@@ -369,7 +369,7 @@ export interface paths {
             cookie?: never;
         };
         /** List webhook subscribers (secrets redacted) */
-        get: operations["getV1WebhooksSubscribers"];
+        get: operations["getData-applicationV1WebhooksSubscribers"];
         put?: never;
         post?: never;
         delete?: never;
@@ -459,7 +459,7 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    getV1Version: {
+    "getData-applicationV1Version": {
         parameters: {
             query?: never;
             header?: never;
@@ -478,7 +478,7 @@ export interface operations {
             };
         };
     };
-    postV1UtilHash: {
+    "postData-applicationV1UtilHash": {
         parameters: {
             query?: never;
             header?: never;
@@ -512,7 +512,7 @@ export interface operations {
             };
         };
     };
-    getV1Onchain: {
+    "getData-applicationV1Onchain": {
         parameters: {
             query?: never;
             header?: never;
@@ -532,7 +532,7 @@ export interface operations {
             };
         };
     };
-    getV1Checkpoint: {
+    "getData-applicationV1Checkpoint": {
         parameters: {
             query?: never;
             header?: never;
@@ -552,7 +552,7 @@ export interface operations {
             };
         };
     };
-    "getV1State-machines": {
+    "getData-applicationV1State-machines": {
         parameters: {
             query?: {
                 /** @description Filter by fiber status: ACTIVE | ARCHIVED | FAILED */
@@ -584,7 +584,7 @@ export interface operations {
             };
         };
     };
-    "getV1State-machinesId": {
+    "getData-applicationV1State-machinesId": {
         parameters: {
             query?: never;
             header?: never;
@@ -615,7 +615,7 @@ export interface operations {
             };
         };
     };
-    "getV1State-machinesIdEvents": {
+    "getData-applicationV1State-machinesIdEvents": {
         parameters: {
             query?: never;
             header?: never;
@@ -646,7 +646,7 @@ export interface operations {
             };
         };
     };
-    "getV1State-machinesIdAudit": {
+    "getData-applicationV1State-machinesIdAudit": {
         parameters: {
             query?: never;
             header?: never;
@@ -677,7 +677,7 @@ export interface operations {
             };
         };
     };
-    "getV1State-machinesIdEstimate-fee": {
+    "getData-applicationV1State-machinesIdEstimate-fee": {
         parameters: {
             query: {
                 event: string;
@@ -709,7 +709,7 @@ export interface operations {
             };
         };
     };
-    "getV1State-machinesIdState-proof": {
+    "getData-applicationV1State-machinesIdState-proof": {
         parameters: {
             query?: {
                 /** @description Optional: also surface this named `stateData` field of the proven record */
@@ -743,7 +743,7 @@ export interface operations {
             };
         };
     };
-    getV1Scripts: {
+    "getData-applicationV1Scripts": {
         parameters: {
             query?: {
                 /** @description Filter by fiber status: ACTIVE | ARCHIVED | FAILED */
@@ -775,7 +775,7 @@ export interface operations {
             };
         };
     };
-    getV1ScriptsId: {
+    "getData-applicationV1ScriptsId": {
         parameters: {
             query?: never;
             header?: never;
@@ -806,7 +806,7 @@ export interface operations {
             };
         };
     };
-    getV1ScriptsIdInvocations: {
+    "getData-applicationV1ScriptsIdInvocations": {
         parameters: {
             query?: never;
             header?: never;
@@ -837,7 +837,7 @@ export interface operations {
             };
         };
     };
-    "getV1ScriptsIdEstimate-fee": {
+    "getData-applicationV1ScriptsIdEstimate-fee": {
         parameters: {
             query?: never;
             header?: never;
@@ -867,7 +867,7 @@ export interface operations {
             };
         };
     };
-    "getV1ScriptsIdState-proof": {
+    "getData-applicationV1ScriptsIdState-proof": {
         parameters: {
             query?: {
                 /** @description Optional: also surface this named `stateData` field of the proven record */
@@ -901,7 +901,7 @@ export interface operations {
             };
         };
     };
-    "getV1AssetsIdState-proof": {
+    "getData-applicationV1AssetsIdState-proof": {
         parameters: {
             query?: {
                 /** @description Optional: also surface this named `stateData` field of the proven record */
@@ -935,7 +935,7 @@ export interface operations {
             };
         };
     };
-    getV1Registry: {
+    "getData-applicationV1Registry": {
         parameters: {
             query?: never;
             header?: never;
@@ -955,7 +955,7 @@ export interface operations {
             };
         };
     };
-    getV1RegistryReverseId: {
+    "getData-applicationV1RegistryReverseId": {
         parameters: {
             query?: never;
             header?: never;
@@ -986,7 +986,7 @@ export interface operations {
             };
         };
     };
-    getV1RegistryName: {
+    "getData-applicationV1RegistryName": {
         parameters: {
             query?: never;
             header?: never;
@@ -1008,7 +1008,7 @@ export interface operations {
             };
         };
     };
-    postV1WebhooksSubscribe: {
+    "postData-applicationV1WebhooksSubscribe": {
         parameters: {
             query?: never;
             header?: never;
@@ -1041,7 +1041,7 @@ export interface operations {
             };
         };
     };
-    deleteV1WebhooksSubscribeId: {
+    "deleteData-applicationV1WebhooksSubscribeId": {
         parameters: {
             query?: never;
             header?: never;
@@ -1060,7 +1060,7 @@ export interface operations {
             };
         };
     };
-    getV1WebhooksSubscribers: {
+    "getData-applicationV1WebhooksSubscribers": {
         parameters: {
             query?: never;
             header?: never;
