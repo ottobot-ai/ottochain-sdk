@@ -135,7 +135,13 @@ describe('MultisigDAO State Machine', () => {
         (t) => t.eventName === 'propose' && t.from === 'ACTIVE'
       );
 
-      expect(proposeTransition!.guard).toHaveProperty('in');
+      // Membership authorization binds to the chain-verified signers (proofs),
+      // not the forgeable event.agent payload field (F1 fix).
+      expect(proposeTransition!.guard).toHaveProperty('some');
+      const guardStr = JSON.stringify(proposeTransition!.guard);
+      expect(guardStr).toContain('proofs');
+      expect(guardStr).not.toContain('event.agent');
+      expect(guardStr).toContain('state.signers');
     });
 
     it('should guard sign to prevent double-signing', () => {

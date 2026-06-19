@@ -1,5 +1,5 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
-import { signerIsParty } from "../../../schema/guards.js";
+import { signerInSet, signerIsParty } from "../../../schema/guards.js";
 
 /**
  * N-of-M multisig governance. Requires threshold signatures for actions.
@@ -162,7 +162,7 @@ export const daoMultisigDef = defineFiberApp({
       from: "ACTIVE",
       to: "PENDING",
       eventName: "propose",
-      guard: { in: [{ var: "event.agent" }, { var: "state.signers" }] },
+      guard: signerInSet("state.signers"),
       effect: {
         merge: [
           { var: "state" },
@@ -192,7 +192,7 @@ export const daoMultisigDef = defineFiberApp({
       eventName: "sign",
       guard: {
         and: [
-          { in: [{ var: "event.agent" }, { var: "state.signers" }] },
+          signerInSet("state.signers"),
           {
             "!": [
               { getKey: [{ var: "state.signatures" }, { var: "event.agent" }] },
@@ -299,7 +299,7 @@ export const daoMultisigDef = defineFiberApp({
       from: "ACTIVE",
       to: "PENDING",
       eventName: "propose_add_signer",
-      guard: { in: [{ var: "event.agent" }, { var: "state.signers" }] },
+      guard: signerInSet("state.signers"),
       effect: {
         merge: [
           { var: "state" },
@@ -329,7 +329,7 @@ export const daoMultisigDef = defineFiberApp({
       eventName: "propose_remove_signer",
       guard: {
         and: [
-          { in: [{ var: "event.agent" }, { var: "state.signers" }] },
+          signerInSet("state.signers"),
           {
             ">": [
               { size: { var: "state.signers" } },
@@ -367,7 +367,7 @@ export const daoMultisigDef = defineFiberApp({
       eventName: "propose_change_threshold",
       guard: {
         and: [
-          { in: [{ var: "event.agent" }, { var: "state.signers" }] },
+          signerInSet("state.signers"),
           { ">=": [{ var: "event.newThreshold" }, 1] },
           {
             "<=": [

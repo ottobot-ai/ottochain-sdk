@@ -1,5 +1,5 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
-import { signerIsParty } from "../../../schema/guards.js";
+import { signerIsParty, signerInSet } from "../../../schema/guards.js";
 
 /**
  * Binary or multi-outcome prediction market with oracle resolution and position staking.
@@ -293,7 +293,7 @@ export const marketPredictionDef = defineFiberApp({
       from: "CLOSED",
       to: "RESOLVING",
       eventName: "submit_resolution",
-      guard: { in: [{ var: "event.agent" }, { var: "state.oracles" }] },
+      guard: signerInSet("state.oracles"),
       effect: {
         merge: [
           { var: "state" },
@@ -318,7 +318,7 @@ export const marketPredictionDef = defineFiberApp({
       eventName: "submit_resolution",
       guard: {
         and: [
-          { in: [{ var: "event.agent" }, { var: "state.oracles" }] },
+          signerInSet("state.oracles"),
           {
             "!": [
               {

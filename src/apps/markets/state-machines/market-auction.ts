@@ -1,5 +1,5 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
-import { signerIsParty } from "../../../schema/guards.js";
+import { signerIsParty, signerIsNotParty } from "../../../schema/guards.js";
 
 /**
  * Auction market supporting English, Dutch, and sealed-bid variants.
@@ -171,7 +171,7 @@ export const marketAuctionDef = defineFiberApp({
       eventName: "bid",
       guard: {
         and: [
-          { "!==": [{ var: "event.agent" }, { var: "state.seller" }] },
+          signerIsNotParty("state.seller"),
           { ">=": [{ var: "event.amount" }, { var: "state.minBid" }] },
           {
             or: [

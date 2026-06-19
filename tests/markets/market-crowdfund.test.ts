@@ -35,8 +35,26 @@ describe('MarketCrowdfund State Machine', () => {
     const pledge = marketCrowdfundDef.transitions.find(t => t.eventName === 'pledge');
     expect(pledge).toBeDefined();
     const guardStr = JSON.stringify(pledge?.guard);
-    expect(guardStr).toContain('!==');
+    // Anti-self check binds to the VERIFIED signer set (proofs[].address), not the
+    // forgeable event.agent — signerIsNotParty('state.creator').
     expect(guardStr).toContain('state.creator');
+    expect(guardStr).toContain('proofs');
+    expect(pledge?.guard).toEqual(
+      expect.objectContaining({
+        and: expect.arrayContaining([
+          {
+            '!': [
+              {
+                in: [
+                  { var: 'state.creator' },
+                  { map: [{ var: 'proofs' }, { var: 'address' }] },
+                ],
+              },
+            ],
+          },
+        ]),
+      })
+    );
   });
 
   it('should increment totalPledged and backerCount on pledge', () => {

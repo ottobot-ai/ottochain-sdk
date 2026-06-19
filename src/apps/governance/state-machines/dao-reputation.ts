@@ -1,4 +1,5 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
+import { signerInSet } from "../../../schema/guards.js";
 
 /**
  * Reputation-based governance. Minimum reputation required for participation.
@@ -210,19 +211,9 @@ export const daoReputationDef = defineFiberApp({
               { var: "state.voteThreshold" },
             ],
           },
-          {
-            "!": [{ in: [{ var: "event.agent" }, { var: "state.votes.for" }] }],
-          },
-          {
-            "!": [
-              { in: [{ var: "event.agent" }, { var: "state.votes.against" }] },
-            ],
-          },
-          {
-            "!": [
-              { in: [{ var: "event.agent" }, { var: "state.votes.abstain" }] },
-            ],
-          },
+          { "!": [signerInSet("state.votes.for")] },
+          { "!": [signerInSet("state.votes.against")] },
+          { "!": [signerInSet("state.votes.abstain")] },
           { "<=": [{ var: "$timestamp" }, { var: "state.proposal.deadline" }] },
         ],
       },
@@ -406,7 +397,7 @@ export const daoReputationDef = defineFiberApp({
               { var: "state.memberThreshold" },
             ],
           },
-          { "!": [{ in: [{ var: "event.agent" }, { var: "state.members" }] }] },
+          { "!": [signerInSet("state.members")] },
         ],
       },
       effect: {
@@ -433,7 +424,7 @@ export const daoReputationDef = defineFiberApp({
       from: "ACTIVE",
       to: "ACTIVE",
       eventName: "leave",
-      guard: { in: [{ var: "event.agent" }, { var: "state.members" }] },
+      guard: signerInSet("state.members"),
       effect: {
         merge: [
           { var: "state" },

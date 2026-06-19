@@ -30,6 +30,21 @@ export const signerIsAnyParty = (partyVars: string[]): GuardRule => ({
 });
 
 /**
+ * FIBER-transition authorization where the actor must be a MEMBER of a pinned set: at least one
+ * VERIFIED signer is in the `setVar` array (e.g. `"state.signers"`, `"state.members"`, `"state.oracles"`).
+ * The replay-safe replacement for `{"in":[{"var":"event.agent"}, {"var":setVar}]}`.
+ */
+export const signerInSet = (setVar: string): GuardRule => ({
+  some: [{ map: [{ var: 'proofs' }, { var: 'address' }] }, { in: [{ var: '' }, { var: setVar }] }],
+});
+
+/**
+ * FIBER-transition ANTI-SELF guard: NO verified signer is the pinned party (e.g. a proposal author may
+ * not vote on their own proposal). The replay-safe replacement for `{"!==":[{"var":"event.agent"}, {"var":partyVar}]}`.
+ */
+export const signerIsNotParty = (partyVar: string): GuardRule => ({ '!': [signerIsParty(partyVar)] });
+
+/**
  * ASSET-op authorization (mintPolicy / burnPolicy / MorphismSpec.guard): the address at `addressVar`
  * (e.g. `"holder.Wallet.address"`) MUST be among the op's verified `signers`. The asset context has no
  * `event` or `proofs` — it injects `signers` directly.

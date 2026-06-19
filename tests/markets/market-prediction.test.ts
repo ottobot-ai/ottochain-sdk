@@ -53,7 +53,14 @@ describe('MarketPrediction State Machine', () => {
       t => t.eventName === 'submit_resolution' && t.from === 'CLOSED'
     );
     expect(t).toBeDefined();
-    expect(t?.guard).toHaveProperty('in');
+    // Oracle allowlist binds to VERIFIED signers (proofs[].address), not the
+    // forgeable event.agent — signerInSet('state.oracles').
+    expect(t?.guard).toEqual({
+      some: [
+        { map: [{ var: 'proofs' }, { var: 'address' }] },
+        { in: [{ var: '' }, { var: 'state.oracles' }] },
+      ],
+    });
   });
 
   it('should require quorum for finalization', () => {

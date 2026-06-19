@@ -1,5 +1,9 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
-import { signerIsAnyParty } from "../../../schema/guards.js";
+import {
+  signerInSet,
+  signerIsAnyParty,
+  signerIsNotParty,
+} from "../../../schema/guards.js";
 
 /**
  * Simple org governance: manage members, update rules, resolve disputes.
@@ -183,7 +187,7 @@ export const govSimpleDef = defineFiberApp({
       from: "ACTIVE",
       to: "ACTIVE",
       eventName: "add_member",
-      guard: { in: [{ var: "event.agent" }, { var: "state.admins" }] },
+      guard: signerInSet("state.admins"),
       effect: {
         merge: [
           { var: "state" },
@@ -205,7 +209,7 @@ export const govSimpleDef = defineFiberApp({
       from: "ACTIVE",
       to: "ACTIVE",
       eventName: "remove_member",
-      guard: { in: [{ var: "event.agent" }, { var: "state.admins" }] },
+      guard: signerInSet("state.admins"),
       effect: {
         merge: [
           { var: "state" },
@@ -428,12 +432,8 @@ export const govSimpleDef = defineFiberApp({
       guard: {
         and: [
           { getKey: [{ var: "state.members" }, { var: "event.agent" }] },
-          {
-            "!==": [{ var: "event.agent" }, { var: "state.dispute.plaintiff" }],
-          },
-          {
-            "!==": [{ var: "event.agent" }, { var: "state.dispute.defendant" }],
-          },
+          signerIsNotParty("state.dispute.plaintiff"),
+          signerIsNotParty("state.dispute.defendant"),
           {
             "!": [{ getKey: [{ var: "state.votes" }, { var: "event.agent" }] }],
           },

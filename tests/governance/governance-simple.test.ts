@@ -68,8 +68,12 @@ describe('Governance (Simple) State Machine', () => {
         (t) => t.eventName === 'add_member'
       );
 
-      expect(transition!.guard).toHaveProperty('in');
+      // Membership authorization binds to the chain-verified signers (proofs),
+      // not the forgeable event.agent payload field (F1 fix).
+      expect(transition!.guard).toHaveProperty('some');
       const guardStr = JSON.stringify(transition!.guard);
+      expect(guardStr).toContain('proofs');
+      expect(guardStr).not.toContain('event.agent');
       expect(guardStr).toContain('admins');
     });
 
@@ -78,8 +82,12 @@ describe('Governance (Simple) State Machine', () => {
         (t) => t.eventName === 'remove_member'
       );
 
-      expect(transition!.guard).toHaveProperty('in');
+      // Membership authorization binds to the chain-verified signers (proofs),
+      // not the forgeable event.agent payload field (F1 fix).
+      expect(transition!.guard).toHaveProperty('some');
       const guardStr = JSON.stringify(transition!.guard);
+      expect(guardStr).toContain('proofs');
+      expect(guardStr).not.toContain('event.agent');
       expect(guardStr).toContain('admins');
     });
   });
