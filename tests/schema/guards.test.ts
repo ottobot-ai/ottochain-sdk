@@ -8,6 +8,8 @@ import {
   signerHasEntry,
   assetSignerIs,
   actorIsSigner,
+  actorInSet,
+  actorHasEntry,
   signerHasReputation,
   signerHasRole,
 } from '../../src/schema/guards';
@@ -102,6 +104,32 @@ describe('schema/guards — authorization binds to verified signers, not event/w
     expect(apply(g, fiberCtx(['0xvictim'], { agent: '0xvictim' }))).toBe(true);
     // a custom actor field is supported
     expect(actorIsSigner('event.delegateFrom')).toEqual(signerIsParty('event.delegateFrom'));
+  });
+
+  it('actorInSet binds event.agent to a verified signer who is in the pinned ARRAY set', () => {
+    const g = actorInSet('state.signers');
+    const ctx = (signers: string[], agent: string, set: string[] = ['0xA', '0xB']) => ({
+      state: { signers: set },
+      proofs: signers.map((a) => ({ address: a })),
+      event: { agent },
+    });
+    expect(apply(g, ctx(['0xA'], '0xA'))).toBe(true); // agent signed and is a member
+    expect(apply(g, ctx(['0xB'], '0xA'))).toBe(false); // forge: agent did not sign
+    // padding: a verified co-signer who is NOT in the set cannot be the written key
+    expect(apply(g, ctx(['0xA', '0xC'], '0xC'))).toBe(false);
+  });
+
+  it('actorHasEntry binds event.agent to a verified signer who is a key in the pinned MAP', () => {
+    const g = actorHasEntry('state.members');
+    const ctx = (signers: string[], agent: string, members: Record<string, unknown> = { '0xA': 1, '0xB': 1 }) => ({
+      state: { members },
+      proofs: signers.map((a) => ({ address: a })),
+      event: { agent },
+    });
+    expect(apply(g, ctx(['0xA'], '0xA'))).toBe(true); // signer is a member key
+    expect(apply(g, ctx(['0xB'], '0xA'))).toBe(false); // forge: agent did not sign
+    // stuffing: a verified co-signer who is NOT a member key cannot be written
+    expect(apply(g, ctx(['0xA', '0xZ'], '0xZ'))).toBe(false);
   });
 
   it('signerHasReputation gates on a registry-map read bound to the signer', () => {

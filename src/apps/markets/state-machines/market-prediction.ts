@@ -397,12 +397,14 @@ export const marketPredictionDef = defineFiberApp({
           {
             ">": [
               {
-                size: {
-                  filter: [
-                    { var: "state.positions" },
-                    { "===": [{ var: "agent" }, { var: "event.agent" }] },
-                  ],
-                },
+                length: [
+                  {
+                    filter: [
+                      { var: "state.positions" },
+                      { "===": [{ var: "agent" }, { var: "event.agent" }] },
+                    ],
+                  },
+                ],
               },
               0,
             ],
@@ -456,12 +458,14 @@ export const marketPredictionDef = defineFiberApp({
       guard: {
         ">=": [
           {
-            size: {
-              filter: [
-                { var: "state.resolutions" },
-                { "===": [{ var: "outcome" }, "INVALID"] },
-              ],
-            },
+            length: [
+              {
+                filter: [
+                  { var: "state.resolutions" },
+                  { "===": [{ var: "outcome" }, "INVALID"] },
+                ],
+              },
+            ],
           },
           { var: "state.quorum" },
         ],
@@ -487,22 +491,24 @@ export const marketPredictionDef = defineFiberApp({
           {
             ">": [
               {
-                size: {
-                  filter: [
-                    { var: "state.positions" },
-                    {
-                      and: [
-                        { "===": [{ var: "agent" }, { var: "event.agent" }] },
-                        {
-                          "===": [
-                            { var: "outcome" },
-                            { var: "state.finalOutcome" },
-                          ],
-                        },
-                      ],
-                    },
-                  ],
-                },
+                length: [
+                  {
+                    filter: [
+                      { var: "state.positions" },
+                      {
+                        and: [
+                          { "===": [{ var: "agent" }, { var: "event.agent" }] },
+                          {
+                            "===": [
+                              { var: "outcome" },
+                              { var: "state.finalOutcome" },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
               },
               0,
             ],

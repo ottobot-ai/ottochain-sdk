@@ -397,12 +397,14 @@ export const marketGroupBuyDef = defineFiberApp({
           {
             ">": [
               {
-                size: {
-                  filter: [
-                    { var: "state.orders" },
-                    { "===": [{ var: "buyer" }, { var: "event.agent" }] },
-                  ],
-                },
+                length: [
+                  {
+                    filter: [
+                      { var: "state.orders" },
+                      { "===": [{ var: "buyer" }, { var: "event.agent" }] },
+                    ],
+                  },
+                ],
               },
               0,
             ],

@@ -218,12 +218,14 @@ export const marketCrowdfundDef = defineFiberApp({
           {
             ">": [
               {
-                size: {
-                  filter: [
-                    { var: "state.pledges" },
-                    { "===": [{ var: "backer" }, { var: "event.agent" }] },
-                  ],
-                },
+                length: [
+                  {
+                    filter: [
+                      { var: "state.pledges" },
+                      { "===": [{ var: "backer" }, { var: "event.agent" }] },
+                    ],
+                  },
+                ],
               },
               0,
             ],
@@ -303,12 +305,14 @@ export const marketCrowdfundDef = defineFiberApp({
           {
             ">": [
               {
-                size: {
-                  filter: [
-                    { var: "state.pledges" },
-                    { "===": [{ var: "backer" }, { var: "event.agent" }] },
-                  ],
-                },
+                length: [
+                  {
+                    filter: [
+                      { var: "state.pledges" },
+                      { "===": [{ var: "backer" }, { var: "event.agent" }] },
+                    ],
+                  },
+                ],
               },
               0,
             ],

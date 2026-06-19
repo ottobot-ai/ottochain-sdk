@@ -1,5 +1,6 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
 import {
+  actorHasEntry,
   signerHasEntry,
   signerInSet,
   signerIsAnyParty,
@@ -190,7 +191,7 @@ export const govSimpleDef = defineFiberApp({
           { var: "state" },
           {
             members: {
-              setKey: [
+              set: [
                 { var: "state.members" },
                 { var: "event.member" },
                 { role: { var: "event.role" }, addedAt: { var: "$ordinal" } },
@@ -212,7 +213,7 @@ export const govSimpleDef = defineFiberApp({
           { var: "state" },
           {
             members: {
-              deleteKey: [{ var: "state.members" }, { var: "event.member" }],
+              unset: [{ var: "state.members" }, { var: "event.member" }],
             },
           },
         ],
@@ -252,13 +253,14 @@ export const govSimpleDef = defineFiberApp({
       from: "VOTING",
       to: "VOTING",
       eventName: "vote",
-      // S1/A2 coupled fix: voter must be a CHAIN-VERIFIED member and must not have
-      // already voted. Both checks bind to proofs[].address (getKey is not a JLVM
-      // opcode); signerHasEntry checks signer ∈ keys(map) via `has`.
+      // S1/A2 coupled fix: bind event.agent to a verified signer who is a member (actorHasEntry),
+      // and block a re-vote by that SAME bound actor — so the ballot is recorded under, and deduped
+      // on, the chain-verified voter. Without the binding, signerHasEntry only proves SOME signer is a
+      // member, letting one member stuff votes under arbitrary keys (set is the rc.5 map-write opcode).
       guard: {
         and: [
-          signerHasEntry("state.members"),
-          { "!": [signerHasEntry("state.votes")] },
+          actorHasEntry("state.members"),
+          { "!": [{ has: [{ var: "state.votes" }, { var: "event.agent" }] }] },
         ],
       },
       effect: {
@@ -266,7 +268,7 @@ export const govSimpleDef = defineFiberApp({
           { var: "state" },
           {
             votes: {
-              setKey: [
+              set: [
                 { var: "state.votes" },
                 { var: "event.agent" },
                 { vote: { var: "event.vote" }, votedAt: { var: "$ordinal" } },
@@ -454,15 +456,16 @@ export const govSimpleDef = defineFiberApp({
       from: "DISPUTE",
       to: "DISPUTE",
       eventName: "vote",
-      // S1/A2 coupled fix: dispute voter must be a CHAIN-VERIFIED member, not a party,
-      // and must not have already voted — all bound to proofs[].address (getKey is not
-      // a JLVM opcode; signerHasEntry checks signer ∈ keys(map) via `has`).
+      // S1/A2 coupled fix: bind event.agent to a verified member (actorHasEntry), exclude the parties,
+      // and block a re-vote by that SAME bound actor — so the dispute ballot is recorded under, and
+      // deduped on, the chain-verified voter (set is the rc.5 map-write opcode; signerIsNotParty still
+      // excludes any signer who is a party, which covers the bound actor).
       guard: {
         and: [
-          signerHasEntry("state.members"),
+          actorHasEntry("state.members"),
           signerIsNotParty("state.dispute.plaintiff"),
           signerIsNotParty("state.dispute.defendant"),
-          { "!": [signerHasEntry("state.votes")] },
+          { "!": [{ has: [{ var: "state.votes" }, { var: "event.agent" }] }] },
         ],
       },
       effect: {
@@ -470,7 +473,7 @@ export const govSimpleDef = defineFiberApp({
           { var: "state" },
           {
             votes: {
-              setKey: [
+              set: [
                 { var: "state.votes" },
                 { var: "event.agent" },
                 {
@@ -537,7 +540,12 @@ export const govSimpleDef = defineFiberApp({
           {
             all: [
               { keys: [{ var: "state.members" }] },
-              { in: [{ var: "" }, { map: [{ var: "proofs" }, { var: "address" }] }] },
+              {
+                in: [
+                  { var: "" },
+                  { map: [{ var: "proofs" }, { var: "address" }] },
+                ],
+              },
             ],
           },
         ],

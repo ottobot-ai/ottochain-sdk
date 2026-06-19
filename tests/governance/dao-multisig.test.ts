@@ -148,12 +148,13 @@ describe('MultisigDAO State Machine', () => {
         (t) => t.eventName === 'propose' && t.from === 'ACTIVE'
       );
 
-      // Membership authorization binds to the chain-verified signers (proofs),
-      // not the forgeable event.agent payload field (F1 fix).
-      expect(proposeTransition!.guard).toHaveProperty('some');
+      // S1 coupled fix: actorInSet binds event.agent to a verified signer who is in state.signers, so
+      // the proposer's signature is written under the chain-verified key. event.agent appears, but only
+      // inside the proofs binding (never as bare authorization); the guard is an `and` of both clauses.
+      expect(proposeTransition!.guard).toHaveProperty('and');
       const guardStr = JSON.stringify(proposeTransition!.guard);
-      expect(guardStr).toContain('proofs');
-      expect(guardStr).not.toContain('event.agent');
+      expect(guardStr).toContain('proofs'); // event.agent is bound to proofs[].address
+      expect(guardStr).toContain('event.agent');
       expect(guardStr).toContain('state.signers');
     });
 
@@ -229,7 +230,8 @@ describe('MultisigDAO State Machine', () => {
 
       const effectStr = JSON.stringify(signTransition!.effect);
       expect(effectStr).toContain('signatures');
-      expect(effectStr).toContain('setKey');
+      expect(effectStr).toContain('"set"'); // rc.5 map-write opcode (setKey does not exist)
+      expect(effectStr).not.toContain('setKey');
     });
 
     it('should record executed action on execute', () => {

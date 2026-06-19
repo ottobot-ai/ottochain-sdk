@@ -1,5 +1,5 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
-import { signerIsParty } from "../../../schema/guards.js";
+import { signerIsParty, actorIsSigner } from "../../../schema/guards.js";
 
 /**
  * Token-weighted voting. Voting power proportional to token holdings.
@@ -223,26 +223,28 @@ export const daoTokenDef = defineFiberApp({
       from: "VOTING",
       to: "VOTING",
       eventName: "vote",
+      // S1+A2 coupled fix: bind event.agent to a verified signer (actorIsSigner) so the
+      // balance lookup, the no-double-vote check, and the voters write below all key on the
+      // CHAIN-VERIFIED actor — never a forgeable claim. getKey→get (value), getKey→has
+      // (presence), setKey→set are the rc.5 map opcodes (getKey/setKey do not exist).
       guard: {
         and: [
+          actorIsSigner(),
           {
             ">": [
-              { getKey: [{ var: "state.balances" }, { var: "event.agent" }] },
+              { get: [{ var: "state.balances" }, { var: "event.agent" }] },
               0,
             ],
           },
           {
             "!": [
               {
-                getKey: [{ var: "state.votes.voters" }, { var: "event.agent" }],
+                has: [{ var: "state.votes.voters" }, { var: "event.agent" }],
               },
             ],
           },
           {
-            "<=": [
-              { var: "$ordinal" },
-              { var: "state.proposal.votingEndsAt" },
-            ],
+            "<=": [{ var: "$ordinal" }, { var: "state.proposal.votingEndsAt" }],
           },
         ],
       },
@@ -261,7 +263,7 @@ export const daoTokenDef = defineFiberApp({
                         "+": [
                           { var: "state.votes.for" },
                           {
-                            getKey: [
+                            get: [
                               { var: "state.balances" },
                               { var: "event.agent" },
                             ],
@@ -275,7 +277,7 @@ export const daoTokenDef = defineFiberApp({
                         "+": [
                           { var: "state.votes.against" },
                           {
-                            getKey: [
+                            get: [
                               { var: "state.balances" },
                               { var: "event.agent" },
                             ],
@@ -288,7 +290,7 @@ export const daoTokenDef = defineFiberApp({
                         "+": [
                           { var: "state.votes.abstain" },
                           {
-                            getKey: [
+                            get: [
                               { var: "state.balances" },
                               { var: "event.agent" },
                             ],
@@ -300,13 +302,13 @@ export const daoTokenDef = defineFiberApp({
                 },
                 {
                   voters: {
-                    setKey: [
+                    set: [
                       { var: "state.votes.voters" },
                       { var: "event.agent" },
                       {
                         vote: { var: "event.vote" },
                         weight: {
-                          getKey: [
+                          get: [
                             { var: "state.balances" },
                             { var: "event.agent" },
                           ],
@@ -331,10 +333,7 @@ export const daoTokenDef = defineFiberApp({
       guard: {
         and: [
           {
-            ">": [
-              { var: "$ordinal" },
-              { var: "state.proposal.votingEndsAt" },
-            ],
+            ">": [{ var: "$ordinal" }, { var: "state.proposal.votingEndsAt" }],
           },
           { ">": [{ var: "state.votes.for" }, { var: "state.votes.against" }] },
           {
@@ -415,10 +414,7 @@ export const daoTokenDef = defineFiberApp({
       guard: {
         and: [
           {
-            ">": [
-              { var: "$ordinal" },
-              { var: "state.proposal.votingEndsAt" },
-            ],
+            ">": [{ var: "$ordinal" }, { var: "state.proposal.votingEndsAt" }],
           },
           {
             or: [
@@ -506,10 +502,17 @@ export const daoTokenDef = defineFiberApp({
       from: "ACTIVE",
       to: "ACTIVE",
       eventName: "delegate",
+      // S1+A2: bind event.agent to a verified signer so the delegation is written under the
+      // CHAIN-VERIFIED delegator's key (set), keyed on the same actor whose balance is checked (get).
       guard: {
-        ">": [
-          { getKey: [{ var: "state.balances" }, { var: "event.agent" }] },
-          0,
+        and: [
+          actorIsSigner(),
+          {
+            ">": [
+              { get: [{ var: "state.balances" }, { var: "event.agent" }] },
+              0,
+            ],
+          },
         ],
       },
       effect: {
@@ -517,7 +520,7 @@ export const daoTokenDef = defineFiberApp({
           { var: "state" },
           {
             delegations: {
-              setKey: [
+              set: [
                 { var: "state.delegations" },
                 { var: "event.agent" },
                 { var: "event.delegateTo" },
@@ -533,13 +536,21 @@ export const daoTokenDef = defineFiberApp({
       from: "ACTIVE",
       to: "ACTIVE",
       eventName: "undelegate",
-      guard: { getKey: [{ var: "state.delegations" }, { var: "event.agent" }] },
+      // S1+A2: bind event.agent to a verified signer; presence via has, removal via unset (the rc.5
+      // map opcodes — getKey/deleteKey do not exist). Only the verified delegator can clear their own
+      // delegation.
+      guard: {
+        and: [
+          actorIsSigner(),
+          { has: [{ var: "state.delegations" }, { var: "event.agent" }] },
+        ],
+      },
       effect: {
         merge: [
           { var: "state" },
           {
             delegations: {
-              deleteKey: [{ var: "state.delegations" }, { var: "event.agent" }],
+              unset: [{ var: "state.delegations" }, { var: "event.agent" }],
             },
           },
         ],

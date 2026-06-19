@@ -1,5 +1,5 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
-import { signerInSet } from "../../../schema/guards.js";
+import { actorIsSigner, signerInSet } from "../../../schema/guards.js";
 
 /**
  * Reputation-based governance. Minimum reputation required for participation.
@@ -393,15 +393,24 @@ export const daoReputationDef = defineFiberApp({
       from: "ACTIVE",
       to: "ACTIVE",
       eventName: "join",
+      // S1/A2: bind event.agent to a verified signer (actorIsSigner) so the member is appended to the
+      // array and keyed into memberJoinedAt under a CHAIN-VERIFIED address (set is the rc.5 map-write
+      // opcode), and dedup on that bound actor.
+      // TODO(#24): event.agentReputation is self-asserted. Replace the reputation clause with
+      // signerHasReputation(registryReputationPath(<registryDep>), "state.memberThreshold") once
+      // runtime-updatable dependencies (#24) let a std-app bind the identity-registry instance — the
+      // same gate as corp-board's removal-resolution. The registry foundation + read helper already
+      // exist (src/apps/identity/state-machines/identity-registry.ts, guards.signerHasReputation).
       guard: {
         and: [
+          actorIsSigner(),
           {
             ">=": [
               { var: "event.agentReputation" },
               { var: "state.memberThreshold" },
             ],
           },
-          { "!": [signerInSet("state.members")] },
+          { "!": [{ in: [{ var: "event.agent" }, { var: "state.members" }] }] },
         ],
       },
       effect: {
@@ -412,7 +421,7 @@ export const daoReputationDef = defineFiberApp({
               cat: [{ var: "state.members" }, [{ var: "event.agent" }]],
             },
             memberJoinedAt: {
-              setKey: [
+              set: [
                 { var: "state.memberJoinedAt" },
                 { var: "event.agent" },
                 { var: "$ordinal" },

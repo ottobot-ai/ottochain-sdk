@@ -190,12 +190,18 @@ describe('TokenDAO State Machine', () => {
       expect(guardStr).toContain('executableAt');
     });
 
-    it('should guard delegate to token holders', () => {
+    it('should guard delegate to a verified signer who holds tokens', () => {
       const delegateTransition = daoTokenDef.transitions.find(
         (t) => t.eventName === 'delegate'
       );
 
-      expect(delegateTransition!.guard).toHaveProperty('>');
+      // Hardened (S1+A2): guard ands the actorIsSigner binding with a balance check, both keyed on
+      // the same verified actor — so the delegation is written under the signer's own address.
+      expect(delegateTransition!.guard).toHaveProperty('and');
+      const guardStr = JSON.stringify(delegateTransition!.guard);
+      expect(guardStr).toContain('proofs'); // binds event.agent to a verified signer
+      expect(guardStr).toContain('balances'); // ...who holds tokens
+      expect(guardStr).not.toContain('getKey'); // rc.5 opcode: get, not the nonexistent getKey
     });
   });
 

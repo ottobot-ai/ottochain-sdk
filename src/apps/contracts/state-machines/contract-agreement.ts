@@ -241,7 +241,7 @@ export const contractAgreementDef = defineFiberApp({
       from: "ACTIVE",
       to: "COMPLETED",
       eventName: "finalize",
-      guard: { ">=": [{ size: { var: "state.completions" } }, 2] },
+      guard: { ">=": [{ length: [{ var: "state.completions" }] }, 2] },
       effect: {
         merge: [
           { var: "state" },

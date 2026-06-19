@@ -163,12 +163,13 @@ describe('Governance (Simple) State Machine', () => {
         (t) => t.eventName === 'vote' && t.from === 'VOTING'
       );
 
-      // S1/A2 coupled fix: voter + dedup bind to proofs[].address (signerHasEntry),
-      // never event.agent / getKey.
+      // S1/A2 coupled fix: actorHasEntry BINDS event.agent to a verified signer who is a member, and
+      // the ballot is recorded + deduped under that same bound actor. event.agent now legitimately
+      // appears, but only inside a proofs binding (never as bare authorization), and getKey is gone.
       expect(transition!.guard).toHaveProperty('and');
       const guardStr = JSON.stringify(transition!.guard);
-      expect(guardStr).toContain('proofs');
-      expect(guardStr).not.toContain('event.agent');
+      expect(guardStr).toContain('proofs'); // event.agent is bound to proofs[].address
+      expect(guardStr).toContain('event.agent');
       expect(guardStr).not.toContain('getKey');
       expect(guardStr).toContain('votes');
     });
@@ -306,7 +307,8 @@ describe('Governance (Simple) State Machine', () => {
       );
 
       const effectStr = JSON.stringify(transition!.effect);
-      expect(effectStr).toContain('deleteKey');
+      expect(effectStr).toContain('unset'); // rc.5 map-delete opcode (deleteKey does not exist)
+      expect(effectStr).not.toContain('deleteKey');
     });
 
     it('should create proposal with deadline on propose', () => {

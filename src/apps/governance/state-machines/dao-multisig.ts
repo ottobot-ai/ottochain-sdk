@@ -1,5 +1,5 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
-import { signerInSet, signerIsParty } from "../../../schema/guards.js";
+import { actorInSet, signerIsParty } from "../../../schema/guards.js";
 
 /**
  * N-of-M multisig governance. Requires threshold signatures for actions.
@@ -161,7 +161,7 @@ export const daoMultisigDef = defineFiberApp({
       from: "ACTIVE",
       to: "PENDING",
       eventName: "propose",
-      guard: signerInSet("state.signers"),
+      guard: actorInSet("state.signers"),
       effect: {
         merge: [
           { var: "state" },
@@ -177,7 +177,7 @@ export const daoMultisigDef = defineFiberApp({
               },
             },
             signatures: {
-              setKey: [{}, { var: "event.agent" }, { var: "$ordinal" }],
+              set: [{}, { var: "event.agent" }, { var: "$ordinal" }],
             },
           },
         ],
@@ -191,15 +191,15 @@ export const daoMultisigDef = defineFiberApp({
       eventName: "sign",
       guard: {
         and: [
-          signerInSet("state.signers"),
+          actorInSet("state.signers"),
           {
             "!": [
-              { getKey: [{ var: "state.signatures" }, { var: "event.agent" }] },
+              { has: [{ var: "state.signatures" }, { var: "event.agent" }] },
             ],
           },
           {
             "<": [
-              { size: { var: "state.signatures" } },
+              { length: [{ keys: [{ var: "state.signatures" }] }] },
               { var: "state.threshold" },
             ],
           },
@@ -210,7 +210,7 @@ export const daoMultisigDef = defineFiberApp({
           { var: "state" },
           {
             signatures: {
-              setKey: [
+              set: [
                 { var: "state.signatures" },
                 { var: "event.agent" },
                 { var: "$ordinal" },
@@ -228,7 +228,7 @@ export const daoMultisigDef = defineFiberApp({
       eventName: "execute",
       guard: {
         ">=": [
-          { size: { var: "state.signatures" } },
+          { length: [{ keys: [{ var: "state.signatures" }] }] },
           { var: "state.threshold" },
         ],
       },
@@ -298,7 +298,7 @@ export const daoMultisigDef = defineFiberApp({
       from: "ACTIVE",
       to: "PENDING",
       eventName: "propose_add_signer",
-      guard: signerInSet("state.signers"),
+      guard: actorInSet("state.signers"),
       effect: {
         merge: [
           { var: "state" },
@@ -314,7 +314,7 @@ export const daoMultisigDef = defineFiberApp({
               },
             },
             signatures: {
-              setKey: [{}, { var: "event.agent" }, { var: "$ordinal" }],
+              set: [{}, { var: "event.agent" }, { var: "$ordinal" }],
             },
           },
         ],
@@ -328,7 +328,7 @@ export const daoMultisigDef = defineFiberApp({
       eventName: "propose_remove_signer",
       guard: {
         and: [
-          signerInSet("state.signers"),
+          actorInSet("state.signers"),
           {
             ">": [
               { length: [{ var: "state.signers" }] },
@@ -352,7 +352,7 @@ export const daoMultisigDef = defineFiberApp({
               },
             },
             signatures: {
-              setKey: [{}, { var: "event.agent" }, { var: "$ordinal" }],
+              set: [{}, { var: "event.agent" }, { var: "$ordinal" }],
             },
           },
         ],
@@ -366,7 +366,7 @@ export const daoMultisigDef = defineFiberApp({
       eventName: "propose_change_threshold",
       guard: {
         and: [
-          signerInSet("state.signers"),
+          actorInSet("state.signers"),
           { ">=": [{ var: "event.newThreshold" }, 1] },
           {
             "<=": [
@@ -391,7 +391,7 @@ export const daoMultisigDef = defineFiberApp({
               },
             },
             signatures: {
-              setKey: [{}, { var: "event.agent" }, { var: "$ordinal" }],
+              set: [{}, { var: "event.agent" }, { var: "$ordinal" }],
             },
           },
         ],
@@ -407,7 +407,7 @@ export const daoMultisigDef = defineFiberApp({
         and: [
           {
             ">=": [
-              { size: { var: "state.signatures" } },
+              { length: [{ keys: [{ var: "state.signatures" }] }] },
               { var: "state.threshold" },
             ],
           },
@@ -486,7 +486,12 @@ export const daoMultisigDef = defineFiberApp({
           {
             all: [
               { var: "state.signers" },
-              { in: [{ var: "" }, { map: [{ var: "proofs" }, { var: "address" }] }] },
+              {
+                in: [
+                  { var: "" },
+                  { map: [{ var: "proofs" }, { var: "address" }] },
+                ],
+              },
             ],
           },
         ],

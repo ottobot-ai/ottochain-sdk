@@ -279,7 +279,7 @@ describe('Contracts State Machine Conversion', () => {
       );
       expect(finalizeTransition?.guard).toEqual({
         ">=": [
-          { "size": { "var": "state.completions" } },
+          { "length": [{ "var": "state.completions" }] },
           2
         ]
       });

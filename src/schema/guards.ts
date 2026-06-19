@@ -21,7 +21,7 @@ export type GuardRule = Record<string, unknown>;
  * replacement for `{"===":[{"var":"event.agent"}, {"var":partyVar}]}`.
  */
 export const signerIsParty = (partyVar: string): GuardRule => ({
-  in: [{ var: partyVar }, { map: [{ var: 'proofs' }, { var: 'address' }] }],
+  in: [{ var: partyVar }, { map: [{ var: "proofs" }, { var: "address" }] }],
 });
 
 /** FIBER-transition authorization where ANY of the pinned parties signed (e.g. borrower OR lender). */
@@ -35,14 +35,19 @@ export const signerIsAnyParty = (partyVars: string[]): GuardRule => ({
  * The replay-safe replacement for `{"in":[{"var":"event.agent"}, {"var":setVar}]}`.
  */
 export const signerInSet = (setVar: string): GuardRule => ({
-  some: [{ map: [{ var: 'proofs' }, { var: 'address' }] }, { in: [{ var: '' }, { var: setVar }] }],
+  some: [
+    { map: [{ var: "proofs" }, { var: "address" }] },
+    { in: [{ var: "" }, { var: setVar }] },
+  ],
 });
 
 /**
  * FIBER-transition ANTI-SELF guard: NO verified signer is the pinned party (e.g. a proposal author may
  * not vote on their own proposal). The replay-safe replacement for `{"!==":[{"var":"event.agent"}, {"var":partyVar}]}`.
  */
-export const signerIsNotParty = (partyVar: string): GuardRule => ({ '!': [signerIsParty(partyVar)] });
+export const signerIsNotParty = (partyVar: string): GuardRule => ({
+  "!": [signerIsParty(partyVar)],
+});
 
 /**
  * FIBER-transition authorization / dedup over a state MAP keyed by address: at least one VERIFIED signer
@@ -53,7 +58,10 @@ export const signerIsNotParty = (partyVar: string): GuardRule => ({ '!': [signer
  * `{"some":[{"map":[proofs,address]},{">=":[{"get":[mapVar,{"var":""}]}, N]}]}`.
  */
 export const signerHasEntry = (mapVar: string): GuardRule => ({
-  some: [{ map: [{ var: 'proofs' }, { var: 'address' }] }, { has: [{ var: mapVar }, { var: '' }] }],
+  some: [
+    { map: [{ var: "proofs" }, { var: "address" }] },
+    { has: [{ var: mapVar }, { var: "" }] },
+  ],
 });
 
 /**
@@ -62,7 +70,7 @@ export const signerHasEntry = (mapVar: string): GuardRule => ({
  * `event` or `proofs` — it injects `signers` directly.
  */
 export const assetSignerIs = (addressVar: string): GuardRule => ({
-  in: [{ var: addressVar }, { var: 'signers' }],
+  in: [{ var: addressVar }, { var: "signers" }],
 });
 
 /**
@@ -77,7 +85,41 @@ export const assetSignerIs = (addressVar: string): GuardRule => ({
  * both signed and is authorized, and the effect can only write under that one verified key.
  * Structurally identical to {@link signerIsParty}; named for intent + greppability at write sites.
  */
-export const actorIsSigner = (actorVar = 'event.agent'): GuardRule => signerIsParty(actorVar);
+export const actorIsSigner = (actorVar = "event.agent"): GuardRule =>
+  signerIsParty(actorVar);
+
+/**
+ * EFFECT-KEY-BINDING membership: the event's claimed actor (`actorVar`, default `event.agent`) is BOTH
+ * a CHAIN-VERIFIED signer AND a member of the pinned set `setVar` (e.g. `"state.signers"`,
+ * `"state.members"`). Use when the EFFECT writes a map/array keyed by that actor and authorization is
+ * set-membership. It proves the EXACT actor whose key is written both signed and is authorized — closing
+ * the S1 forge AND the subtler gap {@link signerInSet} leaves open: `signerInSet` only proves SOME
+ * verified signer is a member, so an op co-signed by an authorized signer could still write a DIFFERENT
+ * verified-but-unauthorized address as the key (padding a signature/vote tally). `actorInSet` pins both
+ * to the same `actorVar`.
+ */
+export const actorInSet = (
+  setVar: string,
+  actorVar = "event.agent",
+): GuardRule => ({
+  and: [actorIsSigner(actorVar), { in: [{ var: actorVar }, { var: setVar }] }],
+});
+
+/**
+ * EFFECT-KEY-BINDING map membership: the claimed actor (`actorVar`, default `event.agent`) is BOTH a
+ * CHAIN-VERIFIED signer AND a key in the pinned state MAP `mapVar` (e.g. `"state.members"`,
+ * `"state.balances"`). The map analog of {@link actorInSet} — use it when the membership set is a dict
+ * keyed by address, where `in` does not apply and `has` checks key presence. Use when the EFFECT writes
+ * `mapVar` (or a per-actor tally) keyed by that actor: it proves the EXACT written key both signed and
+ * is an authorized member, closing the vote/signature-stuffing gap that bare {@link signerHasEntry}
+ * leaves open (which only proves SOME verified signer is a key, not that the written key is).
+ */
+export const actorHasEntry = (
+  mapVar: string,
+  actorVar = "event.agent",
+): GuardRule => ({
+  and: [actorIsSigner(actorVar), { has: [{ var: mapVar }, { var: actorVar }] }],
+});
 
 /**
  * IDENTITY-REGISTRY reputation gate: at least one VERIFIED signer has a reputation in the registry map
@@ -88,10 +130,15 @@ export const actorIsSigner = (actorVar = 'event.agent'): GuardRule => signerIsPa
  * `{">=":[{"var":"event.agentReputation"}, bar]}` (security class S1). See
  * docs/design/app-hardening-identity-integration.md §3–§4.1.
  */
-export const signerHasReputation = (repMapVar: string, thresholdVar: string): GuardRule => ({
+export const signerHasReputation = (
+  repMapVar: string,
+  thresholdVar: string,
+): GuardRule => ({
   some: [
-    { map: [{ var: 'proofs' }, { var: 'address' }] },
-    { '>=': [{ get: [{ var: repMapVar }, { var: '' }] }, { var: thresholdVar }] },
+    { map: [{ var: "proofs" }, { var: "address" }] },
+    {
+      ">=": [{ get: [{ var: repMapVar }, { var: "" }] }, { var: thresholdVar }],
+    },
   ],
 });
 
@@ -104,4 +151,5 @@ export const signerHasReputation = (repMapVar: string, thresholdVar: string): Gu
  * nested `roles[addr][ROLE]`) because metakit `get`/`has` on a null inner map ERROR rather than
  * returning null; a flat map keeps the read total + fail-closed. See app-hardening §4.2.
  */
-export const signerHasRole = (roleMapVar: string): GuardRule => signerHasEntry(roleMapVar);
+export const signerHasRole = (roleMapVar: string): GuardRule =>
+  signerHasEntry(roleMapVar);
