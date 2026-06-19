@@ -1,8 +1,12 @@
 # RFC: General private contract state (`zk-jlvm-shielded` + `shieldApp`)
 
-> Status: **RFC / design — pre-implementation.** This is the "design first" deliverable. It
-> proposes pivoting privacy from *value transfer only* to **general private contract state**:
-> any standard app's transition, proven privately, sharing one universal verifying key.
+> Status: **Implemented (2026-06-19) — design-of-record.** Originally an "RFC / design-first"
+> deliverable; the design it proposes has since **shipped**: the **`zk-jlvm-shielded`** circuit
+> (metakit-sdk **#53**, merged 2026-06-17) and the **`shieldApp()`** SDK transform + sealed-bid
+> worked example (`src/privacy/shield-app.ts`, `src/privacy/sealed-bid.ts`, ottochain-sdk **#212**).
+> Read the body below as the design of a system that now exists, not a forecast. It pivots privacy
+> from *value transfer only* to **general private contract state**: any standard app's transition,
+> proven privately, sharing one universal verifying key.
 >
 > Companions: [`shielded-transfer-app-sketch.md`](./shielded-transfer-app-sketch.md) (the
 > value-PoC-shaped app this generalizes) and
