@@ -20,10 +20,14 @@ Each directory contains a README with full type documentation.
 | [contracts/](./contracts/) | `contract-lifecycle.ts` | Propose → accept → complete / reject / dispute |
 | [markets/](./markets/) | `prediction-market.ts` | Binary prediction market, oracle resolution, payout |
 | [governance/](./governance/) | `dao-proposal-vote.ts` | Multisig DAO and token-weighted DAO proposals |
+| [lending/](./lending/) | `zk-loan.ts` | Privacy-preserving credit: reputation-backed zk eligibility proof, client-side verify, proof-gated origination |
 
 ```bash
 # Identity: DID + credential workflow
 npx tsx examples/identity/did-credential-workflow.ts
+
+# Lending: privacy-preserving zk-loan (runs client-side, no cluster)
+npx tsx examples/lending/zk-loan.ts
 
 # Contracts: full lifecycle (Path A/B/C)
 npx tsx examples/contracts/contract-lifecycle.ts
