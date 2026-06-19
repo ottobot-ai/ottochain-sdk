@@ -176,3 +176,22 @@ export {
 
 // Reserved EFFECT-directive builders (dynamic dependencies, #24).
 export { addDependency, setDependencyActive } from './schema/effects.js';
+
+// ─── Privacy: shield any fiber app into a zk-jlvm-shielded private-state pool ──
+// See docs/design/zk-private-contract-state-rfc.md.
+export { shieldApp, SHIELDED_POOL_STATE, type ShieldOptions } from './privacy/shield-app.js';
+
+// ─── Typed HTTP API contract (generated from the metagraph OpenAPI) ────────────
+// Single source of truth for request/response shapes — see src/openapi.ts.
+export type {
+  paths as ApiPaths,
+  operations as ApiOperations,
+  components as ApiComponents,
+  VersionInfo,
+  TransitionFeeEstimate,
+  ScriptFeeEstimate,
+  SubscribeRequest,
+  SubscribeResponse,
+  Subscriber,
+  SubscriberList,
+} from './openapi.js';
