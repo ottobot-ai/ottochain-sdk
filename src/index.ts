@@ -150,3 +150,6 @@ export {
   type StateCategory,
   type Transition,
 } from './schema/fiber-app.js';
+
+// Canonical authorization-guard builders (bind to verified signers, not attacker payloads).
+export { type GuardRule, signerIsParty, signerIsAnyParty, assetSignerIs } from './schema/guards.js';

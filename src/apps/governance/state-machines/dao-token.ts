@@ -1,4 +1,5 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
+import { signerIsParty } from "../../../schema/guards.js";
 
 /**
  * Token-weighted voting. Voting power proportional to token holdings.
@@ -467,9 +468,7 @@ export const daoTokenDef = defineFiberApp({
       from: "QUEUED",
       to: "ACTIVE",
       eventName: "cancel",
-      guard: {
-        "===": [{ var: "event.agent" }, { var: "state.proposal.proposer" }],
-      },
+      guard: signerIsParty("state.proposal.proposer"),
       effect: {
         merge: [
           { var: "state" },

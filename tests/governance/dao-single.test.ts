@@ -106,9 +106,12 @@ describe('SingleOwnerDAO State Machine', () => {
         (t) => t.eventName === 'execute'
       );
 
-      expect(executeTransition!.guard).toHaveProperty('===');
+      expect(executeTransition!.guard).toHaveProperty('in');
       const guardStr = JSON.stringify(executeTransition!.guard);
-      expect(guardStr).toContain('event.agent');
+      // Authorization binds to the chain-verified signers (proofs), not the
+      // forgeable event.agent payload field (F1 fix).
+      expect(guardStr).toContain('proofs');
+      expect(guardStr).not.toContain('event.agent');
       expect(guardStr).toContain('state.owner');
     });
 
@@ -117,7 +120,10 @@ describe('SingleOwnerDAO State Machine', () => {
         (t) => t.eventName === 'transfer_ownership'
       );
 
-      expect(transferTransition!.guard).toHaveProperty('===');
+      expect(transferTransition!.guard).toHaveProperty('in');
+      const guardStr = JSON.stringify(transferTransition!.guard);
+      expect(guardStr).toContain('proofs');
+      expect(guardStr).toContain('state.owner');
     });
 
     it('should guard accept_ownership to pending owner', () => {
@@ -125,8 +131,9 @@ describe('SingleOwnerDAO State Machine', () => {
         (t) => t.eventName === 'accept_ownership'
       );
 
-      expect(acceptTransition!.guard).toHaveProperty('===');
+      expect(acceptTransition!.guard).toHaveProperty('in');
       const guardStr = JSON.stringify(acceptTransition!.guard);
+      expect(guardStr).toContain('proofs');
       expect(guardStr).toContain('pendingOwner');
     });
 
@@ -135,7 +142,10 @@ describe('SingleOwnerDAO State Machine', () => {
         (t) => t.eventName === 'cancel_transfer'
       );
 
-      expect(cancelTransition!.guard).toHaveProperty('===');
+      expect(cancelTransition!.guard).toHaveProperty('in');
+      const guardStr = JSON.stringify(cancelTransition!.guard);
+      expect(guardStr).toContain('proofs');
+      expect(guardStr).toContain('state.owner');
     });
 
     it('should guard dissolve to owner', () => {
@@ -143,7 +153,10 @@ describe('SingleOwnerDAO State Machine', () => {
         (t) => t.eventName === 'dissolve'
       );
 
-      expect(dissolveTransition!.guard).toHaveProperty('===');
+      expect(dissolveTransition!.guard).toHaveProperty('in');
+      const guardStr = JSON.stringify(dissolveTransition!.guard);
+      expect(guardStr).toContain('proofs');
+      expect(guardStr).toContain('state.owner');
     });
   });
 

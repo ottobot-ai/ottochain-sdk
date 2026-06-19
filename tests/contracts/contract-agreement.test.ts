@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck — tests access guard properties dynamically
 import { contractAgreementDef } from '../../src/apps/contracts/state-machines/contract-agreement.js';
+import { signerIsParty } from '../../src/schema/guards.js';
 
 describe('Contract Agreement State Machine', () => {
   describe('Definition Structure', () => {
@@ -115,12 +116,7 @@ describe('Contract Agreement State Machine', () => {
         t => t.from === 'PROPOSED' && t.to === 'ACTIVE' && t.eventName === 'accept'
       );
       
-      expect(acceptTransition!.guard).toEqual({
-        '===': [
-          { var: 'event.agent' },
-          { var: 'state.counterparty' }
-        ]
-      });
+      expect(acceptTransition!.guard).toEqual(signerIsParty('state.counterparty'));
     });
 
     it('should preserve multi-condition guard for submit_completion', () => {

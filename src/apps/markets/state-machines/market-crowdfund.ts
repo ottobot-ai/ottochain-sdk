@@ -1,4 +1,5 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
+import { signerIsParty } from "../../../schema/guards.js";
 
 /**
  * All-or-nothing crowdfunding with threshold, deadline, and stretch goals.
@@ -135,7 +136,7 @@ export const marketCrowdfundDef = defineFiberApp({
       from: "PROPOSED",
       to: "OPEN",
       eventName: "launch",
-      guard: { "===": [{ var: "event.agent" }, { var: "state.creator" }] },
+      guard: signerIsParty("state.creator"),
       effect: {
         merge: [
           { var: "state" },
@@ -154,7 +155,7 @@ export const marketCrowdfundDef = defineFiberApp({
       from: "PROPOSED",
       to: "CANCELLED",
       eventName: "cancel",
-      guard: { "===": [{ var: "event.agent" }, { var: "state.creator" }] },
+      guard: signerIsParty("state.creator"),
       effect: {
         merge: [
           { var: "state" },

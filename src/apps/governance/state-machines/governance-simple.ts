@@ -1,4 +1,5 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
+import { signerIsAnyParty } from "../../../schema/guards.js";
 
 /**
  * Simple org governance: manage members, update rules, resolve disputes.
@@ -387,16 +388,10 @@ export const govSimpleDef = defineFiberApp({
       from: "DISPUTE",
       to: "DISPUTE",
       eventName: "submit_evidence",
-      guard: {
-        or: [
-          {
-            "===": [{ var: "event.agent" }, { var: "state.dispute.plaintiff" }],
-          },
-          {
-            "===": [{ var: "event.agent" }, { var: "state.dispute.defendant" }],
-          },
-        ],
-      },
+      guard: signerIsAnyParty([
+        "state.dispute.plaintiff",
+        "state.dispute.defendant",
+      ]),
       effect: {
         merge: [
           { var: "state" },

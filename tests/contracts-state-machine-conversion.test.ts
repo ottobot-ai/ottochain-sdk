@@ -16,11 +16,12 @@
  * - Type safety
  */
 
-import { 
-  contractAgreementDef, 
-  contractEscrowDef, 
-  contractUniversalDef 
+import {
+  contractAgreementDef,
+  contractEscrowDef,
+  contractUniversalDef
 } from '../src/apps/contracts/state-machines';
+import { signerIsParty, signerIsAnyParty } from '../src/schema/guards.js';
 
 describe('Contracts State Machine Conversion', () => {
   
@@ -113,12 +114,7 @@ describe('Contracts State Machine Conversion', () => {
       );
       expect(submitCompletionTransition?.guard).toEqual({
         "and": [
-          {
-            "or": [
-              { "===": [{ "var": "event.agent" }, { "var": "state.proposer" }] },
-              { "===": [{ "var": "event.agent" }, { "var": "state.counterparty" }] }
-            ]
-          },
+          signerIsAnyParty(['state.proposer', 'state.counterparty']),
           {
             "!": [{
               "in": [
@@ -154,7 +150,7 @@ describe('Contracts State Machine Conversion', () => {
       expect(depositTransition).toBeDefined();
       expect(depositTransition?.guard).toEqual({
         "and": [
-          { "===": [{ "var": "event.agent" }, { "var": "state.depositor" }] },
+          signerIsParty('state.depositor'),
           { ">=": [{ "var": "event.amount" }, { "var": "state.requiredAmount" }] }
         ]
       });
@@ -353,7 +349,7 @@ describe('Contracts State Machine Conversion', () => {
       );
       expect(autoReleaseTransition?.guard).toEqual({
         "or": [
-          { "===": [{ "var": "event.agent" }, { "var": "state.depositor" }] },
+          signerIsParty('state.depositor'),
           { ">=": [{ "var": "$timestamp" }, { "var": "state.releaseDeadline" }] }
         ]
       });

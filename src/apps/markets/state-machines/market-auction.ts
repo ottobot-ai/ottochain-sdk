@@ -1,4 +1,5 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
+import { signerIsParty } from "../../../schema/guards.js";
 
 /**
  * Auction market supporting English, Dutch, and sealed-bid variants.
@@ -136,7 +137,7 @@ export const marketAuctionDef = defineFiberApp({
       from: "PROPOSED",
       to: "OPEN",
       eventName: "open",
-      guard: { "===": [{ var: "event.agent" }, { var: "state.seller" }] },
+      guard: signerIsParty("state.seller"),
       effect: {
         merge: [
           { var: "state" },
@@ -155,7 +156,7 @@ export const marketAuctionDef = defineFiberApp({
       from: "PROPOSED",
       to: "CANCELLED",
       eventName: "cancel",
-      guard: { "===": [{ var: "event.agent" }, { var: "state.seller" }] },
+      guard: signerIsParty("state.seller"),
       effect: {
         merge: [
           { var: "state" },
@@ -226,7 +227,7 @@ export const marketAuctionDef = defineFiberApp({
       eventName: "close",
       guard: {
         or: [
-          { "===": [{ var: "event.agent" }, { var: "state.seller" }] },
+          signerIsParty("state.seller"),
           {
             and: [
               { var: "state.deadline" },

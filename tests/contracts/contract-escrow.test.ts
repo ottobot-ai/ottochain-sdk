@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck — tests access guard properties dynamically
 import { contractEscrowDef } from '../../src/apps/contracts/state-machines/contract-escrow.js';
+import { signerIsParty } from '../../src/schema/guards.js';
 
 describe('Contract Escrow State Machine', () => {
   describe('Definition Structure', () => {
@@ -138,12 +139,7 @@ describe('Contract Escrow State Machine', () => {
         t => t.from === 'ACTIVE' && t.to === 'RELEASING' && t.eventName === 'request_release'
       );
       
-      expect(requestTransition!.guard).toEqual({
-        '===': [
-          { var: 'event.agent' },
-          { var: 'state.beneficiary' }
-        ]
-      });
+      expect(requestTransition!.guard).toEqual(signerIsParty('state.beneficiary'));
     });
 
     it('should preserve time-based approval logic for approve_release', () => {

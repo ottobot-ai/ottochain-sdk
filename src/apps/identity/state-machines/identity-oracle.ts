@@ -1,4 +1,5 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
+import { signerIsParty } from "../../../schema/guards.js";
 
 /**
  * Oracle identity with staking, attestations, reputation, and slashing mechanics.
@@ -216,7 +217,7 @@ export const identityOracleDef = defineFiberApp({
       eventName: "activate",
       guard: {
         or: [
-          { "===": [{ var: "event.agent" }, { var: "state.address" }] },
+          signerIsParty("state.address"),
           { var: "event.adminOverride" },
         ],
       },
@@ -233,7 +234,7 @@ export const identityOracleDef = defineFiberApp({
       eventName: "add_stake",
       guard: {
         and: [
-          { "===": [{ var: "event.agent" }, { var: "state.address" }] },
+          signerIsParty("state.address"),
           { ">": [{ var: "event.amount" }, 0] },
         ],
       },
@@ -319,7 +320,7 @@ export const identityOracleDef = defineFiberApp({
       eventName: "reactivate",
       guard: {
         and: [
-          { "===": [{ var: "event.agent" }, { var: "state.address" }] },
+          signerIsParty("state.address"),
           { ">=": [{ var: "state.stake" }, { var: "state.minStake" }] },
         ],
       },
@@ -334,7 +335,7 @@ export const identityOracleDef = defineFiberApp({
       from: "ACTIVE",
       to: "WITHDRAWN",
       eventName: "withdraw",
-      guard: { "===": [{ var: "event.agent" }, { var: "state.address" }] },
+      guard: signerIsParty("state.address"),
       effect: {
         merge: [
           { var: "state" },
@@ -350,7 +351,7 @@ export const identityOracleDef = defineFiberApp({
       from: "SLASHED",
       to: "WITHDRAWN",
       eventName: "withdraw",
-      guard: { "===": [{ var: "event.agent" }, { var: "state.address" }] },
+      guard: signerIsParty("state.address"),
       effect: {
         merge: [
           { var: "state" },

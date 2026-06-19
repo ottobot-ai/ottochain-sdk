@@ -1,4 +1,5 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
+import { signerIsParty, signerIsAnyParty } from "../../../schema/guards.js";
 
 /**
  * Two-party agreement with mutual completion attestation and dispute resolution.
@@ -153,7 +154,7 @@ export const contractAgreementDef = defineFiberApp({
       from: "PROPOSED",
       to: "ACTIVE",
       eventName: "accept",
-      guard: { "===": [{ var: "event.agent" }, { var: "state.counterparty" }] },
+      guard: signerIsParty("state.counterparty"),
       effect: {
         merge: [
           { var: "state" },
@@ -166,7 +167,7 @@ export const contractAgreementDef = defineFiberApp({
       from: "PROPOSED",
       to: "REJECTED",
       eventName: "reject",
-      guard: { "===": [{ var: "event.agent" }, { var: "state.counterparty" }] },
+      guard: signerIsParty("state.counterparty"),
       effect: {
         merge: [
           { var: "state" },
@@ -183,7 +184,7 @@ export const contractAgreementDef = defineFiberApp({
       from: "PROPOSED",
       to: "CANCELLED",
       eventName: "cancel",
-      guard: { "===": [{ var: "event.agent" }, { var: "state.proposer" }] },
+      guard: signerIsParty("state.proposer"),
       effect: {
         merge: [
           { var: "state" },
@@ -198,14 +199,7 @@ export const contractAgreementDef = defineFiberApp({
       eventName: "submit_completion",
       guard: {
         and: [
-          {
-            or: [
-              { "===": [{ var: "event.agent" }, { var: "state.proposer" }] },
-              {
-                "===": [{ var: "event.agent" }, { var: "state.counterparty" }],
-              },
-            ],
-          },
+          signerIsAnyParty(["state.proposer", "state.counterparty"]),
           {
             "!": [
               {
@@ -256,12 +250,7 @@ export const contractAgreementDef = defineFiberApp({
       from: "ACTIVE",
       to: "DISPUTED",
       eventName: "dispute",
-      guard: {
-        or: [
-          { "===": [{ var: "event.agent" }, { var: "state.proposer" }] },
-          { "===": [{ var: "event.agent" }, { var: "state.counterparty" }] },
-        ],
-      },
+      guard: signerIsAnyParty(["state.proposer", "state.counterparty"]),
       effect: {
         merge: [
           { var: "state" },
@@ -307,12 +296,7 @@ export const contractAgreementDef = defineFiberApp({
       from: "ACTIVE",
       to: "CANCELLED",
       eventName: "cancel",
-      guard: {
-        or: [
-          { "===": [{ var: "event.agent" }, { var: "state.proposer" }] },
-          { "===": [{ var: "event.agent" }, { var: "state.counterparty" }] },
-        ],
-      },
+      guard: signerIsAnyParty(["state.proposer", "state.counterparty"]),
       effect: {
         merge: [
           { var: "state" },

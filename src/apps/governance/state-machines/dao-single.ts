@@ -1,4 +1,5 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
+import { signerIsParty } from "../../../schema/guards.js";
 
 /**
  * Single owner controls all actions. Simplest governance model.
@@ -118,7 +119,7 @@ export const daoSingleDef = defineFiberApp({
       from: "ACTIVE",
       to: "ACTIVE",
       eventName: "execute",
-      guard: { "===": [{ var: "event.agent" }, { var: "state.owner" }] },
+      guard: signerIsParty("state.owner"),
       effect: {
         merge: [
           { var: "state" },
@@ -147,7 +148,7 @@ export const daoSingleDef = defineFiberApp({
       from: "ACTIVE",
       to: "TRANSFERRING",
       eventName: "transfer_ownership",
-      guard: { "===": [{ var: "event.agent" }, { var: "state.owner" }] },
+      guard: signerIsParty("state.owner"),
       effect: {
         merge: [
           { var: "state" },
@@ -164,7 +165,7 @@ export const daoSingleDef = defineFiberApp({
       from: "TRANSFERRING",
       to: "ACTIVE",
       eventName: "accept_ownership",
-      guard: { "===": [{ var: "event.agent" }, { var: "state.pendingOwner" }] },
+      guard: signerIsParty("state.pendingOwner"),
       effect: {
         merge: [
           { var: "state" },
@@ -195,7 +196,7 @@ export const daoSingleDef = defineFiberApp({
       from: "TRANSFERRING",
       to: "ACTIVE",
       eventName: "cancel_transfer",
-      guard: { "===": [{ var: "event.agent" }, { var: "state.owner" }] },
+      guard: signerIsParty("state.owner"),
       effect: {
         merge: [
           { var: "state" },
@@ -212,7 +213,7 @@ export const daoSingleDef = defineFiberApp({
       from: "ACTIVE",
       to: "DISSOLVED",
       eventName: "dissolve",
-      guard: { "===": [{ var: "event.agent" }, { var: "state.owner" }] },
+      guard: signerIsParty("state.owner"),
       effect: {
         merge: [
           { var: "state" },

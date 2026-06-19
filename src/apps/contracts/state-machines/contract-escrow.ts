@@ -1,4 +1,5 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
+import { signerIsParty } from "../../../schema/guards.js";
 
 /**
  * Asset custody with conditional release, dispute resolution, and split payments.
@@ -210,7 +211,7 @@ export const contractEscrowDef = defineFiberApp({
       eventName: "deposit",
       guard: {
         and: [
-          { "===": [{ var: "event.agent" }, { var: "state.depositor" }] },
+          signerIsParty("state.depositor"),
           { ">=": [{ var: "event.amount" }, { var: "state.requiredAmount" }] },
         ],
       },
@@ -228,7 +229,7 @@ export const contractEscrowDef = defineFiberApp({
       eventName: "activate",
       guard: {
         or: [
-          { "===": [{ var: "event.agent" }, { var: "state.beneficiary" }] },
+          signerIsParty("state.beneficiary"),
           { var: "state.autoActivate" },
         ],
       },
@@ -241,7 +242,7 @@ export const contractEscrowDef = defineFiberApp({
       from: "ACTIVE",
       to: "RELEASING",
       eventName: "request_release",
-      guard: { "===": [{ var: "event.agent" }, { var: "state.beneficiary" }] },
+      guard: signerIsParty("state.beneficiary"),
       effect: {
         merge: [
           { var: "state" },
@@ -266,7 +267,7 @@ export const contractEscrowDef = defineFiberApp({
       eventName: "approve_release",
       guard: {
         or: [
-          { "===": [{ var: "event.agent" }, { var: "state.depositor" }] },
+          signerIsParty("state.depositor"),
           { ">=": [{ var: "$timestamp" }, { var: "state.releaseDeadline" }] },
         ],
       },
@@ -287,7 +288,7 @@ export const contractEscrowDef = defineFiberApp({
       eventName: "dispute",
       guard: {
         and: [
-          { "===": [{ var: "event.agent" }, { var: "state.depositor" }] },
+          signerIsParty("state.depositor"),
           { "<": [{ var: "$timestamp" }, { var: "state.releaseDeadline" }] },
         ],
       },
@@ -343,7 +344,7 @@ export const contractEscrowDef = defineFiberApp({
       from: "CREATED",
       to: "REFUNDED",
       eventName: "cancel",
-      guard: { "===": [{ var: "event.agent" }, { var: "state.depositor" }] },
+      guard: signerIsParty("state.depositor"),
       effect: {
         merge: [{ var: "state" }, { refundedAt: { var: "$timestamp" } }],
       },

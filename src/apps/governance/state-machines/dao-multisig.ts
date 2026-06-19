@@ -1,4 +1,5 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
+import { signerIsParty } from "../../../schema/guards.js";
 
 /**
  * N-of-M multisig governance. Requires threshold signatures for actions.
@@ -266,9 +267,7 @@ export const daoMultisigDef = defineFiberApp({
       guard: {
         or: [
           { ">": [{ var: "$timestamp" }, { var: "state.proposal.expiresAt" }] },
-          {
-            "===": [{ var: "event.agent" }, { var: "state.proposal.proposer" }],
-          },
+          signerIsParty("state.proposal.proposer"),
         ],
       },
       effect: {
