@@ -12,11 +12,11 @@ importers:
         specifier: ^2.12.0
         version: 2.12.0
       '@constellation-network/metagraph-sdk':
-        specifier: 1.8.0-rc.4
-        version: 1.8.0-rc.4
+        specifier: 1.8.0-rc.5
+        version: 1.8.0-rc.5
       '@constellation-network/metagraph-sdk-jlvm':
-        specifier: 1.8.0-rc.4
-        version: 1.8.0-rc.4
+        specifier: 1.8.0-rc.5
+        version: 1.8.0-rc.5
       '@noble/hashes':
         specifier: ^1.8.0
         version: 1.8.0
@@ -826,16 +826,16 @@ packages:
     resolution: {integrity: sha512-4u7w8jcoCUFWhjWnASYzZHAP34OqOtuFBN87nQmFvqda03YU0T6z+yB4w0gSAMpekiRqqGk5rt+qSlW+a2vSEg==}
     engines: {node: '>=22.12.0'}
 
-  '@constellation-network/metagraph-sdk-core@1.8.0-rc.4':
-    resolution: {integrity: sha512-oWJ/EjLyH8kMLQJ+jLgok3a94AwQtudgpM/DipTuZ0qQdFzbENXLR94RpW5e8f9frwJeWzMZRNmgVT2yHqdR+g==}
+  '@constellation-network/metagraph-sdk-core@1.8.0-rc.5':
+    resolution: {integrity: sha512-B+3afI/xOOE/mH7NbdUwXiX9GuA/rFMWci1OHnU+kFKTfVV1sHnxsIelKhm/bcG/N/AsxzQ8IpesJwKZr4FPpA==}
     engines: {node: '>=20.19.0'}
 
-  '@constellation-network/metagraph-sdk-jlvm@1.8.0-rc.4':
-    resolution: {integrity: sha512-JTUTO4Wf3AgGtVIK/IguTbY6ZyPQf8wUnso92fFcxFNdrlo9Q3R1LemtYxcOlF2GieiopWfpYWsLkLQacoxY5w==}
+  '@constellation-network/metagraph-sdk-jlvm@1.8.0-rc.5':
+    resolution: {integrity: sha512-IHiGMdlyyW9v4b8kyRQNCAwdKBKd5CI8EzUgJtk/JlO19eHZ69hYjPDDX4Pkwe7OqClAY8WBqDXC/5ZLn2+15A==}
     engines: {node: '>=20.19.0'}
 
-  '@constellation-network/metagraph-sdk@1.8.0-rc.4':
-    resolution: {integrity: sha512-vZC2NRTi/0tofekmEV54fK4HwxBjgkpd9HS2zcwhbnl8Rw1EVP1uDysTE7odiDYl+HZaVf7mdP3aWKH346jeQQ==}
+  '@constellation-network/metagraph-sdk@1.8.0-rc.5':
+    resolution: {integrity: sha512-/3zAJ+IaSl8l9MMVkjudAjeoh1QiR4r47jt+aIuy4b0o2sL1rueDGC5itTDb8+qY/A499JoWk+2abR4zZni9TA==}
     engines: {node: '>=20.19.0'}
 
   '@conventional-changelog/git-client@2.6.0':
@@ -4431,20 +4431,20 @@ snapshots:
       conventional-commits-parser: 6.3.0
       picocolors: 1.1.1
 
-  '@constellation-network/metagraph-sdk-core@1.8.0-rc.4':
+  '@constellation-network/metagraph-sdk-core@1.8.0-rc.5':
     dependencies:
       '@noble/curves': 2.0.1
       '@noble/hashes': 2.0.1
       bs58: 6.0.0
 
-  '@constellation-network/metagraph-sdk-jlvm@1.8.0-rc.4':
+  '@constellation-network/metagraph-sdk-jlvm@1.8.0-rc.5':
     dependencies:
       '@noble/curves': 2.0.1
       '@noble/hashes': 2.0.1
 
-  '@constellation-network/metagraph-sdk@1.8.0-rc.4':
+  '@constellation-network/metagraph-sdk@1.8.0-rc.5':
     dependencies:
-      '@constellation-network/metagraph-sdk-core': 1.8.0-rc.4
+      '@constellation-network/metagraph-sdk-core': 1.8.0-rc.5
       '@noble/hashes': 2.0.1
 
   '@conventional-changelog/git-client@2.6.0(conventional-commits-parser@6.3.0)':
