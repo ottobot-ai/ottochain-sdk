@@ -108,8 +108,8 @@ describe('LendingZkLoan state machine', () => {
       expect(clauses[1]).toHaveProperty('groth16_verify');
       const g = (clauses[1] as { groth16_verify: unknown[] }).groth16_verify;
       expect(g[0]).toEqual({ var: 'state.lendingRuleVKey' });
-      expect(g[1]).toEqual({ var: 'witness.publicValues' });
-      expect(g[2]).toEqual({ var: 'witness.proof' });
+      expect(g[1]).toEqual({ var: 'event.witness.publicValues' });
+      expect(g[2]).toEqual({ var: 'event.witness.proof' });
     });
 
     it('binds exprHash to the pinned lendingRuleLogicHash via cat/substr', () => {
@@ -117,7 +117,7 @@ describe('LendingZkLoan state machine', () => {
       const exprBind = clauses[2]['==='] as unknown[];
       // LHS reconstructs 0x + substr(publicValues, 2, 64); RHS is the pinned logicHash.
       expect(exprBind[0]).toEqual({
-        cat: ['0x', { substr: [{ var: 'witness.publicValues' }, 2, 64] }],
+        cat: ['0x', { substr: [{ var: 'event.witness.publicValues' }, 2, 64] }],
       });
       expect(exprBind[1]).toEqual({ var: 'state.lendingRuleLogicHash' });
     });
@@ -126,11 +126,11 @@ describe('LendingZkLoan state machine', () => {
       const clauses = guardJson.and;
       const outBind = clauses[3]['==='] as unknown[];
       expect(outBind[0]).toEqual({
-        cat: ['0x', { substr: [{ var: 'witness.publicValues' }, 130, 64] }],
+        cat: ['0x', { substr: [{ var: 'event.witness.publicValues' }, 130, 64] }],
       });
       expect(outBind[1]).toEqual({ var: 'state.keccakTrue' });
       const okBind = clauses[4]['==='] as unknown[];
-      expect(okBind[0]).toEqual({ substr: [{ var: 'witness.publicValues' }, 256, 2] });
+      expect(okBind[0]).toEqual({ substr: [{ var: 'event.witness.publicValues' }, 256, 2] });
       expect(okBind[1]).toBe('01');
     });
 
@@ -140,14 +140,21 @@ describe('LendingZkLoan state machine', () => {
     });
   });
 
-  it('emits asset settlement directives on repay and liquidate', () => {
+  it('moves collateral via the reserved _transferAsset effect directive (not a dropped emits block)', () => {
     const repay = lendingZkLoanDef.transitions.find((t) => t.eventName === 'repay')!;
     const liq = lendingZkLoanDef.transitions.find((t) => t.eventName === 'liquidate')!;
-    expect(repay.emits).toBeDefined();
-    const repayEmit = (repay.emits as readonly unknown[])[0] as { event: string };
-    const liqEmit = (liq.emits as readonly unknown[])[0] as { event: string };
-    expect(repayEmit.event).toBe('collateral_released');
-    expect(liqEmit.event).toBe('collateral_liquidated');
+    // transition-level `emits` is dropped by the engine — the transfer must ride in the effect result.
+    expect((repay as { emits?: unknown }).emits).toBeUndefined();
+    const mergeOf = (t: unknown) =>
+      (t as { effect: { merge: Record<string, unknown>[] } }).effect.merge[1];
+    const repayXfer = mergeOf(repay)._transferAsset;
+    const liqXfer = mergeOf(liq)._transferAsset;
+    expect(repayXfer).toEqual([
+      { assetId: { var: 'state.collateralAssetId' }, recipient: { var: 'state.borrower' } },
+    ]);
+    expect(liqXfer).toEqual([
+      { assetId: { var: 'state.collateralAssetId' }, recipient: { var: 'state.lender' } },
+    ]);
   });
 });
 

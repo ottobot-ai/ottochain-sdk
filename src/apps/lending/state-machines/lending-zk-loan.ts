@@ -330,24 +330,24 @@ export const lendingZkLoanDef = defineFiberApp({
           {
             groth16_verify: [
               { var: "state.lendingRuleVKey" },
-              { var: "witness.publicValues" },
-              { var: "witness.proof" },
+              { var: "event.witness.publicValues" },
+              { var: "event.witness.proof" },
             ],
           },
           {
             "===": [
-              { cat: ["0x", { substr: [{ var: "witness.publicValues" }, 2, 64] }] },
+              { cat: ["0x", { substr: [{ var: "event.witness.publicValues" }, 2, 64] }] },
               { var: "state.lendingRuleLogicHash" },
             ],
           },
           {
             "===": [
-              { cat: ["0x", { substr: [{ var: "witness.publicValues" }, 130, 64] }] },
+              { cat: ["0x", { substr: [{ var: "event.witness.publicValues" }, 130, 64] }] },
               { var: "state.keccakTrue" },
             ],
           },
           {
-            "===": [{ substr: [{ var: "witness.publicValues" }, 256, 2] }, "01"],
+            "===": [{ substr: [{ var: "event.witness.publicValues" }, 256, 2] }, "01"],
           },
         ],
       },
@@ -372,24 +372,22 @@ export const lendingZkLoanDef = defineFiberApp({
       to: "REPAID",
       eventName: "repay",
       guard: { in: [{ var: "state.borrower" }, { map: [{ var: "proofs" }, { var: "address" }] }] },
+      // Release the escrowed collateral back to the borrower. The loan fiber HOLDS the collateral
+      // (locked as AssetHolder.Fiber), so it emits the reserved `_transferAsset` directive from inside
+      // the effect — the engine extracts `_`-prefixed keys (it is NOT merged into state). A transition-
+      // level `emits` block is silently dropped by toProtoDefinition, which would strand the collateral.
       effect: {
         merge: [
           { var: "state" },
-          { status: "REPAID", repaidAt: { var: "$ordinal" } },
+          {
+            status: "REPAID",
+            repaidAt: { var: "$ordinal" },
+            _transferAsset: [
+              { assetId: { var: "state.collateralAssetId" }, recipient: { var: "state.borrower" } },
+            ],
+          },
         ],
       },
-      // Release the escrowed collateral back to the borrower (escrow fiber emits the
-      // _transferAsset directive — see lending asset helpers).
-      emits: [
-        {
-          event: "collateral_released",
-          to: "asset",
-          payload: {
-            assetId: { var: "state.collateralAssetId" },
-            recipient: { var: "state.borrower" },
-          },
-        },
-      ],
       dependencies: [],
     },
 
@@ -419,23 +417,20 @@ export const lendingZkLoanDef = defineFiberApp({
       to: "LIQUIDATED",
       eventName: "liquidate",
       guard: { in: [{ var: "state.lender" }, { map: [{ var: "proofs" }, { var: "address" }] }] },
+      // Transfer the escrowed collateral to the lender via the reserved `_transferAsset` directive
+      // inside the effect (the loan fiber holds it). A transition-level `emits` block is dropped by the engine.
       effect: {
         merge: [
           { var: "state" },
-          { status: "LIQUIDATED", liquidatedAt: { var: "$ordinal" } },
+          {
+            status: "LIQUIDATED",
+            liquidatedAt: { var: "$ordinal" },
+            _transferAsset: [
+              { assetId: { var: "state.collateralAssetId" }, recipient: { var: "state.lender" } },
+            ],
+          },
         ],
       },
-      // Transfer the escrowed collateral to the lender (escrow fiber emits _transferAsset).
-      emits: [
-        {
-          event: "collateral_liquidated",
-          to: "asset",
-          payload: {
-            assetId: { var: "state.collateralAssetId" },
-            recipient: { var: "state.lender" },
-          },
-        },
-      ],
       dependencies: [],
     },
   ],

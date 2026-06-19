@@ -162,9 +162,9 @@ describe('zk/guard — builder + client-side mirror', () => {
     expect([0, 1, 2, 3].map(wordOffset)).toEqual([2, 66, 130, 194]);
   });
 
-  it('semiPrivateGuard pins groth16 + exprHash + outputHash, droppable via requireTrue', () => {
+  it('semiPrivateGuard pins groth16 + exprHash + outputHash + ok-bit, droppable via requireTrue', () => {
     const g = semiPrivateGuard(vkey, logicHash) as { and: unknown[] };
-    expect(g.and).toHaveLength(3);
+    expect(g.and).toHaveLength(4);
     expect(g.and[0]).toEqual({
       groth16_verify: [vkey, { var: 'witness.publicValues' }, { var: 'witness.proof' }],
     });
@@ -174,6 +174,8 @@ describe('zk/guard — builder + client-side mirror', () => {
     expect(g.and[2]).toEqual({
       '==': [{ cat: ['0x', { substr: [{ var: 'witness.publicValues' }, 130, 64] }] }, KECCAK_TRUE],
     });
+    // ok bit: final hex pair of word 3 (offset 256) == "01"
+    expect(g.and[3]).toEqual({ '==': [{ substr: [{ var: 'witness.publicValues' }, 256, 2] }, '01'] });
     expect((semiPrivateGuard(vkey, logicHash, { requireTrue: false }) as { and: unknown[] }).and).toHaveLength(2);
   });
 

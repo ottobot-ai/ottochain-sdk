@@ -37,7 +37,15 @@ export interface SemiPrivateGuardOptions {
 /**
  * Build the JLVM guard a `Governed` morphism / mint policy embeds. `vkey` is the zk-jlvm program
  * verification key (a `bytes32` `0x`-hex literal); `logicHash` is the pinned rule's hash (from
- * {@link ExprRegistry.logicHashOf}). Returns plain JSON — feed it straight into a policy's guard slot.
+ * {@link ExprRegistry.logicHashOf}). Returns plain JSON — feed it into an ASSET policy's guard/mintPolicy
+ * (the asset combiner injects the reserved `witness`). In a fiber TRANSITION there is no `witness` key —
+ * the proof rides in the event payload, so read `event.witness.*` instead.
+ *
+ * REPLAY (audit zk-guards): the proven public values commit only {exprHash, dataHash, outputHash, ok} —
+ * nothing situational (no fiber / asset / `$ordinal` / nonce). A valid `{publicValues, proof}` is therefore
+ * a reusable bearer token, replayable across any action pinning the same vkey + logicHash. Bind the action
+ * INSIDE the proven rule (pin a spender/asset/subject, as `reputationCreditRule` pins `subject`) and/or gate
+ * with a one-time nonce ledger until the public values carry action context.
  */
 export function semiPrivateGuard(
   vkey: `0x${string}`,
@@ -49,7 +57,11 @@ export function semiPrivateGuard(
     { groth16_verify: [vkey, { var: 'witness.publicValues' }, { var: 'witness.proof' }] },
     { '==': [pvWord(0), logicHash] },
   ];
-  if (requireTrue) clauses.push({ '==': [pvWord(2), KECCAK_TRUE] });
+  if (requireTrue) {
+    clauses.push({ '==': [pvWord(2), KECCAK_TRUE] });
+    // ok bit: the final hex pair of word 3 (offset 256) must be "01" — the JLVM run did not error.
+    clauses.push({ '==': [{ substr: [{ var: 'witness.publicValues' }, wordOffset(3) + 62, 2] }, '01'] });
+  }
   return { and: clauses };
 }
 
