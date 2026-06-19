@@ -382,6 +382,119 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AssetCommit */
+        AssetCommit: {
+            /** Format: int32 */
+            behavior: number;
+            /** Format: int64 */
+            sequenceNumber: number;
+            recordHash: string;
+            origin?: string;
+        };
+        /** AssetRecord */
+        AssetRecord: {
+            /** Format: uuid */
+            assetId: string;
+            schemaBinding: components["schemas"]["SchemaBinding"];
+            behavior: components["schemas"]["TokenBehavior"];
+            holder: unknown;
+            /** Format: int64 */
+            amount: number;
+            /** Format: int64 */
+            sequenceNumber: number;
+            /** Format: int64 */
+            creationOrdinal: number;
+            /** Format: int64 */
+            latestUpdateOrdinal: number;
+            /** Format: int64 */
+            expiresAt?: number;
+            componentFiberIds?: string[];
+            componentsCommitment?: string;
+            /** Format: uuid */
+            parentCompositeId?: string;
+            provenance?: components["schemas"]["OriginProvenance"];
+        };
+        /** CalculatedState */
+        CalculatedState: {
+            stateMachines: components["schemas"]["Map_V"];
+            scripts: components["schemas"]["Map_V"];
+            registry: components["schemas"]["Map_V"];
+            reverseNames: components["schemas"]["Map_V"];
+            assets: components["schemas"]["Map_V"];
+            usedNonces: components["schemas"]["Map_V"];
+        };
+        /** Checkpoint_CalculatedState */
+        Checkpoint_CalculatedState: {
+            /** Format: int64 */
+            ordinal: number;
+            state: components["schemas"]["CalculatedState"];
+        };
+        /** EmittedEvent */
+        EmittedEvent: {
+            name: string;
+            data: unknown;
+            destination?: string;
+        };
+        /** EventReceipt */
+        EventReceipt: {
+            /** Format: uuid */
+            fiberId: string;
+            /** Format: int64 */
+            sequenceNumber: number;
+            eventName: string;
+            /** Format: int64 */
+            ordinal: number;
+            fromState: string;
+            toState: string;
+            success: boolean;
+            /** Format: int64 */
+            gasUsed: number;
+            /** Format: int32 */
+            triggersFired: number;
+            errorMessage?: string;
+            /** Format: uuid */
+            sourceFiberId?: string;
+            emittedEvents?: components["schemas"]["EmittedEvent"][];
+        };
+        /** FiberCommit */
+        FiberCommit: {
+            recordHash: string;
+            stateDataHash?: string;
+            /** Format: int64 */
+            sequenceNumber: number;
+        };
+        /** Map_V */
+        Map_V: {
+            [key: string]: components["schemas"]["FiberCommit"];
+        };
+        /** OnChain */
+        OnChain: {
+            fiberCommits: components["schemas"]["Map_V"];
+            latestLogs: components["schemas"]["Map_V"];
+            registryCommits: components["schemas"]["Map_V"];
+            assetCommits: components["schemas"]["Map_V"];
+        };
+        /** OriginProvenance */
+        OriginProvenance: {
+            originChainId: string;
+            originAssetRef: string;
+            fullPath?: string[];
+            attestationHash: string;
+        };
+        /** RegistryEntry */
+        RegistryEntry: {
+            name: string;
+            owner?: string[];
+            target: unknown;
+            metadata: components["schemas"]["Map_V"];
+        };
+        /** SchemaBinding */
+        SchemaBinding: {
+            name: string;
+            version: string;
+            schemaHash: string;
+            logicHash: string;
+        };
         /** ScriptFeeEstimate */
         ScriptFeeEstimate: {
             /** Format: uuid */
@@ -393,6 +506,75 @@ export interface components {
             /** Format: int32 */
             maxDepth: number;
             note: string;
+        };
+        /** ScriptFiberRecord */
+        ScriptFiberRecord: {
+            /** Format: uuid */
+            fiberId: string;
+            /** Format: int64 */
+            creationOrdinal: number;
+            /** Format: int64 */
+            latestUpdateOrdinal: number;
+            scriptProgram: unknown;
+            stateData?: unknown;
+            stateDataHash?: string;
+            accessControl: unknown;
+            /** Format: int64 */
+            sequenceNumber: number;
+            owners?: string[];
+            status: string;
+            lastInvocation?: components["schemas"]["ScriptInvocation"];
+            schemaBinding?: components["schemas"]["SchemaBinding"];
+        };
+        /** ScriptInvocation */
+        ScriptInvocation: {
+            /** Format: uuid */
+            fiberId: string;
+            method: string;
+            args: unknown;
+            result: unknown;
+            /** Format: int64 */
+            gasUsed: number;
+            /** Format: int64 */
+            invokedAt: number;
+            invokedBy: string;
+        };
+        /** StateMachineFiberRecord */
+        StateMachineFiberRecord: {
+            /** Format: uuid */
+            fiberId: string;
+            /** Format: int64 */
+            creationOrdinal: number;
+            /** Format: int64 */
+            previousUpdateOrdinal: number;
+            /** Format: int64 */
+            latestUpdateOrdinal: number;
+            definition: unknown;
+            currentState: string;
+            stateData: unknown;
+            stateDataHash: string;
+            /** Format: int64 */
+            sequenceNumber: number;
+            owners?: string[];
+            status: string;
+            lastReceipt?: components["schemas"]["EventReceipt"];
+            /** Format: uuid */
+            parentFiberId?: string;
+            childFiberIds?: string[];
+            schemaBinding?: components["schemas"]["SchemaBinding"];
+            authorizedSigners?: string[];
+        };
+        /** StateProofResponse */
+        StateProofResponse: {
+            key: string;
+            /** Format: int64 */
+            ordinal: number;
+            committedRoot: unknown;
+            mptRoot: unknown;
+            record: unknown;
+            proof: unknown;
+            field?: string;
+            fieldValue?: unknown;
         };
         /** SubscribeRequest */
         SubscribeRequest: {
@@ -422,6 +604,14 @@ export interface components {
         /** SubscriberList */
         SubscriberList: {
             subscribers?: components["schemas"]["Subscriber"][];
+        };
+        /** TokenBehavior */
+        TokenBehavior: {
+            transferable: boolean;
+            splittable: boolean;
+            combinable: boolean;
+            expirable: boolean;
+            governable: boolean;
         };
         /** TransitionFeeEstimate */
         TransitionFeeEstimate: {
@@ -521,13 +711,12 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OnChain */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["OnChain"];
                 };
             };
         };
@@ -541,13 +730,12 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Checkpoint[CalculatedState] */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["Checkpoint_CalculatedState"];
                 };
             };
         };
@@ -564,13 +752,12 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description SortedMap[UUID, StateMachineFiberRecord] */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["Map_V"];
                 };
             };
             /** @description Invalid value for: query parameter status */
@@ -595,13 +782,12 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Option[StateMachineFiberRecord] */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["StateMachineFiberRecord"];
                 };
             };
             /** @description Invalid value for: path parameter id */
@@ -626,13 +812,12 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description List[EventReceipt] */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["EventReceipt"][];
                 };
             };
             /** @description Invalid value for: path parameter id */
@@ -723,13 +908,12 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description StateProofResponse */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["StateProofResponse"];
                 };
             };
             /** @description Invalid value for: path parameter id, Invalid value for: query parameter field */
@@ -755,13 +939,12 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description SortedMap[UUID, ScriptFiberRecord] */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["Map_V"];
                 };
             };
             /** @description Invalid value for: query parameter status */
@@ -786,13 +969,12 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Option[ScriptFiberRecord] */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ScriptFiberRecord"];
                 };
             };
             /** @description Invalid value for: path parameter id */
@@ -817,13 +999,12 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description List[ScriptInvocation] */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ScriptInvocation"][];
                 };
             };
             /** @description Invalid value for: path parameter id */
@@ -881,13 +1062,12 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description StateProofResponse */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["StateProofResponse"];
                 };
             };
             /** @description Invalid value for: path parameter id, Invalid value for: query parameter field */
@@ -915,13 +1095,12 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description StateProofResponse */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["StateProofResponse"];
                 };
             };
             /** @description Invalid value for: path parameter id, Invalid value for: query parameter field */
@@ -944,13 +1123,12 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description SortedMap[RegistryName, RegistryEntry] */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["Map_V"];
                 };
             };
         };
@@ -966,13 +1144,12 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Option[RegistryName] */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": string;
                 };
             };
             /** @description Invalid value for: path parameter id */
@@ -997,13 +1174,12 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Option[RegistryEntry] */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["RegistryEntry"];
                 };
             };
         };
