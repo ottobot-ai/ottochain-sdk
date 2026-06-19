@@ -15,11 +15,17 @@ remediation waves correctly *deferred* because they require protocol/data-model 
   binding that makes a dynamic `event.agent` map key safe). NOTE: roles are **flat per-role maps**, not a
   nested `roles[addr][ROLE]` map — metakit `get`/`has` on a null inner map *throw*, so a nested read
   would error for any unattested signer; flat maps keep read+write total and fail-closed.
-- §5 per-app **consumption** of the registry (read another fiber's reputation/role) and §6 dynamic deps:
-  **gated on #24** — a std-app definition cannot today bind a specific registry *instance* (`machines.<id>`
-  keys are static in the AST; the registry UUID is instance/genesis-specific). Same gate as corp-board's
-  removal-resolution `TODO(#24)`. The SDK ships the **integration toolkit** (`registryReputationPath` /
-  `registryRolePath` path-builders + the read helpers); concrete per-app wiring lands with #24.
+- §6 dynamic dependencies (#24): **shipped** (ottochain `feat/fiber-dynamic-dependencies`) — an append-only
+  per-fiber dependency ledger mutated by `_addDependency` / `_setDependencyActive`, bounded for DoS, with the
+  `machines` context built from `static transition.deps ∪ active dynamic deps`. This retires the static-dep
+  workaround: a fiber binds a registry/resolution **instance** at runtime, then reads it.
+- §5 per-app **consumption**: **done** — the A3 object-form dependencies are closed via the two-phase
+  pattern (`propose_*` binds the resolution fiber via `addDependency`, the gated transition asserts it via
+  `depInState`), proven on corp-board and fleeted across corp-securities/entity/shareholders. The SDK ships
+  the full consumption toolkit: `depInState`, `addDependency` / `setDependencyActive`, the dynamic
+  registry reads `signerHasReputationVia` / `signerHasRoleVia`, plus the `registryReputationPath` /
+  `registryRolePath` path-builders. **The whole-repo drift lint is now 0 errors across 23 apps** (both the
+  A2 opcode class and the A3 directive class closed).
 
 **Decisions locked (this doc implements them):**
 1. **Dicts stay primary.** The map-write gap is fixed with a metakit **opcode**, not an SDK map→array
