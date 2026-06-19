@@ -15,11 +15,17 @@ export const identityOracleDef = defineFiberApp({
   },
 
   createSchema: {
-    required: ["owner", "stake", "domains"] as const,
+    required: ["owner", "stake", "domains", "slasher"] as const,
     properties: {
       owner: {
         type: "address",
         description: "Oracle owner DAG address",
+        immutable: true,
+      },
+      slasher: {
+        type: "address",
+        description:
+          "DAG address of the slasher authorized to penalize this oracle's stake",
         immutable: true,
       },
       stake: {
@@ -43,6 +49,7 @@ export const identityOracleDef = defineFiberApp({
   stateSchema: {
     properties: {
       owner: { type: "address", immutable: true },
+      slasher: { type: "address", immutable: true },
       address: { type: "address", computed: true },
       stake: { type: "integer", computed: true },
       minStake: { type: "integer" },
@@ -91,7 +98,6 @@ export const identityOracleDef = defineFiberApp({
       required: ["agent"] as const,
       properties: {
         agent: { type: "address" },
-        adminOverride: { type: "boolean", default: false },
       },
     },
     add_stake: {
@@ -215,12 +221,8 @@ export const identityOracleDef = defineFiberApp({
       from: "REGISTERED",
       to: "ACTIVE",
       eventName: "activate",
-      guard: {
-        or: [
-          signerIsParty("state.address"),
-          { var: "event.adminOverride" },
-        ],
-      },
+      // authority gate — an ARBITER/SLASHER attestation check layers on additively when the identity registry lands (see docs/design/app-hardening-identity-integration.md §4.2)
+      guard: signerIsParty("state.address"),
       effect: {
         merge: [
           { var: "state" },
@@ -283,9 +285,10 @@ export const identityOracleDef = defineFiberApp({
       from: "ACTIVE",
       to: "SLASHED",
       eventName: "slash",
+      // authority gate — an ARBITER/SLASHER attestation check layers on additively when the identity registry lands (see docs/design/app-hardening-identity-integration.md §4.2)
       guard: {
         and: [
-          { var: "event.reason" },
+          signerIsParty("state.slasher"),
           { ">": [{ var: "event.amount" }, 0] },
           { "<=": [{ var: "event.amount" }, { var: "state.stake" }] },
         ],

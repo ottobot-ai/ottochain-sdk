@@ -14,7 +14,7 @@
     }
   },
   "createSchema": {
-    "required": ["depositor", "beneficiary", "requiredAmount"],
+    "required": ["depositor", "beneficiary", "requiredAmount", "arbiter"],
     "properties": {
       "depositor": {
         "type": "address",
@@ -23,6 +23,11 @@
       "beneficiary": {
         "type": "address",
         "description": "DAG address of the beneficiary"
+      },
+      "arbiter": {
+        "type": "address",
+        "description": "DAG address of the arbiter authorized to rule on a dispute",
+        "immutable": true
       },
       "requiredAmount": {
         "type": "number",
@@ -331,7 +336,26 @@
       "to": "SPLIT",
       "eventName": "ruling",
       "guard": {
-        "var": "event.judicialRuling"
+        "and": [
+          {
+            "in": [
+              { "var": "state.arbiter" },
+              { "map": [{ "var": "proofs" }, { "var": "address" }] }
+            ]
+          },
+          {
+            "===": [
+              {
+                "reduce": [
+                  { "var": "event.splits" },
+                  { "+": [{ "var": "accumulator" }, { "var": "current.amount" }] },
+                  0
+                ]
+              },
+              { "var": "state.balance" }
+            ]
+          }
+        ]
       },
       "effect": {
         "merge": [
@@ -357,7 +381,20 @@
       "guard": {
         "or": [
           {
-            "var": "event.mutualConsent"
+            "and": [
+              {
+                "in": [
+                  { "var": "state.depositor" },
+                  { "map": [{ "var": "proofs" }, { "var": "address" }] }
+                ]
+              },
+              {
+                "in": [
+                  { "var": "state.beneficiary" },
+                  { "map": [{ "var": "proofs" }, { "var": "address" }] }
+                ]
+              }
+            ]
           },
           {
             ">=": [

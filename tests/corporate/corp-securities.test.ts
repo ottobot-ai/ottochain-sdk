@@ -384,4 +384,76 @@ describe('CorpSecurities State Machine', () => {
       expect(transition?.dependencies?.length).toBeGreaterThan(0);
     });
   });
+
+  describe('Authorization (identity hardening)', () => {
+    const guardOf = (eventName: string, from?: string) =>
+      JSON.stringify(
+        corpSecuritiesDef.transitions.find(
+          t => t.eventName === eventName && (from === undefined || t.from === from)
+        )?.guard
+      );
+
+    it('should pin issuerAddress as a required, immutable createSchema/stateSchema field', () => {
+      expect(corpSecuritiesDef.createSchema.required).toContain('issuerAddress');
+      expect(corpSecuritiesDef.createSchema.properties.issuerAddress.type).toBe('address');
+      expect(corpSecuritiesDef.createSchema.properties.issuerAddress.immutable).toBe(true);
+      expect(corpSecuritiesDef.stateSchema.properties.issuerAddress).toBeDefined();
+      expect(corpSecuritiesDef.stateSchema.properties.issuerAddress.immutable).toBe(true);
+    });
+
+    it('should expose a holder walletAddress in the Holder definition', () => {
+      expect(corpSecuritiesDef.definitions?.Holder.properties?.walletAddress.type).toBe('address');
+    });
+
+    it('should NOT leave any state-changing guard as constant-true {==:[1,1]}', () => {
+      const tautology = JSON.stringify({ '==': [1, 1] });
+      for (const t of corpSecuritiesDef.transitions) {
+        expect(JSON.stringify(t.guard)).not.toBe(tautology);
+      }
+    });
+
+    it.each([
+      'authorize_shares',
+      'issue_shares',
+      'reissue_from_treasury',
+      'stock_split',
+      'declare_dividend',
+      'remove_restriction',
+      'complete_transfer',
+    ])('should gate issuer-privileged %s on the verified signer of state.issuerAddress', (ev) => {
+      const g = guardOf(ev);
+      expect(g).toContain('state.issuerAddress');
+      expect(g).toContain('proofs');
+    });
+
+    it.each(['retire'])('should gate %s (both from-states) on state.issuerAddress', (ev) => {
+      const issued = guardOf(ev, 'ISSUED');
+      const treasury = guardOf(ev, 'TREASURY');
+      expect(issued).toContain('state.issuerAddress');
+      expect(treasury).toContain('state.issuerAddress');
+      expect(issued).toContain('proofs');
+      expect(treasury).toContain('proofs');
+    });
+
+    it('should gate holder-initiated initiate_transfer on the current holder wallet ∈ proofs while preserving restriction checks', () => {
+      const g = guardOf('initiate_transfer');
+      expect(g).toContain('state.holder.walletAddress');
+      expect(g).toContain('proofs');
+      // restriction / rofr logic preserved
+      expect(g).toContain('state.restrictions');
+    });
+
+    it('should gate holder-initiated repurchase on the current holder wallet ∈ proofs', () => {
+      const g = guardOf('repurchase');
+      expect(g).toContain('state.holder.walletAddress');
+      expect(g).toContain('proofs');
+    });
+
+    it('should no longer read the forgeable event identity in any guard', () => {
+      for (const t of corpSecuritiesDef.transitions) {
+        // guards must bind to proofs/state, never to attacker-supplied event identity
+        expect(JSON.stringify(t.guard)).not.toContain('event.holderId');
+      }
+    });
+  });
 });

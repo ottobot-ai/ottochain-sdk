@@ -370,4 +370,44 @@ describe('CorpShareholders State Machine', () => {
       expect(transition?.dependencies?.length).toBeGreaterThan(0);
     });
   });
+
+  describe('Authorization (identity hardening)', () => {
+    const guardOf = (eventName: string) =>
+      JSON.stringify(corpShareholdersDef.transitions.find(t => t.eventName === eventName)?.guard);
+
+    it('should pin registrar as a required, immutable authority address', () => {
+      expect(corpShareholdersDef.createSchema.required).toContain('registrar');
+      expect(corpShareholdersDef.createSchema.properties.registrar.type).toBe('address');
+      expect(corpShareholdersDef.createSchema.properties.registrar.immutable).toBe(true);
+      expect(corpShareholdersDef.stateSchema.properties.registrar).toBeDefined();
+      expect(corpShareholdersDef.stateSchema.properties.registrar.immutable).toBe(true);
+    });
+
+    it('should add an address of record to the EligibleVoter definition', () => {
+      expect(corpShareholdersDef.definitions?.EligibleVoter.properties?.address.type).toBe('address');
+    });
+
+    it('should accept an address per shareholder in register_eligible_shareholders event', () => {
+      const shItems = corpShareholdersDef.eventSchemas.register_eligible_shareholders.properties
+        .shareholders.items as { properties: Record<string, { type?: string }> };
+      expect(shItems.properties.address.type).toBe('address');
+    });
+
+    it('should gate register_eligible_shareholders on the pinned registrar via proofs', () => {
+      const g = guardOf('register_eligible_shareholders');
+      expect(g).toContain('state.registrar');
+      expect(g).toContain('proofs');
+      expect(g).not.toBe(JSON.stringify({ '==': [1, 1] }));
+    });
+
+    it('should bind cast_vote to a roster entry whose address signed (matched-entry shareholderId)', () => {
+      const g = guardOf('cast_vote');
+      expect(g).toContain('state.eligibleVoters');
+      // the matched roster entry's address must be among the verified signers
+      expect(g).toContain('proofs');
+      expect(g).toContain('"var":"address"');
+      // event.shareholderId is now only a roster lookup key, bound to that entry's address
+      expect(g).toContain('event.shareholderId');
+    });
+  });
 });

@@ -326,17 +326,19 @@ describe('Contracts State Machine Conversion', () => {
       });
     });
 
-    it('should handle dispute resolution with judicial ruling', () => {
+    it('should resolve a dispute via the pinned arbitrator OR both parties (S2 fix)', () => {
       const resolveTransition = contractAgreementDef.transitions.find(
         t => t.from === 'DISPUTED' && t.to === 'COMPLETED' && t.eventName === 'resolve'
       );
+      // The bare forgeable booleans (event.judicialRuling / *Approves) are gone;
+      // authority binds to verified signers (proofs[].address).
       expect(resolveTransition?.guard).toEqual({
         "or": [
-          { "var": "event.judicialRuling" },
+          signerIsParty('state.arbitrator'),
           {
             "and": [
-              { "===": [{ "var": "event.proposerApproves" }, true] },
-              { "===": [{ "var": "event.counterpartyApproves" }, true] }
+              signerIsParty('state.proposer'),
+              signerIsParty('state.counterparty')
             ]
           }
         ]

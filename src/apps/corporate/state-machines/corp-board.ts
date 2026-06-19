@@ -1,4 +1,5 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
+import { signerInSet } from "../../../schema/guards.js";
 
 /**
  * Board of directors state machine managing director seats, meetings, quorum, and formal board actions.
@@ -37,7 +38,7 @@ export const corpBoardDef = defineFiberApp({
   },
 
   createSchema: {
-    required: ["boardId", "entityId", "seats"] as const,
+    required: ["boardId", "entityId", "seats", "authorizedRemovers"] as const,
     properties: {
       boardId: {
         type: "string",
@@ -48,6 +49,13 @@ export const corpBoardDef = defineFiberApp({
         type: "string",
         description: "Reference to parent corporate-entity",
         immutable: true,
+      },
+      authorizedRemovers: {
+        type: "array",
+        description:
+          "State-pinned set of DAG addresses authorized to remove a director for cause (board/shareholder authority). A verified signer must be a member; checked against proofs[].address.",
+        immutable: false,
+        items: { type: "address" },
       },
       seats: {
         type: "object",
@@ -123,6 +131,7 @@ export const corpBoardDef = defineFiberApp({
     properties: {
       boardId: { type: "string", immutable: true },
       entityId: { type: "string", immutable: true },
+      authorizedRemovers: { type: "array", items: { type: "address" } },
       directors: {
         type: "array",
         items: { $ref: "#/definitions/Director" },
@@ -437,12 +446,8 @@ export const corpBoardDef = defineFiberApp({
       eventName: "elect_director",
       guard: {
         and: [
-          {
-            or: [
-              { ">": [{ var: "state.seats.vacant" }, 0] },
-              { "==": [{ var: "event.isFillingVacancy" }, true] },
-            ],
-          },
+          // vacancy gated solely on verified state — the forgeable event.isFillingVacancy disjunct was removed
+          { ">": [{ var: "state.seats.vacant" }, 0] },
           { "!=": [{ var: "event.electionResolutionRef" }, null] },
           {
             "!": {
@@ -627,13 +632,23 @@ export const corpBoardDef = defineFiberApp({
       from: "ACTIVE",
       to: "ACTIVE",
       eventName: "remove_for_cause",
+      // authority gate — a member of the pinned authorizedRemovers set must sign; an identity role attestation (BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      // TODO(#24): also assert machines.<removalResolutionRef>.currentStateId == "EXECUTED" once runtime-updatable dependencies land; the resolution UUID must ride as a bare-string dependency. Static deps cannot key on event.removalResolutionRef today.
       guard: {
-        some: [
-          { var: "state.directors" },
+        and: [
+          signerInSet("state.authorizedRemovers"),
+          // event.directorId is the lookup key only — the director must exist and be ACTIVE
           {
-            and: [
-              { "==": [{ var: "directorId" }, { var: "event.directorId" }] },
-              { "==": [{ var: "status" }, "ACTIVE"] },
+            some: [
+              { var: "state.directors" },
+              {
+                and: [
+                  {
+                    "==": [{ var: "directorId" }, { var: "event.directorId" }],
+                  },
+                  { "==": [{ var: "status" }, "ACTIVE"] },
+                ],
+              },
             ],
           },
         ],

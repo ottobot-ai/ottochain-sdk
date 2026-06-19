@@ -265,4 +265,66 @@ describe('CorpEntity State Machine', () => {
       expect(transition?.dependencies).toBeDefined();
     });
   });
+
+  describe('Authorization (identity hardening)', () => {
+    const guardOf = (eventName: string) =>
+      JSON.stringify(corpEntityDef.transitions.find(t => t.eventName === eventName)?.guard);
+    const createProps = corpEntityDef.createSchema.properties as Record<
+      string,
+      { type?: string; immutable?: boolean }
+    >;
+    const stateProps = corpEntityDef.stateSchema.properties as Record<
+      string,
+      { type?: string; immutable?: boolean }
+    >;
+
+    it.each(['charterAuthority', 'boardAuthority', 'shareholderAuthority', 'stateAuthority'])(
+      'should pin %s as a required, immutable authority address',
+      (field) => {
+        expect(corpEntityDef.createSchema.required).toContain(field);
+        expect(createProps[field].type).toBe('address');
+        expect(createProps[field].immutable).toBe(true);
+        expect(stateProps[field]).toBeDefined();
+        expect(stateProps[field].immutable).toBe(true);
+      }
+    );
+
+    it('should gate amend_charter on state.charterAuthority and drop the event.resolutionRef non-null check', () => {
+      const g = guardOf('amend_charter');
+      expect(g).toContain('state.charterAuthority');
+      expect(g).toContain('proofs');
+      expect(g).not.toContain('event.resolutionRef');
+    });
+
+    it('should require BOTH board and shareholder authority to dissolve_voluntary', () => {
+      const g = guardOf('dissolve_voluntary');
+      expect(g).toContain('state.boardAuthority');
+      expect(g).toContain('state.shareholderAuthority');
+      expect(g).toContain('proofs');
+    });
+
+    it('should gate update_registered_agent and reinstate on the board authority', () => {
+      expect(guardOf('update_registered_agent')).toContain('state.boardAuthority');
+      expect(guardOf('reinstate')).toContain('state.boardAuthority');
+    });
+
+    it('should gate state-initiated suspend and dissolve_administrative on the state authority', () => {
+      expect(guardOf('suspend')).toContain('state.stateAuthority');
+      expect(guardOf('dissolve_administrative')).toContain('state.stateAuthority');
+    });
+
+    it('should NOT leave any privileged guard as constant-true {==:[1,1]}', () => {
+      const tautology = JSON.stringify({ '==': [1, 1] });
+      for (const ev of [
+        'amend_charter',
+        'update_registered_agent',
+        'suspend',
+        'reinstate',
+        'dissolve_voluntary',
+        'dissolve_administrative',
+      ]) {
+        expect(guardOf(ev)).not.toBe(tautology);
+      }
+    });
+  });
 });

@@ -1,4 +1,5 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
+import { signerIsParty } from "../../../schema/guards.js";
 
 /**
  * Master corporate record tracking the lifecycle of a business entity from incorporation through dissolution.
@@ -47,11 +48,44 @@ export const corpEntityDef = defineFiberApp({
   },
 
   createSchema: {
-    required: ["entityId", "legalName", "entityType", "jurisdiction"] as const,
+    required: [
+      "entityId",
+      "legalName",
+      "entityType",
+      "jurisdiction",
+      "charterAuthority",
+      "boardAuthority",
+      "shareholderAuthority",
+      "stateAuthority",
+    ] as const,
     properties: {
       entityId: {
         type: "string",
         description: "Unique identifier for this corporate entity",
+        immutable: true,
+      },
+      charterAuthority: {
+        type: "address",
+        description:
+          "State-pinned DAG address authorized to amend the charter (legal identity). Verified against proofs[].address.",
+        immutable: true,
+      },
+      boardAuthority: {
+        type: "address",
+        description:
+          "State-pinned DAG address of the board authority (governs registered-agent changes, suspension/reinstatement, and the board half of voluntary dissolution). Verified against proofs[].address.",
+        immutable: true,
+      },
+      shareholderAuthority: {
+        type: "address",
+        description:
+          "State-pinned DAG address of the shareholder authority (the shareholder half of voluntary dissolution). Verified against proofs[].address.",
+        immutable: true,
+      },
+      stateAuthority: {
+        type: "address",
+        description:
+          "State-pinned DAG address of the chartering jurisdiction/registrar that may administratively dissolve a suspended entity. Verified against proofs[].address.",
         immutable: true,
       },
       legalName: {
@@ -142,6 +176,10 @@ export const corpEntityDef = defineFiberApp({
   stateSchema: {
     properties: {
       entityId: { type: "string", immutable: true },
+      charterAuthority: { type: "address", immutable: true },
+      boardAuthority: { type: "address", immutable: true },
+      shareholderAuthority: { type: "address", immutable: true },
+      stateAuthority: { type: "address", immutable: true },
       legalName: { type: "string" },
       tradeName: { type: "string", nullable: true },
       entityType: { type: "string" },
@@ -472,7 +510,8 @@ export const corpEntityDef = defineFiberApp({
       from: "ACTIVE",
       to: "ACTIVE",
       eventName: "amend_charter",
-      guard: { "!=": [{ var: "event.resolutionRef" }, null] },
+      // authority gate — an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: signerIsParty("state.charterAuthority"),
       dependencies: [
         {
           machine: "corporate-resolution",
@@ -581,7 +620,8 @@ export const corpEntityDef = defineFiberApp({
       from: "ACTIVE",
       to: "ACTIVE",
       eventName: "update_registered_agent",
-      guard: { "==": [1, 1] },
+      // authority gate — an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: signerIsParty("state.boardAuthority"),
       effect: {
         merge: [
           { var: "state" },
@@ -604,7 +644,8 @@ export const corpEntityDef = defineFiberApp({
       from: "ACTIVE",
       to: "SUSPENDED",
       eventName: "suspend",
-      guard: { "==": [1, 1] },
+      // authority gate — state-initiated enforcement; an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: signerIsParty("state.stateAuthority"),
       effect: {
         merge: [
           { var: "state" },
@@ -623,7 +664,8 @@ export const corpEntityDef = defineFiberApp({
       from: "SUSPENDED",
       to: "ACTIVE",
       eventName: "reinstate",
-      guard: { "==": [1, 1] },
+      // authority gate — an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: signerIsParty("state.boardAuthority"),
       effect: {
         merge: [
           { var: "state" },
@@ -642,7 +684,13 @@ export const corpEntityDef = defineFiberApp({
       from: "ACTIVE",
       to: "DISSOLVED",
       eventName: "dissolve_voluntary",
-      guard: { "==": [1, 1] },
+      // authority gate — both the board and shareholder authorities must sign; identity role attestations (BOARD_MEMBER/...) layer on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: {
+        and: [
+          signerIsParty("state.boardAuthority"),
+          signerIsParty("state.shareholderAuthority"),
+        ],
+      },
       dependencies: [
         {
           machine: "corporate-resolution",
@@ -673,7 +721,8 @@ export const corpEntityDef = defineFiberApp({
       from: "SUSPENDED",
       to: "DISSOLVED",
       eventName: "dissolve_administrative",
-      guard: { "==": [1, 1] },
+      // authority gate — state-initiated dissolution; an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: signerIsParty("state.stateAuthority"),
       effect: {
         merge: [
           { var: "state" },

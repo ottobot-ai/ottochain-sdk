@@ -13,7 +13,7 @@
     }
   },
   "createSchema": {
-    "required": ["proposer", "counterparty"],
+    "required": ["proposer", "counterparty", "arbitrator"],
     "properties": {
       "proposer": {
         "type": "address",
@@ -24,6 +24,11 @@
         "type": "address",
         "description": "DAG address of the counterparty",
         "immutable": true
+      },
+      "arbitrator": {
+        "type": "address",
+        "description": "DAG address of the arbitrator authorized to resolve a dispute",
+        "immutable": true
       }
     }
   },
@@ -32,6 +37,7 @@
       "status": { "type": "string" },
       "proposer": { "type": "address" },
       "counterparty": { "type": "address" },
+      "arbitrator": { "type": "address", "immutable": true },
       "completions": { "type": "array" }
     }
   },
@@ -337,24 +343,23 @@
       "guard": {
         "or": [
           {
-            "var": "event.judicialRuling"
+            "in": [
+              { "var": "state.arbitrator" },
+              { "map": [{ "var": "proofs" }, { "var": "address" }] }
+            ]
           },
           {
             "and": [
               {
-                "===": [
-                  {
-                    "var": "event.proposerApproves"
-                  },
-                  true
+                "in": [
+                  { "var": "state.proposer" },
+                  { "map": [{ "var": "proofs" }, { "var": "address" }] }
                 ]
               },
               {
-                "===": [
-                  {
-                    "var": "event.counterpartyApproves"
-                  },
-                  true
+                "in": [
+                  { "var": "state.counterparty" },
+                  { "map": [{ "var": "proofs" }, { "var": "address" }] }
                 ]
               }
             ]
@@ -375,7 +380,16 @@
               "var": "event.resolution"
             },
             "rulingId": {
-              "var": "event.rulingId"
+              "if": [
+                {
+                  "in": [
+                    { "var": "state.arbitrator" },
+                    { "map": [{ "var": "proofs" }, { "var": "address" }] }
+                  ]
+                },
+                { "var": "event.rulingId" },
+                null
+              ]
             }
           }
         ]

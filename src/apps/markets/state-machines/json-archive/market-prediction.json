@@ -230,9 +230,19 @@
       "to": "SETTLED",
       "eventName": "finalize",
       "guard": {
-        ">=": [
-          { "size": { "var": "state.resolutions" } },
-          { "var": "state.quorum" }
+        "and": [
+          {
+            "some": [
+              { "map": [{ "var": "proofs" }, { "var": "address" }] },
+              { "in": [{ "var": "" }, { "var": "state.oracles" }] }
+            ]
+          },
+          {
+            ">=": [
+              { "count": { "var": "state.resolutions" } },
+              { "var": "state.quorum" }
+            ]
+          }
         ]
       },
       "effect": {
@@ -241,7 +251,7 @@
           {
             "status": "SETTLED",
             "settledAt": { "var": "$ordinal" },
-            "finalOutcome": { "var": "event.outcome" },
+            "finalOutcome": { "var": "state.resolutions.0.outcome" },
             "claims": []
           }
         ]
@@ -288,14 +298,24 @@
       "from": "DISPUTED",
       "to": "SETTLED",
       "eventName": "ruling",
-      "guard": { "var": "event.judicialRuling" },
+      "guard": {
+        "and": [
+          {
+            "in": [
+              { "var": "state.arbiter" },
+              { "map": [{ "var": "proofs" }, { "var": "address" }] }
+            ]
+          },
+          { "in": [{ "var": "event.finalOutcome" }, { "var": "state.outcomes" }] }
+        ]
+      },
       "effect": {
         "merge": [
           { "var": "state" },
           {
             "status": "SETTLED",
             "settledAt": { "var": "$ordinal" },
-            "finalOutcome": { "var": "event.outcome" },
+            "finalOutcome": { "var": "event.finalOutcome" },
             "rulingId": { "var": "event.rulingId" },
             "claims": []
           }

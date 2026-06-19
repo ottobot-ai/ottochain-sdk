@@ -171,6 +171,9 @@ describe('Contract Agreement State Machine', () => {
       expect(contractAgreementDef.createSchema).toBeDefined();
       expect(contractAgreementDef.createSchema.required).toContain('proposer');
       expect(contractAgreementDef.createSchema.required).toContain('counterparty');
+      // S2 settlement-bypass fix: the arbitrator is a state-pinned authority.
+      expect(contractAgreementDef.createSchema.required).toContain('arbitrator');
+      expect(contractAgreementDef.createSchema.properties.arbitrator.type).toBe('address');
     });
 
     it('should define state schema with proper types', () => {
@@ -190,11 +193,47 @@ describe('Contract Agreement State Machine', () => {
   describe('Cross-References', () => {
     it('should preserve cross-reference metadata', () => {
       const crossRefs = contractAgreementDef.metadata.crossReferences;
-      
+
       expect(crossRefs).toHaveProperty('proposerIdentityId');
       expect(crossRefs).toHaveProperty('counterpartyIdentityId');
       expect(crossRefs).toHaveProperty('escrowId');
       expect(crossRefs).toHaveProperty('arbitrationPoolId');
+    });
+  });
+
+  describe('S2 settlement-bypass hardening', () => {
+    const sigParty = (v: string) => ({
+      in: [{ var: v }, { map: [{ var: 'proofs' }, { var: 'address' }] }],
+    });
+
+    it('resolve: pinned arbitrator OR both parties — never a bare event flag', () => {
+      const resolve = contractAgreementDef.transitions.find(
+        t => t.from === 'DISPUTED' && t.to === 'COMPLETED' && t.eventName === 'resolve'
+      );
+      expect(resolve!.guard).toEqual({
+        or: [
+          sigParty('state.arbitrator'),
+          { and: [sigParty('state.proposer'), sigParty('state.counterparty')] },
+        ],
+      });
+      // forgeable booleans removed from the guard and the event schema
+      const guardJson = JSON.stringify(resolve!.guard);
+      expect(guardJson).not.toContain('judicialRuling');
+      expect(guardJson).not.toContain('proposerApproves');
+      expect(guardJson).not.toContain('counterpartyApproves');
+      const props = contractAgreementDef.eventSchemas.resolve.properties;
+      expect(props).not.toHaveProperty('judicialRuling');
+      expect(props).not.toHaveProperty('proposerApproves');
+      expect(props).not.toHaveProperty('counterpartyApproves');
+    });
+
+    it('resolve: rulingId is bound to the arbitrator path, not the raw event flag', () => {
+      const resolve = contractAgreementDef.transitions.find(
+        t => t.from === 'DISPUTED' && t.to === 'COMPLETED' && t.eventName === 'resolve'
+      );
+      expect(resolve!.effect.merge[1].rulingId).toEqual({
+        if: [sigParty('state.arbitrator'), { var: 'event.rulingId' }, null],
+      });
     });
   });
 });

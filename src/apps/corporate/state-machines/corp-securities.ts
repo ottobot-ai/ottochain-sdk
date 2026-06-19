@@ -1,4 +1,5 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
+import { signerIsParty } from "../../../schema/guards.js";
 
 /**
  * Securities state machine tracking the lifecycle of equity from authorization through issuance, transfer, and retirement.
@@ -35,6 +36,7 @@ export const corpSecuritiesDef = defineFiberApp({
     required: [
       "securityId",
       "entityId",
+      "issuerAddress",
       "shareClass",
       "shareClassName",
       "shareCount",
@@ -49,6 +51,12 @@ export const corpSecuritiesDef = defineFiberApp({
       entityId: {
         type: "string",
         description: "Reference to parent corporate-entity",
+        immutable: true,
+      },
+      issuerAddress: {
+        type: "address",
+        description:
+          "State-pinned DAG address of the issuing authority (the corporation / transfer agent). Verified against proofs[].address to gate issuer-privileged transitions.",
         immutable: true,
       },
       shareClass: {
@@ -74,6 +82,7 @@ export const corpSecuritiesDef = defineFiberApp({
     properties: {
       securityId: { type: "string", immutable: true },
       entityId: { type: "string", immutable: true },
+      issuerAddress: { type: "address", immutable: true },
       shareClass: { type: "string" },
       shareClassName: { type: "string" },
       certificateNumber: {
@@ -188,6 +197,11 @@ export const corpSecuritiesDef = defineFiberApp({
         holderId: { type: "string" },
         holderType: { type: "string" },
         holderName: { type: "string" },
+        holderWallet: {
+          type: "address",
+          description:
+            "DAG wallet address the holder controls; pinned so holder-initiated transfer/repurchase can be authorized via proofs[].address.",
+        },
         address: { type: "object" },
         issuanceDate: { type: "string", format: "date" },
         issuancePrice: { type: "number" },
@@ -240,6 +254,10 @@ export const corpSecuritiesDef = defineFiberApp({
         toHolderId: { type: "string" },
         toHolderName: { type: "string" },
         toHolderType: { type: "string" },
+        toHolderWallet: {
+          type: "address",
+          description: "DAG wallet address the new holder controls.",
+        },
         toAddress: { type: "object" },
         completedDate: { type: "string", format: "date" },
         costBasis: { type: "number" },
@@ -272,6 +290,10 @@ export const corpSecuritiesDef = defineFiberApp({
         holderId: { type: "string" },
         holderName: { type: "string" },
         holderType: { type: "string" },
+        holderWallet: {
+          type: "address",
+          description: "DAG wallet address the reissued holder controls.",
+        },
         address: { type: "object" },
         reissueDate: { type: "string", format: "date" },
         issuancePrice: { type: "number" },
@@ -356,6 +378,12 @@ export const corpSecuritiesDef = defineFiberApp({
         },
         name: { type: "string" },
         taxId: { type: "string", nullable: true },
+        walletAddress: {
+          type: "address",
+          nullable: true,
+          description:
+            "State-pinned DAG wallet address controlled by this holder; verified against proofs[].address to gate holder-initiated transfer/repurchase.",
+        },
         address: { type: "object", nullable: true },
         acquisitionDate: { type: "string", format: "date" },
         acquisitionMethod: {
@@ -555,7 +583,8 @@ export const corpSecuritiesDef = defineFiberApp({
       from: "AUTHORIZED",
       to: "AUTHORIZED",
       eventName: "authorize_shares",
-      guard: { "==": [1, 1] },
+      // authority gate — an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: signerIsParty("state.issuerAddress"),
       effect: {
         merge: [
           { var: "state" },
@@ -583,7 +612,8 @@ export const corpSecuritiesDef = defineFiberApp({
       from: "AUTHORIZED",
       to: "ISSUED",
       eventName: "issue_shares",
-      guard: { "==": [1, 1] },
+      // authority gate — an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: signerIsParty("state.issuerAddress"),
       dependencies: [
         {
           machine: "corporate-resolution",
@@ -609,6 +639,7 @@ export const corpSecuritiesDef = defineFiberApp({
               holderId: { var: "event.holderId" },
               holderType: { var: "event.holderType" },
               name: { var: "event.holderName" },
+              walletAddress: { var: "event.holderWallet" },
               address: { var: "event.address" },
               acquisitionDate: { var: "event.issuanceDate" },
               acquisitionMethod: "ORIGINAL_ISSUANCE",
@@ -643,6 +674,8 @@ export const corpSecuritiesDef = defineFiberApp({
       eventName: "initiate_transfer",
       guard: {
         and: [
+          // authority gate — an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+          signerIsParty("state.holder.walletAddress"),
           {
             or: [
               { "==": [{ var: "state.restrictions.isRestricted" }, false] },
@@ -692,7 +725,8 @@ export const corpSecuritiesDef = defineFiberApp({
       from: "TRANSFERRED",
       to: "ISSUED",
       eventName: "complete_transfer",
-      guard: { "==": [1, 1] },
+      // authority gate — an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: signerIsParty("state.issuerAddress"),
       effect: {
         merge: [
           { var: "state" },
@@ -702,6 +736,7 @@ export const corpSecuritiesDef = defineFiberApp({
               holderId: { var: "event.toHolderId" },
               holderType: { var: "event.toHolderType" },
               name: { var: "event.toHolderName" },
+              walletAddress: { var: "event.toHolderWallet" },
               address: { var: "event.toAddress" },
               acquisitionDate: { var: "event.completedDate" },
               acquisitionMethod: "PURCHASE",
@@ -725,7 +760,8 @@ export const corpSecuritiesDef = defineFiberApp({
       from: "ISSUED",
       to: "TREASURY",
       eventName: "repurchase",
-      guard: { "==": [1, 1] },
+      // authority gate — the selling holder must sign; an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: signerIsParty("state.holder.walletAddress"),
       dependencies: [
         {
           machine: "corporate-resolution",
@@ -780,7 +816,8 @@ export const corpSecuritiesDef = defineFiberApp({
       from: "TREASURY",
       to: "ISSUED",
       eventName: "reissue_from_treasury",
-      guard: { "==": [1, 1] },
+      // authority gate — an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: signerIsParty("state.issuerAddress"),
       dependencies: [
         {
           machine: "corporate-resolution",
@@ -797,6 +834,7 @@ export const corpSecuritiesDef = defineFiberApp({
               holderId: { var: "event.holderId" },
               holderType: { var: "event.holderType" },
               name: { var: "event.holderName" },
+              walletAddress: { var: "event.holderWallet" },
               address: { var: "event.address" },
               acquisitionDate: { var: "event.reissueDate" },
               acquisitionMethod: "PURCHASE",
@@ -818,7 +856,8 @@ export const corpSecuritiesDef = defineFiberApp({
       from: "ISSUED",
       to: "RETIRED",
       eventName: "retire",
-      guard: { "==": [1, 1] },
+      // authority gate — an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: signerIsParty("state.issuerAddress"),
       dependencies: [
         {
           machine: "corporate-resolution",
@@ -849,7 +888,8 @@ export const corpSecuritiesDef = defineFiberApp({
       from: "TREASURY",
       to: "RETIRED",
       eventName: "retire",
-      guard: { "==": [1, 1] },
+      // authority gate — an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: signerIsParty("state.issuerAddress"),
       dependencies: [
         {
           machine: "corporate-resolution",
@@ -880,7 +920,8 @@ export const corpSecuritiesDef = defineFiberApp({
       from: "ISSUED",
       to: "ISSUED",
       eventName: "stock_split",
-      guard: { "==": [1, 1] },
+      // authority gate — an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: signerIsParty("state.issuerAddress"),
       effect: {
         merge: [
           { var: "state" },
@@ -913,7 +954,8 @@ export const corpSecuritiesDef = defineFiberApp({
       from: "ISSUED",
       to: "ISSUED",
       eventName: "declare_dividend",
-      guard: { "==": [1, 1] },
+      // authority gate — an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: signerIsParty("state.issuerAddress"),
       dependencies: [
         {
           machine: "corporate-resolution",
@@ -967,7 +1009,8 @@ export const corpSecuritiesDef = defineFiberApp({
       from: "ISSUED",
       to: "ISSUED",
       eventName: "remove_restriction",
-      guard: { "==": [1, 1] },
+      // authority gate — an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: signerIsParty("state.issuerAddress"),
       effect: {
         merge: [
           { var: "state" },

@@ -1,4 +1,5 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
+import { signerIsParty } from "../../../schema/guards.js";
 
 /**
  * Shareholder meeting state machine managing annual/special meetings, record dates, proxy periods, voting, and certification of results.
@@ -37,7 +38,7 @@ export const corpShareholdersDef = defineFiberApp({
   },
 
   createSchema: {
-    required: ["meetingId", "entityId"] as const,
+    required: ["meetingId", "entityId", "registrar"] as const,
     properties: {
       meetingId: {
         type: "string",
@@ -47,6 +48,12 @@ export const corpShareholdersDef = defineFiberApp({
       entityId: {
         type: "string",
         description: "Reference to parent corporate-entity",
+        immutable: true,
+      },
+      registrar: {
+        type: "address",
+        description:
+          "State-pinned DAG address of the transfer agent / registrar authorized to register the eligible-shareholder roster of record. Verified against proofs[].address.",
         immutable: true,
       },
       meetingType: {
@@ -78,6 +85,7 @@ export const corpShareholdersDef = defineFiberApp({
     properties: {
       meetingId: { type: "string", immutable: true },
       entityId: { type: "string", immutable: true },
+      registrar: { type: "address", immutable: true },
       meetingType: { type: "string" },
       fiscalYear: { type: "integer" },
       scheduledDate: { type: "string", format: "date-time" },
@@ -215,6 +223,11 @@ export const corpShareholdersDef = defineFiberApp({
             properties: {
               shareholderId: { type: "string" },
               name: { type: "string" },
+              address: {
+                type: "address",
+                description:
+                  "DAG wallet address of record for this shareholder; the only key a verified signer can vote under.",
+              },
               shareholdings: { type: "array" },
             },
           },
@@ -380,6 +393,11 @@ export const corpShareholdersDef = defineFiberApp({
       properties: {
         shareholderId: { type: "string" },
         name: { type: "string" },
+        address: {
+          type: "address",
+          description:
+            "State-pinned DAG wallet address of record; cast_vote requires this address ∈ proofs[].address.",
+        },
         shareholdings: {
           type: "array",
           items: {
@@ -700,7 +718,8 @@ export const corpShareholdersDef = defineFiberApp({
       from: "RECORD_DATE_SET",
       to: "RECORD_DATE_SET",
       eventName: "register_eligible_shareholders",
-      guard: { "==": [1, 1] },
+      // authority gate — only the pinned registrar may set the roster of record; an identity role attestation (ISSUER/BOARD_MEMBER/...) layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
+      guard: signerIsParty("state.registrar"),
       effect: {
         merge: [
           { var: "state" },
@@ -927,15 +946,26 @@ export const corpShareholdersDef = defineFiberApp({
       from: "VOTING",
       to: "VOTING",
       eventName: "cast_vote",
+      // authority gate — the roster entry identified by event.shareholderId must carry an address that signed (address ∈ proofs[].address), so the recorded shareholderId is provably the matched entry's, not a forged one; an identity attestation layers on additively when the identity registry lands (docs/design/app-hardening-identity-integration.md §4.2)
       guard: {
         and: [
           {
             some: [
               { var: "state.eligibleVoters" },
               {
-                "==": [
-                  { var: "shareholderId" },
-                  { var: "event.shareholderId" },
+                and: [
+                  {
+                    "==": [
+                      { var: "shareholderId" },
+                      { var: "event.shareholderId" },
+                    ],
+                  },
+                  {
+                    in: [
+                      { var: "address" },
+                      { map: [{ var: "proofs" }, { var: "address" }] },
+                    ],
+                  },
                 ],
               },
             ],

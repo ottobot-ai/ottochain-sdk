@@ -326,4 +326,37 @@ describe('CorpBoard State Machine', () => {
       expect(transition?.dependencies?.length).toBeGreaterThan(0);
     });
   });
+
+  describe('Authorization (identity hardening)', () => {
+    const guardOf = (eventName: string) =>
+      JSON.stringify(corpBoardDef.transitions.find(t => t.eventName === eventName)?.guard);
+
+    it('should pin authorizedRemovers as a required address-set createSchema/stateSchema field', () => {
+      expect(corpBoardDef.createSchema.required).toContain('authorizedRemovers');
+      expect(corpBoardDef.createSchema.properties.authorizedRemovers.type).toBe('array');
+      expect(corpBoardDef.createSchema.properties.authorizedRemovers.items).toEqual({ type: 'address' });
+      expect(corpBoardDef.stateSchema.properties.authorizedRemovers).toBeDefined();
+    });
+
+    it('should gate remove_for_cause on a verified member of state.authorizedRemovers', () => {
+      const g = guardOf('remove_for_cause');
+      expect(g).toContain('state.authorizedRemovers');
+      expect(g).toContain('proofs');
+      // director lookup retained as a key only
+      expect(g).toContain('state.directors');
+    });
+
+    it('should still declare a TODO for the #24-deferred resolution-EXECUTED assert', () => {
+      // The runtime-dep resolution-state assert is intentionally deferred (#24); the resolution
+      // dependency object remains on the transition until bare-UUID + machines.<id> asserts land.
+      const transition = corpBoardDef.transitions.find(t => t.eventName === 'remove_for_cause');
+      expect(transition?.dependencies?.length).toBeGreaterThan(0);
+    });
+
+    it('should gate elect_director vacancy solely on state.seats.vacant and not event.isFillingVacancy', () => {
+      const g = guardOf('elect_director');
+      expect(g).toContain('state.seats.vacant');
+      expect(g).not.toContain('event.isFillingVacancy');
+    });
+  });
 });
