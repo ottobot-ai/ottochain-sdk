@@ -181,10 +181,18 @@ export const daoTokenDef = defineFiberApp({
       from: "ACTIVE",
       to: "VOTING",
       eventName: "propose",
+      // S1/A2 coupled fix: a CHAIN-VERIFIED signer must hold >= proposalThreshold
+      // tokens. Iterate proofs[].address and read each balance via `get` (getKey is
+      // not a JLVM opcode); never trust the forgeable event.agent for the lookup.
       guard: {
-        ">=": [
-          { getKey: [{ var: "state.balances" }, { var: "event.agent" }] },
-          { var: "state.proposalThreshold" },
+        some: [
+          { map: [{ var: "proofs" }, { var: "address" }] },
+          {
+            ">=": [
+              { get: [{ var: "state.balances" }, { var: "" }] },
+              { var: "state.proposalThreshold" },
+            ],
+          },
         ],
       },
       effect: {

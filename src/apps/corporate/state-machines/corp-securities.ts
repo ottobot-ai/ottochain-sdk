@@ -666,7 +666,7 @@ export const corpSecuritiesDef = defineFiberApp({
           {
             status: "TRANSFERRED",
             transferHistory: {
-              cat: [
+              merge: [
                 { var: "state.transferHistory" },
                 [
                   {
@@ -739,7 +739,7 @@ export const corpSecuritiesDef = defineFiberApp({
           {
             status: "TREASURY",
             transferHistory: {
-              cat: [
+              merge: [
                 { var: "state.transferHistory" },
                 [
                   {
@@ -886,7 +886,7 @@ export const corpSecuritiesDef = defineFiberApp({
           { var: "state" },
           {
             corporateActions: {
-              cat: [
+              merge: [
                 { var: "state.corporateActions" },
                 [
                   {
@@ -929,7 +929,7 @@ export const corpSecuritiesDef = defineFiberApp({
               { var: "state" },
               {
                 corporateActions: {
-                  cat: [
+                  merge: [
                     { var: "state.corporateActions" },
                     [
                       {

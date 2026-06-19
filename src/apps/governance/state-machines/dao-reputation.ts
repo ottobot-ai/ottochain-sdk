@@ -276,21 +276,23 @@ export const daoReputationDef = defineFiberApp({
       from: "VOTING",
       to: "ACTIVE",
       eventName: "execute",
+      // A2 fix: votes.for/against/abstain are arrays of voter addresses; count with
+      // `length` (size is not a JLVM opcode).
       guard: {
         and: [
           { ">": [{ var: "$ordinal" }, { var: "state.proposal.deadline" }] },
           {
             ">": [
-              { size: { var: "state.votes.for" } },
-              { size: { var: "state.votes.against" } },
+              { length: [{ var: "state.votes.for" }] },
+              { length: [{ var: "state.votes.against" }] },
             ],
           },
           {
             ">=": [
               {
                 "+": [
-                  { size: { var: "state.votes.for" } },
-                  { size: { var: "state.votes.against" } },
+                  { length: [{ var: "state.votes.for" }] },
+                  { length: [{ var: "state.votes.against" }] },
                 ],
               },
               { var: "state.quorum" },
@@ -334,6 +336,8 @@ export const daoReputationDef = defineFiberApp({
       from: "VOTING",
       to: "ACTIVE",
       eventName: "reject",
+      // A2 fix: count the array-shaped vote tallies with `length` (size is not a JLVM
+      // opcode).
       guard: {
         and: [
           { ">": [{ var: "$ordinal" }, { var: "state.proposal.deadline" }] },
@@ -341,16 +345,16 @@ export const daoReputationDef = defineFiberApp({
             or: [
               {
                 "<=": [
-                  { size: { var: "state.votes.for" } },
-                  { size: { var: "state.votes.against" } },
+                  { length: [{ var: "state.votes.for" }] },
+                  { length: [{ var: "state.votes.against" }] },
                 ],
               },
               {
                 "<": [
                   {
                     "+": [
-                      { size: { var: "state.votes.for" } },
-                      { size: { var: "state.votes.against" } },
+                      { length: [{ var: "state.votes.for" }] },
+                      { length: [{ var: "state.votes.against" }] },
                     ],
                   },
                   { var: "state.quorum" },

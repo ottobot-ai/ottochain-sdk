@@ -120,23 +120,56 @@ describe('Governance (Simple) State Machine', () => {
       expect(transitions.length).toBeGreaterThanOrEqual(1);
     });
 
-    it('should guard propose to members', () => {
+    it('should derive the finalize for-count from state, not event.forCount (S2)', () => {
+      const transitions = govSimpleDef.transitions.filter(
+        (t) => t.eventName === 'finalize'
+      );
+
+      // S2 fix: both finalize arms count "for" ballots out of state.votes (via
+      // filter over values) and compare against members*passingThreshold — the
+      // attacker-supplied event.forCount is gone (and removed from the schema).
+      for (const transition of transitions) {
+        const guardStr = JSON.stringify(transition.guard);
+        expect(guardStr).not.toContain('forCount');
+        expect(guardStr).toContain('state.votes');
+        expect(guardStr).toContain('filter');
+        expect(guardStr).toContain('passingThreshold');
+        expect(guardStr).not.toMatch(/"size":/);
+      }
+
+      const finalizeSchema = (
+        govSimpleDef.eventSchemas as Record<string, { properties?: Record<string, unknown> }>
+      ).finalize;
+      expect(finalizeSchema.properties ?? {}).not.toHaveProperty('forCount');
+    });
+
+    it('should guard propose to verified members', () => {
       const transition = govSimpleDef.transitions.find(
         (t) => t.eventName === 'propose' && t.from === 'ACTIVE'
       );
 
-      expect(transition!.guard).toHaveProperty('getKey');
+      // S1/A2 coupled fix: membership binds to the chain-verified signers (proofs)
+      // via signerHasEntry (`some`/`has`), not the forgeable event.agent / getKey.
+      expect(transition!.guard).toHaveProperty('some');
       const guardStr = JSON.stringify(transition!.guard);
+      expect(guardStr).toContain('proofs');
+      expect(guardStr).not.toContain('event.agent');
+      expect(guardStr).not.toContain('getKey');
       expect(guardStr).toContain('members');
     });
 
-    it('should guard vote to prevent double-voting', () => {
+    it('should guard vote to verified members and prevent double-voting', () => {
       const transition = govSimpleDef.transitions.find(
         (t) => t.eventName === 'vote' && t.from === 'VOTING'
       );
 
+      // S1/A2 coupled fix: voter + dedup bind to proofs[].address (signerHasEntry),
+      // never event.agent / getKey.
       expect(transition!.guard).toHaveProperty('and');
       const guardStr = JSON.stringify(transition!.guard);
+      expect(guardStr).toContain('proofs');
+      expect(guardStr).not.toContain('event.agent');
+      expect(guardStr).not.toContain('getKey');
       expect(guardStr).toContain('votes');
     });
   });
@@ -179,12 +212,19 @@ describe('Governance (Simple) State Machine', () => {
       expect(transition!.guard).toBeDefined();
     });
 
-    it('should guard file_dispute to members', () => {
+    it('should guard file_dispute to verified members', () => {
       const transition = govSimpleDef.transitions.find(
         (t) => t.eventName === 'file_dispute'
       );
 
-      expect(transition!.guard).toHaveProperty('getKey');
+      // S1/A2 coupled fix: only a chain-verified member may file (signerHasEntry),
+      // not the forgeable event.agent / getKey.
+      expect(transition!.guard).toHaveProperty('some');
+      const guardStr = JSON.stringify(transition!.guard);
+      expect(guardStr).toContain('proofs');
+      expect(guardStr).not.toContain('event.agent');
+      expect(guardStr).not.toContain('getKey');
+      expect(guardStr).toContain('members');
     });
 
     it('should guard submit_evidence to plaintiff or defendant', () => {
@@ -198,7 +238,7 @@ describe('Governance (Simple) State Machine', () => {
       expect(guardStr).toContain('defendant');
     });
 
-    it('should guard resolve to quorum', () => {
+    it('should guard resolve to quorum (A2: length over keys, not size)', () => {
       const transition = govSimpleDef.transitions.find(
         (t) => t.eventName === 'resolve'
       );
@@ -206,6 +246,10 @@ describe('Governance (Simple) State Machine', () => {
       expect(transition!.guard).toHaveProperty('>=');
       const guardStr = JSON.stringify(transition!.guard);
       expect(guardStr).toContain('disputeQuorum');
+      // votes is a Map; count its keys with length (size is not a JLVM opcode).
+      expect(guardStr).toContain('length');
+      expect(guardStr).toContain('keys');
+      expect(guardStr).not.toMatch(/"size":/);
     });
   });
 
@@ -219,15 +263,28 @@ describe('Governance (Simple) State Machine', () => {
       expect(transition!.guard).toBeDefined();
     });
 
-    it('should guard dissolve to 90% approval', () => {
+    it('should guard dissolve to verified unanimity of members', () => {
       const transition = govSimpleDef.transitions.find(
         (t) => t.eventName === 'dissolve'
       );
 
-      expect(transition!.guard).toHaveProperty('>=');
+      // S2 fix: dissolution is gated on CHAIN-VERIFIED unanimity — every member
+      // (a key in state.members) must be among proofs[].address (non-empty) — never
+      // on the attacker-supplied event.approvalCount, which has been removed.
+      expect(transition!.guard).toHaveProperty('and');
       const guardStr = JSON.stringify(transition!.guard);
-      expect(guardStr).toContain('approvalCount');
-      expect(guardStr).toContain('0.9');
+      expect(guardStr).toContain('all');
+      expect(guardStr).toContain('proofs');
+      expect(guardStr).toContain('members');
+      expect(guardStr).not.toContain('approvalCount');
+      expect(guardStr).not.toMatch(/"size":/);
+    });
+
+    it('should not declare an attacker-supplied approvalCount on dissolve', () => {
+      const dissolveSchema = (
+        govSimpleDef.eventSchemas as Record<string, { properties?: Record<string, unknown> }>
+      ).dissolve;
+      expect(dissolveSchema.properties).not.toHaveProperty('approvalCount');
     });
   });
 

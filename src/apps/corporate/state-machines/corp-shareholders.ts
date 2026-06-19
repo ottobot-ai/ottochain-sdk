@@ -765,12 +765,12 @@ export const corpShareholdersDef = defineFiberApp({
           { var: "state" },
           {
             agenda: {
-              cat: [
+              merge: [
                 { var: "state.agenda" },
                 [
                   {
                     itemId: { var: "event.itemId" },
-                    itemNumber: { "+": [{ var: "state.agenda.length" }, 1] },
+                    itemNumber: { "+": [{ length: [{ var: "state.agenda" }] }, 1] },
                     title: { var: "event.title" },
                     description: { var: "event.description" },
                     type: { var: "event.type" },
@@ -798,12 +798,12 @@ export const corpShareholdersDef = defineFiberApp({
           { var: "state" },
           {
             agenda: {
-              cat: [
+              merge: [
                 { var: "state.agenda" },
                 [
                   {
                     itemId: { var: "event.itemId" },
-                    itemNumber: { "+": [{ var: "state.agenda.length" }, 1] },
+                    itemNumber: { "+": [{ length: [{ var: "state.agenda" }] }, 1] },
                     title: { var: "event.title" },
                     description: { var: "event.description" },
                     type: { var: "event.type" },
@@ -831,12 +831,12 @@ export const corpShareholdersDef = defineFiberApp({
           { var: "state" },
           {
             agenda: {
-              cat: [
+              merge: [
                 { var: "state.agenda" },
                 [
                   {
                     itemId: { var: "event.itemId" },
-                    itemNumber: { "+": [{ var: "state.agenda.length" }, 1] },
+                    itemNumber: { "+": [{ length: [{ var: "state.agenda" }] }, 1] },
                     title: { var: "event.title" },
                     description: { var: "event.description" },
                     type: { var: "event.type" },
@@ -934,7 +934,7 @@ export const corpShareholdersDef = defineFiberApp({
               { var: "state.eligibleVoters" },
               {
                 "==": [
-                  { var: ".shareholderId" },
+                  { var: "shareholderId" },
                   { var: "event.shareholderId" },
                 ],
               },
@@ -948,13 +948,13 @@ export const corpShareholdersDef = defineFiberApp({
                   and: [
                     {
                       "==": [
-                        { var: ".shareholderId" },
+                        { var: "shareholderId" },
                         { var: "event.shareholderId" },
                       ],
                     },
                     {
                       "==": [
-                        { var: ".agendaItemId" },
+                        { var: "agendaItemId" },
                         { var: "event.agendaItemId" },
                       ],
                     },
@@ -970,7 +970,7 @@ export const corpShareholdersDef = defineFiberApp({
           { var: "state" },
           {
             votes: {
-              cat: [
+              merge: [
                 { var: "state.votes" },
                 [
                   {
@@ -999,7 +999,7 @@ export const corpShareholdersDef = defineFiberApp({
                   if: [
                     {
                       "==": [
-                        { var: ".shareholderId" },
+                        { var: "shareholderId" },
                         { var: "event.shareholderId" },
                       ],
                     },

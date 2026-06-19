@@ -452,11 +452,11 @@ export const corpBoardDef = defineFiberApp({
                   and: [
                     {
                       "==": [
-                        { var: ".directorId" },
+                        { var: "directorId" },
                         { var: "event.directorId" },
                       ],
                     },
-                    { "==": [{ var: ".status" }, "ACTIVE"] },
+                    { "==": [{ var: "status" }, "ACTIVE"] },
                   ],
                 },
               ],
@@ -469,7 +469,7 @@ export const corpBoardDef = defineFiberApp({
           { var: "state" },
           {
             directors: {
-              cat: [
+              merge: [
                 { var: "state.directors" },
                 [
                   {
@@ -514,8 +514,8 @@ export const corpBoardDef = defineFiberApp({
           { var: "state.directors" },
           {
             and: [
-              { "==": [{ var: ".directorId" }, { var: "event.directorId" }] },
-              { "==": [{ var: ".status" }, "ACTIVE"] },
+              { "==": [{ var: "directorId" }, { var: "event.directorId" }] },
+              { "==": [{ var: "status" }, "ACTIVE"] },
             ],
           },
         ],
@@ -531,7 +531,7 @@ export const corpBoardDef = defineFiberApp({
                   if: [
                     {
                       "==": [
-                        { var: ".directorId" },
+                        { var: "directorId" },
                         { var: "event.directorId" },
                       ],
                     },
@@ -572,8 +572,8 @@ export const corpBoardDef = defineFiberApp({
           { var: "state.directors" },
           {
             and: [
-              { "==": [{ var: ".directorId" }, { var: "event.directorId" }] },
-              { "==": [{ var: ".status" }, "ACTIVE"] },
+              { "==": [{ var: "directorId" }, { var: "event.directorId" }] },
+              { "==": [{ var: "status" }, "ACTIVE"] },
             ],
           },
         ],
@@ -589,7 +589,7 @@ export const corpBoardDef = defineFiberApp({
                   if: [
                     {
                       "==": [
-                        { var: ".directorId" },
+                        { var: "directorId" },
                         { var: "event.directorId" },
                       ],
                     },
@@ -632,8 +632,8 @@ export const corpBoardDef = defineFiberApp({
           { var: "state.directors" },
           {
             and: [
-              { "==": [{ var: ".directorId" }, { var: "event.directorId" }] },
-              { "==": [{ var: ".status" }, "ACTIVE"] },
+              { "==": [{ var: "directorId" }, { var: "event.directorId" }] },
+              { "==": [{ var: "status" }, "ACTIVE"] },
             ],
           },
         ],
@@ -656,7 +656,7 @@ export const corpBoardDef = defineFiberApp({
                   if: [
                     {
                       "==": [
-                        { var: ".directorId" },
+                        { var: "directorId" },
                         { var: "event.directorId" },
                       ],
                     },
@@ -699,8 +699,8 @@ export const corpBoardDef = defineFiberApp({
           { var: "state.directors" },
           {
             and: [
-              { "==": [{ var: ".directorId" }, { var: "event.directorId" }] },
-              { "==": [{ var: ".status" }, "ACTIVE"] },
+              { "==": [{ var: "directorId" }, { var: "event.directorId" }] },
+              { "==": [{ var: "status" }, "ACTIVE"] },
             ],
           },
         ],
@@ -718,7 +718,7 @@ export const corpBoardDef = defineFiberApp({
                     {
                       isChair: {
                         "==": [
-                          { var: ".directorId" },
+                          { var: "directorId" },
                           { var: "event.directorId" },
                         ],
                       },
@@ -801,9 +801,9 @@ export const corpBoardDef = defineFiberApp({
               {
                 and: [
                   {
-                    "==": [{ var: ".directorId" }, { var: "event.directorId" }],
+                    "==": [{ var: "directorId" }, { var: "event.directorId" }],
                   },
-                  { "==": [{ var: ".status" }, "ACTIVE"] },
+                  { "==": [{ var: "status" }, "ACTIVE"] },
                 ],
               },
             ],
@@ -819,7 +819,7 @@ export const corpBoardDef = defineFiberApp({
                 { var: "state.currentMeeting" },
                 {
                   attendees: {
-                    cat: [
+                    merge: [
                       { var: "state.currentMeeting.attendees" },
                       [
                         {
@@ -889,7 +889,7 @@ export const corpBoardDef = defineFiberApp({
                         if: [
                           {
                             "==": [
-                              { var: ".directorId" },
+                              { var: "directorId" },
                               { var: "event.directorId" },
                             ],
                           },
@@ -952,7 +952,7 @@ export const corpBoardDef = defineFiberApp({
             status: "ACTIVE",
             currentMeeting: null,
             meetingHistory: {
-              cat: [
+              merge: [
                 { var: "state.meetingHistory" },
                 [
                   {
@@ -988,7 +988,7 @@ export const corpBoardDef = defineFiberApp({
             status: "ACTIVE",
             currentMeeting: null,
             meetingHistory: {
-              cat: [
+              merge: [
                 { var: "state.meetingHistory" },
                 [
                   {

@@ -128,8 +128,15 @@ describe('TokenDAO State Machine', () => {
         (t) => t.eventName === 'propose'
       );
 
-      expect(proposeTransition!.guard).toHaveProperty('>=');
+      // S1/A2 coupled fix: a chain-verified signer (proofs[].address) must hold
+      // >= proposalThreshold. The per-signer balance is read with the `get` opcode
+      // (getKey is not a JLVM opcode) and never from the forgeable event.agent.
+      expect(proposeTransition!.guard).toHaveProperty('some');
       const guardStr = JSON.stringify(proposeTransition!.guard);
+      expect(guardStr).toContain('proofs');
+      expect(guardStr).not.toContain('event.agent');
+      expect(guardStr).not.toContain('getKey');
+      expect(guardStr).toContain('get');
       expect(guardStr).toContain('balances');
       expect(guardStr).toContain('proposalThreshold');
     });

@@ -117,10 +117,9 @@ export const daoMultisigDef = defineFiberApp({
       },
     },
     dissolve: {
-      description: "Dissolve the DAO (requires unanimous signer count)",
-      properties: {
-        signatureCount: { type: "number" },
-      },
+      description:
+        "Dissolve the DAO (requires every signer to sign this op — verified unanimity)",
+      properties: {},
     },
   },
 
@@ -332,7 +331,7 @@ export const daoMultisigDef = defineFiberApp({
           signerInSet("state.signers"),
           {
             ">": [
-              { size: { var: "state.signers" } },
+              { length: [{ var: "state.signers" }] },
               { var: "state.threshold" },
             ],
           },
@@ -372,7 +371,7 @@ export const daoMultisigDef = defineFiberApp({
           {
             "<=": [
               { var: "event.newThreshold" },
-              { size: { var: "state.signers" } },
+              { length: [{ var: "state.signers" }] },
             ],
           },
         ],
@@ -478,10 +477,18 @@ export const daoMultisigDef = defineFiberApp({
       from: "ACTIVE",
       to: "DISSOLVED",
       eventName: "dissolve",
+      // S2 fix: dissolution must not trust an attacker-supplied count. Derive
+      // unanimity from the CHAIN-VERIFIED signers — every signer in state.signers
+      // must be among proofs[].address (with a non-empty belt). signers is an array.
       guard: {
-        "===": [
-          { var: "event.signatureCount" },
-          { size: { var: "state.signers" } },
+        and: [
+          { ">": [{ length: [{ var: "state.signers" }] }, 0] },
+          {
+            all: [
+              { var: "state.signers" },
+              { in: [{ var: "" }, { map: [{ var: "proofs" }, { var: "address" }] }] },
+            ],
+          },
         ],
       },
       effect: {

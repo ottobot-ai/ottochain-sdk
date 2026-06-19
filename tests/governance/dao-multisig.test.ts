@@ -127,6 +127,19 @@ describe('MultisigDAO State Machine', () => {
       expect(transition!.from).toBe('PENDING');
       expect(transition!.to).toBe('ACTIVE');
     });
+
+    it('should count the signer array with the length opcode (A2), not size', () => {
+      // size is not a JLVM opcode; signers is an array so length applies directly.
+      for (const name of ['propose_remove_signer', 'propose_change_threshold']) {
+        const transition = daoMultisigDef.transitions.find(
+          (t) => t.eventName === name
+        );
+        const guardStr = JSON.stringify(transition!.guard);
+        expect(guardStr).toContain('length');
+        expect(guardStr).not.toContain('"size"');
+        expect(guardStr).not.toMatch(/"size":/);
+      }
+    });
   });
 
   describe('Guard Logic', () => {
@@ -170,14 +183,29 @@ describe('MultisigDAO State Machine', () => {
       expect(cancelTransition!.guard).toHaveProperty('or');
     });
 
-    it('should guard dissolve to require all signers', () => {
+    it('should guard dissolve to verified unanimity of all signers', () => {
       const dissolveTransition = daoMultisigDef.transitions.find(
         (t) => t.eventName === 'dissolve'
       );
 
-      expect(dissolveTransition!.guard).toHaveProperty('===');
+      // S2 fix: dissolution is gated on CHAIN-VERIFIED unanimity — every signer in
+      // state.signers must be among proofs[].address (non-empty) — never on the
+      // attacker-supplied event.signatureCount, which has been removed.
+      expect(dissolveTransition!.guard).toHaveProperty('and');
       const guardStr = JSON.stringify(dissolveTransition!.guard);
-      expect(guardStr).toContain('signatureCount');
+      expect(guardStr).toContain('all');
+      expect(guardStr).toContain('proofs');
+      expect(guardStr).toContain('state.signers');
+      expect(guardStr).not.toContain('signatureCount');
+      expect(guardStr).not.toContain('size');
+    });
+
+    it('should not declare an attacker-supplied signatureCount on dissolve', () => {
+      // The forgeable count field is removed from the event schema (S2).
+      const dissolveSchema = (
+        daoMultisigDef.eventSchemas as Record<string, { properties?: Record<string, unknown> }>
+      ).dissolve;
+      expect(dissolveSchema.properties).not.toHaveProperty('signatureCount');
     });
   });
 

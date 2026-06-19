@@ -156,6 +156,19 @@ describe('DAOReputation State Machine', () => {
       expect(guardStr).toContain('quorum');
     });
 
+    it('should count array-shaped vote tallies with length, not size (A2)', () => {
+      // votes.for/against/abstain are arrays; size is not a JLVM opcode.
+      for (const name of ['execute', 'reject']) {
+        const transition = daoReputationDef.transitions.find(
+          (t) => t.eventName === name
+        );
+        const guardStr = JSON.stringify(transition!.guard);
+        expect(guardStr).toContain('length');
+        expect(guardStr).toContain('votes.for');
+        expect(guardStr).not.toMatch(/"size":/);
+      }
+    });
+
     it('should guard join to membership reputation threshold', () => {
       const joinTransition = daoReputationDef.transitions.find(
         (t) => t.eventName === 'join'

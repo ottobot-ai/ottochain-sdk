@@ -449,8 +449,8 @@ export const corpEntityDef = defineFiberApp({
           { "!=": [{ var: "state.legalName" }, null] },
           { "!=": [{ var: "state.jurisdiction.state" }, null] },
           { "!=": [{ var: "state.registeredAgent" }, null] },
-          { ">": [{ var: "state.incorporators.length" }, 0] },
-          { ">": [{ var: "state.shareStructure.classes.length" }, 0] },
+          { ">": [{ length: [{ var: "state.incorporators" }] }, 0] },
+          { ">": [{ length: [{ var: "state.shareStructure.classes" }] }, 0] },
           { ">": [{ var: "state.shareStructure.totalAuthorized" }, 0] },
         ],
       },
@@ -485,7 +485,7 @@ export const corpEntityDef = defineFiberApp({
           { var: "state" },
           {
             charterAmendments: {
-              cat: [
+              merge: [
                 { var: "state.charterAmendments" },
                 [
                   {
@@ -522,7 +522,7 @@ export const corpEntityDef = defineFiberApp({
           { var: "state.charterAmendments" },
           {
             "==": [
-              { var: ".amendmentId" },
+              { var: "amendmentId" },
               { var: "event.charterAmendmentRef" },
             ],
           },
@@ -543,7 +543,7 @@ export const corpEntityDef = defineFiberApp({
                         if: [
                           {
                             "==": [
-                              { var: ".classId" },
+                              { var: "classId" },
                               { var: "event.classId" },
                             ],
                           },

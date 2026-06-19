@@ -1,5 +1,6 @@
 import { defineFiberApp } from "../../../schema/fiber-app.js";
 import {
+  signerHasEntry,
   signerInSet,
   signerIsAnyParty,
   signerIsNotParty,
@@ -99,11 +100,9 @@ export const govSimpleDef = defineFiberApp({
       },
     },
     finalize: {
-      description: "Finalize the voting period",
-      required: ["forCount"] as const,
-      properties: {
-        forCount: { type: "number" },
-      },
+      description:
+        "Finalize the voting period (for-count derived from recorded ballots)",
+      properties: {},
     },
     file_dispute: {
       description: "File a dispute against a member",
@@ -132,11 +131,9 @@ export const govSimpleDef = defineFiberApp({
       },
     },
     dissolve: {
-      description: "Dissolve the organization (requires 90% approval)",
-      required: ["approvalCount"] as const,
-      properties: {
-        approvalCount: { type: "number" },
-      },
+      description:
+        "Dissolve the organization (requires every member to sign this op — verified unanimity)",
+      properties: {},
     },
   },
 
@@ -227,7 +224,9 @@ export const govSimpleDef = defineFiberApp({
       from: "ACTIVE",
       to: "VOTING",
       eventName: "propose",
-      guard: { getKey: [{ var: "state.members" }, { var: "event.agent" }] },
+      // S1/A2 coupled fix: a CHAIN-VERIFIED signer must be a member (getKey is not a
+      // JLVM opcode; signerHasEntry checks signer ∈ keys(state.members) via `has`).
+      guard: signerHasEntry("state.members"),
       effect: {
         merge: [
           { var: "state" },
@@ -253,12 +252,13 @@ export const govSimpleDef = defineFiberApp({
       from: "VOTING",
       to: "VOTING",
       eventName: "vote",
+      // S1/A2 coupled fix: voter must be a CHAIN-VERIFIED member and must not have
+      // already voted. Both checks bind to proofs[].address (getKey is not a JLVM
+      // opcode); signerHasEntry checks signer ∈ keys(map) via `has`.
       guard: {
         and: [
-          { getKey: [{ var: "state.members" }, { var: "event.agent" }] },
-          {
-            "!": [{ getKey: [{ var: "state.votes" }, { var: "event.agent" }] }],
-          },
+          signerHasEntry("state.members"),
+          { "!": [signerHasEntry("state.votes")] },
         ],
       },
       effect: {
@@ -282,12 +282,24 @@ export const govSimpleDef = defineFiberApp({
       from: "VOTING",
       to: "ACTIVE",
       eventName: "finalize",
+      // S2/A2 coupled fix: the for-count is DERIVED from recorded ballots in
+      // state.votes (length of the "for" entries), never read from the attacker's
+      // event.forCount. members is a Map so its count is length(keys(members)).
       guard: {
         ">=": [
-          { var: "event.forCount" },
+          {
+            length: [
+              {
+                filter: [
+                  { values: [{ var: "state.votes" }] },
+                  { "===": [{ var: "vote" }, "for"] },
+                ],
+              },
+            ],
+          },
           {
             "*": [
-              { size: { var: "state.members" } },
+              { length: [{ keys: [{ var: "state.members" }] }] },
               { var: "state.passingThreshold" },
             ],
           },
@@ -328,12 +340,23 @@ export const govSimpleDef = defineFiberApp({
       from: "VOTING",
       to: "ACTIVE",
       eventName: "finalize",
+      // S2/A2 coupled fix (failed arm): derive the for-count from recorded ballots in
+      // state.votes; never from event.forCount. members count = length(keys(members)).
       guard: {
         "<": [
-          { var: "event.forCount" },
+          {
+            length: [
+              {
+                filter: [
+                  { values: [{ var: "state.votes" }] },
+                  { "===": [{ var: "vote" }, "for"] },
+                ],
+              },
+            ],
+          },
           {
             "*": [
-              { size: { var: "state.members" } },
+              { length: [{ keys: [{ var: "state.members" }] }] },
               { var: "state.passingThreshold" },
             ],
           },
@@ -368,7 +391,9 @@ export const govSimpleDef = defineFiberApp({
       from: "ACTIVE",
       to: "DISPUTE",
       eventName: "file_dispute",
-      guard: { getKey: [{ var: "state.members" }, { var: "event.agent" }] },
+      // S1/A2 coupled fix: only a CHAIN-VERIFIED member may file (getKey is not a JLVM
+      // opcode; signerHasEntry checks signer ∈ keys(state.members) via `has`).
+      guard: signerHasEntry("state.members"),
       effect: {
         merge: [
           { var: "state" },
@@ -429,14 +454,15 @@ export const govSimpleDef = defineFiberApp({
       from: "DISPUTE",
       to: "DISPUTE",
       eventName: "vote",
+      // S1/A2 coupled fix: dispute voter must be a CHAIN-VERIFIED member, not a party,
+      // and must not have already voted — all bound to proofs[].address (getKey is not
+      // a JLVM opcode; signerHasEntry checks signer ∈ keys(map) via `has`).
       guard: {
         and: [
-          { getKey: [{ var: "state.members" }, { var: "event.agent" }] },
+          signerHasEntry("state.members"),
           signerIsNotParty("state.dispute.plaintiff"),
           signerIsNotParty("state.dispute.defendant"),
-          {
-            "!": [{ getKey: [{ var: "state.votes" }, { var: "event.agent" }] }],
-          },
+          { "!": [signerHasEntry("state.votes")] },
         ],
       },
       effect: {
@@ -463,9 +489,11 @@ export const govSimpleDef = defineFiberApp({
       from: "DISPUTE",
       to: "ACTIVE",
       eventName: "resolve",
+      // A2 fix: count recorded ballots. votes is a Map, and `length` rejects Maps, so
+      // count its keys: length(keys(state.votes)). (size is not a JLVM opcode.)
       guard: {
         ">=": [
-          { size: { var: "state.votes" } },
+          { length: [{ keys: [{ var: "state.votes" }] }] },
           { var: "state.disputeQuorum" },
         ],
       },
@@ -499,10 +527,19 @@ export const govSimpleDef = defineFiberApp({
       from: "ACTIVE",
       to: "DISSOLVED",
       eventName: "dissolve",
+      // S2/A2 coupled fix: dissolution must not trust an attacker-supplied
+      // approvalCount. Derive consent from the CHAIN-VERIFIED signers — every member
+      // (a key in state.members) must be among proofs[].address, with a non-empty
+      // belt. members is a Map, so iterate keys(members); size is not a JLVM opcode.
       guard: {
-        ">=": [
-          { var: "event.approvalCount" },
-          { "*": [{ size: { var: "state.members" } }, 0.9] },
+        and: [
+          { ">": [{ length: [{ keys: [{ var: "state.members" }] }] }, 0] },
+          {
+            all: [
+              { keys: [{ var: "state.members" }] },
+              { in: [{ var: "" }, { map: [{ var: "proofs" }, { var: "address" }] }] },
+            ],
+          },
         ],
       },
       effect: {
