@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.4.0](https://github.com/ottobot-ai/ottochain-sdk/compare/v2.3.0...v2.4.0) (2026-06-19)
+
+
+### Features
+
+* **privacy:** shieldApp(def) — shield any fiber app into a private-state pool ([#212](https://github.com/ottobot-ai/ottochain-sdk/issues/212)) ([0f2b60a](https://github.com/ottobot-ai/ottochain-sdk/commit/0f2b60a5129dca404a8d40b1e8c3bd0709e01644))
+* semi-private privacy tier (@ottochain/sdk/zk) + zk-loan std app ([#213](https://github.com/ottobot-ai/ottochain-sdk/issues/213)) ([5e6bd8e](https://github.com/ottobot-ai/ottochain-sdk/commit/5e6bd8e5aa13a8369a918bbb29ee2a6dc9ecb104))
+* typed API types generated from metagraph OpenAPI ([#214](https://github.com/ottobot-ai/ottochain-sdk/issues/214)) ([317626c](https://github.com/ottobot-ai/ottochain-sdk/commit/317626c86ecc2e6f29b95cbc040a95675416e27d))
+* typed domain schemas from contract (records, onchain, registry) ([#215](https://github.com/ottobot-ai/ottochain-sdk/issues/215)) ([25f6702](https://github.com/ottobot-ai/ottochain-sdk/commit/25f67025671b25494272ec4b9b6f89bd4e5dcd33))
+
+
+### Bug Fixes
+
+* align ottochain-sdk wire format with chain (P0 + P1) ([#208](https://github.com/ottobot-ai/ottochain-sdk/issues/208)) ([f4a99ae](https://github.com/ottobot-ai/ottochain-sdk/commit/f4a99aee898020de6d2b9f8d9a301694fd549845))
+* **ci:** let OIDC trusted publishing engage on npm publish ([#198](https://github.com/ottobot-ai/ottochain-sdk/issues/198)) ([525b757](https://github.com/ottobot-ai/ottochain-sdk/commit/525b75798cf48ef59203b5f1a2adda3fe1d0ed5a))
+* **signing:** apply dropNulls internally on the dataUpdate signing path ([#197](https://github.com/ottobot-ai/ottochain-sdk/issues/197)) ([a6ea942](https://github.com/ottobot-ai/ottochain-sdk/commit/a6ea942d7753b7316ee5e89cffa477519b630985))
+
 ## [2.3.0](https://github.com/ottobot-ai/ottochain-sdk/compare/v2.2.5...v2.3.0) (2026-06-05)
 
 
