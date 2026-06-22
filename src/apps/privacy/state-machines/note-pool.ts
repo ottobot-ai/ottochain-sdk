@@ -73,24 +73,37 @@ import { transferAsset } from "../../../schema/effects.js";
  * begins at hex offset `2 + 64*w` (the leading `2` skips `0x`).
  *
  * `ShieldedTransferPublicValues { bytes32 anchor; bytes32[] nullifiers; bytes32[] outputCms;
- *  uint64 fee; bytes32 feeAsset; }`. ABI-encoded with the two dynamic arrays as a head of
- * offsets + a tail of (len, elems). For FIXED N=1/M=1 the tail is static and `substr`-addressable.
+ *  uint64 fee; bytes32 feeAsset; }`. The circuit commits this via `alloy_sol_types::abi_encode`,
+ * which — the struct being a DYNAMIC tuple (it holds the two dynamic arrays) — emits a single leading
+ * `0x20` tuple-offset HEAD WORD before the struct body, then the body's own head of array offsets +
+ * a tail of (len, elems). For FIXED N=1/M=1 the tail is static and `substr`-addressable.
  *
  * ┌── field ─────────────┬── hex offset ─┬── width ─┬── notes ─────────────────────────────────┐
- * │ anchor               │      2        │   64     │ Poseidon-Merkle root the inputs prove under │
- * │ fee  (uint64 word)   │    194        │   64     │ transparent fee, right-aligned in word 3    │
- * │ feeAsset             │    258        │   64     │ asset-as-Fr the fee is denominated in       │
- * │ nullifiers[0]        │    386        │   64     │ after the nullifiers length word @322       │
- * │ outputCms[0]         │    514        │   64     │ after the outputCms length word @450        │
+ * │ tuple head (0x20)    │      2        │   64     │ abi_encode dynamic-tuple offset; NOT a field│
+ * │ anchor               │     66        │   64     │ Poseidon-Merkle root the inputs prove under │
+ * │ nullifiers off (0xa0)│    130        │   64     │ body-relative offset of the nullifiers array│
+ * │ outputCms  off (0xe0)│    194        │   64     │ body-relative offset of the outputCms array │
+ * │ fee  (uint64 word)   │    258        │   64     │ transparent fee, right-aligned in the word  │
+ * │ feeAsset             │    322        │   64     │ asset-as-Fr the fee is denominated in       │
+ * │ nullifiers.len       │    386        │   64     │ == 1 for the N=1 MVP                         │
+ * │ nullifiers[0]        │    450        │   64     │ the revealed input nullifier                │
+ * │ outputCms.len        │    514        │   64     │ == 1 for the M=1 MVP                         │
+ * │ outputCms[0]         │    578        │   64     │ the revealed output commitment              │
  * └──────────────────────┴───────────────┴──────────┴─────────────────────────────────────────────┘
  *
  * The word ORDER and ENCODING a matching SP1 fixture MUST produce (so the placeholder can be
  * swapped for a real proof): the `0x`-string is
- *   0x ‖ anchor ‖ <head offset words for the two arrays> ‖ fee ‖ feeAsset ‖
+ *   0x ‖ 0x20 ‖ anchor ‖ nullifiers.off ‖ outputCms.off ‖ fee ‖ feeAsset ‖
  *      nullifiers.len ‖ nullifiers[0] ‖ outputCms.len ‖ outputCms[0]
- * laid out by the circuit's `commit_public_values(ShieldedTransferPublicValues{..})` ABI encoder,
- * such that the five offsets below land on the words above. Every word is a lowercase
- * 32-byte hex with NO `0x` per-word prefix (the single `0x` is on the whole string).
+ * laid out by the circuit's `commit_slice(abi_encode(ShieldedTransferPublicValues{..}))`, such that
+ * the five field offsets below land on the words above. Every word is a lowercase 32-byte hex with
+ * NO `0x` per-word prefix (the single `0x` is on the whole string).
+ *
+ * RECONCILED 2026-06 against the REAL `zk-shielded` circuit (~/repos/metakit-sdk/rust/zk-shielded):
+ * an earlier version of this layout omitted the leading `0x20` dynamic-tuple head word, so every
+ * offset was one 32-byte word (64 hex) too low and the guard sliced the WRONG words. The circuit is
+ * the source of truth; the offsets above were corrected (+64 each) to match a real SP1 Groth16 proof
+ * whose `publicValues` is `0x ‖ 0x20 ‖ anchor ‖ 0xa0 ‖ 0xe0 ‖ fee ‖ feeAsset ‖ 1 ‖ nf ‖ 1 ‖ cm`.
  *
  * cm / nf preimages (the circuit's, fixed and byte-for-byte across Scala/Rust/TS):
  *   - `cm = Poseidon([value_as_fr, owner, asset, rho])` (4-input, MAX poseidon arity);
@@ -98,16 +111,16 @@ import { transferAsset } from "../../../schema/effects.js";
  *   - `nf = Poseidon([rho, nsk])` (FIELD ORDER rho, nsk).
  */
 export const PV_LAYOUT = {
-  /** anchor — word 0. */
-  anchor: 2,
-  /** fee — word 3 (uint64 right-aligned). MVP pins this whole word to {@link NotePoolOptions.feeWord}. */
-  fee: 194,
-  /** feeAsset — word 4. */
-  feeAsset: 258,
-  /** nullifiers[0] — after the nullifiers length word @322. */
-  nullifier: 386,
-  /** outputCms[0] — after the outputCms length word @450. */
-  outputCm: 514,
+  /** anchor — word 1 (word 0 is the dynamic-tuple `0x20` head word; see the table). */
+  anchor: 66,
+  /** fee — word 4 (uint64 right-aligned). MVP pins this whole word to {@link NotePoolOptions.feeWord}. */
+  fee: 258,
+  /** feeAsset — word 5. */
+  feeAsset: 322,
+  /** nullifiers[0] — after the nullifiers length word @386. */
+  nullifier: 450,
+  /** outputCms[0] — after the outputCms length word @514. */
+  outputCm: 578,
 } as const;
 
 // =============================================================================

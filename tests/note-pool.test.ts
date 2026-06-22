@@ -33,9 +33,7 @@ import {
 const apply = (rule: unknown, data: unknown = {}): unknown =>
   jsonLogic.apply(rule as Record<string, unknown>, data as Record<string, unknown>);
 
-const fixture = JSON.parse(
-  readFileSync(resolve(__dirname, "zk/fixtures/shielded-note-pool-transfer.placeholder.json"), "utf8"),
-) as {
+type NotePoolFixture = {
   realProof: { enabled: boolean };
   vkey: string;
   publicValues: string;
@@ -43,6 +41,31 @@ const fixture = JSON.parse(
   newRoot: string;
   fields: { anchor: string; feeWord: string; feeAsset: string; nullifier: string; outputCm: string };
   pmt: { root: string; leaf: string; index: number; siblings: string[]; depth: number };
+};
+
+const loadFixture = (name: string): NotePoolFixture =>
+  JSON.parse(readFileSync(resolve(__dirname, "zk/fixtures", name), "utf8")) as NotePoolFixture;
+
+// Prefer the REAL SP1 zk-shielded Groth16 fixture (realProof.enabled) when it has been dropped in;
+// fall back to the placeholder otherwise. The real fixture's publicValues aligns with the corrected
+// PV_LAYOUT and its proof PASSES groth16_verify; the placeholder's proof is rejected (graceful deny).
+const realFixture = (() => {
+  try {
+    const f = loadFixture("shielded-note-pool-transfer.json");
+    return f.realProof.enabled ? f : null;
+  } catch {
+    return null;
+  }
+})();
+const fixture: NotePoolFixture = realFixture ?? loadFixture("shielded-note-pool-transfer.placeholder.json");
+
+// A proof that groth16_verify REJECTS, for the graceful-deny path: corrupt the real proof's bytes
+// (a garbage bundle returns false, never throws). When only the placeholder is present its own proof
+// is already a non-verifying bundle, so reuse it directly.
+const denyEvent = {
+  proof: realFixture ? realFixture.proof.slice(0, -8) + "deadbeef" : fixture.proof,
+  publicValues: fixture.publicValues,
+  newRoot: fixture.newRoot,
 };
 
 const OPTS: NotePoolOptions = {
@@ -117,7 +140,9 @@ describe("shielded-note-pool — structure", () => {
   });
 
   it("PV_LAYOUT pins the documented N=1/M=1 offsets", () => {
-    expect(PV_LAYOUT).toEqual({ anchor: 2, fee: 194, feeAsset: 258, nullifier: 386, outputCm: 514 });
+    // Real zk-shielded `abi_encode` emits a leading 0x20 dynamic-tuple head word, so each field is
+    // one 32-byte word (64 hex) past a naive layout: anchor@66, fee@258, feeAsset@322, nf@450, cm@578.
+    expect(PV_LAYOUT).toEqual({ anchor: 66, fee: 258, feeAsset: 322, nullifier: 450, outputCm: 578 });
   });
 
   it("pvField extracts each field at its layout offset with a 0x re-prefix", () => {
@@ -136,8 +161,8 @@ describe("shielded-note-pool — guard logic (real VM, sans groth16)", () => {
 
   const ctx = (state: typeof baseState, proofs = relayerProofs) => ({ state, event: transferEvent, proofs });
 
-  it("the placeholder groth16 clause returns FALSE (graceful deny until a real proof lands)", () => {
-    expect(apply(groth16Clause, ctx(baseState))).toBe(false);
+  it("the groth16 clause returns FALSE on a non-verifying (corrupted/placeholder) proof — graceful deny", () => {
+    expect(apply(groth16Clause, { state: baseState, event: denyEvent, proofs: relayerProofs })).toBe(false);
   });
 
   it("anchor ∈ knownRoots passes when the anchor is honored, fails when it is not", () => {
@@ -163,8 +188,8 @@ describe("shielded-note-pool — guard logic (real VM, sans groth16)", () => {
     expect(apply(relayerClause, ctx(baseState, [{ address: "DAGNOTTHERELAYER000000000000000000000000" }]))).toBe(false);
   });
 
-  it("the FULL transfer guard rejects (groth16 false) on the placeholder proof", () => {
-    expect(apply(guard, ctx(baseState))).toBe(false);
+  it("the FULL transfer guard rejects (groth16 false) on a non-verifying proof", () => {
+    expect(apply(guard, { state: baseState, event: denyEvent, proofs: relayerProofs })).toBe(false);
   });
 
   it("with the groth16 clause stripped, every OTHER clause passes (binding logic is sound)", () => {
