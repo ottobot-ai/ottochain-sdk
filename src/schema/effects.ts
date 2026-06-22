@@ -43,3 +43,30 @@ export const setDependencyActive = (
 ): Record<string, unknown> => ({
   _setDependencyActive: [{ fiberId, active }],
 });
+
+/**
+ * `_transferAsset`: move one or more WHOLE asset instances the emitting fiber holds, each to a single
+ * recipient. The directive rides INSIDE a `merge` effect map (the engine extracts `_`-prefixed keys
+ * before merging into state); a transition-level `emits` block is silently stripped by
+ * `toProtoDefinition`, which would strand the asset.
+ *
+ * Each directive is `{ assetId, recipient }` ONLY — there is NO `amount` field. The combiner reassigns
+ * `holder := recipient` on the WHOLE asset record (`AssetCombiner.applyFiberTransfer`); value is moved
+ * one whole instance at a time, never split. `recipient` must resolve to a `StrValue`: a UUID → `Fiber`,
+ * a DAG address → `Wallet` (UUID is tried first). `assetId`/`recipient` may be literals or expressions
+ * (e.g. `{ var: "event.agent" }`).
+ *
+ * Combiner-side holder defense (R1) independently re-validates every directive: the asset must resolve,
+ * be held by `Fiber(self)`, be `behavior.transferable`, and (Fiber recipient) the recipient fiber must be
+ * live — else the whole transition is `CombineRejected`. There is a hard cap of 32 asset mutations per
+ * transition (all-or-nothing); keep emitting fibers at ≤1 transfer per transition for claim/withdraw/slash.
+ *
+ * @example
+ * effect: { merge: [ { var: "state" }, {
+ *   status: "SETTLED",
+ *   ...transferAsset([{ assetId: { var: "event.rewardAssetId" }, recipient: { var: "event.agent" } }]),
+ * } ] }
+ */
+export const transferAsset = (
+  transfers: { assetId: JsonLogicValue; recipient: JsonLogicValue }[],
+): Record<string, unknown> => ({ _transferAsset: transfers });
