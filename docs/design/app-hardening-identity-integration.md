@@ -160,7 +160,7 @@ relocation — object-`dependencies` → bare-UUID dep + the `machines.<id>` gua
 | identity-oracle `slash` (+ `activate` adminOverride) | missing-auth / S2 | `SLASHER` (or `state.governance`) signer ∈ proofs; delete the `adminOverride` event escape hatch |
 | corp-securities (all `{"==":[1,1]}`), corp-entity `amend_charter`/`dissolve`, corp-board `remove_for_cause` | S2 / missing-auth + A3 dropped deps | pin `ISSUER`/`charterAuthority`/`BOARD_MEMBER` (role attestation) signer ∈ proofs; convert object-deps → bare-UUID + assert `machines.<resolution>.currentStateId == "EXECUTED"` |
 | governance `dao-token`/`dao-multisig`/`governance-simple` map-writes | A2 | §2 `set`/`unset` opcode rename (no model change) |
-| contract-escrow `spawns` Judiciary | A3 | `_spawn` inside the effect with an inline arbiter-fiber definition (its authority is §4.2) |
+| contract-escrow `spawns` Judiciary | A3 | Removed the dead transition-level `spawns:` sugar (chain never honored it — absent from the on-chain `Transition` schema); dispute now surfaced via `_emit` `dispute_opened`, authority from the pinned `arbiter` (§4.2). The `_spawn` reserved-key directive stays available, but wasn't needed here (no Judiciary fiber defined). |
 
 ---
 
