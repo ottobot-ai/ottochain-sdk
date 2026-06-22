@@ -249,6 +249,28 @@ export const signerHasRoleVia = (
  * so a single gated transition is split into a bind step then this assert step. See
  * docs/design/app-hardening-identity-integration.md §5–§6.
  */
+/**
+ * EFFECT-KEY-BINDING dedup over an ARRAY of records: no existing element of the array at `arrayVar`
+ * (e.g. `"state.submissions"`, shaped `[ { addr, value }, … ]`) has its `field` (default `"addr"`)
+ * equal to the actor at `actorVar` (default `"event.agent"`). The array analog of the map-keyed
+ * `{"!":[has(...)]}` dedup — used where the collection is an append-only array of `{addr,…}` records
+ * (there is no `(array,string)` key check, but `none` over the array with a per-element `===` is total).
+ *
+ * The bare-element callback context inside `none` sees each record map directly, so `{get:[{var:""},field]}`
+ * is a valid `(map,string)` read. Pair with an `actorIsSigner`/`actorHasEntry` clause on the same
+ * `actorVar` (the dedup proves "not yet present", not "is the verified signer").
+ */
+export const actorNotInArray = (
+  arrayVar: string,
+  field = "addr",
+  actorVar = "event.agent",
+): GuardRule => ({
+  none: [
+    { var: arrayVar },
+    { "===": [{ get: [{ var: "" }, field] }, { var: actorVar }] },
+  ],
+});
+
 export const depInState = (refVar: string, requiredState: string): GuardRule => ({
   if: [
     { has: [{ var: "machines" }, { var: refVar }] },
