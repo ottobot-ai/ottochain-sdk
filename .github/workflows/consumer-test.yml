@@ -27,7 +27,7 @@ jobs:
     outputs:
       tarball: ${{ steps.pack.outputs.tarball }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: pnpm/action-setup@v6
 
@@ -61,7 +61,7 @@ jobs:
     runs-on: ubuntu-latest
     if: contains(github.event.inputs.consumers || 'services,explorer', 'services')
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           repository: ottobot-ai/ottochain-services
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -109,7 +109,7 @@ jobs:
     runs-on: ubuntu-latest
     if: contains(github.event.inputs.consumers || 'services,explorer', 'explorer')
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           repository: ottobot-ai/ottochain-explorer
           token: ${{ secrets.GITHUB_TOKEN }}
