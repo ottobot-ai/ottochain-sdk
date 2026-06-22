@@ -172,10 +172,12 @@ export {
   signerHasRoleVia,
   // cross-fiber state gate (runtime-bound dependency, #24) — replaces object-form deps
   depInState,
+  // append-only-array dedup: actor not yet present in an array of records
+  actorNotInArray,
 } from './schema/guards.js';
 
-// Reserved EFFECT-directive builders (dynamic dependencies, #24).
-export { addDependency, setDependencyActive } from './schema/effects.js';
+// Reserved EFFECT-directive builders (dynamic dependencies, #24; whole-asset custody moves).
+export { addDependency, setDependencyActive, transferAsset } from './schema/effects.js';
 
 // ─── Privacy: shield any fiber app into a zk-jlvm-shielded private-state pool ──
 // See docs/design/zk-private-contract-state-rfc.md.

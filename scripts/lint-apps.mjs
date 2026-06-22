@@ -72,6 +72,8 @@ const APP_GROUPS = [
   'governance',
   'corporate',
   'lending',
+  'compute',
+  'stakedPool',
 ];
 
 /** Collect every FiberAppDefinition from the app namespaces' *_DEFINITIONS maps. */
