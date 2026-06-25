@@ -98,10 +98,11 @@ export interface StateMachineDefinition {
   }>;
   metadata: unknown | null;
   /**
-   * Fiber constitution. PRESENT only for a `Constrained` policy (a bare object of the
-   * SET dials); ABSENT for `Unconstrained` (the chain emits no `policy` key for it).
+   * Fiber constitution. PRESENT for `Constrained` (a bare object of the SET dials) and for
+   * `Immutable` (the bare JSON string `"Immutable"`); ABSENT for `Unconstrained` (the chain
+   * emits no `policy` key for it).
    */
-  policy?: Record<string, unknown>;
+  policy?: Record<string, unknown> | string;
 }
 
 /**
@@ -242,11 +243,14 @@ function toWireDefinition(def: FiberAppDefinition): StateMachineDefinition {
     })),
     // Strip FiberAppMetadata — the chain's `metadata` is `Option[JsonLogicValue]`.
     metadata: null,
-    // Carry the fiber constitution through verbatim from the shared projector: PRESENT
-    // (a bare object of set dials) for `Constrained`, ABSENT for `Unconstrained`. The
-    // `policy` key is only set here when `toProtoDefinition` emitted one, so an
-    // unconstrained def keeps NO `policy` key (omit-on-unconstrained wire parity).
-    ...(proto.policy !== undefined ? { policy: proto.policy as Record<string, unknown> } : {}),
+    // Carry the fiber constitution through verbatim from the shared projector: PRESENT for
+    // `Constrained` (a bare object of set dials) and `Immutable` (the bare string
+    // `"Immutable"`), ABSENT for `Unconstrained`. The `policy` key is only set here when
+    // `toProtoDefinition` emitted one, so an unconstrained def keeps NO `policy` key
+    // (omit-on-unconstrained wire parity).
+    ...(proto.policy !== undefined
+      ? { policy: proto.policy as Record<string, unknown> | string }
+      : {}),
   };
 }
 

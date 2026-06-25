@@ -150,10 +150,109 @@ export interface Transition<TState extends string = string, TEvent extends strin
 // Fiber Policy (the fiber "constitution")
 // =============================================================================
 
+// ─── Dial value types (EXACT chain wire encodings) ───────────────────────────
+// These mirror the chain's `FiberPolicy.scala` codecs byte-for-byte. The chain
+// re-encodes and verifies over `JCS(dropNulls(payload))`, so any divergence in
+// casing or shape silently breaks the create signature (opaque HTTP 400). Each
+// type is annotated with the exact Scala source it mirrors.
+
+/**
+ * `allowedEffects` element — the 5 `EffectKind` families, UPPERCASE on the wire
+ * (`enumeratum` `Uppercase` mixin). Chain: `EffectKind` in `FiberPolicy.scala`.
+ */
+export type EffectKind = 'TRIGGER' | 'SPAWN' | 'EMIT' | 'TRANSFER' | 'DEPENDENCY';
+
+/**
+ * `spawnOwnerPolicy` — UPPERCASE (`enumeratum` `Uppercase`). Chain: `SpawnOwnerPolicy`
+ * (`Explicit` / `SubsetOfParent` / `InheritParent` ⇒ `"EXPLICIT"` / `"SUBSETOFPARENT"`
+ * / `"INHERITPARENT"`).
+ */
+export type SpawnOwnerPolicy = 'EXPLICIT' | 'SUBSETOFPARENT' | 'INHERITPARENT';
+
+/**
+ * `dependencyPolicy.mode` — UPPERCASE (`enumeratum` `Uppercase`). Chain: `DependencyMode`
+ * (`Open` / `Allowlist` / `Frozen`). REQUIRED on the wire (Scala defaults it to `Open`,
+ * but the `customizableEncoder` always encodes the value).
+ */
+export type DependencyMode = 'OPEN' | 'ALLOWLIST' | 'FROZEN';
+
+/**
+ * `transferPolicy` — recipient allowlist for `_transferAsset`. Chain: `TransferPolicy`
+ * (`Option[Set[UUID]]` fibers, `Option[Set[Address]]` wallets). Each field is OPTIONAL;
+ * an absent field ⇒ that recipient class is unconstrained (and is `dropNulls`-stripped).
+ */
+export interface TransferPolicy {
+  /** Fiber UUIDs permitted to receive a transfer. */
+  allowedRecipientFibers?: readonly string[];
+  /** DAG wallet addresses permitted to receive a transfer. */
+  allowedRecipientWallets?: readonly string[];
+}
+
+/**
+ * `dependencyPolicy` — dynamic-dependency posture. Chain: `DependencyPolicy`
+ * (`mode: DependencyMode`, `allowed: Option[Set[UUID]]`). `mode` is REQUIRED; `allowed`
+ * is meaningful only when `mode === 'ALLOWLIST'` and is `dropNulls`-stripped otherwise.
+ */
+export interface DependencyPolicy {
+  /** Posture: `OPEN` (any target) / `ALLOWLIST` (only `allowed`) / `FROZEN` (no new). */
+  mode: DependencyMode;
+  /** Fiber UUIDs permitted as dependency targets (meaningful only under `ALLOWLIST`). */
+  allowed?: readonly string[];
+}
+
+/**
+ * `migrationAuthority` — who may authorize a `Governed` migration. Chain:
+ * `MigrationAuthority`, a DISJOINT-FIELD discriminated union (no tag key): the `Signers`
+ * arm carries `addresses`, the `Role` arm carries `registryFiberId` + `roleField`. The
+ * presence of disjoint fields is the discriminator (same as the chain decoder's `.or`).
+ */
+export type MigrationAuthority =
+  | {
+      /** VERIFIED signer DAG addresses permitted to authorize the migration (`Signers`). */
+      addresses: readonly string[];
+    }
+  | {
+      /** Registry fiber UUID whose role-map is consulted (`Role`). */
+      registryFiberId: string;
+      /** Field/key in that fiber's state holding the `{<address>: true}` role map (`Role`). */
+      roleField: string;
+    };
+
+/**
+ * `upgradePolicy` — the upgrade-path constitution. Chain: `UpgradePolicy`. The three
+ * bare variants encode as LOWERCASE tag STRINGS (`"immutable"` / `"appendOnly"` /
+ * `"arbitrary"`); the `Governed` arm encodes as the object `{ authority: <MigrationAuthority> }`.
+ *
+ * NOTE: this lowercase `"immutable"` is the upgradePolicy DIAL VALUE — distinct from the
+ * policy-level variant tag `"Immutable"` (capital-I), a different construct added in a
+ * later change.
+ */
+export type UpgradePolicy =
+  | 'immutable'
+  | 'appendOnly'
+  | 'arbitrary'
+  | {
+      /** Authority that may consent to a `Governed` migration. */
+      authority: MigrationAuthority;
+    };
+
+/**
+ * `compatibleWith` — the inclusive-min / exclusive-max SemVer bridge window a migration
+ * may target. Chain: `VersionRange` (`min: Option[SemVer]`, `max: Option[SemVer]`). Each
+ * bound is a SemVer STRING (`"1.2.3"`); an absent bound is unconstrained on that side and
+ * is `dropNulls`-stripped.
+ */
+export interface VersionRange {
+  /** Inclusive lower bound, e.g. `"1.0.0"` (absent ⇒ unconstrained below). */
+  min?: string;
+  /** Exclusive upper bound, e.g. `"2.0.0"` (absent ⇒ unconstrained above). */
+  max?: string;
+}
+
 /**
  * `FiberPolicy` — the constitution a definition declares for the fibers it spawns.
  *
- * This MIRRORS the chain ADT `FiberPolicy = Unconstrained | Constrained(<dials>)`
+ * This MIRRORS the chain ADT `FiberPolicy = Unconstrained | Immutable | Constrained(<dials>)`
  * (chain branch `feat/fiber-policy-adt`). The representation here is chosen for
  * BYTE-FOR-BYTE wire parity with the chain, because a `StateMachineDefinition` is
  * signed verbatim by the SDK (`batchSign(dropNulls(...))`) and re-encoded + verified
@@ -162,6 +261,11 @@ export interface Transition<TState extends string = string, TEvent extends strin
  *   - **`Unconstrained`** ⇒ there is **NO `policy` key** on the wire definition at all.
  *     In the SDK this is the DEFAULT and is represented by simply OMITTING `policy`
  *     (i.e. `policy === undefined`).
+ *   - **`Immutable`** ⇒ the definition is permanently locked; `policy` is the bare JSON
+ *     STRING `"Immutable"` (EXACT casing, capital-I) — NOT an object. Semantically this is
+ *     the upgradePolicy DIAL set to its LOWERCASE `"immutable"` value with no other dial
+ *     set, and the chain collapses that exact `Constrained` into the `Immutable` variant.
+ *     See {@link immutable} and the canonical collapse in {@link projectFiberPolicy}.
  *   - **`Constrained(dials)`** ⇒ `policy` is a bare object of ONLY the dials that are
  *     SET. Unset dials are absent (the chain `dropNulls`-strips them; so does the SDK
  *     at sign time). A `Constrained` with no dials set is wire-indistinguishable from
@@ -170,48 +274,84 @@ export interface Transition<TState extends string = string, TEvent extends strin
  * All 14 dials are optional. Provide any subset.
  */
 export interface FiberPolicyDials {
-  /** Whether the fiber may reproduce itself (spawn instances of its own definition). */
+  /** Whether the fiber may reproduce itself (spawn instances of its own definition). Wire: boolean. */
   selfReproducing?: boolean;
   /**
-   * Allow-list of reserved effect kinds this fiber may use, as a SET of effect-kind
-   * identifiers (e.g. the `_`-prefixed directive names: `_emit`, `_spawn`,
-   * `_transferAsset`, `_addDependency`, …). Order is not significant; duplicates are
-   * collapsed by the chain's `Set`.
+   * Allow-list of effect families this fiber's transitions may produce, as a SET of the 5
+   * UPPERCASE {@link EffectKind} tokens (`"TRIGGER" | "SPAWN" | "EMIT" | "TRANSFER" |
+   * "DEPENDENCY"`). Order is not significant; duplicates are collapsed by the chain's `Set`.
+   * Chain: `allowedEffects: Option[Set[EffectKind]]`.
    */
-  allowedEffects?: readonly string[];
-  /** Policy governing who/what may own fibers this one spawns. */
-  spawnOwnerPolicy?: string;
-  /** Maximum spawn-generation depth (descendant chain length). */
+  allowedEffects?: readonly EffectKind[];
+  /**
+   * Who/what may own fibers this one spawns — an UPPERCASE {@link SpawnOwnerPolicy} token
+   * (`"EXPLICIT" | "SUBSETOFPARENT" | "INHERITPARENT"`). Chain: `spawnOwnerPolicy: Option[SpawnOwnerPolicy]`.
+   */
+  spawnOwnerPolicy?: SpawnOwnerPolicy;
+  /** Maximum spawn-generation depth (descendant chain length). Wire: number. */
   maxGenerations?: number;
-  /** Maximum number of children a single fiber may spawn. */
+  /** Maximum number of children a single transition may spawn. Wire: number. */
   maxSpawnFanout?: number;
-  /** SET of caller UUIDs permitted to drive transitions on this fiber. */
+  /** SET of caller fiber UUIDs permitted to drive transitions on this fiber. Wire: string[]. */
   acceptedCallers?: readonly string[];
-  /** SET of state ids that are sealed (immutable / non-transitionable). */
+  /** SET of state ids that are sealed (no transition may fire from them). Wire: string[]. */
   sealedStates?: readonly string[];
-  /** Policy governing asset transfers out of the fiber. */
-  transferPolicy?: string;
-  /** Policy governing dynamic dependencies the fiber may bind. */
-  dependencyPolicy?: string;
-  /** Policy governing in-place upgrades / migrations. */
-  upgradePolicy?: string;
-  /** SemVer of this definition (constitution version). */
+  /**
+   * Recipient allowlist for `_transferAsset` — the {@link TransferPolicy} object
+   * `{ allowedRecipientFibers?: uuid[], allowedRecipientWallets?: DAG-address[] }`.
+   * Chain: `transferPolicy: Option[TransferPolicy]`.
+   */
+  transferPolicy?: TransferPolicy;
+  /**
+   * Dynamic-dependency policy — the {@link DependencyPolicy} object `{ mode, allowed? }`
+   * where `mode` is the REQUIRED UPPERCASE {@link DependencyMode}. Chain:
+   * `dependencyPolicy: Option[DependencyPolicy]`.
+   */
+  dependencyPolicy?: DependencyPolicy;
+  /**
+   * In-place upgrade/migration posture — an {@link UpgradePolicy}: a LOWERCASE bare tag
+   * (`"immutable" | "appendOnly" | "arbitrary"`) OR the `Governed` object
+   * `{ authority: <MigrationAuthority> }`. Chain: `upgradePolicy: Option[UpgradePolicy]`.
+   */
+  upgradePolicy?: UpgradePolicy;
+  /** Self-declared SemVer of this definition as a STRING `"major.minor.patch"` (e.g. `"1.2.3"`). Chain: `version: Option[SemVer]`. */
   version?: string;
-  /** SemVer RANGE of definitions this one declares itself compatible with. */
-  compatibleWith?: string;
-  /** SET of interface identifiers this definition implements. */
+  /**
+   * Migration bridge window — the {@link VersionRange} object `{ min?: semver, max?: semver }`
+   * naming the successor versions this definition declares it will migrate TO. Chain:
+   * `compatibleWith: Option[VersionRange]`.
+   */
+  compatibleWith?: VersionRange;
+  /** SET of (ERC-165-style) interface identifiers this definition advertises. Wire: string[]. */
   interfaces?: readonly string[];
-  /** Authority permitted to migrate fibers governed by this policy. */
-  migrationAuthority?: string;
+  /**
+   * Authority permitted to authorize a `Governed` migration — a {@link MigrationAuthority}:
+   * `{ addresses: DAG-address[] }` (Signers) OR `{ registryFiberId: uuid, roleField: string }`
+   * (Role), discriminated by disjoint fields. Chain: `migrationAuthority: Option[MigrationAuthority]`.
+   */
+  migrationAuthority?: MigrationAuthority;
 }
 
 /**
- * Wire form of a constrained policy — a bare object of the SET dials. This is what
- * lands under `policy` on the projected `ProtoStateMachineDefinition`. Unset dials are
- * stripped at projection time (and again by `dropNulls` at sign time), so this object
- * matches the chain's `dropNulls`-stripped `Constrained` encoding exactly.
+ * The wire (and authoring) tag for the `Immutable` policy VARIANT: the bare JSON string
+ * `"Immutable"`. EXACT casing, capital-I — this is the POLICY-LEVEL variant name and is
+ * DISTINCT from the `upgradePolicy` dial VALUE `"immutable"` (lowercase). The chain emits
+ * exactly this capital-I string for `Immutable`, so the SDK must too, byte-for-byte.
  */
-export type FiberPolicy = FiberPolicyDials;
+export const IMMUTABLE_POLICY = 'Immutable' as const;
+export type ImmutablePolicy = typeof IMMUTABLE_POLICY;
+
+/**
+ * Wire form of a `FiberPolicy`. Mirrors the chain ADT's non-`Unconstrained` arms:
+ *
+ *   - a bare object of the SET dials — the `Constrained` arm. Unset dials are stripped at
+ *     projection time (and again by `dropNulls` at sign time), so this object matches the
+ *     chain's `dropNulls`-stripped `Constrained` encoding exactly; OR
+ *   - the bare JSON string `"Immutable"` — the {@link ImmutablePolicy} arm.
+ *
+ * (`Unconstrained` has no wire representation: it is the absence of the `policy` key.)
+ */
+export type FiberPolicy = FiberPolicyDials | ImmutablePolicy;
 
 /** The names of the 14 policy dials, in declaration order. Used by the projector. */
 const FIBER_POLICY_DIALS: readonly (keyof FiberPolicyDials)[] = [
@@ -241,6 +381,22 @@ export function unconstrained(): undefined {
 }
 
 /**
+ * The canonical IMMUTABLE policy: the definition is permanently locked. Projects to the
+ * bare JSON string `"Immutable"` ({@link IMMUTABLE_POLICY}), the chain's `Immutable`
+ * variant tag. Semantically equivalent to `constrained({ upgradePolicy: 'immutable' })`
+ * with no other dial set — which `constrained()`/`projectFiberPolicy()` collapse to the
+ * same string for wire parity (see {@link constrained}).
+ *
+ * @example
+ * ```ts
+ * const def = defineFiberApp({ ...spec, policy: immutable() });
+ * ```
+ */
+export function immutable(): ImmutablePolicy {
+  return IMMUTABLE_POLICY;
+}
+
+/**
  * Build a CONSTRAINED `FiberPolicy` from any subset of the 14 dials.
  *
  * Pass only the dials you want to set. Dials left `undefined`/`null` are dropped so the
@@ -249,12 +405,21 @@ export function unconstrained(): undefined {
  * `undefined` (an empty constraint == `Unconstrained`), which projects to no `policy`
  * key — preserving wire parity.
  *
+ * CANONICAL COLLAPSE: `constrained({ upgradePolicy: 'immutable' })` with NO other dial set
+ * collapses to the bare string `"Immutable"` ({@link IMMUTABLE_POLICY}), because the chain
+ * collapses that exact `Constrained` into the `Immutable` variant. NOTE the casing: the
+ * collapse triggers on the chain's LOWERCASE upgradePolicy dial value `"immutable"`, and
+ * the result is the capital-I policy-variant tag `"Immutable"`. Signing the dials object
+ * `{ "upgradePolicy": "immutable" }` instead would diverge the canonical (the chain
+ * re-encodes it as `"Immutable"`) and break the create signature. Adding ANY other dial
+ * keeps it a dials object.
+ *
  * @example
  * ```ts
  * const policy = constrained({
  *   selfReproducing: false,
  *   maxGenerations: 3,
- *   allowedEffects: ['_emit', '_transferAsset'],
+ *   allowedEffects: ['EMIT', 'TRANSFER'],
  *   sealedStates: ['ARCHIVED'],
  * });
  * ```
@@ -266,19 +431,32 @@ export function constrained(dials: FiberPolicyDials): FiberPolicy | undefined {
     if (v === undefined || v === null) continue;
     out[k] = v;
   }
-  return Object.keys(out).length === 0 ? undefined : (out as FiberPolicy);
+  const keys = Object.keys(out);
+  if (keys.length === 0) return undefined;
+  // Canonical collapse: a lone LOWERCASE `upgradePolicy: 'immutable'` (the chain's dial
+  // value) IS the `Immutable` variant — emit the capital-I `"Immutable"` tag, not the dials.
+  if (keys.length === 1 && out.upgradePolicy === 'immutable') return IMMUTABLE_POLICY;
+  return out as FiberPolicy;
 }
 
 /**
- * Project an authoring `policy` value onto the wire form. Returns the minimal
- * `Constrained` object, or `undefined` when the policy is (effectively) `Unconstrained`
- * — i.e. omit the `policy` key. Centralizes the omit-on-unconstrained parity rule so
- * every projection path (`toProtoDefinition`, the genesis manifest) stays consistent.
+ * Project an authoring `policy` value onto the wire form. Returns one of:
+ *   - `undefined` when the policy is (effectively) `Unconstrained` — i.e. omit the `policy`
+ *     key entirely;
+ *   - the bare string `"Immutable"` ({@link IMMUTABLE_POLICY}) for the `Immutable` variant
+ *     (also the collapse of a lone LOWERCASE `upgradePolicy: 'immutable'`); or
+ *   - the minimal `Constrained` dials object otherwise.
+ *
+ * Centralizes the omit-on-unconstrained AND the Immutable-collapse parity rules so every
+ * projection path (`toProtoDefinition`, the genesis manifest) stays consistent.
  */
 export function projectFiberPolicy(policy: FiberPolicy | undefined): FiberPolicy | undefined {
   if (policy === undefined || policy === null) return undefined;
+  // The Immutable variant is already its canonical bare-string wire form.
+  if (policy === IMMUTABLE_POLICY) return IMMUTABLE_POLICY;
   // Re-run the dial filter so a hand-built object with explicit-undefined/empty dials
-  // collapses to Unconstrained exactly like `constrained()` does.
+  // collapses to Unconstrained, and a lone `upgradePolicy: 'immutable'` collapses to
+  // `"Immutable"`, exactly like `constrained()` does.
   return constrained(policy);
 }
 
@@ -314,11 +492,13 @@ export interface FiberAppDefinition<
   metadata: FiberAppMetadata;
 
   /**
-   * Fiber constitution. Mirrors the chain ADT `FiberPolicy = Unconstrained |
-   * Constrained(<dials>)`. OMIT this field (the default) for `Unconstrained` — the
-   * projected wire definition then has NO `policy` key. Set it to a `constrained({...})`
-   * object to declare a subset of the 14 dials; unset dials are stripped so the wire
-   * form matches the chain's `dropNulls`-stripped `Constrained` byte-for-byte.
+   * Fiber constitution. Mirrors the chain ADT `FiberPolicy = Unconstrained | Immutable |
+   * Constrained(<dials>)`. OMIT this field (the default) for `Unconstrained` — the projected
+   * wire definition then has NO `policy` key. Set it to `immutable()` to permanently lock the
+   * definition (projects to the bare string `"Immutable"`). Set it to a `constrained({...})`
+   * object to declare a subset of the 14 dials; unset dials are stripped so the wire form
+   * matches the chain's `dropNulls`-stripped `Constrained` byte-for-byte (and a lone
+   * `upgradePolicy: 'immutable'` collapses to `"Immutable"`).
    */
   policy?: FiberPolicy;
 
@@ -438,10 +618,11 @@ export interface ProtoStateMachineDefinition {
   }>;
   metadata?: Record<string, unknown>;
   /**
-   * Fiber constitution. PRESENT only for a `Constrained` policy (a bare object of the
-   * SET dials); ABSENT for `Unconstrained`. This omit-on-unconstrained rule is the wire
-   * parity contract: the chain emits no `policy` key for `Unconstrained`, so neither may
-   * the SDK, or the signature breaks (HTTP 400). See {@link projectFiberPolicy}.
+   * Fiber constitution. PRESENT for `Constrained` (a bare object of the SET dials) and for
+   * `Immutable` (the bare string `"Immutable"`); ABSENT for `Unconstrained`. This
+   * omit-on-unconstrained rule is the wire parity contract: the chain emits no `policy` key
+   * for `Unconstrained`, so neither may the SDK, or the signature breaks (HTTP 400). See
+   * {@link projectFiberPolicy}.
    */
   policy?: FiberPolicy;
 }
@@ -497,10 +678,10 @@ export function toProtoDefinition<T extends FiberAppDefinition>(
   // needs on-chain metadata sets `ProtoStateMachineDefinition.metadata` explicitly after conversion.
 
   // Fiber constitution. OMIT the `policy` key entirely for `Unconstrained` (the chain
-  // emits nothing for it) and emit a bare object of only the SET dials for `Constrained`.
-  // `projectFiberPolicy` returns `undefined` for an (effectively) unconstrained policy, so
-  // we assign only when it is a real constraint — keeping the wire byte-for-byte identical
-  // to the chain's `dropNulls`-stripped encoding.
+  // emits nothing for it); emit the bare string `"Immutable"` for `Immutable`; emit a bare
+  // object of only the SET dials for `Constrained`. `projectFiberPolicy` returns `undefined`
+  // for an (effectively) unconstrained policy, so we assign only when it is a real policy —
+  // keeping the wire byte-for-byte identical to the chain's encoding.
   const policy = projectFiberPolicy(def.policy);
   if (policy !== undefined) {
     protoDef.policy = policy;
