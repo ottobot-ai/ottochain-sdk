@@ -13,6 +13,7 @@ import {
   defineFiberApp,
   constrained,
   unconstrained,
+  immutable,
 } from '../../src/schema/fiber-app.js';
 import { dropNulls } from '../../src/ottochain/drop-nulls.js';
 import { identityUniversalDef } from '../../src/apps/identity/state-machines/identity-universal.js';
@@ -99,7 +100,7 @@ describe('signing-canonical parity (SDK <-> chain wire StateMachineDefinition)',
           policy: constrained({
             selfReproducing: false,
             maxGenerations: 3,
-            allowedEffects: ['_emit', '_transferAsset'],
+            allowedEffects: ['EMIT', 'TRANSFER'],
             sealedStates: ['B'],
           }),
         }),
@@ -107,7 +108,7 @@ describe('signing-canonical parity (SDK <-> chain wire StateMachineDefinition)',
       expect(wire.policy).toEqual({
         selfReproducing: false,
         maxGenerations: 3,
-        allowedEffects: ['_emit', '_transferAsset'],
+        allowedEffects: ['EMIT', 'TRANSFER'],
         sealedStates: ['B'],
       });
     });
@@ -117,6 +118,177 @@ describe('signing-canonical parity (SDK <-> chain wire StateMachineDefinition)',
         defineFiberApp({ ...base, policy: constrained({ maxGenerations: 2, transferPolicy: undefined }) }),
       );
       expect(Object.keys(wire.policy ?? {})).toEqual(['maxGenerations']);
+    });
+
+    it('emits `policy` as the bare string "Immutable" for an immutable() definition', () => {
+      const wire = toProtoDefinition(defineFiberApp({ ...base, policy: immutable() }));
+      expect(wire.policy).toBe('Immutable');
+      // EXACT casing: the capital-I policy-VARIANT tag, NOT the lowercase upgradePolicy dial value.
+      expect(JSON.stringify(wire)).toContain('"policy":"Immutable"');
+      // The lowercase dial value "immutable" must NOT appear anywhere on the wire.
+      expect(JSON.stringify(wire)).not.toContain('"immutable"');
+    });
+
+    it('COLLAPSE: constrained({ upgradePolicy: "immutable" }) with only that dial → "Immutable"', () => {
+      // The chain collapses this exact lone-dial Constrained (LOWERCASE `"immutable"` dial value)
+      // into the `Immutable` variant, so the SDK must sign the capital-I bare string `"Immutable"`
+      // (not `{ upgradePolicy: "immutable" }`) or the create signature breaks against the chain's
+      // re-encoding.
+      const wire = toProtoDefinition(
+        defineFiberApp({ ...base, policy: constrained({ upgradePolicy: 'immutable' }) }),
+      );
+      expect(wire.policy).toBe('Immutable');
+      // immutable() and the collapsed constrained() are wire-identical.
+      const wireDirect = toProtoDefinition(defineFiberApp({ ...base, policy: immutable() }));
+      expect(JSON.stringify(wire)).toBe(JSON.stringify(wireDirect));
+    });
+
+    it('does NOT collapse upgradePolicy="immutable" when ANOTHER dial is also set (stays a dials object)', () => {
+      const wire = toProtoDefinition(
+        defineFiberApp({
+          ...base,
+          policy: constrained({ upgradePolicy: 'immutable', maxGenerations: 2 }),
+        }),
+      );
+      expect(typeof wire.policy).toBe('object');
+      // Stays a dials object with the LOWERCASE dial value verbatim.
+      expect(wire.policy).toEqual({ maxGenerations: 2, upgradePolicy: 'immutable' });
+    });
+  });
+
+  // Each dial's EXACT chain wire encoding (FiberPolicy.scala). Casing / shape divergence
+  // silently breaks the create signature, so these are byte-for-byte assertions.
+  describe('dial wire encodings (EXACT chain FiberPolicy.scala parity)', () => {
+    const base = {
+      metadata: { name: 'P', app: 'p', type: 'p', version: '1.0.0' },
+      states: { A: { id: 'A', isFinal: false }, B: { id: 'B', isFinal: true } },
+      initialState: 'A' as const,
+      transitions: [
+        { from: 'A', to: 'B', eventName: 'go', guard: { '==': [1, 1] }, effect: { var: 'state' } },
+      ],
+    };
+    const policyOf = (dials: Parameters<typeof constrained>[0]) =>
+      toProtoDefinition(defineFiberApp({ ...base, policy: constrained(dials) })).policy;
+
+    it('allowedEffects: UPPERCASE EffectKind tokens, verbatim', () => {
+      expect(policyOf({ allowedEffects: ['TRIGGER', 'SPAWN', 'EMIT', 'TRANSFER', 'DEPENDENCY'] })).toEqual({
+        allowedEffects: ['TRIGGER', 'SPAWN', 'EMIT', 'TRANSFER', 'DEPENDENCY'],
+      });
+    });
+
+    it('spawnOwnerPolicy: UPPERCASE SpawnOwnerPolicy token', () => {
+      expect(policyOf({ spawnOwnerPolicy: 'SUBSETOFPARENT' })).toEqual({ spawnOwnerPolicy: 'SUBSETOFPARENT' });
+    });
+
+    it('transferPolicy: nested object of recipient allowlists', () => {
+      expect(
+        policyOf({
+          transferPolicy: {
+            allowedRecipientFibers: ['11111111-1111-1111-1111-111111111111'],
+            allowedRecipientWallets: ['DAG0000000000000000000000000000000000000000'],
+          },
+        }),
+      ).toEqual({
+        transferPolicy: {
+          allowedRecipientFibers: ['11111111-1111-1111-1111-111111111111'],
+          allowedRecipientWallets: ['DAG0000000000000000000000000000000000000000'],
+        },
+      });
+    });
+
+    it('dependencyPolicy: nested object with REQUIRED UPPERCASE mode + optional allowed', () => {
+      expect(
+        policyOf({
+          dependencyPolicy: { mode: 'ALLOWLIST', allowed: ['22222222-2222-2222-2222-222222222222'] },
+        }),
+      ).toEqual({
+        dependencyPolicy: { mode: 'ALLOWLIST', allowed: ['22222222-2222-2222-2222-222222222222'] },
+      });
+      // FROZEN with no allowed list — mode alone.
+      expect(policyOf({ dependencyPolicy: { mode: 'FROZEN' } })).toEqual({
+        dependencyPolicy: { mode: 'FROZEN' },
+      });
+    });
+
+    it('upgradePolicy: LOWERCASE bare tags', () => {
+      expect(policyOf({ upgradePolicy: 'appendOnly' })).toEqual({ upgradePolicy: 'appendOnly' });
+      expect(policyOf({ upgradePolicy: 'arbitrary' })).toEqual({ upgradePolicy: 'arbitrary' });
+      // lowercase "immutable" is the DIAL VALUE (distinct from the policy-level "Immutable" variant).
+      expect(policyOf({ upgradePolicy: 'immutable', maxGenerations: 1 })).toEqual({
+        upgradePolicy: 'immutable',
+        maxGenerations: 1,
+      });
+    });
+
+    it('upgradePolicy: Governed object { authority } with the Signers MigrationAuthority arm', () => {
+      expect(
+        policyOf({
+          upgradePolicy: { authority: { addresses: ['DAG0000000000000000000000000000000000000000'] } },
+        }),
+      ).toEqual({
+        upgradePolicy: { authority: { addresses: ['DAG0000000000000000000000000000000000000000'] } },
+      });
+    });
+
+    it('migrationAuthority: Signers arm = { addresses }, Role arm = { registryFiberId, roleField }', () => {
+      expect(policyOf({ migrationAuthority: { addresses: ['DAG0000000000000000000000000000000000000000'] } })).toEqual(
+        { migrationAuthority: { addresses: ['DAG0000000000000000000000000000000000000000'] } },
+      );
+      expect(
+        policyOf({
+          migrationAuthority: { registryFiberId: '33333333-3333-3333-3333-333333333333', roleField: 'admins' },
+        }),
+      ).toEqual({
+        migrationAuthority: { registryFiberId: '33333333-3333-3333-3333-333333333333', roleField: 'admins' },
+      });
+    });
+
+    it('version: a bare SemVer STRING (not an object)', () => {
+      const policy = policyOf({ version: '1.2.3' });
+      expect(policy).toEqual({ version: '1.2.3' });
+      expect(typeof (policy as { version: unknown }).version).toBe('string');
+    });
+
+    it('compatibleWith: nested { min, max } SemVer-string window', () => {
+      expect(policyOf({ compatibleWith: { min: '1.0.0', max: '2.0.0' } })).toEqual({
+        compatibleWith: { min: '1.0.0', max: '2.0.0' },
+      });
+    });
+
+    it('a rich multi-dial policy round-trips byte-identically through JSON', () => {
+      const rich = constrained({
+        selfReproducing: true,
+        allowedEffects: ['EMIT', 'TRANSFER'],
+        spawnOwnerPolicy: 'INHERITPARENT',
+        maxGenerations: 3,
+        maxSpawnFanout: 5,
+        acceptedCallers: ['44444444-4444-4444-4444-444444444444'],
+        sealedStates: ['B'],
+        transferPolicy: { allowedRecipientWallets: ['DAG0000000000000000000000000000000000000000'] },
+        dependencyPolicy: { mode: 'OPEN' },
+        upgradePolicy: 'appendOnly',
+        version: '2.1.0',
+        compatibleWith: { min: '2.0.0' },
+        interfaces: ['iVotable', 'iStakeable'],
+        migrationAuthority: { registryFiberId: '55555555-5555-5555-5555-555555555555', roleField: 'gov' },
+      });
+      const wire = toProtoDefinition(defineFiberApp({ ...base, policy: rich }));
+      expect(wire.policy).toEqual({
+        selfReproducing: true,
+        allowedEffects: ['EMIT', 'TRANSFER'],
+        spawnOwnerPolicy: 'INHERITPARENT',
+        maxGenerations: 3,
+        maxSpawnFanout: 5,
+        acceptedCallers: ['44444444-4444-4444-4444-444444444444'],
+        sealedStates: ['B'],
+        transferPolicy: { allowedRecipientWallets: ['DAG0000000000000000000000000000000000000000'] },
+        dependencyPolicy: { mode: 'OPEN' },
+        upgradePolicy: 'appendOnly',
+        version: '2.1.0',
+        compatibleWith: { min: '2.0.0' },
+        interfaces: ['iVotable', 'iStakeable'],
+        migrationAuthority: { registryFiberId: '55555555-5555-5555-5555-555555555555', roleField: 'gov' },
+      });
     });
   });
 
