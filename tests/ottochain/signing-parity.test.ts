@@ -13,6 +13,7 @@ import {
   defineFiberApp,
   constrained,
   unconstrained,
+  immutable,
 } from '../../src/schema/fiber-app.js';
 import { dropNulls } from '../../src/ottochain/drop-nulls.js';
 import { identityUniversalDef } from '../../src/apps/identity/state-machines/identity-universal.js';
@@ -117,6 +118,38 @@ describe('signing-canonical parity (SDK <-> chain wire StateMachineDefinition)',
         defineFiberApp({ ...base, policy: constrained({ maxGenerations: 2, transferPolicy: undefined }) }),
       );
       expect(Object.keys(wire.policy ?? {})).toEqual(['maxGenerations']);
+    });
+
+    it('emits `policy` as the bare string "Immutable" for an immutable() definition', () => {
+      const wire = toProtoDefinition(defineFiberApp({ ...base, policy: immutable() }));
+      expect(wire.policy).toBe('Immutable');
+      // EXACT casing: the capital-I variant tag, NOT the all-caps dial value.
+      expect(JSON.stringify(wire)).toContain('"policy":"Immutable"');
+      expect(JSON.stringify(wire)).not.toContain('IMMUTABLE');
+    });
+
+    it('COLLAPSE: constrained({ upgradePolicy: "IMMUTABLE" }) with only that dial → "Immutable"', () => {
+      // The chain collapses this exact lone-dial Constrained into the Immutable variant, so the
+      // SDK must sign the bare string `"Immutable"` (not `{ upgradePolicy: "IMMUTABLE" }`) or the
+      // create signature breaks against the chain's re-encoding.
+      const wire = toProtoDefinition(
+        defineFiberApp({ ...base, policy: constrained({ upgradePolicy: 'IMMUTABLE' }) }),
+      );
+      expect(wire.policy).toBe('Immutable');
+      // immutable() and the collapsed constrained() are wire-identical.
+      const wireDirect = toProtoDefinition(defineFiberApp({ ...base, policy: immutable() }));
+      expect(JSON.stringify(wire)).toBe(JSON.stringify(wireDirect));
+    });
+
+    it('does NOT collapse upgradePolicy=IMMUTABLE when ANOTHER dial is also set (stays a dials object)', () => {
+      const wire = toProtoDefinition(
+        defineFiberApp({
+          ...base,
+          policy: constrained({ upgradePolicy: 'IMMUTABLE', maxGenerations: 2 }),
+        }),
+      );
+      expect(typeof wire.policy).toBe('object');
+      expect(wire.policy).toEqual({ maxGenerations: 2, upgradePolicy: 'IMMUTABLE' });
     });
   });
 

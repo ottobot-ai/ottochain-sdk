@@ -153,7 +153,7 @@ export interface Transition<TState extends string = string, TEvent extends strin
 /**
  * `FiberPolicy` — the constitution a definition declares for the fibers it spawns.
  *
- * This MIRRORS the chain ADT `FiberPolicy = Unconstrained | Constrained(<dials>)`
+ * This MIRRORS the chain ADT `FiberPolicy = Unconstrained | Immutable | Constrained(<dials>)`
  * (chain branch `feat/fiber-policy-adt`). The representation here is chosen for
  * BYTE-FOR-BYTE wire parity with the chain, because a `StateMachineDefinition` is
  * signed verbatim by the SDK (`batchSign(dropNulls(...))`) and re-encoded + verified
@@ -162,6 +162,11 @@ export interface Transition<TState extends string = string, TEvent extends strin
  *   - **`Unconstrained`** ⇒ there is **NO `policy` key** on the wire definition at all.
  *     In the SDK this is the DEFAULT and is represented by simply OMITTING `policy`
  *     (i.e. `policy === undefined`).
+ *   - **`Immutable`** ⇒ the definition is permanently locked; `policy` is the bare JSON
+ *     STRING `"Immutable"` (EXACT casing, capital-I) — NOT an object. Semantically this is
+ *     `upgradePolicy = IMMUTABLE` with no other dial set, and the chain collapses that exact
+ *     `Constrained` into the `Immutable` variant. See {@link immutable} and the canonical
+ *     collapse in {@link projectFiberPolicy}.
  *   - **`Constrained(dials)`** ⇒ `policy` is a bare object of ONLY the dials that are
  *     SET. Unset dials are absent (the chain `dropNulls`-strips them; so does the SDK
  *     at sign time). A `Constrained` with no dials set is wire-indistinguishable from
@@ -206,12 +211,25 @@ export interface FiberPolicyDials {
 }
 
 /**
- * Wire form of a constrained policy — a bare object of the SET dials. This is what
- * lands under `policy` on the projected `ProtoStateMachineDefinition`. Unset dials are
- * stripped at projection time (and again by `dropNulls` at sign time), so this object
- * matches the chain's `dropNulls`-stripped `Constrained` encoding exactly.
+ * The wire (and authoring) tag for the `Immutable` policy variant: the bare JSON string
+ * `"Immutable"`. EXACT casing, capital-I — this is the POLICY-LEVEL variant name and is
+ * distinct from the `upgradePolicy` dial VALUE `"IMMUTABLE"` (all-caps). The chain emits
+ * exactly this string for `Immutable`, so the SDK must too, byte-for-byte.
  */
-export type FiberPolicy = FiberPolicyDials;
+export const IMMUTABLE_POLICY = 'Immutable' as const;
+export type ImmutablePolicy = typeof IMMUTABLE_POLICY;
+
+/**
+ * Wire form of a `FiberPolicy`. Mirrors the chain ADT's non-`Unconstrained` arms:
+ *
+ *   - a bare object of the SET dials — the `Constrained` arm. Unset dials are stripped at
+ *     projection time (and again by `dropNulls` at sign time), so this object matches the
+ *     chain's `dropNulls`-stripped `Constrained` encoding exactly; OR
+ *   - the bare JSON string `"Immutable"` — the {@link ImmutablePolicy} arm.
+ *
+ * (`Unconstrained` has no wire representation: it is the absence of the `policy` key.)
+ */
+export type FiberPolicy = FiberPolicyDials | ImmutablePolicy;
 
 /** The names of the 14 policy dials, in declaration order. Used by the projector. */
 const FIBER_POLICY_DIALS: readonly (keyof FiberPolicyDials)[] = [
@@ -241,6 +259,22 @@ export function unconstrained(): undefined {
 }
 
 /**
+ * The canonical IMMUTABLE policy: the definition is permanently locked. Projects to the
+ * bare JSON string `"Immutable"` ({@link IMMUTABLE_POLICY}), the chain's `Immutable`
+ * variant tag. Semantically equivalent to `constrained({ upgradePolicy: 'IMMUTABLE' })`
+ * with no other dial set — which `constrained()`/`projectFiberPolicy()` collapse to the
+ * same string for wire parity (see {@link constrained}).
+ *
+ * @example
+ * ```ts
+ * const def = defineFiberApp({ ...spec, policy: immutable() });
+ * ```
+ */
+export function immutable(): ImmutablePolicy {
+  return IMMUTABLE_POLICY;
+}
+
+/**
  * Build a CONSTRAINED `FiberPolicy` from any subset of the 14 dials.
  *
  * Pass only the dials you want to set. Dials left `undefined`/`null` are dropped so the
@@ -248,6 +282,13 @@ export function unconstrained(): undefined {
  * `dropNulls`-stripped `Constrained`. If NO dial is effectively set, this returns
  * `undefined` (an empty constraint == `Unconstrained`), which projects to no `policy`
  * key — preserving wire parity.
+ *
+ * CANONICAL COLLAPSE: `constrained({ upgradePolicy: 'IMMUTABLE' })` with NO other dial set
+ * collapses to the bare string `"Immutable"` ({@link IMMUTABLE_POLICY}), because the chain
+ * collapses that exact `Constrained` into the `Immutable` variant. Signing the dials object
+ * `{ "upgradePolicy": "IMMUTABLE" }` instead would diverge the canonical (the chain re-encodes
+ * it as `"Immutable"`) and break the create signature. Adding ANY other dial keeps it a dials
+ * object.
  *
  * @example
  * ```ts
@@ -266,19 +307,31 @@ export function constrained(dials: FiberPolicyDials): FiberPolicy | undefined {
     if (v === undefined || v === null) continue;
     out[k] = v;
   }
-  return Object.keys(out).length === 0 ? undefined : (out as FiberPolicy);
+  const keys = Object.keys(out);
+  if (keys.length === 0) return undefined;
+  // Canonical collapse: a lone `upgradePolicy: 'IMMUTABLE'` IS the `Immutable` variant.
+  if (keys.length === 1 && out.upgradePolicy === 'IMMUTABLE') return IMMUTABLE_POLICY;
+  return out as FiberPolicy;
 }
 
 /**
- * Project an authoring `policy` value onto the wire form. Returns the minimal
- * `Constrained` object, or `undefined` when the policy is (effectively) `Unconstrained`
- * — i.e. omit the `policy` key. Centralizes the omit-on-unconstrained parity rule so
- * every projection path (`toProtoDefinition`, the genesis manifest) stays consistent.
+ * Project an authoring `policy` value onto the wire form. Returns one of:
+ *   - `undefined` when the policy is (effectively) `Unconstrained` — i.e. omit the `policy`
+ *     key entirely;
+ *   - the bare string `"Immutable"` ({@link IMMUTABLE_POLICY}) for the `Immutable` variant
+ *     (also the collapse of a lone `upgradePolicy: 'IMMUTABLE'`); or
+ *   - the minimal `Constrained` dials object otherwise.
+ *
+ * Centralizes the omit-on-unconstrained AND the Immutable-collapse parity rules so every
+ * projection path (`toProtoDefinition`, the genesis manifest) stays consistent.
  */
 export function projectFiberPolicy(policy: FiberPolicy | undefined): FiberPolicy | undefined {
   if (policy === undefined || policy === null) return undefined;
+  // The Immutable variant is already its canonical bare-string wire form.
+  if (policy === IMMUTABLE_POLICY) return IMMUTABLE_POLICY;
   // Re-run the dial filter so a hand-built object with explicit-undefined/empty dials
-  // collapses to Unconstrained exactly like `constrained()` does.
+  // collapses to Unconstrained, and a lone `upgradePolicy: 'IMMUTABLE'` collapses to
+  // `"Immutable"`, exactly like `constrained()` does.
   return constrained(policy);
 }
 
@@ -314,11 +367,13 @@ export interface FiberAppDefinition<
   metadata: FiberAppMetadata;
 
   /**
-   * Fiber constitution. Mirrors the chain ADT `FiberPolicy = Unconstrained |
-   * Constrained(<dials>)`. OMIT this field (the default) for `Unconstrained` — the
-   * projected wire definition then has NO `policy` key. Set it to a `constrained({...})`
-   * object to declare a subset of the 14 dials; unset dials are stripped so the wire
-   * form matches the chain's `dropNulls`-stripped `Constrained` byte-for-byte.
+   * Fiber constitution. Mirrors the chain ADT `FiberPolicy = Unconstrained | Immutable |
+   * Constrained(<dials>)`. OMIT this field (the default) for `Unconstrained` — the projected
+   * wire definition then has NO `policy` key. Set it to `immutable()` to permanently lock the
+   * definition (projects to the bare string `"Immutable"`). Set it to a `constrained({...})`
+   * object to declare a subset of the 14 dials; unset dials are stripped so the wire form
+   * matches the chain's `dropNulls`-stripped `Constrained` byte-for-byte (and a lone
+   * `upgradePolicy: 'IMMUTABLE'` collapses to `"Immutable"`).
    */
   policy?: FiberPolicy;
 
@@ -438,10 +493,11 @@ export interface ProtoStateMachineDefinition {
   }>;
   metadata?: Record<string, unknown>;
   /**
-   * Fiber constitution. PRESENT only for a `Constrained` policy (a bare object of the
-   * SET dials); ABSENT for `Unconstrained`. This omit-on-unconstrained rule is the wire
-   * parity contract: the chain emits no `policy` key for `Unconstrained`, so neither may
-   * the SDK, or the signature breaks (HTTP 400). See {@link projectFiberPolicy}.
+   * Fiber constitution. PRESENT for `Constrained` (a bare object of the SET dials) and for
+   * `Immutable` (the bare string `"Immutable"`); ABSENT for `Unconstrained`. This
+   * omit-on-unconstrained rule is the wire parity contract: the chain emits no `policy` key
+   * for `Unconstrained`, so neither may the SDK, or the signature breaks (HTTP 400). See
+   * {@link projectFiberPolicy}.
    */
   policy?: FiberPolicy;
 }
@@ -497,10 +553,10 @@ export function toProtoDefinition<T extends FiberAppDefinition>(
   // needs on-chain metadata sets `ProtoStateMachineDefinition.metadata` explicitly after conversion.
 
   // Fiber constitution. OMIT the `policy` key entirely for `Unconstrained` (the chain
-  // emits nothing for it) and emit a bare object of only the SET dials for `Constrained`.
-  // `projectFiberPolicy` returns `undefined` for an (effectively) unconstrained policy, so
-  // we assign only when it is a real constraint — keeping the wire byte-for-byte identical
-  // to the chain's `dropNulls`-stripped encoding.
+  // emits nothing for it); emit the bare string `"Immutable"` for `Immutable`; emit a bare
+  // object of only the SET dials for `Constrained`. `projectFiberPolicy` returns `undefined`
+  // for an (effectively) unconstrained policy, so we assign only when it is a real policy —
+  // keeping the wire byte-for-byte identical to the chain's encoding.
   const policy = projectFiberPolicy(def.policy);
   if (policy !== undefined) {
     protoDef.policy = policy;

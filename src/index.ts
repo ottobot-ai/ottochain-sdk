@@ -143,15 +143,18 @@ export {
   toProtoDefinition,
   defineFiberApp,
   // Fiber policy (the fiber constitution): mirrors the chain ADT
-  // `FiberPolicy = Unconstrained | Constrained(<dials>)`.
+  // `FiberPolicy = Unconstrained | Immutable | Constrained(<dials>)`.
   constrained,
   unconstrained,
+  immutable,
+  IMMUTABLE_POLICY,
   projectFiberPolicy,
   type ProtoStateMachineDefinition,
   type FiberAppDefinition,
   type FiberAppMetadata,
   type FiberPolicy,
   type FiberPolicyDials,
+  type ImmutablePolicy,
   type StateDefinition,
   type StdStateMetadata,
   type StateCategory,
