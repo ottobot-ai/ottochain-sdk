@@ -147,6 +147,142 @@ export interface Transition<TState extends string = string, TEvent extends strin
 }
 
 // =============================================================================
+// Fiber Policy (the fiber "constitution")
+// =============================================================================
+
+/**
+ * `FiberPolicy` — the constitution a definition declares for the fibers it spawns.
+ *
+ * This MIRRORS the chain ADT `FiberPolicy = Unconstrained | Constrained(<dials>)`
+ * (chain branch `feat/fiber-policy-adt`). The representation here is chosen for
+ * BYTE-FOR-BYTE wire parity with the chain, because a `StateMachineDefinition` is
+ * signed verbatim by the SDK (`batchSign(dropNulls(...))`) and re-encoded + verified
+ * by the chain. The rule is:
+ *
+ *   - **`Unconstrained`** ⇒ there is **NO `policy` key** on the wire definition at all.
+ *     In the SDK this is the DEFAULT and is represented by simply OMITTING `policy`
+ *     (i.e. `policy === undefined`).
+ *   - **`Constrained(dials)`** ⇒ `policy` is a bare object of ONLY the dials that are
+ *     SET. Unset dials are absent (the chain `dropNulls`-strips them; so does the SDK
+ *     at sign time). A `Constrained` with no dials set is wire-indistinguishable from
+ *     `Unconstrained`, so `toProtoDefinition` collapses it back to "no policy key".
+ *
+ * All 14 dials are optional. Provide any subset.
+ */
+export interface FiberPolicyDials {
+  /** Whether the fiber may reproduce itself (spawn instances of its own definition). */
+  selfReproducing?: boolean;
+  /**
+   * Allow-list of reserved effect kinds this fiber may use, as a SET of effect-kind
+   * identifiers (e.g. the `_`-prefixed directive names: `_emit`, `_spawn`,
+   * `_transferAsset`, `_addDependency`, …). Order is not significant; duplicates are
+   * collapsed by the chain's `Set`.
+   */
+  allowedEffects?: readonly string[];
+  /** Policy governing who/what may own fibers this one spawns. */
+  spawnOwnerPolicy?: string;
+  /** Maximum spawn-generation depth (descendant chain length). */
+  maxGenerations?: number;
+  /** Maximum number of children a single fiber may spawn. */
+  maxSpawnFanout?: number;
+  /** SET of caller UUIDs permitted to drive transitions on this fiber. */
+  acceptedCallers?: readonly string[];
+  /** SET of state ids that are sealed (immutable / non-transitionable). */
+  sealedStates?: readonly string[];
+  /** Policy governing asset transfers out of the fiber. */
+  transferPolicy?: string;
+  /** Policy governing dynamic dependencies the fiber may bind. */
+  dependencyPolicy?: string;
+  /** Policy governing in-place upgrades / migrations. */
+  upgradePolicy?: string;
+  /** SemVer of this definition (constitution version). */
+  version?: string;
+  /** SemVer RANGE of definitions this one declares itself compatible with. */
+  compatibleWith?: string;
+  /** SET of interface identifiers this definition implements. */
+  interfaces?: readonly string[];
+  /** Authority permitted to migrate fibers governed by this policy. */
+  migrationAuthority?: string;
+}
+
+/**
+ * Wire form of a constrained policy — a bare object of the SET dials. This is what
+ * lands under `policy` on the projected `ProtoStateMachineDefinition`. Unset dials are
+ * stripped at projection time (and again by `dropNulls` at sign time), so this object
+ * matches the chain's `dropNulls`-stripped `Constrained` encoding exactly.
+ */
+export type FiberPolicy = FiberPolicyDials;
+
+/** The names of the 14 policy dials, in declaration order. Used by the projector. */
+const FIBER_POLICY_DIALS: readonly (keyof FiberPolicyDials)[] = [
+  'selfReproducing',
+  'allowedEffects',
+  'spawnOwnerPolicy',
+  'maxGenerations',
+  'maxSpawnFanout',
+  'acceptedCallers',
+  'sealedStates',
+  'transferPolicy',
+  'dependencyPolicy',
+  'upgradePolicy',
+  'version',
+  'compatibleWith',
+  'interfaces',
+  'migrationAuthority',
+];
+
+/**
+ * The canonical UNCONSTRAINED policy: omission. Provided as a named export for
+ * readability at call sites — `policy: unconstrained()` documents intent, and projects
+ * to NO `policy` key (identical to leaving `policy` off entirely).
+ */
+export function unconstrained(): undefined {
+  return undefined;
+}
+
+/**
+ * Build a CONSTRAINED `FiberPolicy` from any subset of the 14 dials.
+ *
+ * Pass only the dials you want to set. Dials left `undefined`/`null` are dropped so the
+ * result is a clean, minimal object that serializes identically to the chain's
+ * `dropNulls`-stripped `Constrained`. If NO dial is effectively set, this returns
+ * `undefined` (an empty constraint == `Unconstrained`), which projects to no `policy`
+ * key — preserving wire parity.
+ *
+ * @example
+ * ```ts
+ * const policy = constrained({
+ *   selfReproducing: false,
+ *   maxGenerations: 3,
+ *   allowedEffects: ['_emit', '_transferAsset'],
+ *   sealedStates: ['ARCHIVED'],
+ * });
+ * ```
+ */
+export function constrained(dials: FiberPolicyDials): FiberPolicy | undefined {
+  const out: Record<string, unknown> = {};
+  for (const k of FIBER_POLICY_DIALS) {
+    const v = dials[k];
+    if (v === undefined || v === null) continue;
+    out[k] = v;
+  }
+  return Object.keys(out).length === 0 ? undefined : (out as FiberPolicy);
+}
+
+/**
+ * Project an authoring `policy` value onto the wire form. Returns the minimal
+ * `Constrained` object, or `undefined` when the policy is (effectively) `Unconstrained`
+ * — i.e. omit the `policy` key. Centralizes the omit-on-unconstrained parity rule so
+ * every projection path (`toProtoDefinition`, the genesis manifest) stays consistent.
+ */
+export function projectFiberPolicy(policy: FiberPolicy | undefined): FiberPolicy | undefined {
+  if (policy === undefined || policy === null) return undefined;
+  // Re-run the dial filter so a hand-built object with explicit-undefined/empty dials
+  // collapses to Unconstrained exactly like `constrained()` does.
+  return constrained(policy);
+}
+
+// =============================================================================
 // Fiber App Definition
 // =============================================================================
 
@@ -176,7 +312,16 @@ export interface FiberAppDefinition<
   TEvent extends string = string
 > {
   metadata: FiberAppMetadata;
-  
+
+  /**
+   * Fiber constitution. Mirrors the chain ADT `FiberPolicy = Unconstrained |
+   * Constrained(<dials>)`. OMIT this field (the default) for `Unconstrained` — the
+   * projected wire definition then has NO `policy` key. Set it to a `constrained({...})`
+   * object to declare a subset of the 14 dials; unset dials are stripped so the wire
+   * form matches the chain's `dropNulls`-stripped `Constrained` byte-for-byte.
+   */
+  policy?: FiberPolicy;
+
   /** Schema for fiber creation inputs (user-provided) */
   createSchema?: {
     required?: readonly string[];
@@ -292,6 +437,13 @@ export interface ProtoStateMachineDefinition {
     dependencies: string[];
   }>;
   metadata?: Record<string, unknown>;
+  /**
+   * Fiber constitution. PRESENT only for a `Constrained` policy (a bare object of the
+   * SET dials); ABSENT for `Unconstrained`. This omit-on-unconstrained rule is the wire
+   * parity contract: the chain emits no `policy` key for `Unconstrained`, so neither may
+   * the SDK, or the signature breaks (HTTP 400). See {@link projectFiberPolicy}.
+   */
+  policy?: FiberPolicy;
 }
 
 /**
@@ -343,6 +495,16 @@ export function toProtoDefinition<T extends FiberAppDefinition>(
   // change the signed digest of an otherwise-identical machine), so it is deliberately NOT emitted
   // (the chain's `StateMachineDefinition.metadata` stays absent → `None`). A caller that genuinely
   // needs on-chain metadata sets `ProtoStateMachineDefinition.metadata` explicitly after conversion.
+
+  // Fiber constitution. OMIT the `policy` key entirely for `Unconstrained` (the chain
+  // emits nothing for it) and emit a bare object of only the SET dials for `Constrained`.
+  // `projectFiberPolicy` returns `undefined` for an (effectively) unconstrained policy, so
+  // we assign only when it is a real constraint — keeping the wire byte-for-byte identical
+  // to the chain's `dropNulls`-stripped encoding.
+  const policy = projectFiberPolicy(def.policy);
+  if (policy !== undefined) {
+    protoDef.policy = policy;
+  }
 
   return protoDef;
 }
