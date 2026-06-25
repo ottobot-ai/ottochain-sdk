@@ -1,0 +1,36 @@
+{
+  "_README": "PLACEHOLDER fixture for shielded-note-pool. The `proof` is NOT a real Groth16 proof; `groth16_verify` returns false on it. Every guard clause EXCEPT the groth16 clause is validated by tests/note-pool.test.ts against the real VM. The REAL proof lives in shielded-note-pool-transfer.json (realProof.enabled=true), produced by the SP1 zk-shielded GPU toolchain (sp1-gpu-proving skill, mode groth16). publicValues fields land at the corrected PV_LAYOUT char offsets {anchor:66, fee:258, feeAsset:322, nullifier:450, outputCm:578} — the +64 each accounts for the leading 0x20 dynamic-tuple head word that alloy_sol_types::abi_encode emits.",
+  "realProof": {
+    "enabled": false,
+    "note": "set true once a real zk-shielded Groth16 fixture is dropped in"
+  },
+  "vkey": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "publicValues": "0x000000000000000000000000000000000000000000000000000000000000002024d1dd8c15ec78af6a362bed8d466b5e653948d06ddf460602c8645a20fad9ab00000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000e00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000fee50000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000011100000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000222",
+  "proof": "0xdededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededededede",
+  "newRoot": "0x0000000000000000000000000000000000000000000000000000000000000333",
+  "fields": {
+    "anchor": "0x24d1dd8c15ec78af6a362bed8d466b5e653948d06ddf460602c8645a20fad9ab",
+    "feeWord": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "feeAsset": "0x000000000000000000000000000000000000000000000000000000000000fee5",
+    "nullifier": "0x0000000000000000000000000000000000000000000000000000000000000111",
+    "outputCm": "0x0000000000000000000000000000000000000000000000000000000000000222"
+  },
+  "pmt": {
+    "root": "0x24d1dd8c15ec78af6a362bed8d466b5e653948d06ddf460602c8645a20fad9ab",
+    "leaf": "0x0000000000000000000000000000000000000000000000000000000000000007",
+    "index": 0,
+    "siblings": [
+      "0x2f2dfef69678d92f92f098809c390fd5854ed453f7133bc7e1f991f4e2504a4d",
+      "0x0000000000000000000000000000000000000000000000000000000000000009"
+    ],
+    "depth": 2,
+    "_note": "siblings are ROOT-FIRST (top-down); index is the leaf position 0."
+  },
+  "expect": {
+    "groth16VerifyPlaceholder": false,
+    "anchorInKnownRoots": true,
+    "nullifierFresh": true,
+    "feeWordPinnedZero": true,
+    "pmtVerify": true
+  }
+}

@@ -34,3 +34,6 @@ export * as markets from "./markets/index.js";
 export * as governance from "./governance/index.js";
 export * as corporate from "./corporate/index.js";
 export * as lending from "./lending/index.js";
+export * as compute from "./compute/index.js";
+export * as stakedPool from "./staked-pool/index.js";
+export * as privacy from "./privacy/index.js";

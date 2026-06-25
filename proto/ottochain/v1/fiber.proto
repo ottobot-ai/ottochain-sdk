@@ -45,6 +45,10 @@ message EmittedEvent {
   string name = 1;
   google.protobuf.Value data = 2;
   optional string destination = 3;
+  // Engine-stamped at extraction (EffectExtractor), never user-supplied — make every
+  // emitted event attributable to the fiber that produced it (engine-default-fixes Fix 1).
+  string emitter_fiber_id = 4;  // The fiber whose transition ran `_emit` (the EMITTER, distinct from EventReceipt.source_fiber_id).
+  int32 emission_index = 5;     // Sparse position within the raw `_emit` array at authoring time.
 }
 
 // Event receipt - log entry for state machine transition

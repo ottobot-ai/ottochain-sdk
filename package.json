@@ -61,6 +61,16 @@
       "require": "./dist/cjs/apps/corporate/index.js",
       "types": "./dist/types/apps/corporate/index.d.ts"
     },
+    "./apps/compute": {
+      "import": "./dist/esm/apps/compute/index.js",
+      "require": "./dist/cjs/apps/compute/index.js",
+      "types": "./dist/types/apps/compute/index.d.ts"
+    },
+    "./apps/staked-pool": {
+      "import": "./dist/esm/apps/staked-pool/index.js",
+      "require": "./dist/cjs/apps/staked-pool/index.js",
+      "types": "./dist/types/apps/staked-pool/index.d.ts"
+    },
     "./apps": {
       "import": "./dist/esm/apps/index.js",
       "require": "./dist/cjs/apps/index.js",

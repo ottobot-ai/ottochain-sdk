@@ -1,0 +1,52 @@
+{
+  "_README": "REAL SP1 zk-shielded Groth16 fixture for the shielded-note-pool (N=1 input / M=1 output, fee=0). Produced on the local NVIDIA RTX 5090 via the sp1-gpu-proving toolchain (SP1_PROVER=cuda, mode groth16, sp1-gpu-server 6.2.3 device 0, gnark bn254 wrap). The host (rust/zk-shielded/script) generated AND verified this proof against its own vkey, and asserted the committed publicValues equal the native verify_transfer output. publicValues is alloy_sol_types::abi_encode(ShieldedTransferPublicValues), which carries a leading 0x20 dynamic-tuple head word; fields therefore land at the corrected PV_LAYOUT char offsets {anchor:66, fee:258, feeAsset:322, nullifier:450, outputCm:578}.",
+  "realProof": {
+    "enabled": true,
+    "note": "real zk-shielded Groth16 proof; groth16_verify(vkey, publicValues, proof) returns true"
+  },
+  "scheme": "groth16-bn254",
+  "provenance": {
+    "circuit": "~/repos/metakit-sdk/rust/zk-shielded",
+    "command": "SP1_PROVER=cuda RUST_LOG=info cargo run --release -- --mode groth16 --witness <n1m1-zero-fee-witness.json>",
+    "gpu": "NVIDIA GeForce RTX 5090 (32 GB), sp1-gpu-server 6.2.3 device 0, gnark groth16/bn254 wrap",
+    "constraints": 15972262,
+    "wallClockSeconds": 184,
+    "witness": {
+      "inputNote": { "value": 100, "owner": "Poseidon([111])", "asset": "0xfee5", "rho": "7001" },
+      "outputNote": { "value": 100, "owner": "Poseidon([222])", "asset": "0xfee5", "rho": "8001" },
+      "fee": 0,
+      "merklePosition": 3,
+      "depth": 8,
+      "note": "1-in/1-out, value-conserved (100==100), fee 0; input cm placed at leaf 3 of a depth-8 Poseidon-Merkle tree; anchor = that tree's root."
+    }
+  },
+  "vkey": "0x00abcf5bcaaf808e68742c2c91b65aec8eb25756fee86ee836d27b7cd0956aff",
+  "publicValues": "0x00000000000000000000000000000000000000000000000000000000000000201b3fe12cddeee585db30828f8bc369f908e9a8b1713aa04f5eb4291b3ac7d03c00000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000e00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000fee500000000000000000000000000000000000000000000000000000000000000011d4e5228d8e405bbfcf920c6dd41e80e73954ffa06edc315e788b830a229611800000000000000000000000000000000000000000000000000000000000000012913e7efa7b0ced7a97cc43a53e86685b1585971123c67eb469ce63a090dbebd",
+  "proof": "0x4388a21c0000000000000000000000000000000000000000000000000000000000000000002f850ee998974d6cc00e50cd0814b098c05bfade466d28573240d057f25352000000000000000000000000000000000000000000000000000000000000000004de9094bbf4fa479d5f03b7591318edf81f0c47410493187acab838bcb3312e077731c1b066cef799496ea340b1bba9b82b4e87e62dbb84b945936b47f547bc17090cf9bab0d1422fa4e24e006dab4beca5a83c1fd2b7173156e9606b75534a2d7c804e9ec93e56e4c1130954948491af1b5ac3a50bf8721f4d5de07e81dc8201da085c6c01bf2cd37b436969eabbac413f1d7d1e65e861989a5b1fa69ff2fa04738b0a0884c9674bbfdbf63366323393dcd90fc65b19b855f22972170049651b1ff7f644bb27f3709409d1a1b7bab4b3118b337503cfb3b0d3e3b03edc2951269da013316c98965fac50b30a7e12082815b25310444ea3e13dd249b0b97a55",
+  "newRoot": "0x2913e7efa7b0ced7a97cc43a53e86685b1585971123c67eb469ce63a090dbebd",
+  "fields": {
+    "anchor": "0x1b3fe12cddeee585db30828f8bc369f908e9a8b1713aa04f5eb4291b3ac7d03c",
+    "feeWord": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "feeAsset": "0x000000000000000000000000000000000000000000000000000000000000fee5",
+    "nullifier": "0x1d4e5228d8e405bbfcf920c6dd41e80e73954ffa06edc315e788b830a2296118",
+    "outputCm": "0x2913e7efa7b0ced7a97cc43a53e86685b1585971123c67eb469ce63a090dbebd"
+  },
+  "pmt": {
+    "root": "0x24d1dd8c15ec78af6a362bed8d466b5e653948d06ddf460602c8645a20fad9ab",
+    "leaf": "0x0000000000000000000000000000000000000000000000000000000000000007",
+    "index": 0,
+    "siblings": [
+      "0x2f2dfef69678d92f92f098809c390fd5854ed453f7133bc7e1f991f4e2504a4d",
+      "0x0000000000000000000000000000000000000000000000000000000000000009"
+    ],
+    "depth": 2,
+    "_note": "Standalone depth-2 Poseidon-Merkle inclusion proof used only by the pmt_verify operand-shape test (independent of the Groth16 proof). Siblings are ROOT-FIRST (top-down); index is the leaf position 0."
+  },
+  "expect": {
+    "groth16Verify": true,
+    "anchorInKnownRoots": true,
+    "nullifierFresh": true,
+    "feeWordPinnedZero": true,
+    "pmtVerify": true
+  }
+}
