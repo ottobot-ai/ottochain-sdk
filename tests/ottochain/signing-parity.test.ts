@@ -8,7 +8,12 @@
  * chain's `PublishVersionSigningCanonicalSuite` / `SdkCompatibilitySuite`.
  */
 import { describe, it, expect } from '@jest/globals';
-import { toProtoDefinition, defineFiberApp } from '../../src/schema/fiber-app.js';
+import {
+  toProtoDefinition,
+  defineFiberApp,
+  constrained,
+  unconstrained,
+} from '../../src/schema/fiber-app.js';
 import { dropNulls } from '../../src/ottochain/drop-nulls.js';
 import { identityUniversalDef } from '../../src/apps/identity/state-machines/identity-universal.js';
 import { govUniversalDef } from '../../src/apps/governance/state-machines/governance-universal.js';
@@ -52,8 +57,68 @@ describe('signing-canonical parity (SDK <-> chain wire StateMachineDefinition)',
       it('contains no `$timestamp` (the chain reserves $ordinal/$epochProgress, never $timestamp)', () => {
         expect(JSON.stringify(wire)).not.toContain('$timestamp');
       });
+
+      it('omits the `policy` key (std apps are Unconstrained == no policy key on the wire)', () => {
+        expect(wire).not.toHaveProperty('policy');
+        expect(JSON.stringify(wire)).not.toContain('"policy"');
+      });
     });
   }
+
+  describe('FiberPolicy projection (Unconstrained == omit, Constrained == bare set-dial object)', () => {
+    const base = {
+      metadata: { name: 'P', app: 'p', type: 'p', version: '1.0.0' },
+      states: { A: { id: 'A', isFinal: false }, B: { id: 'B', isFinal: true } },
+      initialState: 'A' as const,
+      transitions: [
+        { from: 'A', to: 'B', eventName: 'go', guard: { '==': [1, 1] }, effect: { var: 'state' } },
+      ],
+    };
+
+    it('omits `policy` entirely when the definition is unconstrained (no policy field)', () => {
+      const wire = toProtoDefinition(defineFiberApp({ ...base }));
+      expect(wire).not.toHaveProperty('policy');
+    });
+
+    it('omits `policy` when `policy: unconstrained()` is set explicitly', () => {
+      const wire = toProtoDefinition(defineFiberApp({ ...base, policy: unconstrained() }));
+      expect(wire).not.toHaveProperty('policy');
+    });
+
+    it('omits `policy` when a constrained() has zero effective dials (empty == Unconstrained)', () => {
+      const wire = toProtoDefinition(
+        defineFiberApp({ ...base, policy: constrained({ maxGenerations: undefined }) }),
+      );
+      expect(wire).not.toHaveProperty('policy');
+    });
+
+    it('emits `policy` as a bare object of ONLY the set dials when constrained', () => {
+      const wire = toProtoDefinition(
+        defineFiberApp({
+          ...base,
+          policy: constrained({
+            selfReproducing: false,
+            maxGenerations: 3,
+            allowedEffects: ['_emit', '_transferAsset'],
+            sealedStates: ['B'],
+          }),
+        }),
+      );
+      expect(wire.policy).toEqual({
+        selfReproducing: false,
+        maxGenerations: 3,
+        allowedEffects: ['_emit', '_transferAsset'],
+        sealedStates: ['B'],
+      });
+    });
+
+    it('strips unset dials so the wire matches the chain `dropNulls`-stripped Constrained', () => {
+      const wire = toProtoDefinition(
+        defineFiberApp({ ...base, policy: constrained({ maxGenerations: 2, transferPolicy: undefined }) }),
+      );
+      expect(Object.keys(wire.policy ?? {})).toEqual(['maxGenerations']);
+    });
+  });
 
   it('toProtoDefinition drops build-time-only DependencySpec objects + emits, keeping string deps', () => {
     const def = defineFiberApp({
