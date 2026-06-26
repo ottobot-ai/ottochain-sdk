@@ -1,15 +1,16 @@
 import { describe, it, expect } from '@jest/globals';
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { transition, effect, machine } from '../../src/templates/machine';
 import { defineFiberApp } from '../../src/schema/fiber-app';
 import { transferAsset } from '../../src/schema/effects';
 import type { MachineShape } from '../../src/ottochain/types';
 
 // The riverdale golden — the chain-accepted form `transition()`/`effect()` must reproduce byte-for-byte
-// (key order is irrelevant; JCS sorts keys, so deep equality is the right oracle).
+// (key order is irrelevant; JCS sorts keys, so deep equality is the right oracle). Vendored fixture.
 const CONSUMER_DEF = JSON.parse(
   readFileSync(
-    '/home/euler/repos/ottochain-riverdale-e2e/e2e-test/examples/riverdale-economy/consumer.definition.json',
+    resolve(__dirname, '../fixtures/riverdale-economy/consumer.definition.json'),
     'utf8',
   ),
 ) as { transitions: Record<string, unknown>[] };

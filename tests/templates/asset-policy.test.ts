@@ -12,11 +12,8 @@ import {
 import { TOKEN_BEHAVIOR_BITS, type CreateAssetPolicy } from '../../src/ottochain/types';
 import { dropNulls } from '../../src/ottochain/drop-nulls';
 
-// The acceptance oracle: the chain-accepted riverdale golden policy JSONs.
-const GOLDEN_DIR = resolve(
-  __dirname,
-  '../../../ottochain-riverdale-e2e/e2e-test/examples/riverdale-economy',
-);
+// The acceptance oracle: the chain-accepted riverdale golden policy JSONs (vendored, see fixtures README).
+const GOLDEN_DIR = resolve(__dirname, '../fixtures/riverdale-economy');
 const golden = (file: string): unknown => JSON.parse(readFileSync(resolve(GOLDEN_DIR, file), 'utf8'));
 
 describe('templates/asset-policy — behavior is summed from TOKEN_BEHAVIOR_BITS, never a literal', () => {

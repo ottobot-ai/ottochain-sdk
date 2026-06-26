@@ -13,13 +13,10 @@ import {
 
 // The acceptance oracle: the chain-accepted riverdale golden definition (green lane). Effects are FLAT
 // maps mixing `_`-directives with state-update fields; we deep-equal our builders against the exact
-// `_triggers` / `_spawn` fragments the chain re-derives. Loaded via fs (sibling repo, outside rootDir).
+// `_triggers` / `_spawn` fragments the chain re-derives. Vendored fixture (see fixtures README).
 const consumerDef = JSON.parse(
   readFileSync(
-    resolve(
-      __dirname,
-      '../../../ottochain-riverdale-e2e/e2e-test/examples/riverdale-economy/consumer.definition.json',
-    ),
+    resolve(__dirname, '../fixtures/riverdale-economy/consumer.definition.json'),
     'utf-8',
   ),
 ) as {

@@ -22,10 +22,7 @@ import { machine, transition, effect } from '../../src/templates/machine';
 import { defineFiberApp } from '../../src/schema/fiber-app';
 import type { MachineShape } from '../../src/ottochain/types';
 
-const GOLDEN_DIR = resolve(
-  __dirname,
-  '../../../ottochain-riverdale-e2e/e2e-test/examples/riverdale-economy',
-);
+const GOLDEN_DIR = resolve(__dirname, '../fixtures/riverdale-economy');
 const golden = (file: string): unknown => JSON.parse(readFileSync(resolve(GOLDEN_DIR, file), 'utf8'));
 
 // One fresh key; deterministic signatures ⇒ equal signature == byte-identical signed canonical.
