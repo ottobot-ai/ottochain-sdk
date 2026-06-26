@@ -26,6 +26,11 @@
       "require": "./dist/cjs/zk/index.js",
       "types": "./dist/types/zk/index.d.ts"
     },
+    "./templates": {
+      "import": "./dist/esm/templates/index.js",
+      "require": "./dist/cjs/templates/index.js",
+      "types": "./dist/types/templates/index.d.ts"
+    },
     "./apps/identity": {
       "import": "./dist/esm/apps/identity/index.js",
       "require": "./dist/cjs/apps/identity/index.js",

@@ -12,6 +12,8 @@ import type {
   MintAsset,
   ApplyMorphism,
   AuthorizeCompose,
+  PublishMachineVersion,
+  UpgradeFiber,
 } from './types.js';
 import { signDataUpdate } from '../signing.js';
 
@@ -292,6 +294,20 @@ export function createAuthorizeComposePayload(
   params: AuthorizeCompose,
 ): { AuthorizeCompose: AuthorizeCompose } {
   return { AuthorizeCompose: params };
+}
+
+/** Wrap a {@link PublishMachineVersion} (create-or-append a STATE-MACHINE registry version). */
+export function createPublishMachineVersionPayload(
+  params: PublishMachineVersion,
+): { PublishMachineVersion: PublishMachineVersion } {
+  return { PublishMachineVersion: params };
+}
+
+/** Wrap an {@link UpgradeFiber} (re-pin a fiber to another registered version of the SAME package). */
+export function createUpgradeFiberPayload(
+  params: UpgradeFiber,
+): { UpgradeFiber: UpgradeFiber } {
+  return { UpgradeFiber: params };
 }
 
 /**
