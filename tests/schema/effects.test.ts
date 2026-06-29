@@ -102,19 +102,23 @@ describe("schema/effects — reserved EFFECT directives match the riverdale gree
     );
   });
 
-  it("RESERVED_EFFECT_KEYS lists all 7 reserved directive keys (Proposal 01 validator input)", () => {
-    expect(RESERVED_EFFECT_KEYS).toHaveLength(7);
-    for (const key of [
+  // Cross-language PIN: these MUST match the chain's reserved directive vocabulary — the `FiberDirective`
+  // enum / `ReservedKeys.directiveKeys` (ottochain). The SDK can't import the Scala enum, so this golden is
+  // the drift guard: if the chain adds/renames a directive, update both in lockstep. (A directive the chain
+  // does not recognise is silently stripped from the effect, never executed — so drift fails silently.)
+  it("RESERVED_EFFECT_KEYS exactly matches the chain's reserved directive keys (FiberDirective)", () => {
+    const chainDirectives = [
       "_triggers",
       "_spawn",
+      "_scriptCall",
       "_emit",
       "_transferAsset",
-      "_scriptCall",
       "_addDependency",
       "_setDependencyActive",
-    ]) {
-      expect(RESERVED_EFFECT_KEYS).toContain(key);
-    }
+    ];
+    expect([...RESERVED_EFFECT_KEYS].sort()).toEqual(
+      [...chainDirectives].sort(),
+    );
   });
 
   it("toFiber / toWallet build the canonical AssetHolder object form", () => {
