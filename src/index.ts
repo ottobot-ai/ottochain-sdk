@@ -195,8 +195,19 @@ export {
   actorNotInArray,
 } from './schema/guards.js';
 
-// Reserved EFFECT-directive builders (dynamic dependencies, #24; whole-asset custody moves).
-export { addDependency, setDependencyActive, transferAsset } from './schema/effects.js';
+// Reserved EFFECT-directive builders (dynamic dependencies, #24; whole-asset custody moves;
+// cross-fiber triggers, spawn, emit + recipient-intent helpers; the reserved-key set for validators).
+export {
+  addDependency,
+  setDependencyActive,
+  transferAsset,
+  triggers,
+  spawn,
+  emit,
+  toFiber,
+  toWallet,
+  RESERVED_EFFECT_KEYS,
+} from './schema/effects.js';
 
 // ─── Privacy: shield any fiber app into a zk-jlvm-shielded private-state pool ──
 // See docs/design/zk-private-contract-state-rfc.md.
