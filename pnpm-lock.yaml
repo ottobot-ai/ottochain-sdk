@@ -83,7 +83,7 @@ importers:
         version: 29.4.9(@babel/core@7.29.0)(@jest/transform@30.3.0)(@jest/types@30.3.0)(babel-jest@30.3.0(@babel/core@7.29.0))(jest-util@30.3.0)(jest@30.3.0(@types/node@25.9.3))(typescript@6.0.3)
       ts-proto:
         specifier: ^2.11.6
-        version: 2.11.8
+        version: 2.11.9
       typedoc:
         specifier: ^0.28.19
         version: 0.28.19(typescript@6.0.3)
@@ -2158,6 +2158,7 @@ packages:
   git-raw-commits@5.0.1:
     resolution: {integrity: sha512-Y+csSm2GD/PCSh6Isd/WiMjNAydu0VBiG9J7EdQsNA5P9uXvLayqjmTsNlK5Gs9IhblFZqOU0yid5Il5JPoLiQ==}
     engines: {node: '>=18'}
+    deprecated: Deprecated and no longer maintained. Use @conventional-changelog/git-client instead.
     hasBin: true
 
   glob-parent@6.0.2:
@@ -3341,8 +3342,8 @@ packages:
   ts-proto-descriptors@2.1.0:
     resolution: {integrity: sha512-S5EZYEQ6L9KLFfjSRpZWDIXDV/W7tAj8uW7pLsihIxyr62EAVSiKuVPwE8iWnr849Bqa53enex1jhDUcpgquzA==}
 
-  ts-proto@2.11.8:
-    resolution: {integrity: sha512-+5hzECnyVB33jxjG1BIdzAHcRBm7hjnm8womdJVp2A7xJWihP0drHHVsXYTr9i/LpWNGfh80I+AVVNzFM5AwJw==}
+  ts-proto@2.11.9:
+    resolution: {integrity: sha512-rWmxXkEXV4qHc0xHteHMZ8i2V8KjUwloQ4MLb5dZwTBb0/9rtfnaFJO+4vm7irWmlV1gtkShT8O1zlY9B6lxcA==}
     hasBin: true
 
   tslib@1.14.1:
@@ -7497,7 +7498,7 @@ snapshots:
     dependencies:
       '@bufbuild/protobuf': 2.12.0
 
-  ts-proto@2.11.8:
+  ts-proto@2.11.9:
     dependencies:
       '@bufbuild/protobuf': 2.12.0
       case-anything: 2.1.13
