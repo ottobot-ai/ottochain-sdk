@@ -31,7 +31,10 @@ import {
 } from "../src/apps/privacy/index.js";
 
 const apply = (rule: unknown, data: unknown = {}): unknown =>
-  jsonLogic.apply(rule as Record<string, unknown>, data as Record<string, unknown>);
+  jsonLogic.apply(
+    rule as Record<string, unknown>,
+    data as Record<string, unknown>,
+  );
 
 type NotePoolFixture = {
   realProof: { enabled: boolean };
@@ -39,12 +42,26 @@ type NotePoolFixture = {
   publicValues: string;
   proof: string;
   newRoot: string;
-  fields: { anchor: string; feeWord: string; feeAsset: string; nullifier: string; outputCm: string };
-  pmt: { root: string; leaf: string; index: number; siblings: string[]; depth: number };
+  fields: {
+    anchor: string;
+    feeWord: string;
+    feeAsset: string;
+    nullifier: string;
+    outputCm: string;
+  };
+  pmt: {
+    root: string;
+    leaf: string;
+    index: number;
+    siblings: string[];
+    depth: number;
+  };
 };
 
 const loadFixture = (name: string): NotePoolFixture =>
-  JSON.parse(readFileSync(resolve(__dirname, "zk/fixtures", name), "utf8")) as NotePoolFixture;
+  JSON.parse(
+    readFileSync(resolve(__dirname, "zk/fixtures", name), "utf8"),
+  ) as NotePoolFixture;
 
 // Prefer the REAL SP1 zk-shielded Groth16 fixture (realProof.enabled) when it has been dropped in;
 // fall back to the placeholder otherwise. The real fixture's publicValues aligns with the corrected
@@ -57,13 +74,16 @@ const realFixture = (() => {
     return null;
   }
 })();
-const fixture: NotePoolFixture = realFixture ?? loadFixture("shielded-note-pool-transfer.placeholder.json");
+const fixture: NotePoolFixture =
+  realFixture ?? loadFixture("shielded-note-pool-transfer.placeholder.json");
 
 // A proof that groth16_verify REJECTS, for the graceful-deny path: corrupt the real proof's bytes
 // (a garbage bundle returns false, never throws). When only the placeholder is present its own proof
 // is already a non-verifying bundle, so reuse it directly.
 const denyEvent = {
-  proof: realFixture ? realFixture.proof.slice(0, -8) + "deadbeef" : fixture.proof,
+  proof: realFixture
+    ? realFixture.proof.slice(0, -8) + "deadbeef"
+    : fixture.proof,
   publicValues: fixture.publicValues,
   newRoot: fixture.newRoot,
 };
@@ -133,67 +153,150 @@ describe("shielded-note-pool — structure", () => {
 
   it("public state = nullifier set + anchor window + commitment log + note-records", () => {
     const props = Object.keys(def.stateSchema!.properties);
-    for (const f of ["vkey", "knownRoots", "nullifiers", "commitments", "noteRecords", "relayer"]) {
+    for (const f of [
+      "vkey",
+      "knownRoots",
+      "nullifiers",
+      "commitments",
+      "noteRecords",
+      "relayer",
+    ]) {
       expect(props).toContain(f);
     }
-    expect(Object.keys(NOTE_POOL_STATE)).toEqual(Object.keys(def.stateSchema!.properties));
+    expect(Object.keys(NOTE_POOL_STATE)).toEqual(
+      Object.keys(def.stateSchema!.properties),
+    );
   });
 
   it("PV_LAYOUT pins the documented N=1/M=1 offsets", () => {
     // Real zk-shielded `abi_encode` emits a leading 0x20 dynamic-tuple head word, so each field is
     // one 32-byte word (64 hex) past a naive layout: anchor@66, fee@258, feeAsset@322, nf@450, cm@578.
-    expect(PV_LAYOUT).toEqual({ anchor: 66, fee: 258, feeAsset: 322, nullifier: 450, outputCm: 578 });
+    expect(PV_LAYOUT).toEqual({
+      anchor: 66,
+      fee: 258,
+      feeAsset: 322,
+      nullifier: 450,
+      outputCm: 578,
+    });
   });
 
   it("pvField extracts each field at its layout offset with a 0x re-prefix", () => {
-    expect(apply(pvField(PV_LAYOUT.anchor), { event: transferEvent })).toBe(fixture.fields.anchor);
-    expect(apply(pvField(PV_LAYOUT.nullifier), { event: transferEvent })).toBe(fixture.fields.nullifier);
-    expect(apply(pvField(PV_LAYOUT.outputCm), { event: transferEvent })).toBe(fixture.fields.outputCm);
-    expect(apply(pvField(PV_LAYOUT.feeAsset), { event: transferEvent })).toBe(fixture.fields.feeAsset);
-    expect(apply(pvField(PV_LAYOUT.fee), { event: transferEvent })).toBe(fixture.fields.feeWord);
+    expect(apply(pvField(PV_LAYOUT.anchor), { event: transferEvent })).toBe(
+      fixture.fields.anchor,
+    );
+    expect(apply(pvField(PV_LAYOUT.nullifier), { event: transferEvent })).toBe(
+      fixture.fields.nullifier,
+    );
+    expect(apply(pvField(PV_LAYOUT.outputCm), { event: transferEvent })).toBe(
+      fixture.fields.outputCm,
+    );
+    expect(apply(pvField(PV_LAYOUT.feeAsset), { event: transferEvent })).toBe(
+      fixture.fields.feeAsset,
+    );
+    expect(apply(pvField(PV_LAYOUT.fee), { event: transferEvent })).toBe(
+      fixture.fields.feeWord,
+    );
   });
 });
 
 describe("shielded-note-pool — guard logic (real VM, sans groth16)", () => {
   const guard = T("transfer").guard as { and: unknown[] };
   // guard.and = [groth16, in(anchor,knownRoots), none(nullifiers), ===(feeAsset), ===(feeWord), signerIsParty(relayer)]
-  const [groth16Clause, anchorClause, nullifierClause, feeAssetClause, feeWordClause, relayerClause] = guard.and;
+  const [
+    groth16Clause,
+    anchorClause,
+    nullifierClause,
+    feeAssetClause,
+    feeWordClause,
+    relayerClause,
+  ] = guard.and;
 
-  const ctx = (state: typeof baseState, proofs = relayerProofs) => ({ state, event: transferEvent, proofs });
+  const ctx = (state: typeof baseState, proofs = relayerProofs) => ({
+    state,
+    event: transferEvent,
+    proofs,
+  });
 
   it("the groth16 clause returns FALSE on a non-verifying (corrupted/placeholder) proof — graceful deny", () => {
-    expect(apply(groth16Clause, { state: baseState, event: denyEvent, proofs: relayerProofs })).toBe(false);
+    expect(
+      apply(groth16Clause, {
+        state: baseState,
+        event: denyEvent,
+        proofs: relayerProofs,
+      }),
+    ).toBe(false);
   });
 
   it("anchor ∈ knownRoots passes when the anchor is honored, fails when it is not", () => {
     expect(apply(anchorClause, ctx(baseState))).toBe(true);
-    expect(apply(anchorClause, ctx({ ...baseState, knownRoots: ["0x" + "ab".repeat(32)] }))).toBe(false);
+    expect(
+      apply(
+        anchorClause,
+        ctx({ ...baseState, knownRoots: ["0x" + "ab".repeat(32)] }),
+      ),
+    ).toBe(false);
   });
 
   it("nullifier `none` is fresh on an empty set, REJECTS on replay (the double-spend gate)", () => {
     expect(apply(nullifierClause, ctx(baseState))).toBe(true);
     // plant the SAME 0x-prefixed nullifier the proof reveals -> none() must fire false
-    expect(apply(nullifierClause, ctx({ ...baseState, nullifiers: [fixture.fields.nullifier] }))).toBe(false);
+    expect(
+      apply(
+        nullifierClause,
+        ctx({ ...baseState, nullifiers: [fixture.fields.nullifier] }),
+      ),
+    ).toBe(false);
   });
 
   it("feeAsset and feeWord pinning: matching passes, spoof/siphon fails", () => {
     expect(apply(feeAssetClause, ctx(baseState))).toBe(true);
     expect(apply(feeWordClause, ctx(baseState))).toBe(true);
-    expect(apply(feeAssetClause, ctx({ ...baseState, feeAsset: "0x" + "cd".repeat(32) }))).toBe(false);
-    expect(apply(feeWordClause, ctx({ ...baseState, feeWord: "0x" + ("0".repeat(63) + "1") }))).toBe(false);
+    expect(
+      apply(
+        feeAssetClause,
+        ctx({ ...baseState, feeAsset: "0x" + "cd".repeat(32) }),
+      ),
+    ).toBe(false);
+    expect(
+      apply(
+        feeWordClause,
+        ctx({ ...baseState, feeWord: "0x" + ("0".repeat(63) + "1") }),
+      ),
+    ).toBe(false);
   });
 
   it("root-advance is relayer-gated: relayer signer passes, a non-relayer signer fails", () => {
     expect(apply(relayerClause, ctx(baseState))).toBe(true);
-    expect(apply(relayerClause, ctx(baseState, [{ address: "DAGNOTTHERELAYER000000000000000000000000" }]))).toBe(false);
+    expect(
+      apply(
+        relayerClause,
+        ctx(baseState, [
+          { address: "DAGNOTTHERELAYER000000000000000000000000" },
+        ]),
+      ),
+    ).toBe(false);
   });
 
   it("the FULL transfer guard rejects (groth16 false) on a non-verifying proof", () => {
-    expect(apply(guard, { state: baseState, event: denyEvent, proofs: relayerProofs })).toBe(false);
+    expect(
+      apply(guard, {
+        state: baseState,
+        event: denyEvent,
+        proofs: relayerProofs,
+      }),
+    ).toBe(false);
   });
 
   it("with the groth16 clause stripped, every OTHER clause passes (binding logic is sound)", () => {
-    const sansGroth16 = { and: [anchorClause, nullifierClause, feeAssetClause, feeWordClause, relayerClause] };
+    const sansGroth16 = {
+      and: [
+        anchorClause,
+        nullifierClause,
+        feeAssetClause,
+        feeWordClause,
+        relayerClause,
+      ],
+    };
     expect(apply(sansGroth16, ctx(baseState))).toBe(true);
   });
 });
@@ -201,7 +304,10 @@ describe("shielded-note-pool — guard logic (real VM, sans groth16)", () => {
 describe("shielded-note-pool — effect (real VM)", () => {
   it("transfer effect APPENDS the nullifier + commitment via merge (cat would error)", () => {
     const eff = T("transfer").effect!;
-    const next = apply(eff, { state: baseState, event: transferEvent }) as Record<string, unknown>;
+    const next = apply(eff, {
+      state: baseState,
+      event: transferEvent,
+    }) as Record<string, unknown>;
     expect(next.nullifiers).toEqual([fixture.fields.nullifier]);
     expect(next.commitments).toEqual([fixture.fields.outputCm]);
     expect(next.leafCount).toBe(1);
@@ -212,7 +318,10 @@ describe("shielded-note-pool — effect (real VM)", () => {
     const eff = T("transfer").effect!;
     // window of 2; 2 existing roots -> after append+trim only the last 2 remain (oldest evicted)
     const state = { ...baseState, rootWindow: 2, knownRoots: ["0xaa", "0xbb"] };
-    const next = apply(eff, { state, event: transferEvent }) as Record<string, unknown>;
+    const next = apply(eff, { state, event: transferEvent }) as Record<
+      string,
+      unknown
+    >;
     expect(next.currentRoot).toBe(fixture.newRoot);
     expect(next.knownRoots).toEqual(["0xbb", fixture.newRoot]);
   });
@@ -225,11 +334,22 @@ describe("shielded-note-pool — effect (real VM)", () => {
       recordId,
       recipient: "DAGRECIPIENT0000000000000000000000000000",
     };
-    const state = { ...baseState, noteRecords: [recordId, "22222222-2222-2222-2222-222222222222"] };
-    const next = apply(T("unshield").effect!, { state, event: unshieldEvent }) as Record<string, unknown>;
+    const state = {
+      ...baseState,
+      noteRecords: [recordId, "22222222-2222-2222-2222-222222222222"],
+    };
+    const next = apply(T("unshield").effect!, {
+      state,
+      event: unshieldEvent,
+    }) as Record<string, unknown>;
     expect(next.nullifiers).toEqual([fixture.fields.nullifier]);
     expect(next.noteRecords).toEqual(["22222222-2222-2222-2222-222222222222"]); // released id filtered out
-    expect(next._transferAsset).toEqual([{ assetId: recordId, recipient: unshieldEvent.recipient }]);
+    expect(next._transferAsset).toEqual([
+      {
+        assetId: recordId,
+        recipient: { Wallet: { address: unshieldEvent.recipient } },
+      },
+    ]);
   });
 
   it("noteMinted records the commitment + record UUID", () => {
@@ -238,7 +358,10 @@ describe("shielded-note-pool — effect (real VM)", () => {
       recordId: "33333333-3333-3333-3333-333333333333",
       depositor: "DAGDEPOSITOR000000000000000000000000000",
     };
-    const next = apply(T("noteMinted").effect!, { state: baseState, event: ev }) as Record<string, unknown>;
+    const next = apply(T("noteMinted").effect!, {
+      state: baseState,
+      event: ev,
+    }) as Record<string, unknown>;
     expect(next.commitments).toEqual([ev.commitment]);
     expect(next.noteRecords).toEqual([ev.recordId]);
   });
@@ -251,8 +374,18 @@ describe("shielded-note-pool — unshield record-selection guard", () => {
     const recordClause = guard.and[guard.and.length - 1];
     const held = "11111111-1111-1111-1111-111111111111";
     const ev = { recordId: held };
-    expect(apply(recordClause, { state: { ...baseState, noteRecords: [held] }, event: ev })).toBe(true);
-    expect(apply(recordClause, { state: { ...baseState, noteRecords: [] }, event: ev })).toBe(false);
+    expect(
+      apply(recordClause, {
+        state: { ...baseState, noteRecords: [held] },
+        event: ev,
+      }),
+    ).toBe(true);
+    expect(
+      apply(recordClause, {
+        state: { ...baseState, noteRecords: [] },
+        event: ev,
+      }),
+    ).toBe(false);
   });
 });
 
@@ -266,9 +399,16 @@ describe("shielded-note-pool — pmt_verify operand shape (real VM)", () => {
     );
     expect(apply(rule, fixture.pmt)).toBe(true);
     // a wrong leaf fails
-    expect(apply(rule, { ...fixture.pmt, leaf: "0x" + "0".repeat(63) + "9" })).toBe(false);
+    expect(
+      apply(rule, { ...fixture.pmt, leaf: "0x" + "0".repeat(63) + "9" }),
+    ).toBe(false);
     // a swapped (non-root-first) sibling order fails
-    expect(apply(rule, { ...fixture.pmt, siblings: [...fixture.pmt.siblings].reverse() })).toBe(false);
+    expect(
+      apply(rule, {
+        ...fixture.pmt,
+        siblings: [...fixture.pmt.siblings].reverse(),
+      }),
+    ).toBe(false);
   });
 });
 
@@ -287,12 +427,16 @@ realProofDescribe("shielded-note-pool — REAL Groth16 proof (drop-in)", () => {
       knownRoots: [fixture.fields.anchor],
       nullifiers: [],
     };
-    expect(apply(guard, { state, event: transferEvent, proofs: relayerProofs })).toBe(true);
+    expect(
+      apply(guard, { state, event: transferEvent, proofs: relayerProofs }),
+    ).toBe(true);
   });
 
   it("the real proof REJECTS on a replayed nullifier", () => {
     const guard = T("transfer").guard!;
     const state = { ...baseState, nullifiers: [fixture.fields.nullifier] };
-    expect(apply(guard, { state, event: transferEvent, proofs: relayerProofs })).toBe(false);
+    expect(
+      apply(guard, { state, event: transferEvent, proofs: relayerProofs }),
+    ).toBe(false);
   });
 });

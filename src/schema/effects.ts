@@ -15,7 +15,7 @@
  * ```
  */
 
-import type { ProtoStateMachineDefinition } from './fiber-app.js';
+import type { ProtoStateMachineDefinition } from "./fiber-app.js";
 
 /** A JSON-Logic value: a literal (string/number/bool) or a `{var}`/operator expression. */
 type JsonLogicValue = unknown;
@@ -54,9 +54,11 @@ export const setDependencyActive = (
  *
  * Each directive is `{ assetId, recipient }` ONLY — there is NO `amount` field. The combiner reassigns
  * `holder := recipient` on the WHOLE asset record (`AssetCombiner.applyFiberTransfer`); value is moved
- * one whole instance at a time, never split. `recipient` must resolve to a `StrValue`: a UUID → `Fiber`,
- * a DAG address → `Wallet` (UUID is tried first). `assetId`/`recipient` may be literals or expressions
- * (e.g. `{ var: "event.agent" }`).
+ * one whole instance at a time, never split. `recipient` must resolve to the canonical `AssetHolder`
+ * OBJECT form — `{"Fiber":{"fiberId":..}}` / `{"Wallet":{"address":..}}` — built with {@link toFiber} /
+ * {@link toWallet}; the chain raises a graceful `CombineRejected` on a bare string or malformed object
+ * (`EffectExtractor.parseAssetTransfer`). `assetId` is a UUID; the holder id may be a literal or an
+ * expression (e.g. `{ var: "event.agent" }`).
  *
  * Combiner-side holder defense (R1) independently re-validates every directive: the asset must resolve,
  * be held by `Fiber(self)`, be `behavior.transferable`, and (Fiber recipient) the recipient fiber must be
@@ -66,7 +68,7 @@ export const setDependencyActive = (
  * @example
  * effect: { merge: [ { var: "state" }, {
  *   status: "SETTLED",
- *   ...transferAsset([{ assetId: { var: "event.rewardAssetId" }, recipient: { var: "event.agent" } }]),
+ *   ...transferAsset([{ assetId: { var: "event.rewardAssetId" }, recipient: toWallet({ var: "event.agent" }) }]),
  * } ] }
  */
 export const transferAsset = (
@@ -74,20 +76,25 @@ export const transferAsset = (
 ): Record<string, unknown> => ({ _transferAsset: transfers });
 
 /**
- * Recipient-intent labels for {@link transferAsset}. The `_transferAsset` `recipient` is a BARE
- * string, NOT an `AssetHolder` object, and the chain's `EffectExtractor.parseRecipient` disambiguates
- * it by SHAPE: a UUID-shaped string resolves to a `Fiber`, a DAG address resolves to a `Wallet` (UUID
- * is tried first). These helpers are the IDENTITY function — they change NOTHING on the wire — they
- * only document, at the call site, which arm the author intends:
+ * Build a `_transferAsset` `recipient` as the canonical `AssetHolder` OBJECT form. The chain requires the
+ * object form ONLY — `{"Fiber":{"fiberId":..}}` / `{"Wallet":{"address":..}}` — and raises a graceful
+ * `CombineRejected` on a bare string or a malformed object (`EffectExtractor.parseAssetTransfer`); the
+ * legacy bare-string UUID/DAG-address disambiguation has been removed. These mirror the typed
+ * {@link fiberHolder} / {@link walletHolder} `AssetHolder` builders (used for `MintAsset.holder` /
+ * `ApplyMorphism.recipient`) but accept a `JsonLogicValue`, so the id can be a runtime expression:
  *
  * ```ts
- * transferAsset([{ assetId, recipient: toFiber({ var: "event.retailerId" }) }]);  // → Fiber
- * transferAsset([{ assetId, recipient: toWallet({ var: "event.agent" }) }]);       // → Wallet
+ * transferAsset([{ assetId, recipient: toFiber({ var: "event.retailerId" }) }]);  // → {"Fiber":{"fiberId":..}}
+ * transferAsset([{ assetId, recipient: toWallet({ var: "event.agent" }) }]);       // → {"Wallet":{"address":..}}
  * ```
  */
-export const toFiber = (fiberId: JsonLogicValue): JsonLogicValue => fiberId;
-/** See {@link toFiber}: identity label marking a `transferAsset` recipient as a DAG-address Wallet. */
-export const toWallet = (address: JsonLogicValue): JsonLogicValue => address;
+export const toFiber = (fiberId: JsonLogicValue): JsonLogicValue => ({
+  Fiber: { fiberId },
+});
+/** See {@link toFiber}: a `transferAsset` recipient held by a wallet — `{"Wallet":{"address":..}}`. */
+export const toWallet = (address: JsonLogicValue): JsonLogicValue => ({
+  Wallet: { address },
+});
 
 /**
  * `_triggers` (F4): fire one or more CROSS-FIBER events. Each entry is projected to
@@ -108,9 +115,17 @@ export const toWallet = (address: JsonLogicValue): JsonLogicValue => address;
  * } ] }
  */
 export const triggers = (
-  ts: { target: JsonLogicValue; event: string; payload?: Record<string, unknown> }[],
+  ts: {
+    target: JsonLogicValue;
+    event: string;
+    payload?: Record<string, unknown>;
+  }[],
 ): Record<string, unknown> => ({
-  _triggers: ts.map((t) => ({ targetMachineId: t.target, eventName: t.event, payload: t.payload ?? {} })),
+  _triggers: ts.map((t) => ({
+    targetMachineId: t.target,
+    eventName: t.event,
+    payload: t.payload ?? {},
+  })),
 });
 
 /**
@@ -153,11 +168,11 @@ export const emit = (
  * persisted state.
  */
 export const RESERVED_EFFECT_KEYS = [
-  '_triggers',
-  '_spawn',
-  '_emit',
-  '_transferAsset',
-  '_scriptCall',
-  '_addDependency',
-  '_setDependencyActive',
+  "_triggers",
+  "_spawn",
+  "_emit",
+  "_transferAsset",
+  "_scriptCall",
+  "_addDependency",
+  "_setDependencyActive",
 ] as const;

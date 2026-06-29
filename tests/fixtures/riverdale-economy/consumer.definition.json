@@ -14,7 +14,9 @@
       "effect": {
         "status": "debt_current",
         "loanBalance": { "var": "event.amount" },
-        "balance": { "+": [{ "var": "state.balance" }, { "var": "event.amount" }] }
+        "balance": {
+          "+": [{ "var": "state.balance" }, { "var": "event.amount" }]
+        }
       },
       "dependencies": []
     },
@@ -38,7 +40,9 @@
         "_transferAsset": [
           {
             "assetId": { "var": "event.payAssetId" },
-            "recipient": { "var": "event.retailerId" }
+            "recipient": {
+              "Fiber": { "fiberId": { "var": "event.retailerId" } }
+            }
           }
         ],
         "status": "debt_current",
@@ -65,11 +69,13 @@
         "_transferAsset": [
           {
             "assetId": { "var": "event.repayAssetId" },
-            "recipient": { "var": "event.bankId" }
+            "recipient": { "Fiber": { "fiberId": { "var": "event.bankId" } } }
           }
         ],
         "status": "debt_current",
-        "loanBalance": { "-": [{ "var": "state.loanBalance" }, { "var": "event.amount" }] },
+        "loanBalance": {
+          "-": [{ "var": "state.loanBalance" }, { "var": "event.amount" }]
+        },
         "paymentsMade": { "+": [{ "var": "state.paymentsMade" }, 1] }
       },
       "dependencies": []
@@ -83,11 +89,13 @@
         "_transferAsset": [
           {
             "assetId": { "var": "event.taxAssetId" },
-            "recipient": { "var": "event.govId" }
+            "recipient": { "Fiber": { "fiberId": { "var": "event.govId" } } }
           }
         ],
         "status": "debt_current",
-        "taxesPaid": { "+": [{ "var": "state.taxesPaid" }, { "var": "event.taxAmount" }] }
+        "taxesPaid": {
+          "+": [{ "var": "state.taxesPaid" }, { "var": "event.taxAmount" }]
+        }
       },
       "dependencies": []
     },
@@ -164,7 +172,9 @@
       "guard": { "==": [1, 1] },
       "effect": {
         "status": "debt_current",
-        "balance": { "+": [{ "var": "state.balance" }, { "var": "event.amount" }] },
+        "balance": {
+          "+": [{ "var": "state.balance" }, { "var": "event.amount" }]
+        },
         "activeListings": { "-": [{ "var": "state.activeListings" }, 1] },
         "marketplaceSales": { "+": [{ "var": "state.marketplaceSales" }, 1] }
       },

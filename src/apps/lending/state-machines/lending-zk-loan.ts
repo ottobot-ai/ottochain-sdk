@@ -87,12 +87,14 @@ export const lendingZkLoanDef = defineFiberApp({
       },
       collateralPolicy: {
         type: "string",
-        description: "Collateral asset policy name (e.g. 'collateral-vault-v1.asset').",
+        description:
+          "Collateral asset policy name (e.g. 'collateral-vault-v1.asset').",
         immutable: true,
       },
       debtPolicy: {
         type: "string",
-        description: "Debt/loan-token asset policy name (e.g. 'loan-debt-v1.asset').",
+        description:
+          "Debt/loan-token asset policy name (e.g. 'loan-debt-v1.asset').",
         immutable: true,
       },
       escrowFiberId: {
@@ -164,14 +166,21 @@ export const lendingZkLoanDef = defineFiberApp({
           description:
             "Eligibility-proof witness: { publicValues: 0x-hex, proof: 0x-hex }. Exposed to the guard under the reserved `witness` key.",
           properties: {
-            publicValues: { type: "string", description: "abi_encode(JlvmPublicValues), 0x-hex." },
-            proof: { type: "string", description: "SP1-Groth16 proof bytes, 0x-hex." },
+            publicValues: {
+              type: "string",
+              description: "abi_encode(JlvmPublicValues), 0x-hex.",
+            },
+            proof: {
+              type: "string",
+              description: "SP1-Groth16 proof bytes, 0x-hex.",
+            },
           },
           required: ["publicValues", "proof"] as const,
         },
         debtAssetId: {
           type: "uuid",
-          description: "Asset instance id for the debt/principal token minted to the borrower.",
+          description:
+            "Asset instance id for the debt/principal token minted to the borrower.",
         },
       },
     },
@@ -199,7 +208,8 @@ export const lendingZkLoanDef = defineFiberApp({
       isFinal: false,
       metadata: {
         label: "Requested",
-        description: "Loan requested; collateral not yet locked, eligibility not yet proven.",
+        description:
+          "Loan requested; collateral not yet locked, eligibility not yet proven.",
         category: "initial",
       },
     },
@@ -218,7 +228,8 @@ export const lendingZkLoanDef = defineFiberApp({
       isFinal: false,
       metadata: {
         label: "Active",
-        description: "Loan originated (eligibility proven in zk); principal minted to the borrower.",
+        description:
+          "Loan originated (eligibility proven in zk); principal minted to the borrower.",
         category: "active",
       },
     },
@@ -227,7 +238,8 @@ export const lendingZkLoanDef = defineFiberApp({
       isFinal: false,
       metadata: {
         label: "Defaulted",
-        description: "Loan past due and unpaid; collateral pending liquidation.",
+        description:
+          "Loan past due and unpaid; collateral pending liquidation.",
         category: "pending",
       },
     },
@@ -236,7 +248,8 @@ export const lendingZkLoanDef = defineFiberApp({
       isFinal: true,
       metadata: {
         label: "Repaid",
-        description: "Principal repaid (debt burned) and collateral released to the borrower.",
+        description:
+          "Principal repaid (debt burned) and collateral released to the borrower.",
         category: "terminal",
       },
     },
@@ -245,7 +258,8 @@ export const lendingZkLoanDef = defineFiberApp({
       isFinal: true,
       metadata: {
         label: "Liquidated",
-        description: "Defaulted loan settled by transferring the collateral to the lender.",
+        description:
+          "Defaulted loan settled by transferring the collateral to the lender.",
         category: "terminal",
       },
     },
@@ -270,8 +284,18 @@ export const lendingZkLoanDef = defineFiberApp({
       eventName: "lock_collateral",
       guard: {
         and: [
-          { in: [{ var: "state.borrower" }, { map: [{ var: "proofs" }, { var: "address" }] }] },
-          { "===": [{ var: "event.assetId" }, { var: "state.collateralAssetId" }] },
+          {
+            in: [
+              { var: "state.borrower" },
+              { map: [{ var: "proofs" }, { var: "address" }] },
+            ],
+          },
+          {
+            "===": [
+              { var: "event.assetId" },
+              { var: "state.collateralAssetId" },
+            ],
+          },
         ],
       },
       effect: {
@@ -290,8 +314,18 @@ export const lendingZkLoanDef = defineFiberApp({
       eventName: "cancel",
       guard: {
         or: [
-          { in: [{ var: "state.borrower" }, { map: [{ var: "proofs" }, { var: "address" }] }] },
-          { in: [{ var: "state.lender" }, { map: [{ var: "proofs" }, { var: "address" }] }] },
+          {
+            in: [
+              { var: "state.borrower" },
+              { map: [{ var: "proofs" }, { var: "address" }] },
+            ],
+          },
+          {
+            in: [
+              { var: "state.lender" },
+              { map: [{ var: "proofs" }, { var: "address" }] },
+            ],
+          },
         ],
       },
       effect: {
@@ -326,7 +360,12 @@ export const lendingZkLoanDef = defineFiberApp({
       eventName: "originate",
       guard: {
         and: [
-          { in: [{ var: "state.lender" }, { map: [{ var: "proofs" }, { var: "address" }] }] },
+          {
+            in: [
+              { var: "state.lender" },
+              { map: [{ var: "proofs" }, { var: "address" }] },
+            ],
+          },
           {
             groth16_verify: [
               { var: "state.lendingRuleVKey" },
@@ -336,18 +375,31 @@ export const lendingZkLoanDef = defineFiberApp({
           },
           {
             "===": [
-              { cat: ["0x", { substr: [{ var: "event.witness.publicValues" }, 2, 64] }] },
+              {
+                cat: [
+                  "0x",
+                  { substr: [{ var: "event.witness.publicValues" }, 2, 64] },
+                ],
+              },
               { var: "state.lendingRuleLogicHash" },
             ],
           },
           {
             "===": [
-              { cat: ["0x", { substr: [{ var: "event.witness.publicValues" }, 130, 64] }] },
+              {
+                cat: [
+                  "0x",
+                  { substr: [{ var: "event.witness.publicValues" }, 130, 64] },
+                ],
+              },
               { var: "state.keccakTrue" },
             ],
           },
           {
-            "===": [{ substr: [{ var: "event.witness.publicValues" }, 256, 2] }, "01"],
+            "===": [
+              { substr: [{ var: "event.witness.publicValues" }, 256, 2] },
+              "01",
+            ],
           },
         ],
       },
@@ -371,7 +423,12 @@ export const lendingZkLoanDef = defineFiberApp({
       from: "ACTIVE",
       to: "REPAID",
       eventName: "repay",
-      guard: { in: [{ var: "state.borrower" }, { map: [{ var: "proofs" }, { var: "address" }] }] },
+      guard: {
+        in: [
+          { var: "state.borrower" },
+          { map: [{ var: "proofs" }, { var: "address" }] },
+        ],
+      },
       // Release the escrowed collateral back to the borrower. The loan fiber HOLDS the collateral
       // (locked as AssetHolder.Fiber), so it emits the reserved `_transferAsset` directive from inside
       // the effect — the engine extracts `_`-prefixed keys (it is NOT merged into state). A transition-
@@ -383,7 +440,10 @@ export const lendingZkLoanDef = defineFiberApp({
             status: "REPAID",
             repaidAt: { var: "$ordinal" },
             _transferAsset: [
-              { assetId: { var: "state.collateralAssetId" }, recipient: { var: "state.borrower" } },
+              {
+                assetId: { var: "state.collateralAssetId" },
+                recipient: { Wallet: { address: { var: "state.borrower" } } },
+              },
             ],
           },
         ],
@@ -416,7 +476,12 @@ export const lendingZkLoanDef = defineFiberApp({
       from: "DEFAULTED",
       to: "LIQUIDATED",
       eventName: "liquidate",
-      guard: { in: [{ var: "state.lender" }, { map: [{ var: "proofs" }, { var: "address" }] }] },
+      guard: {
+        in: [
+          { var: "state.lender" },
+          { map: [{ var: "proofs" }, { var: "address" }] },
+        ],
+      },
       // Transfer the escrowed collateral to the lender via the reserved `_transferAsset` directive
       // inside the effect (the loan fiber holds it). A transition-level `emits` block is dropped by the engine.
       effect: {
@@ -426,7 +491,10 @@ export const lendingZkLoanDef = defineFiberApp({
             status: "LIQUIDATED",
             liquidatedAt: { var: "$ordinal" },
             _transferAsset: [
-              { assetId: { var: "state.collateralAssetId" }, recipient: { var: "state.lender" } },
+              {
+                assetId: { var: "state.collateralAssetId" },
+                recipient: { Wallet: { address: { var: "state.lender" } } },
+              },
             ],
           },
         ],
