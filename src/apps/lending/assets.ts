@@ -23,9 +23,7 @@
 // ---------------------------------------------------------------------------
 
 /** A holder of an asset: a wallet address, or a custody fiber (the escrow). */
-export type AssetHolder =
-  | { Wallet: { address: string } }
-  | { Fiber: { fiberId: string } };
+export type AssetHolder = { Wallet: { address: string } } | { Fiber: { fiberId: string } };
 
 /** Helpers for the two-variant holder. */
 export const walletHolder = (address: string): AssetHolder => ({ Wallet: { address } });
@@ -54,13 +52,37 @@ export function behaviorBits(b: TokenBehavior): number {
 /** Common behavior presets (asset-model.md §2). */
 export const TokenBehaviors = {
   /** Non-transferable, non-divisible (bits 0). */
-  Soulbound: { transferable: false, splittable: false, combinable: false, expirable: false, governable: false } as TokenBehavior,
+  Soulbound: {
+    transferable: false,
+    splittable: false,
+    combinable: false,
+    expirable: false,
+    governable: false,
+  } as TokenBehavior,
   /** Transferable only (bits 16). */
-  NFT: { transferable: true, splittable: false, combinable: false, expirable: false, governable: false } as TokenBehavior,
+  NFT: {
+    transferable: true,
+    splittable: false,
+    combinable: false,
+    expirable: false,
+    governable: false,
+  } as TokenBehavior,
   /** Transferable + splittable + combinable (bits 28 = TSC). */
-  Fungible: { transferable: true, splittable: true, combinable: true, expirable: false, governable: false } as TokenBehavior,
+  Fungible: {
+    transferable: true,
+    splittable: true,
+    combinable: true,
+    expirable: false,
+    governable: false,
+  } as TokenBehavior,
   /** Fungible + governable (bits 29 = TSCG) — the default for a gated debt token. */
-  GovernedFungible: { transferable: true, splittable: true, combinable: true, expirable: false, governable: true } as TokenBehavior,
+  GovernedFungible: {
+    transferable: true,
+    splittable: true,
+    combinable: true,
+    expirable: false,
+    governable: true,
+  } as TokenBehavior,
 } as const;
 
 /** A JSON-Logic expression (guard/policy). */
@@ -79,17 +101,10 @@ export interface SupplyPolicy {
 }
 
 /** Morphism kinds. asset-model.md §4. */
-export type MorphismKind =
-  | "Transfer"
-  | "Burn"
-  | "Fractionalize"
-  | "Compose"
-  | "Decompose"
-  | "Wrap"
-  | "Stake";
+export type MorphismKind = 'Transfer' | 'Burn' | 'Fractionalize' | 'Compose' | 'Decompose' | 'Wrap' | 'Stake';
 
 /** Morphism visibility — Governed carries a JSON-Logic guard. asset-model.md §8. */
-export type MorphismVisibility = "Public" | "Governed" | "Disabled";
+export type MorphismVisibility = 'Public' | 'Governed' | 'Disabled';
 
 /** Per-kind morphism spec on a policy version. asset-model.md §7. */
 export interface MorphismSpec {
@@ -145,9 +160,7 @@ export interface CreateAssetPolicyMessage {
 }
 
 /** Publish an asset policy package version. asset-model.md §7. */
-export function createAssetPolicyPayload(
-  params: CreateAssetPolicyParams,
-): CreateAssetPolicyMessage {
+export function createAssetPolicyPayload(params: CreateAssetPolicyParams): CreateAssetPolicyMessage {
   return {
     CreateAssetPolicy: {
       name: params.name,
@@ -231,9 +244,7 @@ export interface ApplyMorphismMessage {
  * Apply a typed morphism (Transfer / Burn / Compose / ...). asset-model.md §7.
  * Transfer = `{ kind: "Transfer", recipient }`; Burn (repay) = `{ kind: "Burn" }`.
  */
-export function createApplyMorphismPayload(
-  params: ApplyMorphismParams,
-): ApplyMorphismMessage {
+export function createApplyMorphismPayload(params: ApplyMorphismParams): ApplyMorphismMessage {
   return {
     ApplyMorphism: {
       assetId: params.assetId,
@@ -268,9 +279,7 @@ export interface AuthorizeComposeMessage {
 }
 
 /** Commit half of a two-party compose. asset-model.md §7/§8. */
-export function createAuthorizeComposePayload(
-  params: AuthorizeComposeParams,
-): AuthorizeComposeMessage {
+export function createAuthorizeComposePayload(params: AuthorizeComposeParams): AuthorizeComposeMessage {
   return {
     AuthorizeCompose: {
       assetId: params.assetId,
@@ -292,22 +301,19 @@ export function createAuthorizeComposePayload(
  * a custody Transfer into `AssetHolder.Fiber(escrow)`; release/liquidation is a Transfer out
  * driven by the loan fiber's REPAID / LIQUIDATED transition (`_transferAsset`).
  */
-export function collateralPolicy(
-  name = "collateral-vault-v1.asset",
-  version = "1.0.0",
-): CreateAssetPolicyParams {
+export function collateralPolicy(name = 'collateral-vault-v1.asset', version = '1.0.0'): CreateAssetPolicyParams {
   return {
     name,
     version,
     behavior: { transferable: true, splittable: false, combinable: false, expirable: false, governable: true },
     supply: { maxSupply: null, mintPolicy: null, burnPolicy: null, decimals: 0 },
     morphisms: {
-      Transfer: { visibility: "Governed" },
-      Burn: { visibility: "Disabled" },
-      Compose: { visibility: "Disabled" },
+      Transfer: { visibility: 'Governed' },
+      Burn: { visibility: 'Disabled' },
+      Compose: { visibility: 'Disabled' },
     },
     stateShape: {},
-    metadata: { family: "lending", role: "collateral" },
+    metadata: { family: 'lending', role: 'collateral' },
   };
 }
 
@@ -321,8 +327,8 @@ export function collateralPolicy(
  */
 export function debtPolicy(
   mintGuard: JsonLogicRule,
-  name = "loan-debt-v1.asset",
-  version = "1.0.0",
+  name = 'loan-debt-v1.asset',
+  version = '1.0.0',
 ): CreateAssetPolicyParams {
   return {
     name,
@@ -334,15 +340,15 @@ export function debtPolicy(
       mintPolicy: mintGuard,
       // Repayment burns the debt; only the holder (borrower) may burn theirs. The asset context has
       // no `event` key — bind to the verified `signers` (chain-derived from the op's proofs).
-      burnPolicy: { in: [{ var: "holder.Wallet.address" }, { var: "signers" }] },
+      burnPolicy: { in: [{ var: 'holder.Wallet.address' }, { var: 'signers' }] },
       decimals: 2,
     },
     morphisms: {
-      Transfer: { visibility: "Public" },
-      Burn: { visibility: "Public" },
+      Transfer: { visibility: 'Public' },
+      Burn: { visibility: 'Public' },
     },
     stateShape: {},
-    metadata: { family: "lending", role: "debt" },
+    metadata: { family: 'lending', role: 'debt' },
   };
 }
 
@@ -362,7 +368,7 @@ export function lockCollateralOp(args: {
 }): ApplyMorphismMessage {
   return createApplyMorphismPayload({
     assetId: args.collateralAssetId,
-    kind: "Transfer",
+    kind: 'Transfer',
     recipient: fiberHolder(args.escrowFiberId),
     targetSequenceNumber: args.targetSequenceNumber,
   });
@@ -389,13 +395,10 @@ export function mintPrincipalOp(args: {
 }
 
 /** repay: Burn the borrower's debt token (the principal is repaid). */
-export function repayBurnOp(args: {
-  debtAssetId: string;
-  targetSequenceNumber: number;
-}): ApplyMorphismMessage {
+export function repayBurnOp(args: { debtAssetId: string; targetSequenceNumber: number }): ApplyMorphismMessage {
   return createApplyMorphismPayload({
     assetId: args.debtAssetId,
-    kind: "Burn",
+    kind: 'Burn',
     targetSequenceNumber: args.targetSequenceNumber,
   });
 }
@@ -413,7 +416,7 @@ export function settleCollateralOp(args: {
 }): ApplyMorphismMessage {
   return createApplyMorphismPayload({
     assetId: args.collateralAssetId,
-    kind: "Transfer",
+    kind: 'Transfer',
     recipient: walletHolder(args.recipient),
     targetSequenceNumber: args.targetSequenceNumber,
   });

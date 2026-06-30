@@ -101,9 +101,7 @@ describe('rule 1: unknown reserved $-var', () => {
   });
 
   it('the injected set is exactly the three engine keys', () => {
-    expect([...INJECTED_RESERVED_VARS].sort()).toEqual(
-      ['$epochProgress', '$lastSnapshotHash', '$ordinal'].sort(),
-    );
+    expect([...INJECTED_RESERVED_VARS].sort()).toEqual(['$epochProgress', '$lastSnapshotHash', '$ordinal'].sort());
   });
 });
 
@@ -132,24 +130,21 @@ describe('rule 2: unknown operator tags', () => {
     expect(has(lintFiberApp(app), LINT_CODES.UNKNOWN_OPERATOR)).toBe(false);
   });
 
-  it.each([...KNOWN_BAD_OPERATORS.keys()])(
-    'FAIL: known-bad opcode %s is flagged as error',
-    (badOp) => {
-      const app = makeApp([
-        {
-          from: 'START',
-          to: 'DONE',
-          eventName: 'go',
-          guard: { '>=': [{ [badOp]: { var: 'state.signatures' } }, 2] },
-          dependencies: [],
-        },
-      ]);
-      const vs = lintFiberApp(app);
-      const v = vs.find((x) => x.code === LINT_CODES.UNKNOWN_OPERATOR && x.severity === 'error');
-      expect(v).toBeDefined();
-      expect(v!.message).toContain(badOp);
-    },
-  );
+  it.each([...KNOWN_BAD_OPERATORS.keys()])('FAIL: known-bad opcode %s is flagged as error', (badOp) => {
+    const app = makeApp([
+      {
+        from: 'START',
+        to: 'DONE',
+        eventName: 'go',
+        guard: { '>=': [{ [badOp]: { var: 'state.signatures' } }, 2] },
+        dependencies: [],
+      },
+    ]);
+    const vs = lintFiberApp(app);
+    const v = vs.find((x) => x.code === LINT_CODES.UNKNOWN_OPERATOR && x.severity === 'error');
+    expect(v).toBeDefined();
+    expect(v!.message).toContain(badOp);
+  });
 
   it('FAIL: setKey inside an effect is flagged (silent junk-key write)', () => {
     const app = makeApp([
@@ -180,10 +175,7 @@ describe('rule 2: unknown operator tags', () => {
         eventName: 'ruling',
         guard: { '==': [1, 1] },
         effect: {
-          merge: [
-            { var: 'state' },
-            { splits: { var: 'event.splits' }, rulingId: { var: 'event.rulingId' } },
-          ],
+          merge: [{ var: 'state' }, { splits: { var: 'event.splits' }, rulingId: { var: 'event.rulingId' } }],
         },
         dependencies: [],
       },
@@ -222,10 +214,7 @@ describe('rule 3: witness.* in a transition', () => {
         to: 'DONE',
         eventName: 'originate',
         guard: {
-          groth16_verify: [
-            { var: 'event.witness.publicValues' },
-            { var: 'event.witness.proof' },
-          ],
+          groth16_verify: [{ var: 'event.witness.publicValues' }, { var: 'event.witness.proof' }],
         },
         dependencies: [],
       },
@@ -240,10 +229,7 @@ describe('rule 3: witness.* in a transition', () => {
         to: 'DONE',
         eventName: 'originate',
         guard: {
-          groth16_verify: [
-            { var: 'witness.publicValues' },
-            { var: 'witness.proof' },
-          ],
+          groth16_verify: [{ var: 'witness.publicValues' }, { var: 'witness.proof' }],
         },
         dependencies: [],
       },
@@ -295,10 +281,7 @@ describe('rule 4: dropped structural directives', () => {
         eventName: 'go',
         guard: { '==': [1, 1] },
         effect: {
-          merge: [
-            { var: 'state' },
-            { _emit: [{ name: 'Done', data: {}, destination: 'asset' }] },
-          ],
+          merge: [{ var: 'state' }, { _emit: [{ name: 'Done', data: {}, destination: 'asset' }] }],
         },
         dependencies: ['11111111-1111-1111-1111-111111111111'],
       },
@@ -372,10 +355,7 @@ describe('rule 4: dropped structural directives', () => {
         to: 'DONE',
         eventName: 'go',
         guard: { '==': [1, 1] },
-        dependencies: [
-          '22222222-2222-2222-2222-222222222222',
-          { machine: 'x', instanceRef: { var: 'event.r' } },
-        ],
+        dependencies: ['22222222-2222-2222-2222-222222222222', { machine: 'x', instanceRef: { var: 'event.r' } }],
       },
     ]);
     const ds = lintFiberApp(app).filter((v) => v.code === LINT_CODES.DROPPED_DIRECTIVE);
@@ -396,10 +376,7 @@ describe('rule 5: leading-dot var paths', () => {
         to: 'DONE',
         eventName: 'go',
         guard: {
-          some: [
-            { var: 'state.directors' },
-            { '==': [{ var: 'directorId' }, { var: 'event.directorId' }] },
-          ],
+          some: [{ var: 'state.directors' }, { '==': [{ var: 'directorId' }, { var: 'event.directorId' }] }],
         },
         dependencies: [],
       },
@@ -414,10 +391,7 @@ describe('rule 5: leading-dot var paths', () => {
         to: 'DONE',
         eventName: 'go',
         guard: {
-          some: [
-            { var: 'state.directors' },
-            { '==': [{ var: '.directorId' }, { var: 'event.directorId' }] },
-          ],
+          some: [{ var: 'state.directors' }, { '==': [{ var: '.directorId' }, { var: 'event.directorId' }] }],
         },
         dependencies: [],
       },
@@ -531,9 +505,7 @@ describe('lintFiberApp integration', () => {
   });
 
   it('lintFiberApps aggregates across multiple defs', () => {
-    const clean = makeApp([
-      { from: 'START', to: 'DONE', eventName: 'ok', guard: { '==': [1, 1] }, dependencies: [] },
-    ]);
+    const clean = makeApp([{ from: 'START', to: 'DONE', eventName: 'ok', guard: { '==': [1, 1] }, dependencies: [] }]);
     const dirty = makeApp([
       {
         from: 'START',

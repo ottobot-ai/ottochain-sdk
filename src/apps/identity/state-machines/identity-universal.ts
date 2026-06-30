@@ -1,28 +1,28 @@
-import { defineFiberApp } from "../../../schema/fiber-app.js";
+import { defineFiberApp } from '../../../schema/fiber-app.js';
 
 /**
  * Minimal identity state machine - extend for custom use cases.
  */
 export const identityUniversalDef = defineFiberApp({
   metadata: {
-    name: "IdentityUniversal",
-    app: "identity",
-    type: "universal",
-    version: "1.0.0",
-    description: "Minimal identity state machine - extend for custom use cases",
+    name: 'IdentityUniversal',
+    app: 'identity',
+    type: 'universal',
+    version: '1.0.0',
+    description: 'Minimal identity state machine - extend for custom use cases',
   },
 
   createSchema: {
-    required: ["owner"] as const,
+    required: ['owner'] as const,
     properties: {
       owner: {
-        type: "address",
-        description: "Identity owner DAG address",
+        type: 'address',
+        description: 'Identity owner DAG address',
         immutable: true,
       },
       metadata: {
-        type: "object",
-        description: "Arbitrary metadata",
+        type: 'object',
+        description: 'Arbitrary metadata',
         default: {},
       },
     },
@@ -30,109 +30,102 @@ export const identityUniversalDef = defineFiberApp({
 
   stateSchema: {
     properties: {
-      owner: { type: "address", immutable: true },
+      owner: { type: 'address', immutable: true },
       status: {
-        type: "string",
-        enum: ["CREATED", "ACTIVE", "INACTIVE"] as const,
+        type: 'string',
+        enum: ['CREATED', 'ACTIVE', 'INACTIVE'] as const,
         computed: true,
       },
-      metadata: { type: "object" },
-      activatedAt: { type: "timestamp", computed: true },
-      updatedAt: { type: "timestamp", computed: true },
-      deactivatedAt: { type: "timestamp", computed: true },
+      metadata: { type: 'object' },
+      activatedAt: { type: 'timestamp', computed: true },
+      updatedAt: { type: 'timestamp', computed: true },
+      deactivatedAt: { type: 'timestamp', computed: true },
     },
   },
 
   eventSchemas: {
     activate: {
-      description: "Activate the identity",
+      description: 'Activate the identity',
     },
     update: {
-      description: "Update identity metadata",
+      description: 'Update identity metadata',
       properties: {
-        metadata: { type: "object" },
+        metadata: { type: 'object' },
       },
     },
     deactivate: {
-      description: "Deactivate the identity",
+      description: 'Deactivate the identity',
     },
   },
 
   states: {
     CREATED: {
-      id: "CREATED",
+      id: 'CREATED',
       isFinal: false,
       metadata: {
-        label: "Created",
-        description: "Identity registered but not yet activated",
-        category: "initial",
+        label: 'Created',
+        description: 'Identity registered but not yet activated',
+        category: 'initial',
       },
     },
     ACTIVE: {
-      id: "ACTIVE",
+      id: 'ACTIVE',
       isFinal: false,
       metadata: {
-        label: "Active",
-        description: "Identity is active and can be updated",
-        category: "active",
+        label: 'Active',
+        description: 'Identity is active and can be updated',
+        category: 'active',
       },
     },
     INACTIVE: {
-      id: "INACTIVE",
+      id: 'INACTIVE',
       isFinal: true,
       metadata: {
-        label: "Inactive",
-        description: "Identity deactivated by its owner (terminal)",
-        category: "terminal",
+        label: 'Inactive',
+        description: 'Identity deactivated by its owner (terminal)',
+        category: 'terminal',
       },
     },
   },
 
-  initialState: "CREATED",
+  initialState: 'CREATED',
 
   transitions: [
     {
-      from: "CREATED",
-      to: "ACTIVE",
-      eventName: "activate",
-      guard: { "==": [1, 1] },
+      from: 'CREATED',
+      to: 'ACTIVE',
+      eventName: 'activate',
+      guard: { '==': [1, 1] },
       effect: {
-        merge: [
-          { var: "state" },
-          { status: "ACTIVE", activatedAt: { var: "$ordinal" } },
-        ],
+        merge: [{ var: 'state' }, { status: 'ACTIVE', activatedAt: { var: '$ordinal' } }],
       },
     },
     {
-      from: "ACTIVE",
-      to: "ACTIVE",
-      eventName: "update",
-      guard: { "==": [1, 1] },
+      from: 'ACTIVE',
+      to: 'ACTIVE',
+      eventName: 'update',
+      guard: { '==': [1, 1] },
       effect: {
         merge: [
-          { var: "state" },
+          { var: 'state' },
           {
-            updatedAt: { var: "$ordinal" },
-            metadata: { var: "event.metadata" },
+            updatedAt: { var: '$ordinal' },
+            metadata: { var: 'event.metadata' },
           },
         ],
       },
     },
     {
-      from: "ACTIVE",
-      to: "INACTIVE",
-      eventName: "deactivate",
-      guard: { "==": [1, 1] },
+      from: 'ACTIVE',
+      to: 'INACTIVE',
+      eventName: 'deactivate',
+      guard: { '==': [1, 1] },
       effect: {
-        merge: [
-          { var: "state" },
-          { status: "INACTIVE", deactivatedAt: { var: "$ordinal" } },
-        ],
+        merge: [{ var: 'state' }, { status: 'INACTIVE', deactivatedAt: { var: '$ordinal' } }],
       },
     },
   ],
 });
 
 export type UniversalIdentityState = keyof typeof identityUniversalDef.states;
-export type UniversalIdentityEvent =
-  (typeof identityUniversalDef.transitions)[number]["eventName"];
+export type UniversalIdentityEvent = (typeof identityUniversalDef.transitions)[number]['eventName'];

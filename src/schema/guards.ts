@@ -21,7 +21,7 @@ export type GuardRule = Record<string, unknown>;
  * replacement for `{"===":[{"var":"event.agent"}, {"var":partyVar}]}`.
  */
 export const signerIsParty = (partyVar: string): GuardRule => ({
-  in: [{ var: partyVar }, { map: [{ var: "proofs" }, { var: "address" }] }],
+  in: [{ var: partyVar }, { map: [{ var: 'proofs' }, { var: 'address' }] }],
 });
 
 /** FIBER-transition authorization where ANY of the pinned parties signed (e.g. borrower OR lender). */
@@ -35,10 +35,7 @@ export const signerIsAnyParty = (partyVars: string[]): GuardRule => ({
  * The replay-safe replacement for `{"in":[{"var":"event.agent"}, {"var":setVar}]}`.
  */
 export const signerInSet = (setVar: string): GuardRule => ({
-  some: [
-    { map: [{ var: "proofs" }, { var: "address" }] },
-    { in: [{ var: "" }, { var: setVar }] },
-  ],
+  some: [{ map: [{ var: 'proofs' }, { var: 'address' }] }, { in: [{ var: '' }, { var: setVar }] }],
 });
 
 /**
@@ -46,7 +43,7 @@ export const signerInSet = (setVar: string): GuardRule => ({
  * not vote on their own proposal). The replay-safe replacement for `{"!==":[{"var":"event.agent"}, {"var":partyVar}]}`.
  */
 export const signerIsNotParty = (partyVar: string): GuardRule => ({
-  "!": [signerIsParty(partyVar)],
+  '!': [signerIsParty(partyVar)],
 });
 
 /**
@@ -58,10 +55,7 @@ export const signerIsNotParty = (partyVar: string): GuardRule => ({
  * `{"some":[{"map":[proofs,address]},{">=":[{"get":[mapVar,{"var":""}]}, N]}]}`.
  */
 export const signerHasEntry = (mapVar: string): GuardRule => ({
-  some: [
-    { map: [{ var: "proofs" }, { var: "address" }] },
-    { has: [{ var: mapVar }, { var: "" }] },
-  ],
+  some: [{ map: [{ var: 'proofs' }, { var: 'address' }] }, { has: [{ var: mapVar }, { var: '' }] }],
 });
 
 /**
@@ -70,7 +64,7 @@ export const signerHasEntry = (mapVar: string): GuardRule => ({
  * `event` or `proofs` — it injects `signers` directly.
  */
 export const assetSignerIs = (addressVar: string): GuardRule => ({
-  in: [{ var: addressVar }, { var: "signers" }],
+  in: [{ var: addressVar }, { var: 'signers' }],
 });
 
 /**
@@ -85,8 +79,7 @@ export const assetSignerIs = (addressVar: string): GuardRule => ({
  * both signed and is authorized, and the effect can only write under that one verified key.
  * Structurally identical to {@link signerIsParty}; named for intent + greppability at write sites.
  */
-export const actorIsSigner = (actorVar = "event.agent"): GuardRule =>
-  signerIsParty(actorVar);
+export const actorIsSigner = (actorVar = 'event.agent'): GuardRule => signerIsParty(actorVar);
 
 /**
  * EFFECT-KEY-BINDING membership: the event's claimed actor (`actorVar`, default `event.agent`) is BOTH
@@ -98,10 +91,7 @@ export const actorIsSigner = (actorVar = "event.agent"): GuardRule =>
  * verified-but-unauthorized address as the key (padding a signature/vote tally). `actorInSet` pins both
  * to the same `actorVar`.
  */
-export const actorInSet = (
-  setVar: string,
-  actorVar = "event.agent",
-): GuardRule => ({
+export const actorInSet = (setVar: string, actorVar = 'event.agent'): GuardRule => ({
   and: [actorIsSigner(actorVar), { in: [{ var: actorVar }, { var: setVar }] }],
 });
 
@@ -114,10 +104,7 @@ export const actorInSet = (
  * is an authorized member, closing the vote/signature-stuffing gap that bare {@link signerHasEntry}
  * leaves open (which only proves SOME verified signer is a key, not that the written key is).
  */
-export const actorHasEntry = (
-  mapVar: string,
-  actorVar = "event.agent",
-): GuardRule => ({
+export const actorHasEntry = (mapVar: string, actorVar = 'event.agent'): GuardRule => ({
   and: [actorIsSigner(actorVar), { has: [{ var: mapVar }, { var: actorVar }] }],
 });
 
@@ -130,14 +117,11 @@ export const actorHasEntry = (
  * `{">=":[{"var":"event.agentReputation"}, bar]}` (security class S1). See
  * docs/design/app-hardening-identity-integration.md §3–§4.1.
  */
-export const signerHasReputation = (
-  repMapVar: string,
-  thresholdVar: string,
-): GuardRule => ({
+export const signerHasReputation = (repMapVar: string, thresholdVar: string): GuardRule => ({
   some: [
-    { map: [{ var: "proofs" }, { var: "address" }] },
+    { map: [{ var: 'proofs' }, { var: 'address' }] },
     {
-      ">=": [{ get: [{ var: repMapVar }, { var: "" }] }, { var: thresholdVar }],
+      '>=': [{ get: [{ var: repMapVar }, { var: '' }] }, { var: thresholdVar }],
     },
   ],
 });
@@ -151,8 +135,7 @@ export const signerHasReputation = (
  * nested `roles[addr][ROLE]`) because metakit `get`/`has` on a null inner map ERROR rather than
  * returning null; a flat map keeps the read total + fail-closed. See app-hardening §4.2.
  */
-export const signerHasRole = (roleMapVar: string): GuardRule =>
-  signerHasEntry(roleMapVar);
+export const signerHasRole = (roleMapVar: string): GuardRule => signerHasEntry(roleMapVar);
 
 /**
  * DYNAMIC identity-registry reputation gate — for when the registry instance is bound at RUNTIME via the
@@ -163,31 +146,25 @@ export const signerHasRole = (roleMapVar: string): GuardRule =>
  * error. REQUIRES the registry dependency to have been added in a PRIOR transition (`_addDependency`),
  * because the `machines` context is built before the effect runs (two-phase: bind, then read).
  */
-export const signerHasReputationVia = (
-  registryIdVar: string,
-  thresholdVar: string,
-): GuardRule => ({
+export const signerHasReputationVia = (registryIdVar: string, thresholdVar: string): GuardRule => ({
   if: [
-    { has: [{ var: "machines" }, { var: registryIdVar }] },
+    { has: [{ var: 'machines' }, { var: registryIdVar }] },
     {
       some: [
-        { map: [{ var: "proofs" }, { var: "address" }] },
+        { map: [{ var: 'proofs' }, { var: 'address' }] },
         {
-          ">=": [
+          '>=': [
             {
               get: [
                 {
                   get: [
                     {
-                      get: [
-                        { get: [{ var: "machines" }, { var: registryIdVar }] },
-                        "state",
-                      ],
+                      get: [{ get: [{ var: 'machines' }, { var: registryIdVar }] }, 'state'],
                     },
-                    "reputations",
+                    'reputations',
                   ],
                 },
-                { var: "" },
+                { var: '' },
               ],
             },
             { var: thresholdVar },
@@ -207,29 +184,23 @@ export const signerHasReputationVia = (
  * by a presence check so an UNBOUND registry yields a clean `false`. Same two-phase requirement as
  * {@link signerHasReputationVia}.
  */
-export const signerHasRoleVia = (
-  registryIdVar: string,
-  roleField: string,
-): GuardRule => ({
+export const signerHasRoleVia = (registryIdVar: string, roleField: string): GuardRule => ({
   if: [
-    { has: [{ var: "machines" }, { var: registryIdVar }] },
+    { has: [{ var: 'machines' }, { var: registryIdVar }] },
     {
       some: [
-        { map: [{ var: "proofs" }, { var: "address" }] },
+        { map: [{ var: 'proofs' }, { var: 'address' }] },
         {
           has: [
             {
               get: [
                 {
-                  get: [
-                    { get: [{ var: "machines" }, { var: registryIdVar }] },
-                    "state",
-                  ],
+                  get: [{ get: [{ var: 'machines' }, { var: registryIdVar }] }, 'state'],
                 },
                 roleField,
               ],
             },
-            { var: "" },
+            { var: '' },
           ],
         },
       ],
@@ -260,25 +231,15 @@ export const signerHasRoleVia = (
  * is a valid `(map,string)` read. Pair with an `actorIsSigner`/`actorHasEntry` clause on the same
  * `actorVar` (the dedup proves "not yet present", not "is the verified signer").
  */
-export const actorNotInArray = (
-  arrayVar: string,
-  field = "addr",
-  actorVar = "event.agent",
-): GuardRule => ({
-  none: [
-    { var: arrayVar },
-    { "===": [{ get: [{ var: "" }, field] }, { var: actorVar }] },
-  ],
+export const actorNotInArray = (arrayVar: string, field = 'addr', actorVar = 'event.agent'): GuardRule => ({
+  none: [{ var: arrayVar }, { '===': [{ get: [{ var: '' }, field] }, { var: actorVar }] }],
 });
 
 export const depInState = (refVar: string, requiredState: string): GuardRule => ({
   if: [
-    { has: [{ var: "machines" }, { var: refVar }] },
+    { has: [{ var: 'machines' }, { var: refVar }] },
     {
-      "==": [
-        { get: [{ get: [{ var: "machines" }, { var: refVar }] }, "currentStateId"] },
-        requiredState,
-      ],
+      '==': [{ get: [{ get: [{ var: 'machines' }, { var: refVar }] }, 'currentStateId'] }, requiredState],
     },
     false,
   ],

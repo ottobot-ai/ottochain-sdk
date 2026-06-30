@@ -32,8 +32,8 @@
  * @packageDocumentation
  */
 
-import { stakedPoolBaseDef, stakedPoolOracleDef } from "./state-machines/index.js";
-import type { FiberAppDefinition } from "../../schema/fiber-app.js";
+import { stakedPoolBaseDef, stakedPoolOracleDef } from './state-machines/index.js';
+import type { FiberAppDefinition } from '../../schema/fiber-app.js';
 
 export { stakedPoolBaseDef, stakedPoolOracleDef };
 
@@ -49,27 +49,16 @@ export type StakedPoolType = keyof typeof STAKED_POOL_DEFINITIONS;
  * Get a staked-pool state machine definition by type.
  * @param type - 'base' | 'oraclePool' (default: 'oraclePool')
  */
-export function getStakedPoolDefinition(
-  type: StakedPoolType = "oraclePool",
-): FiberAppDefinition {
+export function getStakedPoolDefinition(type: StakedPoolType = 'oraclePool'): FiberAppDefinition {
   return STAKED_POOL_DEFINITIONS[type];
 }
 
 // ---------------------------------------------------------------------------
 // Factory + base building blocks (for downstream specializations)
 // ---------------------------------------------------------------------------
-export {
-  makeStakedPoolDef,
-  defaultSubmitArm,
-  baseInitialStateData,
-  type StakedPoolOverrides,
-} from "./base.js";
+export { makeStakedPoolDef, defaultSubmitArm, baseInitialStateData, type StakedPoolOverrides } from './base.js';
 
-export {
-  makeOraclePoolDef,
-  type OracleAggregation,
-  type OraclePoolOptions,
-} from "./state-machines/index.js";
+export { makeOraclePoolDef, type OracleAggregation, type OraclePoolOptions } from './state-machines/index.js';
 
 // ---------------------------------------------------------------------------
 // Asset-subsystem integration (stake + reward policies / lifecycle drivers)
@@ -89,14 +78,9 @@ export {
   type MintAssetMessage,
   type ApplyMorphismMessage,
   type PolicyRef,
-} from "./assets.js";
+} from './assets.js';
 
 // ---------------------------------------------------------------------------
 // Cross-fiber consumer-read interface ("pull the answer", epoch-pinned)
 // ---------------------------------------------------------------------------
-export {
-  bindAndPinPoolEpoch,
-  poolSettledForPinnedEpoch,
-  readPoolResult,
-  readPoolResultValue,
-} from "./consumer.js";
+export { bindAndPinPoolEpoch, poolSettledForPinnedEpoch, readPoolResult, readPoolResultValue } from './consumer.js';

@@ -7,7 +7,12 @@
 
 import { jsonLogic } from '@constellation-network/metagraph-sdk-jlvm';
 import { identityRegistryDef } from '../../src/apps/identity/state-machines/index';
-import { REGISTRY_ROLES, REGISTRY_ROLE_MAP, registryRolePath, registryReputationPath } from '../../src/apps/identity/constants';
+import {
+  REGISTRY_ROLES,
+  REGISTRY_ROLE_MAP,
+  registryRolePath,
+  registryReputationPath,
+} from '../../src/apps/identity/constants';
 
 const apply = (rule: unknown, data: unknown): unknown => jsonLogic.apply(rule as object, data as object);
 
@@ -43,9 +48,7 @@ describe('IdentityRegistry State Machine', () => {
 
     it('exposes reputation + the four flat per-role maps in state', () => {
       const props = Object.keys(identityRegistryDef.stateSchema!.properties!);
-      expect(props).toEqual(
-        expect.arrayContaining(['reputations', 'arbiters', 'slashers', 'issuers', 'boardMembers']),
-      );
+      expect(props).toEqual(expect.arrayContaining(['reputations', 'arbiters', 'slashers', 'issuers', 'boardMembers']));
     });
 
     it('has authority-write transitions', () => {

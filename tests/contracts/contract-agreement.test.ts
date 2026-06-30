@@ -14,7 +14,7 @@ describe('Contract Agreement State Machine', () => {
       expect(contractAgreementDef.metadata.name).toBe('ContractAgreement');
       expect(contractAgreementDef.metadata.app).toBe('contracts');
       expect(contractAgreementDef.metadata.description).toBe(
-        'Two-party agreement with mutual completion attestation and dispute resolution'
+        'Two-party agreement with mutual completion attestation and dispute resolution',
       );
       expect(contractAgreementDef.metadata.version).toBe('1.0.0');
     });
@@ -22,8 +22,8 @@ describe('Contract Agreement State Machine', () => {
     it('should define all required states', () => {
       const expectedStates = ['PROPOSED', 'ACTIVE', 'COMPLETED', 'DISPUTED', 'REJECTED', 'CANCELLED'];
       const actualStates = Object.keys(contractAgreementDef.states);
-      
-      expectedStates.forEach(state => {
+
+      expectedStates.forEach((state) => {
         expect(actualStates).toContain(state);
       });
     });
@@ -45,9 +45,9 @@ describe('Contract Agreement State Machine', () => {
   describe('State Transitions', () => {
     it('should allow accept transition from PROPOSED to ACTIVE', () => {
       const acceptTransition = contractAgreementDef.transitions.find(
-        t => t.from === 'PROPOSED' && t.to === 'ACTIVE' && t.eventName === 'accept'
+        (t) => t.from === 'PROPOSED' && t.to === 'ACTIVE' && t.eventName === 'accept',
       );
-      
+
       expect(acceptTransition).toBeDefined();
       expect(acceptTransition!.guard).toBeDefined();
       expect(acceptTransition!.effect).toBeDefined();
@@ -55,9 +55,9 @@ describe('Contract Agreement State Machine', () => {
 
     it('should allow reject transition from PROPOSED to REJECTED', () => {
       const rejectTransition = contractAgreementDef.transitions.find(
-        t => t.from === 'PROPOSED' && t.to === 'REJECTED' && t.eventName === 'reject'
+        (t) => t.from === 'PROPOSED' && t.to === 'REJECTED' && t.eventName === 'reject',
       );
-      
+
       expect(rejectTransition).toBeDefined();
       expect(rejectTransition!.guard).toBeDefined();
       expect(rejectTransition!.effect).toBeDefined();
@@ -65,18 +65,18 @@ describe('Contract Agreement State Machine', () => {
 
     it('should allow cancel transition from PROPOSED to CANCELLED', () => {
       const cancelTransition = contractAgreementDef.transitions.find(
-        t => t.from === 'PROPOSED' && t.to === 'CANCELLED' && t.eventName === 'cancel'
+        (t) => t.from === 'PROPOSED' && t.to === 'CANCELLED' && t.eventName === 'cancel',
       );
-      
+
       expect(cancelTransition).toBeDefined();
       expect(cancelTransition!.guard).toBeDefined();
     });
 
     it('should allow submit_completion transition in ACTIVE state', () => {
       const submitTransition = contractAgreementDef.transitions.find(
-        t => t.from === 'ACTIVE' && t.to === 'ACTIVE' && t.eventName === 'submit_completion'
+        (t) => t.from === 'ACTIVE' && t.to === 'ACTIVE' && t.eventName === 'submit_completion',
       );
-      
+
       expect(submitTransition).toBeDefined();
       expect(submitTransition!.guard).toBeDefined();
       expect(submitTransition!.effect).toBeDefined();
@@ -84,27 +84,27 @@ describe('Contract Agreement State Machine', () => {
 
     it('should allow finalize transition from ACTIVE to COMPLETED', () => {
       const finalizeTransition = contractAgreementDef.transitions.find(
-        t => t.from === 'ACTIVE' && t.to === 'COMPLETED' && t.eventName === 'finalize'
+        (t) => t.from === 'ACTIVE' && t.to === 'COMPLETED' && t.eventName === 'finalize',
       );
-      
+
       expect(finalizeTransition).toBeDefined();
       expect(finalizeTransition!.guard).toBeDefined();
     });
 
     it('should allow dispute transition from ACTIVE to DISPUTED', () => {
       const disputeTransition = contractAgreementDef.transitions.find(
-        t => t.from === 'ACTIVE' && t.to === 'DISPUTED' && t.eventName === 'dispute'
+        (t) => t.from === 'ACTIVE' && t.to === 'DISPUTED' && t.eventName === 'dispute',
       );
-      
+
       expect(disputeTransition).toBeDefined();
       expect(disputeTransition!.guard).toBeDefined();
     });
 
     it('should allow resolve transition from DISPUTED to COMPLETED', () => {
       const resolveTransition = contractAgreementDef.transitions.find(
-        t => t.from === 'DISPUTED' && t.to === 'COMPLETED' && t.eventName === 'resolve'
+        (t) => t.from === 'DISPUTED' && t.to === 'COMPLETED' && t.eventName === 'resolve',
       );
-      
+
       expect(resolveTransition).toBeDefined();
       expect(resolveTransition!.guard).toBeDefined();
     });
@@ -113,17 +113,17 @@ describe('Contract Agreement State Machine', () => {
   describe('Guard Logic Preservation', () => {
     it('should preserve agent authorization guards for accept', () => {
       const acceptTransition = contractAgreementDef.transitions.find(
-        t => t.from === 'PROPOSED' && t.to === 'ACTIVE' && t.eventName === 'accept'
+        (t) => t.from === 'PROPOSED' && t.to === 'ACTIVE' && t.eventName === 'accept',
       );
-      
+
       expect(acceptTransition!.guard).toEqual(signerIsParty('state.counterparty'));
     });
 
     it('should preserve multi-condition guard for submit_completion', () => {
       const submitTransition = contractAgreementDef.transitions.find(
-        t => t.from === 'ACTIVE' && t.to === 'ACTIVE' && t.eventName === 'submit_completion'
+        (t) => t.from === 'ACTIVE' && t.to === 'ACTIVE' && t.eventName === 'submit_completion',
       );
-      
+
       // Should have complex AND logic with OR conditions and negation
       expect(submitTransition!.guard).toHaveProperty('and');
       expect(Array.isArray(submitTransition!.guard.and)).toBe(true);
@@ -131,14 +131,11 @@ describe('Contract Agreement State Machine', () => {
 
     it('should preserve completion count guard for finalize', () => {
       const finalizeTransition = contractAgreementDef.transitions.find(
-        t => t.from === 'ACTIVE' && t.to === 'COMPLETED' && t.eventName === 'finalize'
+        (t) => t.from === 'ACTIVE' && t.to === 'COMPLETED' && t.eventName === 'finalize',
       );
-      
+
       expect(finalizeTransition!.guard).toEqual({
-        '>=': [
-          { length: [{ var: 'state.completions' }] },
-          2
-        ]
+        '>=': [{ length: [{ var: 'state.completions' }] }, 2],
       });
     });
   });
@@ -146,9 +143,9 @@ describe('Contract Agreement State Machine', () => {
   describe('Effect Logic Preservation', () => {
     it('should preserve merge effects for accept transition', () => {
       const acceptTransition = contractAgreementDef.transitions.find(
-        t => t.from === 'PROPOSED' && t.to === 'ACTIVE' && t.eventName === 'accept'
+        (t) => t.from === 'PROPOSED' && t.to === 'ACTIVE' && t.eventName === 'accept',
       );
-      
+
       expect(acceptTransition!.effect.merge).toBeDefined();
       expect(acceptTransition!.effect.merge[0]).toEqual({ var: 'state' });
       expect(acceptTransition!.effect.merge[1]).toHaveProperty('status', 'ACTIVE');
@@ -157,9 +154,9 @@ describe('Contract Agreement State Machine', () => {
 
     it('should preserve completion array updates for submit_completion', () => {
       const submitTransition = contractAgreementDef.transitions.find(
-        t => t.from === 'ACTIVE' && t.to === 'ACTIVE' && t.eventName === 'submit_completion'
+        (t) => t.from === 'ACTIVE' && t.to === 'ACTIVE' && t.eventName === 'submit_completion',
       );
-      
+
       const mergeEffect = submitTransition!.effect.merge[1];
       expect(mergeEffect).toHaveProperty('completions');
       expect(mergeEffect.completions).toHaveProperty('cat');
@@ -183,8 +180,8 @@ describe('Contract Agreement State Machine', () => {
 
     it('should define event schemas for all events', () => {
       const expectedEvents = ['accept', 'reject', 'cancel', 'submit_completion', 'finalize', 'dispute', 'resolve'];
-      
-      expectedEvents.forEach(eventName => {
+
+      expectedEvents.forEach((eventName) => {
         expect(contractAgreementDef.eventSchemas).toHaveProperty(eventName);
       });
     });
@@ -208,13 +205,10 @@ describe('Contract Agreement State Machine', () => {
 
     it('resolve: pinned arbitrator OR both parties — never a bare event flag', () => {
       const resolve = contractAgreementDef.transitions.find(
-        t => t.from === 'DISPUTED' && t.to === 'COMPLETED' && t.eventName === 'resolve'
+        (t) => t.from === 'DISPUTED' && t.to === 'COMPLETED' && t.eventName === 'resolve',
       );
       expect(resolve!.guard).toEqual({
-        or: [
-          sigParty('state.arbitrator'),
-          { and: [sigParty('state.proposer'), sigParty('state.counterparty')] },
-        ],
+        or: [sigParty('state.arbitrator'), { and: [sigParty('state.proposer'), sigParty('state.counterparty')] }],
       });
       // forgeable booleans removed from the guard and the event schema
       const guardJson = JSON.stringify(resolve!.guard);
@@ -229,7 +223,7 @@ describe('Contract Agreement State Machine', () => {
 
     it('resolve: rulingId is bound to the arbitrator path, not the raw event flag', () => {
       const resolve = contractAgreementDef.transitions.find(
-        t => t.from === 'DISPUTED' && t.to === 'COMPLETED' && t.eventName === 'resolve'
+        (t) => t.from === 'DISPUTED' && t.to === 'COMPLETED' && t.eventName === 'resolve',
       );
       expect(resolve!.effect.merge[1].rulingId).toEqual({
         if: [sigParty('state.arbitrator'), { var: 'event.rulingId' }, null],

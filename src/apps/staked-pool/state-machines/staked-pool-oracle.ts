@@ -24,37 +24,37 @@
  *     entitlement), consumed by `claim_reward` + a `claimed` dedup map.
  */
 
-import type { JsonLogicRule, Transition } from "../../../schema/fiber-app.js";
-import { makeStakedPoolDef } from "../base.js";
+import type { JsonLogicRule, Transition } from '../../../schema/fiber-app.js';
+import { makeStakedPoolDef } from '../base.js';
 
-export type OracleAggregation = "mean" | "trimmedMean";
+export type OracleAggregation = 'mean' | 'trimmedMean';
 
 const sum = (arr: JsonLogicRule): JsonLogicRule => ({
-  reduce: [arr, { "+": [{ var: "accumulator" }, { var: "current" }] }, 0],
+  reduce: [arr, { '+': [{ var: 'accumulator' }, { var: 'current' }] }, 0],
 });
-const meanOf = (arr: JsonLogicRule): JsonLogicRule => ({ "/": [sum(arr), { count: [arr] }] });
+const meanOf = (arr: JsonLogicRule): JsonLogicRule => ({ '/': [sum(arr), { count: [arr] }] });
 
 /** vals = map(submissions, .value) */
-const VALS: JsonLogicRule = { map: [{ var: "state.submissions" }, { get: [{ var: "" }, "value"] }] };
+const VALS: JsonLogicRule = { map: [{ var: 'state.submissions' }, { get: [{ var: '' }, 'value'] }] };
 
 /**
  * The aggregation `center` as a CLOSED expression over `state.submissions` (must be inlined into the
  * `kept` filter — see file header). `trimmedMean` drops the single min + single max before averaging.
  */
 function centerExpr(aggregation: OracleAggregation): JsonLogicRule {
-  if (aggregation === "mean") return meanOf(VALS);
+  if (aggregation === 'mean') return meanOf(VALS);
   const trimmed: JsonLogicRule = {
     filter: [
-      { var: "state.submissions" },
+      { var: 'state.submissions' },
       {
         and: [
-          { "!==": [{ get: [{ var: "" }, "value"] }, { min: [VALS] }] },
-          { "!==": [{ get: [{ var: "" }, "value"] }, { max: [VALS] }] },
+          { '!==': [{ get: [{ var: '' }, 'value'] }, { min: [VALS] }] },
+          { '!==': [{ get: [{ var: '' }, 'value'] }, { max: [VALS] }] },
         ],
       },
     ],
   };
-  const trimmedVals: JsonLogicRule = { map: [trimmed, { get: [{ var: "" }, "value"] }] };
+  const trimmedVals: JsonLogicRule = { map: [trimmed, { get: [{ var: '' }, 'value'] }] };
   return meanOf(trimmedVals);
 }
 
@@ -64,47 +64,41 @@ function finalizeArm(aggregation: OracleAggregation): Transition {
   // kept = the in-consensus submissions; `center` is INLINED (visible state.submissions inside filter).
   const kept: JsonLogicRule = {
     filter: [
-      { var: "state.submissions" },
+      { var: 'state.submissions' },
       {
-        "<=": [
-          { abs: [{ "-": [{ get: [{ var: "" }, "value"] }, center] }] },
-          { var: "state.outlierBound" },
-        ],
+        '<=': [{ abs: [{ '-': [{ get: [{ var: '' }, 'value'] }, center] }] }, { var: 'state.outlierBound' }],
       },
     ],
   };
-  const keptVals: JsonLogicRule = { map: [kept, { get: [{ var: "" }, "value"] }] };
-  const inConsensus: JsonLogicRule = { map: [kept, { get: [{ var: "" }, "addr"] }] };
+  const keptVals: JsonLogicRule = { map: [kept, { get: [{ var: '' }, 'value'] }] };
+  const inConsensus: JsonLogicRule = { map: [kept, { get: [{ var: '' }, 'addr'] }] };
 
   return {
-    from: "COLLECTING",
-    to: "SETTLED",
-    eventName: "finalize",
+    from: 'COLLECTING',
+    to: 'SETTLED',
+    eventName: 'finalize',
     // Authority finalizes once quorum is met AND the window has elapsed.
     guard: {
       and: [
-        { in: [{ var: "state.authority" }, { map: [{ var: "proofs" }, { var: "address" }] }] },
-        { ">=": [{ count: [{ var: "state.submissions" }] }, { var: "state.quorum" }] },
+        { in: [{ var: 'state.authority' }, { map: [{ var: 'proofs' }, { var: 'address' }] }] },
+        { '>=': [{ count: [{ var: 'state.submissions' }] }, { var: 'state.quorum' }] },
         {
-          ">=": [
-            { var: "$ordinal" },
-            { "+": [{ var: "state.epochStartedAt" }, { var: "state.epochLength" }] },
-          ],
+          '>=': [{ var: '$ordinal' }, { '+': [{ var: 'state.epochStartedAt' }, { var: 'state.epochLength' }] }],
         },
       ],
     },
     // ZERO _transferAsset: publish result + record the in-consensus entitlement set + reset claimed.
     effect: {
       merge: [
-        { var: "state" },
+        { var: 'state' },
         {
-          status: "SETTLED",
+          status: 'SETTLED',
           inConsensus,
           claimed: {},
           result: {
             value: meanOf(keptVals),
-            epoch: { var: "state.epoch" },
-            finalizedAt: { var: "$ordinal" },
+            epoch: { var: 'state.epoch' },
+            finalizedAt: { var: '$ordinal' },
           },
         },
       ],
@@ -120,23 +114,27 @@ export interface OraclePoolOptions {
 
 /** Build the oracle-pool definition. `outlierPenalty` is soft-only (no-credit for outliers); hard slash is v2. */
 export function makeOraclePoolDef(options: OraclePoolOptions = {}) {
-  const aggregation = options.aggregation ?? "trimmedMean";
+  const aggregation = options.aggregation ?? 'trimmedMean';
   return makeStakedPoolDef({
     metadata: {
-      name: "StakedPoolOracle",
-      type: "oraclePool",
+      name: 'StakedPoolOracle',
+      type: 'oraclePool',
       description:
-        "Reputation-gated staked oracle pool: participants stake + submit numeric datapoints; finalize " +
-        "publishes an outlier-bounded (default trimmed-mean) consensus answer and credits the in-consensus " +
-        "set as a claim entitlement (zero finalize-time transfers); a consumer reads the published value " +
-        "cross-fiber via an epoch-pinned depInState(SETTLED) gate.",
+        'Reputation-gated staked oracle pool: participants stake + submit numeric datapoints; finalize ' +
+        'publishes an outlier-bounded (default trimmed-mean) consensus answer and credits the in-consensus ' +
+        'set as a claim entitlement (zero finalize-time transfers); a consumer reads the published value ' +
+        'cross-fiber via an epoch-pinned depInState(SETTLED) gate.',
     },
     finalize: finalizeArm(aggregation),
     extraCreateProperties: {
-      rewardPolicy: { type: "string", description: "Asset policy of the shared fungible reward token.", immutable: true },
+      rewardPolicy: {
+        type: 'string',
+        description: 'Asset policy of the shared fungible reward token.',
+        immutable: true,
+      },
     },
     extraStateProperties: {
-      rewardPolicy: { type: "string", immutable: true },
+      rewardPolicy: { type: 'string', immutable: true },
     },
   });
 }

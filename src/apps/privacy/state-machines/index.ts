@@ -3,7 +3,7 @@
  * Re-exports from TypeScript definition files.
  */
 
-export { mixerDdhRingDef, sigmaDdhRingOf } from "./mixer-ddhRing.js";
+export { mixerDdhRingDef, sigmaDdhRingOf } from './mixer-ddhRing.js';
 export {
   notePoolDef,
   NOTE_POOL_STATE,
@@ -16,4 +16,4 @@ export {
   type TransferPayload,
   type UnshieldPayload,
   type NoteMintedPayload,
-} from "./note-pool.js";
+} from './note-pool.js';

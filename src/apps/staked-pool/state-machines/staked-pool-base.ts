@@ -6,31 +6,31 @@
  * round-tripping and as the explicit "base, unspecialized" instance.
  */
 
-import type { Transition } from "../../../schema/fiber-app.js";
-import { makeStakedPoolDef } from "../base.js";
+import type { Transition } from '../../../schema/fiber-app.js';
+import { makeStakedPoolDef } from '../base.js';
 
 /** Minimal finalize: authority settles; no aggregation, empty entitlement set, zero transfers. */
 const baseFinalizeArm: Transition = {
-  from: "COLLECTING",
-  to: "SETTLED",
-  eventName: "finalize",
+  from: 'COLLECTING',
+  to: 'SETTLED',
+  eventName: 'finalize',
   guard: {
     and: [
-      { in: [{ var: "state.authority" }, { map: [{ var: "proofs" }, { var: "address" }] }] },
-      { ">=": [{ count: [{ var: "state.submissions" }] }, { var: "state.quorum" }] },
+      { in: [{ var: 'state.authority' }, { map: [{ var: 'proofs' }, { var: 'address' }] }] },
+      { '>=': [{ count: [{ var: 'state.submissions' }] }, { var: 'state.quorum' }] },
     ],
   },
   effect: {
     merge: [
-      { var: "state" },
+      { var: 'state' },
       {
-        status: "SETTLED",
+        status: 'SETTLED',
         inConsensus: [],
         claimed: {},
         result: {
-          submissionCount: { count: [{ var: "state.submissions" }] },
-          epoch: { var: "state.epoch" },
-          finalizedAt: { var: "$ordinal" },
+          submissionCount: { count: [{ var: 'state.submissions' }] },
+          epoch: { var: 'state.epoch' },
+          finalizedAt: { var: '$ordinal' },
         },
       },
     ],
@@ -40,12 +40,12 @@ const baseFinalizeArm: Transition = {
 
 export const stakedPoolBaseDef = makeStakedPoolDef({
   metadata: {
-    name: "StakedPool",
-    type: "base",
+    name: 'StakedPool',
+    type: 'base',
     description:
-      "Generic staked-epoch-pool base (FORMING→COLLECTING→SETTLED→COLLECTING…→CLOSED): registry-gated " +
-      "join with stake custody, append-only submissions, a state-resident claim entitlement ledger, and " +
-      "one-whole-asset claim/withdraw transfers. Specialize `submit`/`finalize` for a concrete pool.",
+      'Generic staked-epoch-pool base (FORMING→COLLECTING→SETTLED→COLLECTING…→CLOSED): registry-gated ' +
+      'join with stake custody, append-only submissions, a state-resident claim entitlement ledger, and ' +
+      'one-whole-asset claim/withdraw transfers. Specialize `submit`/`finalize` for a concrete pool.',
   },
   finalize: baseFinalizeArm,
 });

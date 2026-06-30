@@ -14,7 +14,7 @@ describe('DAOReputation State Machine', () => {
     it('should have correct metadata', () => {
       expect(daoReputationDef.metadata.name).toBe('DAOReputation');
       expect(daoReputationDef.metadata.description).toBe(
-        'Reputation-based governance. Minimum reputation required for participation.'
+        'Reputation-based governance. Minimum reputation required for participation.',
       );
       expect(daoReputationDef.metadata.version).toBe('1.0.0');
       expect(daoReputationDef.metadata.category).toBe('governance/dao');
@@ -44,7 +44,7 @@ describe('DAOReputation State Machine', () => {
   describe('State Transitions', () => {
     it('should allow propose transition from ACTIVE to VOTING', () => {
       const proposeTransition = daoReputationDef.transitions.find(
-        (t) => t.from === 'ACTIVE' && t.to === 'VOTING' && t.eventName === 'propose'
+        (t) => t.from === 'ACTIVE' && t.to === 'VOTING' && t.eventName === 'propose',
       );
 
       expect(proposeTransition).toBeDefined();
@@ -54,7 +54,7 @@ describe('DAOReputation State Machine', () => {
 
     it('should allow vote transition from VOTING to VOTING', () => {
       const voteTransition = daoReputationDef.transitions.find(
-        (t) => t.from === 'VOTING' && t.to === 'VOTING' && t.eventName === 'vote'
+        (t) => t.from === 'VOTING' && t.to === 'VOTING' && t.eventName === 'vote',
       );
 
       expect(voteTransition).toBeDefined();
@@ -64,7 +64,7 @@ describe('DAOReputation State Machine', () => {
 
     it('should allow execute transition from VOTING to ACTIVE', () => {
       const executeTransition = daoReputationDef.transitions.find(
-        (t) => t.from === 'VOTING' && t.to === 'ACTIVE' && t.eventName === 'execute'
+        (t) => t.from === 'VOTING' && t.to === 'ACTIVE' && t.eventName === 'execute',
       );
 
       expect(executeTransition).toBeDefined();
@@ -74,7 +74,7 @@ describe('DAOReputation State Machine', () => {
 
     it('should allow reject transition from VOTING to ACTIVE', () => {
       const rejectTransition = daoReputationDef.transitions.find(
-        (t) => t.from === 'VOTING' && t.to === 'ACTIVE' && t.eventName === 'reject'
+        (t) => t.from === 'VOTING' && t.to === 'ACTIVE' && t.eventName === 'reject',
       );
 
       expect(rejectTransition).toBeDefined();
@@ -84,27 +84,21 @@ describe('DAOReputation State Machine', () => {
 
   describe('Membership Transitions', () => {
     it('should support join transition', () => {
-      const transition = daoReputationDef.transitions.find(
-        (t) => t.eventName === 'join'
-      );
+      const transition = daoReputationDef.transitions.find((t) => t.eventName === 'join');
       expect(transition).toBeDefined();
       expect(transition!.from).toBe('ACTIVE');
       expect(transition!.to).toBe('ACTIVE');
     });
 
     it('should support leave transition', () => {
-      const transition = daoReputationDef.transitions.find(
-        (t) => t.eventName === 'leave'
-      );
+      const transition = daoReputationDef.transitions.find((t) => t.eventName === 'leave');
       expect(transition).toBeDefined();
       expect(transition!.from).toBe('ACTIVE');
       expect(transition!.to).toBe('ACTIVE');
     });
 
     it('should support propose_threshold_change transition', () => {
-      const transition = daoReputationDef.transitions.find(
-        (t) => t.eventName === 'propose_threshold_change'
-      );
+      const transition = daoReputationDef.transitions.find((t) => t.eventName === 'propose_threshold_change');
       expect(transition).toBeDefined();
       expect(transition!.from).toBe('ACTIVE');
       expect(transition!.to).toBe('VOTING');
@@ -114,7 +108,7 @@ describe('DAOReputation State Machine', () => {
   describe('Guard Logic', () => {
     it('should guard propose to reputation threshold', () => {
       const proposeTransition = daoReputationDef.transitions.find(
-        (t) => t.eventName === 'propose' && t.from === 'ACTIVE'
+        (t) => t.eventName === 'propose' && t.from === 'ACTIVE',
       );
 
       expect(proposeTransition!.guard).toHaveProperty('>=');
@@ -124,9 +118,7 @@ describe('DAOReputation State Machine', () => {
     });
 
     it('should guard vote to reputation and deadline', () => {
-      const voteTransition = daoReputationDef.transitions.find(
-        (t) => t.eventName === 'vote'
-      );
+      const voteTransition = daoReputationDef.transitions.find((t) => t.eventName === 'vote');
 
       expect(voteTransition!.guard).toHaveProperty('and');
       const guardStr = JSON.stringify(voteTransition!.guard);
@@ -135,9 +127,7 @@ describe('DAOReputation State Machine', () => {
     });
 
     it('should guard vote to prevent double-voting', () => {
-      const voteTransition = daoReputationDef.transitions.find(
-        (t) => t.eventName === 'vote'
-      );
+      const voteTransition = daoReputationDef.transitions.find((t) => t.eventName === 'vote');
 
       const guardStr = JSON.stringify(voteTransition!.guard);
       expect(guardStr).toContain('votes.for');
@@ -146,9 +136,7 @@ describe('DAOReputation State Machine', () => {
     });
 
     it('should guard execute to deadline passed and quorum met', () => {
-      const executeTransition = daoReputationDef.transitions.find(
-        (t) => t.eventName === 'execute'
-      );
+      const executeTransition = daoReputationDef.transitions.find((t) => t.eventName === 'execute');
 
       expect(executeTransition!.guard).toHaveProperty('and');
       const guardStr = JSON.stringify(executeTransition!.guard);
@@ -159,9 +147,7 @@ describe('DAOReputation State Machine', () => {
     it('should count array-shaped vote tallies with length, not size (A2)', () => {
       // votes.for/against/abstain are arrays; size is not a JLVM opcode.
       for (const name of ['execute', 'reject']) {
-        const transition = daoReputationDef.transitions.find(
-          (t) => t.eventName === name
-        );
+        const transition = daoReputationDef.transitions.find((t) => t.eventName === name);
         const guardStr = JSON.stringify(transition!.guard);
         expect(guardStr).toContain('length');
         expect(guardStr).toContain('votes.for');
@@ -170,9 +156,7 @@ describe('DAOReputation State Machine', () => {
     });
 
     it('should guard join to membership reputation threshold', () => {
-      const joinTransition = daoReputationDef.transitions.find(
-        (t) => t.eventName === 'join'
-      );
+      const joinTransition = daoReputationDef.transitions.find((t) => t.eventName === 'join');
 
       expect(joinTransition!.guard).toHaveProperty('and');
       const guardStr = JSON.stringify(joinTransition!.guard);
@@ -180,9 +164,7 @@ describe('DAOReputation State Machine', () => {
     });
 
     it('should guard leave to current members only', () => {
-      const leaveTransition = daoReputationDef.transitions.find(
-        (t) => t.eventName === 'leave'
-      );
+      const leaveTransition = daoReputationDef.transitions.find((t) => t.eventName === 'leave');
 
       // Membership authorization binds to the chain-verified signers (proofs),
       // not the forgeable event.agent payload field (F1 fix).
@@ -197,7 +179,7 @@ describe('DAOReputation State Machine', () => {
   describe('Effect Logic', () => {
     it('should create proposal with voting tracking on propose', () => {
       const proposeTransition = daoReputationDef.transitions.find(
-        (t) => t.eventName === 'propose' && t.from === 'ACTIVE'
+        (t) => t.eventName === 'propose' && t.from === 'ACTIVE',
       );
 
       const effectStr = JSON.stringify(proposeTransition!.effect);
@@ -207,9 +189,7 @@ describe('DAOReputation State Machine', () => {
     });
 
     it('should track for/against/abstain votes', () => {
-      const voteTransition = daoReputationDef.transitions.find(
-        (t) => t.eventName === 'vote'
-      );
+      const voteTransition = daoReputationDef.transitions.find((t) => t.eventName === 'vote');
 
       const effectStr = JSON.stringify(voteTransition!.effect);
       expect(effectStr).toContain('votes');
@@ -218,9 +198,7 @@ describe('DAOReputation State Machine', () => {
     });
 
     it('should record history on execute', () => {
-      const executeTransition = daoReputationDef.transitions.find(
-        (t) => t.eventName === 'execute'
-      );
+      const executeTransition = daoReputationDef.transitions.find((t) => t.eventName === 'execute');
 
       const effectStr = JSON.stringify(executeTransition!.effect);
       expect(effectStr).toContain('history');
@@ -228,9 +206,7 @@ describe('DAOReputation State Machine', () => {
     });
 
     it('should emit proposal_executed event', () => {
-      const executeTransition = daoReputationDef.transitions.find(
-        (t) => t.eventName === 'execute'
-      );
+      const executeTransition = daoReputationDef.transitions.find((t) => t.eventName === 'execute');
 
       const effectStr = JSON.stringify(executeTransition!.effect);
       expect(effectStr).toContain('_emit');
@@ -239,9 +215,7 @@ describe('DAOReputation State Machine', () => {
     });
 
     it('should add member on join', () => {
-      const joinTransition = daoReputationDef.transitions.find(
-        (t) => t.eventName === 'join'
-      );
+      const joinTransition = daoReputationDef.transitions.find((t) => t.eventName === 'join');
 
       const effectStr = JSON.stringify(joinTransition!.effect);
       expect(effectStr).toContain('members');
@@ -249,9 +223,7 @@ describe('DAOReputation State Machine', () => {
     });
 
     it('should remove member on leave', () => {
-      const leaveTransition = daoReputationDef.transitions.find(
-        (t) => t.eventName === 'leave'
-      );
+      const leaveTransition = daoReputationDef.transitions.find((t) => t.eventName === 'leave');
 
       const effectStr = JSON.stringify(leaveTransition!.effect);
       expect(effectStr).toContain('filter');

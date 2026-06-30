@@ -10,10 +10,7 @@ import {
   marketGroupBuyDef,
 } from '../../src/apps/markets/state-machines';
 
-import {
-  MARKETS_DEFINITIONS,
-  getMarketDefinition,
-} from '../../src/apps/markets';
+import { MARKETS_DEFINITIONS, getMarketDefinition } from '../../src/apps/markets';
 
 describe('Markets App Integration', () => {
   it('should export all 5 market state machines from state-machines index', () => {
@@ -45,13 +42,7 @@ describe('Markets App Integration', () => {
   });
 
   it('all market definitions should have required base fields', () => {
-    const defs = [
-      marketUniversalDef,
-      marketPredictionDef,
-      marketAuctionDef,
-      marketCrowdfundDef,
-      marketGroupBuyDef,
-    ];
+    const defs = [marketUniversalDef, marketPredictionDef, marketAuctionDef, marketCrowdfundDef, marketGroupBuyDef];
     for (const def of defs) {
       expect(def.metadata).toBeDefined();
       expect(def.metadata.name).toBeTruthy();
@@ -62,13 +53,7 @@ describe('Markets App Integration', () => {
   });
 
   it('all market definitions should have at least one final state', () => {
-    const defs = [
-      marketUniversalDef,
-      marketPredictionDef,
-      marketAuctionDef,
-      marketCrowdfundDef,
-      marketGroupBuyDef,
-    ];
+    const defs = [marketUniversalDef, marketPredictionDef, marketAuctionDef, marketCrowdfundDef, marketGroupBuyDef];
     for (const def of defs) {
       const finalStates = Object.values(def.states).filter((s: { isFinal: boolean }) => s.isFinal);
       expect(finalStates.length).toBeGreaterThan(0);
@@ -76,13 +61,7 @@ describe('Markets App Integration', () => {
   });
 
   it('all transitions should have non-empty event names', () => {
-    const defs = [
-      marketUniversalDef,
-      marketPredictionDef,
-      marketAuctionDef,
-      marketCrowdfundDef,
-      marketGroupBuyDef,
-    ];
+    const defs = [marketUniversalDef, marketPredictionDef, marketAuctionDef, marketCrowdfundDef, marketGroupBuyDef];
     for (const def of defs) {
       for (const t of def.transitions) {
         expect(t.eventName).toBeTruthy();

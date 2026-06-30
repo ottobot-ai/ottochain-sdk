@@ -22,7 +22,7 @@ describe('CorpSecurities State Machine', () => {
     it('should define all required states', () => {
       const expectedStates = ['AUTHORIZED', 'ISSUED', 'TREASURY', 'TRANSFERRED', 'RETIRED'];
       const actualStates = Object.keys(corpSecuritiesDef.states);
-      expectedStates.forEach(state => {
+      expectedStates.forEach((state) => {
         expect(actualStates).toContain(state);
       });
     });
@@ -43,7 +43,7 @@ describe('CorpSecurities State Machine', () => {
     });
 
     it('should have descriptions for all states', () => {
-      Object.values(corpSecuritiesDef.states).forEach(state => {
+      Object.values(corpSecuritiesDef.states).forEach((state) => {
         expect(state.description).toBeDefined();
         expect(state.description.length).toBeGreaterThan(0);
       });
@@ -53,77 +53,77 @@ describe('CorpSecurities State Machine', () => {
   describe('State Transitions', () => {
     it('should allow authorize_shares transition from AUTHORIZED to AUTHORIZED', () => {
       const transition = corpSecuritiesDef.transitions.find(
-        t => t.from === 'AUTHORIZED' && t.to === 'AUTHORIZED' && t.eventName === 'authorize_shares'
+        (t) => t.from === 'AUTHORIZED' && t.to === 'AUTHORIZED' && t.eventName === 'authorize_shares',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow issue_shares transition from AUTHORIZED to ISSUED', () => {
       const transition = corpSecuritiesDef.transitions.find(
-        t => t.from === 'AUTHORIZED' && t.to === 'ISSUED' && t.eventName === 'issue_shares'
+        (t) => t.from === 'AUTHORIZED' && t.to === 'ISSUED' && t.eventName === 'issue_shares',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow initiate_transfer transition from ISSUED to TRANSFERRED', () => {
       const transition = corpSecuritiesDef.transitions.find(
-        t => t.from === 'ISSUED' && t.to === 'TRANSFERRED' && t.eventName === 'initiate_transfer'
+        (t) => t.from === 'ISSUED' && t.to === 'TRANSFERRED' && t.eventName === 'initiate_transfer',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow complete_transfer transition from TRANSFERRED to ISSUED', () => {
       const transition = corpSecuritiesDef.transitions.find(
-        t => t.from === 'TRANSFERRED' && t.to === 'ISSUED' && t.eventName === 'complete_transfer'
+        (t) => t.from === 'TRANSFERRED' && t.to === 'ISSUED' && t.eventName === 'complete_transfer',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow repurchase transition from ISSUED to TREASURY', () => {
       const transition = corpSecuritiesDef.transitions.find(
-        t => t.from === 'ISSUED' && t.to === 'TREASURY' && t.eventName === 'repurchase'
+        (t) => t.from === 'ISSUED' && t.to === 'TREASURY' && t.eventName === 'repurchase',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow reissue_from_treasury transition from TREASURY to ISSUED', () => {
       const transition = corpSecuritiesDef.transitions.find(
-        t => t.from === 'TREASURY' && t.to === 'ISSUED' && t.eventName === 'reissue_from_treasury'
+        (t) => t.from === 'TREASURY' && t.to === 'ISSUED' && t.eventName === 'reissue_from_treasury',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow retire transition from ISSUED to RETIRED', () => {
       const transition = corpSecuritiesDef.transitions.find(
-        t => t.from === 'ISSUED' && t.to === 'RETIRED' && t.eventName === 'retire'
+        (t) => t.from === 'ISSUED' && t.to === 'RETIRED' && t.eventName === 'retire',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow retire transition from TREASURY to RETIRED', () => {
       const transition = corpSecuritiesDef.transitions.find(
-        t => t.from === 'TREASURY' && t.to === 'RETIRED' && t.eventName === 'retire'
+        (t) => t.from === 'TREASURY' && t.to === 'RETIRED' && t.eventName === 'retire',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow stock_split transition from ISSUED to ISSUED', () => {
       const transition = corpSecuritiesDef.transitions.find(
-        t => t.from === 'ISSUED' && t.to === 'ISSUED' && t.eventName === 'stock_split'
+        (t) => t.from === 'ISSUED' && t.to === 'ISSUED' && t.eventName === 'stock_split',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow declare_dividend transition from ISSUED to ISSUED', () => {
       const transition = corpSecuritiesDef.transitions.find(
-        t => t.from === 'ISSUED' && t.to === 'ISSUED' && t.eventName === 'declare_dividend'
+        (t) => t.from === 'ISSUED' && t.to === 'ISSUED' && t.eventName === 'declare_dividend',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow remove_restriction transition from ISSUED to ISSUED', () => {
       const transition = corpSecuritiesDef.transitions.find(
-        t => t.from === 'ISSUED' && t.to === 'ISSUED' && t.eventName === 'remove_restriction'
+        (t) => t.from === 'ISSUED' && t.to === 'ISSUED' && t.eventName === 'remove_restriction',
       );
       expect(transition).toBeDefined();
     });
@@ -131,23 +131,17 @@ describe('CorpSecurities State Machine', () => {
 
   describe('Transition Guards and Effects', () => {
     it('should have guard on issue_shares transition', () => {
-      const transition = corpSecuritiesDef.transitions.find(
-        t => t.eventName === 'issue_shares'
-      );
+      const transition = corpSecuritiesDef.transitions.find((t) => t.eventName === 'issue_shares');
       expect(transition?.guard).toBeDefined();
     });
 
     it('should have effect on issue_shares transition', () => {
-      const transition = corpSecuritiesDef.transitions.find(
-        t => t.eventName === 'issue_shares'
-      );
+      const transition = corpSecuritiesDef.transitions.find((t) => t.eventName === 'issue_shares');
       expect(transition?.effect).toBeDefined();
     });
 
     it('should have guard on initiate_transfer transition', () => {
-      const transition = corpSecuritiesDef.transitions.find(
-        t => t.eventName === 'initiate_transfer'
-      );
+      const transition = corpSecuritiesDef.transitions.find((t) => t.eventName === 'initiate_transfer');
       expect(transition?.guard).toBeDefined();
     });
 
@@ -156,9 +150,8 @@ describe('CorpSecurities State Machine', () => {
     // event name now rides in the effect JSON.
     const effectOf = (eventName: string, from?: string) =>
       JSON.stringify(
-        corpSecuritiesDef.transitions.find(
-          t => t.eventName === eventName && (from === undefined || t.from === from)
-        )?.effect
+        corpSecuritiesDef.transitions.find((t) => t.eventName === eventName && (from === undefined || t.from === from))
+          ?.effect,
       );
 
     it('should emit SHARES_ISSUED on issue_shares', () => {
@@ -354,13 +347,9 @@ describe('CorpSecurities State Machine', () => {
   // the guard JSON) and carries an empty `dependencies` array.
   describe('Dependencies (two-phase #24 gating)', () => {
     const transition = (eventName: string, from?: string) =>
-      corpSecuritiesDef.transitions.find(
-        t => t.eventName === eventName && (from === undefined || t.from === from)
-      );
-    const effectJson = (eventName: string, from?: string) =>
-      JSON.stringify(transition(eventName, from)?.effect);
-    const guardJson = (eventName: string, from?: string) =>
-      JSON.stringify(transition(eventName, from)?.guard);
+      corpSecuritiesDef.transitions.find((t) => t.eventName === eventName && (from === undefined || t.from === from));
+    const effectJson = (eventName: string, from?: string) => JSON.stringify(transition(eventName, from)?.effect);
+    const guardJson = (eventName: string, from?: string) => JSON.stringify(transition(eventName, from)?.guard);
 
     it.each([
       ['issue_shares', 'propose_issue', 'pendingIssue', 'EXECUTED'],
@@ -377,7 +366,7 @@ describe('CorpSecurities State Machine', () => {
         expect(g).toContain(pending);
         expect(g).toContain(requiredState);
         expect(transition(gated)?.dependencies).toEqual([]);
-      }
+      },
     );
 
     it('retire (both from-states) is two-phased via propose_retire / pendingRetire', () => {
@@ -401,9 +390,8 @@ describe('CorpSecurities State Machine', () => {
   describe('Authorization (identity hardening)', () => {
     const guardOf = (eventName: string, from?: string) =>
       JSON.stringify(
-        corpSecuritiesDef.transitions.find(
-          t => t.eventName === eventName && (from === undefined || t.from === from)
-        )?.guard
+        corpSecuritiesDef.transitions.find((t) => t.eventName === eventName && (from === undefined || t.from === from))
+          ?.guard,
       );
 
     it('should pin issuerAddress as a required, immutable createSchema/stateSchema field', () => {

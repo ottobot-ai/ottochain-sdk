@@ -1,5 +1,5 @@
-import { defineFiberApp } from "../../../schema/fiber-app.js";
-import { signerIsParty } from "../../../schema/guards.js";
+import { defineFiberApp } from '../../../schema/fiber-app.js';
+import { signerIsParty } from '../../../schema/guards.js';
 
 /**
  * Identity Registry — the ecosystem authority & reputation source.
@@ -26,27 +26,25 @@ import { signerIsParty } from "../../../schema/guards.js";
  */
 export const identityRegistryDef = defineFiberApp({
   metadata: {
-    name: "IdentityRegistry",
-    app: "identity",
-    type: "registry",
-    version: "1.0.0",
-    description:
-      "Ecosystem reputation + role-attestation registry; authority-gated writes, dependency reads.",
+    name: 'IdentityRegistry',
+    app: 'identity',
+    type: 'registry',
+    version: '1.0.0',
+    description: 'Ecosystem reputation + role-attestation registry; authority-gated writes, dependency reads.',
     crossReferences: {
-      IdentityAgent: "per-agent reputation source",
-      Governance: "reputation-gated participation",
-      Contracts: "ARBITER-gated dispute settlement",
-      Corporate: "ISSUER / BOARD_MEMBER authority",
+      IdentityAgent: 'per-agent reputation source',
+      Governance: 'reputation-gated participation',
+      Contracts: 'ARBITER-gated dispute settlement',
+      Corporate: 'ISSUER / BOARD_MEMBER authority',
     },
   },
 
   createSchema: {
-    required: ["authority"] as const,
+    required: ['authority'] as const,
     properties: {
       authority: {
-        type: "address",
-        description:
-          "DAG address authorized to write reputation + role attestations (immutable)",
+        type: 'address',
+        description: 'DAG address authorized to write reputation + role attestations (immutable)',
         immutable: true,
       },
     },
@@ -54,54 +52,53 @@ export const identityRegistryDef = defineFiberApp({
 
   stateSchema: {
     properties: {
-      authority: { type: "address", immutable: true },
+      authority: { type: 'address', immutable: true },
       // { <address>: int } — public reputation, read via signerHasReputation
-      reputations: { type: "object", computed: true },
+      reputations: { type: 'object', computed: true },
       // FLAT per-role attestation maps { <address>: true }, read via signerHasRole
-      arbiters: { type: "object", computed: true },
-      slashers: { type: "object", computed: true },
-      issuers: { type: "object", computed: true },
-      boardMembers: { type: "object", computed: true },
+      arbiters: { type: 'object', computed: true },
+      slashers: { type: 'object', computed: true },
+      issuers: { type: 'object', computed: true },
+      boardMembers: { type: 'object', computed: true },
     },
   },
 
   eventSchemas: {
     set_reputation: {
       description: "Authority sets an address's reputation to an absolute score",
-      required: ["subject", "score"] as const,
+      required: ['subject', 'score'] as const,
       properties: {
-        subject: { type: "address" },
-        score: { type: "integer" },
+        subject: { type: 'address' },
+        score: { type: 'integer' },
       },
     },
     adjust_reputation: {
       description: "Authority adjusts an address's reputation by a signed delta",
-      required: ["subject", "delta"] as const,
+      required: ['subject', 'delta'] as const,
       properties: {
-        subject: { type: "address" },
-        delta: { type: "integer" },
+        subject: { type: 'address' },
+        delta: { type: 'integer' },
       },
     },
     grant_role: {
-      description:
-        "Authority grants a role attestation (ARBITER|SLASHER|ISSUER|BOARD_MEMBER) to an address",
-      required: ["subject", "role"] as const,
+      description: 'Authority grants a role attestation (ARBITER|SLASHER|ISSUER|BOARD_MEMBER) to an address',
+      required: ['subject', 'role'] as const,
       properties: {
-        subject: { type: "address" },
+        subject: { type: 'address' },
         role: {
-          type: "string",
-          enum: ["ARBITER", "SLASHER", "ISSUER", "BOARD_MEMBER"] as const,
+          type: 'string',
+          enum: ['ARBITER', 'SLASHER', 'ISSUER', 'BOARD_MEMBER'] as const,
         },
       },
     },
     revoke_role: {
-      description: "Authority revokes a role attestation from an address",
-      required: ["subject", "role"] as const,
+      description: 'Authority revokes a role attestation from an address',
+      required: ['subject', 'role'] as const,
       properties: {
-        subject: { type: "address" },
+        subject: { type: 'address' },
         role: {
-          type: "string",
-          enum: ["ARBITER", "SLASHER", "ISSUER", "BOARD_MEMBER"] as const,
+          type: 'string',
+          enum: ['ARBITER', 'SLASHER', 'ISSUER', 'BOARD_MEMBER'] as const,
         },
       },
     },
@@ -109,35 +106,31 @@ export const identityRegistryDef = defineFiberApp({
 
   states: {
     ACTIVE: {
-      id: "ACTIVE",
+      id: 'ACTIVE',
       isFinal: false,
       metadata: {
-        label: "Active",
-        description: "Registry accepting authority writes",
-        category: "active",
+        label: 'Active',
+        description: 'Registry accepting authority writes',
+        category: 'active',
       },
     },
   },
 
-  initialState: "ACTIVE",
+  initialState: 'ACTIVE',
 
   transitions: [
     // ACTIVE → ACTIVE: set_reputation (absolute)
     {
-      from: "ACTIVE",
-      to: "ACTIVE",
-      eventName: "set_reputation",
-      guard: signerIsParty("state.authority"),
+      from: 'ACTIVE',
+      to: 'ACTIVE',
+      eventName: 'set_reputation',
+      guard: signerIsParty('state.authority'),
       effect: {
         merge: [
-          { var: "state" },
+          { var: 'state' },
           {
             reputations: {
-              set: [
-                { var: "state.reputations" },
-                { var: "event.subject" },
-                { var: "event.score" },
-              ],
+              set: [{ var: 'state.reputations' }, { var: 'event.subject' }, { var: 'event.score' }],
             },
           },
         ],
@@ -146,27 +139,24 @@ export const identityRegistryDef = defineFiberApp({
     },
     // ACTIVE → ACTIVE: adjust_reputation (signed delta; absent subject starts from 0)
     {
-      from: "ACTIVE",
-      to: "ACTIVE",
-      eventName: "adjust_reputation",
-      guard: signerIsParty("state.authority"),
+      from: 'ACTIVE',
+      to: 'ACTIVE',
+      eventName: 'adjust_reputation',
+      guard: signerIsParty('state.authority'),
       effect: {
         merge: [
-          { var: "state" },
+          { var: 'state' },
           {
             reputations: {
               set: [
-                { var: "state.reputations" },
-                { var: "event.subject" },
+                { var: 'state.reputations' },
+                { var: 'event.subject' },
                 {
-                  "+": [
+                  '+': [
                     {
-                      get: [
-                        { var: "state.reputations" },
-                        { var: "event.subject" },
-                      ],
+                      get: [{ var: 'state.reputations' }, { var: 'event.subject' }],
                     },
-                    { var: "event.delta" },
+                    { var: 'event.delta' },
                   ],
                 },
               ],
@@ -178,64 +168,48 @@ export const identityRegistryDef = defineFiberApp({
     },
     // ACTIVE → ACTIVE: grant_role (cascade selects the flat per-role map)
     {
-      from: "ACTIVE",
-      to: "ACTIVE",
-      eventName: "grant_role",
-      guard: signerIsParty("state.authority"),
+      from: 'ACTIVE',
+      to: 'ACTIVE',
+      eventName: 'grant_role',
+      guard: signerIsParty('state.authority'),
       effect: {
         merge: [
-          { var: "state" },
+          { var: 'state' },
           {
             arbiters: {
               if: [
-                { "==": [{ var: "event.role" }, "ARBITER"] },
+                { '==': [{ var: 'event.role' }, 'ARBITER'] },
                 {
-                  set: [
-                    { var: "state.arbiters" },
-                    { var: "event.subject" },
-                    true,
-                  ],
+                  set: [{ var: 'state.arbiters' }, { var: 'event.subject' }, true],
                 },
-                { var: "state.arbiters" },
+                { var: 'state.arbiters' },
               ],
             },
             slashers: {
               if: [
-                { "==": [{ var: "event.role" }, "SLASHER"] },
+                { '==': [{ var: 'event.role' }, 'SLASHER'] },
                 {
-                  set: [
-                    { var: "state.slashers" },
-                    { var: "event.subject" },
-                    true,
-                  ],
+                  set: [{ var: 'state.slashers' }, { var: 'event.subject' }, true],
                 },
-                { var: "state.slashers" },
+                { var: 'state.slashers' },
               ],
             },
             issuers: {
               if: [
-                { "==": [{ var: "event.role" }, "ISSUER"] },
+                { '==': [{ var: 'event.role' }, 'ISSUER'] },
                 {
-                  set: [
-                    { var: "state.issuers" },
-                    { var: "event.subject" },
-                    true,
-                  ],
+                  set: [{ var: 'state.issuers' }, { var: 'event.subject' }, true],
                 },
-                { var: "state.issuers" },
+                { var: 'state.issuers' },
               ],
             },
             boardMembers: {
               if: [
-                { "==": [{ var: "event.role" }, "BOARD_MEMBER"] },
+                { '==': [{ var: 'event.role' }, 'BOARD_MEMBER'] },
                 {
-                  set: [
-                    { var: "state.boardMembers" },
-                    { var: "event.subject" },
-                    true,
-                  ],
+                  set: [{ var: 'state.boardMembers' }, { var: 'event.subject' }, true],
                 },
-                { var: "state.boardMembers" },
+                { var: 'state.boardMembers' },
               ],
             },
           },
@@ -245,45 +219,42 @@ export const identityRegistryDef = defineFiberApp({
     },
     // ACTIVE → ACTIVE: revoke_role (cascade unsets from the flat per-role map)
     {
-      from: "ACTIVE",
-      to: "ACTIVE",
-      eventName: "revoke_role",
-      guard: signerIsParty("state.authority"),
+      from: 'ACTIVE',
+      to: 'ACTIVE',
+      eventName: 'revoke_role',
+      guard: signerIsParty('state.authority'),
       effect: {
         merge: [
-          { var: "state" },
+          { var: 'state' },
           {
             arbiters: {
               if: [
-                { "==": [{ var: "event.role" }, "ARBITER"] },
-                { unset: [{ var: "state.arbiters" }, { var: "event.subject" }] },
-                { var: "state.arbiters" },
+                { '==': [{ var: 'event.role' }, 'ARBITER'] },
+                { unset: [{ var: 'state.arbiters' }, { var: 'event.subject' }] },
+                { var: 'state.arbiters' },
               ],
             },
             slashers: {
               if: [
-                { "==": [{ var: "event.role" }, "SLASHER"] },
-                { unset: [{ var: "state.slashers" }, { var: "event.subject" }] },
-                { var: "state.slashers" },
+                { '==': [{ var: 'event.role' }, 'SLASHER'] },
+                { unset: [{ var: 'state.slashers' }, { var: 'event.subject' }] },
+                { var: 'state.slashers' },
               ],
             },
             issuers: {
               if: [
-                { "==": [{ var: "event.role" }, "ISSUER"] },
-                { unset: [{ var: "state.issuers" }, { var: "event.subject" }] },
-                { var: "state.issuers" },
+                { '==': [{ var: 'event.role' }, 'ISSUER'] },
+                { unset: [{ var: 'state.issuers' }, { var: 'event.subject' }] },
+                { var: 'state.issuers' },
               ],
             },
             boardMembers: {
               if: [
-                { "==": [{ var: "event.role" }, "BOARD_MEMBER"] },
+                { '==': [{ var: 'event.role' }, 'BOARD_MEMBER'] },
                 {
-                  unset: [
-                    { var: "state.boardMembers" },
-                    { var: "event.subject" },
-                  ],
+                  unset: [{ var: 'state.boardMembers' }, { var: 'event.subject' }],
                 },
-                { var: "state.boardMembers" },
+                { var: 'state.boardMembers' },
               ],
             },
           },
@@ -296,5 +267,4 @@ export const identityRegistryDef = defineFiberApp({
 
 // Derived types for consumers
 export type RegistryState = keyof typeof identityRegistryDef.states;
-export type RegistryEvent =
-  (typeof identityRegistryDef.transitions)[number]["eventName"];
+export type RegistryEvent = (typeof identityRegistryDef.transitions)[number]['eventName'];

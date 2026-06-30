@@ -35,8 +35,8 @@
  * @packageDocumentation
  */
 
-import { lendingZkLoanDef } from "./state-machines/index.js";
-import type { FiberAppDefinition } from "../../schema/fiber-app.js";
+import { lendingZkLoanDef } from './state-machines/index.js';
+import type { FiberAppDefinition } from '../../schema/fiber-app.js';
 
 export { lendingZkLoanDef };
 
@@ -51,9 +51,7 @@ export type LendingType = keyof typeof LENDING_DEFINITIONS;
  * Get a lending state machine definition by type.
  * @param type - 'zkLoan' (default: 'zkLoan')
  */
-export function getLendingDefinition(
-  type: LendingType = "zkLoan",
-): FiberAppDefinition {
+export function getLendingDefinition(type: LendingType = 'zkLoan'): FiberAppDefinition {
   return LENDING_DEFINITIONS[type];
 }
 
@@ -69,7 +67,7 @@ export {
   type PinnedLendingRule,
   type OriginationGuardRefs,
   type JsonLogicRule,
-} from "./eligibility.js";
+} from './eligibility.js';
 
 // ---------------------------------------------------------------------------
 // Credit scoring via the identity + reputation app (the creditScore IS reputation)
@@ -82,7 +80,7 @@ export {
   type CreditScoreConfig,
   type ReputationCreditParams,
   type CreditDataContext,
-} from "./credit-scoring.js";
+} from './credit-scoring.js';
 
 // ---------------------------------------------------------------------------
 // Asset-subsystem integration (collateral, debt/principal, repayment morphisms)
@@ -122,4 +120,4 @@ export {
   mintPrincipalOp,
   repayBurnOp,
   settleCollateralOp,
-} from "./assets.js";
+} from './assets.js';

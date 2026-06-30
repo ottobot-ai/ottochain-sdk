@@ -15,10 +15,7 @@ import {
 import { exprHash, KECCAK_TRUE, decodeJlvmPublicValues } from '../../src/zk/index';
 
 const apply = (logic: unknown, data: unknown): unknown =>
-  (jlvm.jsonLogic ?? (jlvm as { default: { apply: (l: unknown, d: unknown) => unknown } }).default).apply(
-    logic,
-    data,
-  );
+  (jlvm.jsonLogic ?? (jlvm as { default: { apply: (l: unknown, d: unknown) => unknown } }).default).apply(logic, data);
 
 /** Build a publicValues blob matching the JlvmPublicValues ABI layout for a given rule + ok bit. */
 function makePublicValues(rule: unknown, ok: boolean): `0x${string}` {
@@ -26,8 +23,8 @@ function makePublicValues(rule: unknown, ok: boolean): `0x${string}` {
   const word = (hex: string) => strip(hex).padStart(64, '0');
   const exprH = exprHash(rule); // word 0
   const dataH = '0x' + 'ab'.repeat(32); // word 1 (private — arbitrary here)
-  const outH = ok ? KECCAK_TRUE : ('0x' + '00'.repeat(32)); // word 2
-  const okWord = ('0'.repeat(62) + (ok ? '01' : '00')); // word 3 (bool right-aligned)
+  const outH = ok ? KECCAK_TRUE : '0x' + '00'.repeat(32); // word 2
+  const okWord = '0'.repeat(62) + (ok ? '01' : '00'); // word 3 (bool right-aligned)
   return `0x${word(exprH)}${word(dataH)}${word(outH)}${okWord}` as `0x${string}`;
 }
 

@@ -17,23 +17,14 @@ import {
   contractEscrowDef,
   contractUniversalDef,
 } from '../src/apps/contracts/state-machines/index.js';
-import {
-  getMarketDefinition,
-  MARKETS_DEFINITIONS,
-} from '../src/apps/markets/index.js';
-import {
-  getIdentityDefinition,
-  IDENTITY_DEFINITIONS as APP_IDENTITY_DEFINITIONS,
-} from '../src/apps/identity/index.js';
+import { getMarketDefinition, MARKETS_DEFINITIONS } from '../src/apps/markets/index.js';
+import { getIdentityDefinition, IDENTITY_DEFINITIONS as APP_IDENTITY_DEFINITIONS } from '../src/apps/identity/index.js';
 import {
   identityAgentDef,
   identityOracleDef,
   identityUniversalDef,
 } from '../src/apps/identity/state-machines/index.js';
-import {
-  getContractDefinition,
-  CONTRACTS_DEFINITIONS,
-} from '../src/apps/contracts/index.js';
+import { getContractDefinition, CONTRACTS_DEFINITIONS } from '../src/apps/contracts/index.js';
 
 describe('markets state machine schema helpers', () => {
   describe('marketUniversalDef', () => {
@@ -62,7 +53,7 @@ describe('markets state machine schema helpers', () => {
       it('returns event names for PROPOSED state', () => {
         const events = getEventsFrom(def, 'PROPOSED' as any);
         expect(Array.isArray(events)).toBe(true);
-        expect(events.every(e => typeof e === 'string')).toBe(true);
+        expect(events.every((e) => typeof e === 'string')).toBe(true);
         expect(events).toContain('open');
       });
 
@@ -139,7 +130,7 @@ describe('markets state machine schema helpers', () => {
       it('returns event names for PROPOSED state', () => {
         const events = getEventsFrom(def, 'PROPOSED' as any);
         expect(Array.isArray(events)).toBe(true);
-        expect(events.every(e => typeof e === 'string')).toBe(true);
+        expect(events.every((e) => typeof e === 'string')).toBe(true);
       });
 
       it('returns empty array for unknown state', () => {
@@ -293,7 +284,7 @@ describe('contracts state machine schema helpers', () => {
       it('returns event names for PROPOSED state', () => {
         const events = getEventsFrom(def, 'PROPOSED' as any);
         expect(Array.isArray(events)).toBe(true);
-        expect(events.every(e => typeof e === 'string')).toBe(true);
+        expect(events.every((e) => typeof e === 'string')).toBe(true);
         expect(events).toContain('accept');
       });
 
@@ -378,7 +369,7 @@ describe('contracts state machine schema helpers', () => {
       it('returns event names for CREATED state', () => {
         const events = getEventsFrom(def, 'CREATED' as any);
         expect(Array.isArray(events)).toBe(true);
-        expect(events.every(e => typeof e === 'string')).toBe(true);
+        expect(events.every((e) => typeof e === 'string')).toBe(true);
         expect(events).toContain('deposit');
       });
 
@@ -459,7 +450,7 @@ describe('contracts state machine schema helpers', () => {
       it('returns event names for PROPOSED state', () => {
         const events = getEventsFrom(def, 'PROPOSED' as any);
         expect(Array.isArray(events)).toBe(true);
-        expect(events.every(e => typeof e === 'string')).toBe(true);
+        expect(events.every((e) => typeof e === 'string')).toBe(true);
       });
 
       it('returns event names for ACTIVE state', () => {

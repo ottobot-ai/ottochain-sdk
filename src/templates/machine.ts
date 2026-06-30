@@ -24,7 +24,7 @@ import {
   type DependencySpec,
   type FiberAppDefinition,
   type ProtoStateMachineDefinition,
-} from "../schema/fiber-app.js";
+} from '../schema/fiber-app.js';
 import type {
   MachineShape,
   PublishMachineVersion,
@@ -34,17 +34,14 @@ import type {
   SemVer,
   JsonLogicValue,
   JsonLogicExpression,
-} from "../ottochain/types.js";
+} from '../ottochain/types.js';
 
 // =============================================================================
 // transition()
 // =============================================================================
 
 /** Authoring shape for {@link transition} — `on` is the event name (mapped to the wire `eventName`). */
-export interface TransitionSpec<
-  TState extends string = string,
-  TEvent extends string = string,
-> {
+export interface TransitionSpec<TState extends string = string, TEvent extends string = string> {
   from: TState;
   to: TState;
   /** Event that fires this transition. Mapped to the wire key `eventName`. */
@@ -80,15 +77,14 @@ export interface TransitionSpec<
  * });
  * ```
  */
-export function transition<
-  TState extends string = string,
-  TEvent extends string = string,
->(t: TransitionSpec<TState, TEvent>): Transition<TState, TEvent> {
+export function transition<TState extends string = string, TEvent extends string = string>(
+  t: TransitionSpec<TState, TEvent>,
+): Transition<TState, TEvent> {
   return {
     from: t.from,
     to: t.to,
     eventName: t.on,
-    guard: t.guard ?? { "==": [1, 1] },
+    guard: t.guard ?? { '==': [1, 1] },
     effect: t.effect,
     dependencies: t.dependencies ?? [],
   };
@@ -129,10 +125,7 @@ export function effect(
 // =============================================================================
 
 /** The machine package spec: identity (`name`@`version`) + the one canonical `app` + its schema shape. */
-export interface MachineSpec<
-  TState extends string = string,
-  TEvent extends string = string,
-> {
+export interface MachineSpec<TState extends string = string, TEvent extends string = string> {
   /** Full registry name `labels.tld` (e.g. `"consumer.package"`). */
   name: string;
   /** SemVer string (e.g. `"1.0.0"`). */
@@ -202,10 +195,9 @@ function exactRef(name: string, version: SemVer): SchemaRef {
  * `upgradeFrom().newDefinition` — so they cannot drift and the chain's verified binding admits the fiber
  * (F9). REUSES `toProtoDefinition` (the single canonicalization path); never re-derives the wire shape.
  */
-export function machine<
-  TState extends string = string,
-  TEvent extends string = string,
->(spec: MachineSpec<TState, TEvent>): Machine {
+export function machine<TState extends string = string, TEvent extends string = string>(
+  spec: MachineSpec<TState, TEvent>,
+): Machine {
   // Project the canonical wire definition ONCE; every consumer reuses this exact reference.
   const wireDef: ProtoStateMachineDefinition = toProtoDefinition(spec.app);
 
@@ -219,7 +211,7 @@ export function machine<
         name: spec.name,
         version: spec.version,
         // REQUIRED-no-default on the wire; '' is valid empty base64 when no descriptor set is bound.
-        schemaB64: o?.schemaB64 ?? "",
+        schemaB64: o?.schemaB64 ?? '',
         machineShape: spec.schemaShape,
         definition: wireDef, // SAME reference as wireDefinition()/create()
         strict: o?.strict ?? false, // REQUIRED — never omitted

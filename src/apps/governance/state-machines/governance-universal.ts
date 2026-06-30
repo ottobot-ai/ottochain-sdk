@@ -1,16 +1,15 @@
-import { defineFiberApp } from "../../../schema/fiber-app.js";
+import { defineFiberApp } from '../../../schema/fiber-app.js';
 
 /**
  * Minimal governance state machine - extend for custom use cases.
  */
 export const govUniversalDef = defineFiberApp({
   metadata: {
-    name: "GovernanceUniversal",
-    app: "governance",
-    type: "universal",
-    version: "1.0.0",
-    description:
-      "Minimal governance state machine - extend for custom use cases",
+    name: 'GovernanceUniversal',
+    app: 'governance',
+    type: 'universal',
+    version: '1.0.0',
+    description: 'Minimal governance state machine - extend for custom use cases',
   },
 
   createSchema: {
@@ -19,86 +18,86 @@ export const govUniversalDef = defineFiberApp({
 
   stateSchema: {
     properties: {
-      status: { type: "string" },
-      proposal: { type: "object" },
-      proposedAt: { type: "timestamp" },
-      votes: { type: "object", computed: true },
-      lastProposal: { type: "object" },
-      lastResult: { type: "string" },
-      dissolvedAt: { type: "timestamp" },
+      status: { type: 'string' },
+      proposal: { type: 'object' },
+      proposedAt: { type: 'timestamp' },
+      votes: { type: 'object', computed: true },
+      lastProposal: { type: 'object' },
+      lastResult: { type: 'string' },
+      dissolvedAt: { type: 'timestamp' },
     },
   },
 
   eventSchemas: {
     propose: {
-      description: "Submit a new proposal",
+      description: 'Submit a new proposal',
       properties: {
-        proposal: { type: "object" },
+        proposal: { type: 'object' },
       },
     },
     vote: {
-      description: "Cast a vote on the active proposal",
+      description: 'Cast a vote on the active proposal',
       properties: {
-        agent: { type: "address" },
-        vote: { type: "string" },
+        agent: { type: 'address' },
+        vote: { type: 'string' },
       },
     },
     finalize: {
-      description: "Finalize the current proposal",
+      description: 'Finalize the current proposal',
       properties: {
-        result: { type: "string" },
+        result: { type: 'string' },
       },
     },
     dissolve: {
-      description: "Dissolve the governance entity",
+      description: 'Dissolve the governance entity',
     },
   },
 
   states: {
     ACTIVE: {
-      id: "ACTIVE",
+      id: 'ACTIVE',
       isFinal: false,
       metadata: {
-        label: "Active",
-        description: "Governance is idle and ready to accept a proposal",
-        category: "initial",
+        label: 'Active',
+        description: 'Governance is idle and ready to accept a proposal',
+        category: 'initial',
       },
     },
     VOTING: {
-      id: "VOTING",
+      id: 'VOTING',
       isFinal: false,
       metadata: {
-        label: "Voting",
-        description: "A proposal is open for voting",
-        category: "pending",
+        label: 'Voting',
+        description: 'A proposal is open for voting',
+        category: 'pending',
       },
     },
     DISSOLVED: {
-      id: "DISSOLVED",
+      id: 'DISSOLVED',
       isFinal: true,
       metadata: {
-        label: "Dissolved",
-        description: "Governance entity dissolved (terminal)",
-        category: "terminal",
+        label: 'Dissolved',
+        description: 'Governance entity dissolved (terminal)',
+        category: 'terminal',
       },
     },
   },
 
-  initialState: "ACTIVE",
+  initialState: 'ACTIVE',
 
   transitions: [
     {
-      from: "ACTIVE",
-      to: "VOTING",
-      eventName: "propose",
-      guard: { "==": [1, 1] },
+      from: 'ACTIVE',
+      to: 'VOTING',
+      eventName: 'propose',
+      guard: { '==': [1, 1] },
       effect: {
         merge: [
-          { var: "state" },
+          { var: 'state' },
           {
-            status: "VOTING",
-            proposal: { var: "event.proposal" },
-            proposedAt: { var: "$ordinal" },
+            status: 'VOTING',
+            proposal: { var: 'event.proposal' },
+            proposedAt: { var: '$ordinal' },
             votes: {},
           },
         ],
@@ -106,20 +105,20 @@ export const govUniversalDef = defineFiberApp({
       dependencies: [],
     },
     {
-      from: "VOTING",
-      to: "VOTING",
-      eventName: "vote",
-      guard: { "==": [1, 1] },
+      from: 'VOTING',
+      to: 'VOTING',
+      eventName: 'vote',
+      guard: { '==': [1, 1] },
       effect: {
         merge: [
-          { var: "state" },
+          { var: 'state' },
           {
             votes: {
               merge: [
-                { var: "state.votes" },
+                { var: 'state.votes' },
                 {
-                  __key: { var: "event.agent" },
-                  __value: { var: "event.vote" },
+                  __key: { var: 'event.agent' },
+                  __value: { var: 'event.vote' },
                 },
               ],
             },
@@ -129,17 +128,17 @@ export const govUniversalDef = defineFiberApp({
       dependencies: [],
     },
     {
-      from: "VOTING",
-      to: "ACTIVE",
-      eventName: "finalize",
-      guard: { "==": [1, 1] },
+      from: 'VOTING',
+      to: 'ACTIVE',
+      eventName: 'finalize',
+      guard: { '==': [1, 1] },
       effect: {
         merge: [
-          { var: "state" },
+          { var: 'state' },
           {
-            status: "ACTIVE",
-            lastProposal: { var: "state.proposal" },
-            lastResult: { var: "event.result" },
+            status: 'ACTIVE',
+            lastProposal: { var: 'state.proposal' },
+            lastResult: { var: 'event.result' },
             proposal: null,
             votes: null,
           },
@@ -148,16 +147,16 @@ export const govUniversalDef = defineFiberApp({
       dependencies: [],
     },
     {
-      from: "ACTIVE",
-      to: "DISSOLVED",
-      eventName: "dissolve",
-      guard: { "==": [1, 1] },
+      from: 'ACTIVE',
+      to: 'DISSOLVED',
+      eventName: 'dissolve',
+      guard: { '==': [1, 1] },
       effect: {
         merge: [
-          { var: "state" },
+          { var: 'state' },
           {
-            status: "DISSOLVED",
-            dissolvedAt: { var: "$ordinal" },
+            status: 'DISSOLVED',
+            dissolvedAt: { var: '$ordinal' },
           },
         ],
       },

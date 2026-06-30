@@ -40,8 +40,8 @@ import {
   type TransferPayload,
   type UnshieldPayload,
   type NoteMintedPayload,
-} from "./state-machines/index.js";
-import type { FiberAppDefinition } from "../../schema/fiber-app.js";
+} from './state-machines/index.js';
+import type { FiberAppDefinition } from '../../schema/fiber-app.js';
 
 export {
   mixerDdhRingDef,
@@ -70,15 +70,15 @@ export const shieldedNotePoolDef = notePoolDef({
   vkey: ZERO_WORD,
   depth: 8,
   denom: 100,
-  poolPolicyRef: "std.privacy.note-pool",
+  poolPolicyRef: 'std.privacy.note-pool',
   feeAsset: ZERO_WORD,
-  relayer: "DAG0000000000000000000000000000000000000000",
+  relayer: 'DAG0000000000000000000000000000000000000000',
 });
 
 /** All privacy (note-layer) state machine definitions. */
 export const PRIVACY_DEFINITIONS = {
-  "sigma-mixer": mixerDdhRingDef,
-  "shielded-note-pool": shieldedNotePoolDef,
+  'sigma-mixer': mixerDdhRingDef,
+  'shielded-note-pool': shieldedNotePoolDef,
 } as const;
 
 export type PrivacyDefType = keyof typeof PRIVACY_DEFINITIONS;
@@ -87,8 +87,6 @@ export type PrivacyDefType = keyof typeof PRIVACY_DEFINITIONS;
  * Get a privacy state machine definition by type.
  * @param type - 'sigma-mixer' (default) | 'shielded-note-pool'.
  */
-export function getPrivacyDefinition(
-  type: PrivacyDefType = "sigma-mixer",
-): FiberAppDefinition {
+export function getPrivacyDefinition(type: PrivacyDefType = 'sigma-mixer'): FiberAppDefinition {
   return PRIVACY_DEFINITIONS[type];
 }

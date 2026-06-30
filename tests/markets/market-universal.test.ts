@@ -39,7 +39,7 @@ describe('MarketUniversal State Machine', () => {
   });
 
   it('should have open, cancel, commit, close, settle events', () => {
-    const eventNames = marketUniversalDef.transitions.map(t => t.eventName);
+    const eventNames = marketUniversalDef.transitions.map((t) => t.eventName);
     expect(eventNames).toContain('open');
     expect(eventNames).toContain('cancel');
     expect(eventNames).toContain('commit');
@@ -48,7 +48,7 @@ describe('MarketUniversal State Machine', () => {
   });
 
   it('should have commit transition with amount guard', () => {
-    const commitTransition = marketUniversalDef.transitions.find(t => t.eventName === 'commit');
+    const commitTransition = marketUniversalDef.transitions.find((t) => t.eventName === 'commit');
     expect(commitTransition).toBeDefined();
     expect(commitTransition?.from).toBe('OPEN');
     expect(commitTransition?.to).toBe('OPEN');

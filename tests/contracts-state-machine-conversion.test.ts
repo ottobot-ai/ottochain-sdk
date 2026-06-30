@@ -2,11 +2,11 @@
 // @ts-nocheck — TDD scaffolding: tests access future fields not yet on the type
 /**
  * TDD Tests for Contracts State Machine Conversion
- * 
+ *
  * These tests validate the conversion of JSON state machines to TypeScript
  * using defineFiberApp(). Tests should FAIL initially since the conversion
  * hasn't been implemented yet.
- * 
+ *
  * Coverage:
  * - ContractAgreement state machine
  * - ContractEscrow state machine  
@@ -16,15 +16,10 @@
  * - Type safety
  */
 
-import {
-  contractAgreementDef,
-  contractEscrowDef,
-  contractUniversalDef
-} from '../src/apps/contracts/state-machines';
+import { contractAgreementDef, contractEscrowDef, contractUniversalDef } from '../src/apps/contracts/state-machines';
 import { signerIsParty, signerIsAnyParty } from '../src/schema/guards.js';
 
 describe('Contracts State Machine Conversion', () => {
-  
   describe('ContractAgreement State Machine', () => {
     it('should define ContractAgreement using defineFiberApp', () => {
       // This test will FAIL until conversion is complete
@@ -46,7 +41,7 @@ describe('Contracts State Machine Conversion', () => {
         immutable: true,
       });
       expect(contractAgreementDef.createSchema.properties.counterparty).toEqual({
-        type: 'address', 
+        type: 'address',
         description: expect.any(String),
         immutable: true,
       });
@@ -82,16 +77,16 @@ describe('Contracts State Machine Conversion', () => {
     it('should define proper transitions with events', () => {
       expect(contractAgreementDef.transitions).toBeDefined();
       expect(contractAgreementDef.transitions).toHaveLength(8); // All transitions from JSON
-      
+
       // Check key transitions exist
       const acceptTransition = contractAgreementDef.transitions.find(
-        t => t.from === 'PROPOSED' && t.to === 'ACTIVE' && t.eventName === 'accept'
+        (t) => t.from === 'PROPOSED' && t.to === 'ACTIVE' && t.eventName === 'accept',
       );
       expect(acceptTransition).toBeDefined();
       expect(acceptTransition?.guard).toBeDefined(); // Agent validation guard
-      
+
       const disputeTransition = contractAgreementDef.transitions.find(
-        t => t.from === 'ACTIVE' && t.to === 'DISPUTED' && t.eventName === 'dispute'
+        (t) => t.from === 'ACTIVE' && t.to === 'DISPUTED' && t.eventName === 'dispute',
       );
       expect(disputeTransition).toBeDefined();
     });
@@ -110,20 +105,19 @@ describe('Contracts State Machine Conversion', () => {
 
     it('should preserve all JSON Logic guards and effects', () => {
       const submitCompletionTransition = contractAgreementDef.transitions.find(
-        t => t.eventName === 'submit_completion'
+        (t) => t.eventName === 'submit_completion',
       );
       expect(submitCompletionTransition?.guard).toEqual({
-        "and": [
+        and: [
           signerIsAnyParty(['state.proposer', 'state.counterparty']),
           {
-            "!": [{
-              "in": [
-                { "var": "event.agent" },
-                { "map": [{ "var": "state.completions" }, { "var": "agent" }] }
-              ]
-            }]
-          }
-        ]
+            '!': [
+              {
+                in: [{ var: 'event.agent' }, { map: [{ var: 'state.completions' }, { var: 'agent' }] }],
+              },
+            ],
+          },
+        ],
       });
     });
   });
@@ -138,27 +132,24 @@ describe('Contracts State Machine Conversion', () => {
 
     it('should have all required states', () => {
       const expectedStates = ['CREATED', 'FUNDED', 'ACTIVE', 'RELEASING', 'DISPUTED', 'RELEASED', 'REFUNDED', 'SPLIT'];
-      expectedStates.forEach(state => {
+      expectedStates.forEach((state) => {
         expect(contractEscrowDef.states[state]).toBeDefined();
       });
     });
 
     it('should have deposit transition with amount validation', () => {
       const depositTransition = contractEscrowDef.transitions.find(
-        t => t.from === 'CREATED' && t.to === 'FUNDED' && t.eventName === 'deposit'
+        (t) => t.from === 'CREATED' && t.to === 'FUNDED' && t.eventName === 'deposit',
       );
       expect(depositTransition).toBeDefined();
       expect(depositTransition?.guard).toEqual({
-        "and": [
-          signerIsParty('state.depositor'),
-          { ">=": [{ "var": "event.amount" }, { "var": "state.requiredAmount" }] }
-        ]
+        and: [signerIsParty('state.depositor'), { '>=': [{ var: 'event.amount' }, { var: 'state.requiredAmount' }] }],
       });
     });
 
     it('should surface the dispute case via _emit (A3: transition-level spawns is dropped)', () => {
       const disputeTransition = contractEscrowDef.transitions.find(
-        t => t.from === 'RELEASING' && t.to === 'DISPUTED' && t.eventName === 'dispute'
+        (t) => t.from === 'RELEASING' && t.to === 'DISPUTED' && t.eventName === 'dispute',
       );
       expect(disputeTransition?.spawns).toBeUndefined();
       const effectStr = JSON.stringify(disputeTransition?.effect);
@@ -189,14 +180,14 @@ describe('Contracts State Machine Conversion', () => {
 
     it('should have minimal state machine with basic states', () => {
       const expectedStates = ['PROPOSED', 'ACTIVE', 'COMPLETED', 'CANCELLED'];
-      expectedStates.forEach(state => {
+      expectedStates.forEach((state) => {
         expect(contractUniversalDef.states[state]).toBeDefined();
       });
     });
 
     it('should have simple transitions with trivial guards', () => {
-      contractUniversalDef.transitions.forEach(transition => {
-        expect(transition.guard).toEqual({ "==": [1, 1] });
+      contractUniversalDef.transitions.forEach((transition) => {
+        expect(transition.guard).toEqual({ '==': [1, 1] });
       });
     });
 
@@ -211,7 +202,7 @@ describe('Contracts State Machine Conversion', () => {
     it('should export all contract state machines from index', () => {
       // This test ensures the index.ts file properly exports all converted definitions
       expect(contractAgreementDef).toBeDefined();
-      expect(contractEscrowDef).toBeDefined(); 
+      expect(contractEscrowDef).toBeDefined();
       expect(contractUniversalDef).toBeDefined();
     });
 
@@ -220,7 +211,7 @@ describe('Contracts State Machine Conversion', () => {
       const agreement: typeof contractAgreementDef = contractAgreementDef;
       const escrow: typeof contractEscrowDef = contractEscrowDef;
       const universal: typeof contractUniversalDef = contractUniversalDef;
-      
+
       expect(agreement).toBe(contractAgreementDef);
       expect(escrow).toBe(contractEscrowDef);
       expect(universal).toBe(contractUniversalDef);
@@ -240,7 +231,7 @@ describe('Contracts State Machine Conversion', () => {
         field: 'escrowId',
         description: 'Links to Escrow if payment is escrowed',
       });
-      
+
       expect(contractEscrowDef.metadata.crossReferences).toBeDefined();
       expect(contractEscrowDef.metadata.crossReferences.contractId).toEqual({
         machine: 'contract-agreement',
@@ -258,7 +249,7 @@ describe('Contracts State Machine Conversion', () => {
     });
 
     it('should preserve all transition dependencies', () => {
-      contractAgreementDef.transitions.forEach(transition => {
+      contractAgreementDef.transitions.forEach((transition) => {
         expect(transition.dependencies).toBeDefined();
         expect(Array.isArray(transition.dependencies)).toBe(true);
       });
@@ -267,37 +258,34 @@ describe('Contracts State Machine Conversion', () => {
 
   describe('JSON Logic Validation', () => {
     it('should preserve complex guards without modification', () => {
-      const finalizeTransition = contractAgreementDef.transitions.find(
-        t => t.eventName === 'finalize'
-      );
+      const finalizeTransition = contractAgreementDef.transitions.find((t) => t.eventName === 'finalize');
       expect(finalizeTransition?.guard).toEqual({
-        ">=": [
-          { "length": [{ "var": "state.completions" }] },
-          2
-        ]
+        '>=': [{ length: [{ var: 'state.completions' }] }, 2],
       });
     });
 
     it('should preserve complex effects with merge operations', () => {
       const submitCompletionTransition = contractAgreementDef.transitions.find(
-        t => t.eventName === 'submit_completion'
+        (t) => t.eventName === 'submit_completion',
       );
       expect(submitCompletionTransition?.effect).toEqual({
-        "merge": [
-          { "var": "state" },
+        merge: [
+          { var: 'state' },
           {
-            "completions": {
-              "cat": [
-                { "var": "state.completions" },
-                [{
-                  "agent": { "var": "event.agent" },
-                  "proof": { "var": "event.proof" },
-                  "submittedAt": { "var": "$ordinal" }
-                }]
-              ]
-            }
-          }
-        ]
+            completions: {
+              cat: [
+                { var: 'state.completions' },
+                [
+                  {
+                    agent: { var: 'event.agent' },
+                    proof: { var: 'event.proof' },
+                    submittedAt: { var: '$ordinal' },
+                  },
+                ],
+              ],
+            },
+          },
+        ],
       });
     });
   });
@@ -305,48 +293,42 @@ describe('Contracts State Machine Conversion', () => {
   describe('Error Handling Edge Cases', () => {
     it('should handle reject transition with reason field', () => {
       const rejectTransition = contractAgreementDef.transitions.find(
-        t => t.from === 'PROPOSED' && t.to === 'REJECTED' && t.eventName === 'reject'
+        (t) => t.from === 'PROPOSED' && t.to === 'REJECTED' && t.eventName === 'reject',
       );
       expect(rejectTransition?.effect).toEqual({
-        "merge": [
-          { "var": "state" },
+        merge: [
+          { var: 'state' },
           {
-            "status": "REJECTED",
-            "rejectedAt": { "var": "$ordinal" },
-            "rejectReason": { "var": "event.reason" }
-          }
-        ]
+            status: 'REJECTED',
+            rejectedAt: { var: '$ordinal' },
+            rejectReason: { var: 'event.reason' },
+          },
+        ],
       });
     });
 
     it('should resolve a dispute via the pinned arbitrator OR both parties (S2 fix)', () => {
       const resolveTransition = contractAgreementDef.transitions.find(
-        t => t.from === 'DISPUTED' && t.to === 'COMPLETED' && t.eventName === 'resolve'
+        (t) => t.from === 'DISPUTED' && t.to === 'COMPLETED' && t.eventName === 'resolve',
       );
       // The bare forgeable booleans (event.judicialRuling / *Approves) are gone;
       // authority binds to verified signers (proofs[].address).
       expect(resolveTransition?.guard).toEqual({
-        "or": [
+        or: [
           signerIsParty('state.arbitrator'),
           {
-            "and": [
-              signerIsParty('state.proposer'),
-              signerIsParty('state.counterparty')
-            ]
-          }
-        ]
+            and: [signerIsParty('state.proposer'), signerIsParty('state.counterparty')],
+          },
+        ],
       });
     });
 
     it('should handle escrow timeout scenarios', () => {
       const autoReleaseTransition = contractEscrowDef.transitions.find(
-        t => t.from === 'RELEASING' && t.to === 'RELEASED' && t.eventName === 'approve_release'
+        (t) => t.from === 'RELEASING' && t.to === 'RELEASED' && t.eventName === 'approve_release',
       );
       expect(autoReleaseTransition?.guard).toEqual({
-        "or": [
-          signerIsParty('state.depositor'),
-          { ">=": [{ "var": "$ordinal" }, { "var": "state.releaseDeadline" }] }
-        ]
+        or: [signerIsParty('state.depositor'), { '>=': [{ var: '$ordinal' }, { var: 'state.releaseDeadline' }] }],
       });
     });
   });

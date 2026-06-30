@@ -32,12 +32,7 @@ import {
 
 // ── synthetic public-values helpers (mirrors abi_encode(JlvmPublicValues)) ──────────────────────
 const word = (hex32: string): string => hex32.replace(/^0x/, '').toLowerCase().padStart(64, '0');
-const makePV = (
-  exprH: string,
-  dataH: string,
-  outH: string,
-  ok: boolean,
-): `0x${string}` =>
+const makePV = (exprH: string, dataH: string, outH: string, ok: boolean): `0x${string}` =>
   `0x${word(exprH)}${word(dataH)}${word(outH)}${ok ? '00'.repeat(31) + '01' : '00'.repeat(32)}`;
 
 const POSEIDON_1_2 = '0x115cc0f5e7d690413df64c6b9662e9cf2a3617f2743245519e19607a4417189a';
@@ -189,14 +184,14 @@ describe('zk/guard — builder + client-side mirror', () => {
     expect(jsonLogic.apply(exprClause, ctx)).toBe(true);
     expect(jsonLogic.apply(outClause, ctx)).toBe(true);
     // a non-matching rule hash makes the exprHash clause false
-    const wrong = { '==': [{ cat: ['0x', { substr: [{ var: 'witness.publicValues' }, 2, 64] }] }, `0x${'99'.repeat(32)}`] };
+    const wrong = {
+      '==': [{ cat: ['0x', { substr: [{ var: 'witness.publicValues' }, 2, 64] }] }, `0x${'99'.repeat(32)}`],
+    };
     expect(jsonLogic.apply(wrong, ctx)).toBe(false);
   });
 
   it('verifyGroth16Bundle returns false (not throws) on a garbage proof', () => {
-    expect(
-      verifyGroth16Bundle({ vkey, publicValues: '0x', proof: `0x${'00'.repeat(8)}` }),
-    ).toBe(false);
+    expect(verifyGroth16Bundle({ vkey, publicValues: '0x', proof: `0x${'00'.repeat(8)}` })).toBe(false);
   });
 
   it('checkSemiPrivateBinding accepts a bound witness and reports each failure', () => {

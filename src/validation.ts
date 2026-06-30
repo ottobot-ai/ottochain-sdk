@@ -27,9 +27,7 @@ const hexString = (length?: number) => {
 /**
  * Schema for a DAG address
  */
-export const DagAddressSchema = z
-  .string()
-  .regex(/^DAG[0-9][a-zA-Z0-9]{36}$/, 'Must be a valid DAG address');
+export const DagAddressSchema = z.string().regex(/^DAG[0-9][a-zA-Z0-9]{36}$/, 'Must be a valid DAG address');
 
 // ============================================================================
 // Core Type Schemas
@@ -254,11 +252,7 @@ export type ValidatedCompleteContractRequest = z.infer<typeof CompleteContractRe
  * // keyPair is now typed as ValidatedKeyPair
  * ```
  */
-export function validate<T extends z.ZodTypeAny>(
-  schema: T,
-  data: unknown,
-  fieldName?: string
-): z.infer<T> {
+export function validate<T extends z.ZodTypeAny>(schema: T, data: unknown, fieldName?: string): z.infer<T> {
   const result = schema.safeParse(data);
 
   if (!result.success) {
@@ -348,7 +342,7 @@ export function validateKeyPair(keyPair: unknown): ValidatedKeyPair {
  */
 export function safeParse<T extends z.ZodTypeAny>(
   schema: T,
-  data: unknown
+  data: unknown,
 ): { success: true; data: z.infer<T> } | { success: false; error: ValidationError } {
   const result = schema.safeParse(data);
 

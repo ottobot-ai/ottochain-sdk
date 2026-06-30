@@ -6,8 +6,8 @@
  * @packageDocumentation
  */
 
-import { State } from "../../generated/ottochain/apps/identity/v1/identity.js";
-import { AttestationType } from "../../generated/ottochain/apps/identity/v1/attestation.js";
+import { State } from '../../generated/ottochain/apps/identity/v1/identity.js';
+import { AttestationType } from '../../generated/ottochain/apps/identity/v1/attestation.js';
 
 // ---------------------------------------------------------------------------
 // State Machine Transitions
@@ -20,22 +20,14 @@ import { AttestationType } from "../../generated/ottochain/apps/identity/v1/atte
  */
 export const IDENTITY_TRANSITIONS: Record<State, readonly string[]> = {
   [State.IDENTITY_STATE_UNSPECIFIED]: [],
-  [State.IDENTITY_STATE_UNREGISTERED]: ["register"],
-  [State.IDENTITY_STATE_REGISTERED]: ["activate", "withdraw"],
-  [State.IDENTITY_STATE_ACTIVE]: [
-    "challenge",
-    "slash",
-    "deactivate",
-    "withdraw",
-  ],
-  [State.IDENTITY_STATE_CHALLENGED]: [
-    "uphold_challenge",
-    "dismiss_challenge",
-  ],
-  [State.IDENTITY_STATE_SUSPENDED]: ["begin_probation"],
-  [State.IDENTITY_STATE_PROBATION]: ["complete_probation"],
-  [State.IDENTITY_STATE_SLASHED]: ["reactivate", "withdraw"],
-  [State.IDENTITY_STATE_INACTIVE]: ["activate", "withdraw"],
+  [State.IDENTITY_STATE_UNREGISTERED]: ['register'],
+  [State.IDENTITY_STATE_REGISTERED]: ['activate', 'withdraw'],
+  [State.IDENTITY_STATE_ACTIVE]: ['challenge', 'slash', 'deactivate', 'withdraw'],
+  [State.IDENTITY_STATE_CHALLENGED]: ['uphold_challenge', 'dismiss_challenge'],
+  [State.IDENTITY_STATE_SUSPENDED]: ['begin_probation'],
+  [State.IDENTITY_STATE_PROBATION]: ['complete_probation'],
+  [State.IDENTITY_STATE_SLASHED]: ['reactivate', 'withdraw'],
+  [State.IDENTITY_STATE_INACTIVE]: ['activate', 'withdraw'],
   [State.IDENTITY_STATE_WITHDRAWN]: [], // Terminal state
   [State.UNRECOGNIZED]: [],
 };
@@ -70,10 +62,10 @@ export const ATTESTATION_DELTAS: Record<AttestationType, number> = {
  * dependency + `signerHasRole` (see docs/design/app-hardening-identity-integration.md §4.2).
  */
 export const REGISTRY_ROLES = {
-  ARBITER: "ARBITER",
-  SLASHER: "SLASHER",
-  ISSUER: "ISSUER",
-  BOARD_MEMBER: "BOARD_MEMBER",
+  ARBITER: 'ARBITER',
+  SLASHER: 'SLASHER',
+  ISSUER: 'ISSUER',
+  BOARD_MEMBER: 'BOARD_MEMBER',
 } as const;
 
 export type RegistryRole = keyof typeof REGISTRY_ROLES;
@@ -84,10 +76,10 @@ export type RegistryRole = keyof typeof REGISTRY_ROLES;
  * verified signer with `signerHasRole`. Kept in lock-step with the identity-registry stateSchema.
  */
 export const REGISTRY_ROLE_MAP: Record<RegistryRole, string> = {
-  ARBITER: "arbiters",
-  SLASHER: "slashers",
-  ISSUER: "issuers",
-  BOARD_MEMBER: "boardMembers",
+  ARBITER: 'arbiters',
+  SLASHER: 'slashers',
+  ISSUER: 'issuers',
+  BOARD_MEMBER: 'boardMembers',
 } as const;
 
 /**

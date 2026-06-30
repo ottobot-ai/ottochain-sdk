@@ -8,11 +8,7 @@ import {
   getEventReceipts,
   getScriptInvocations,
 } from '../src/ottochain/snapshot';
-import {
-  getSnapshotOnChainState,
-  getLatestOnChainState,
-  decodeOnChainState,
-} from '../src/ottochain/snapshot';
+import { getSnapshotOnChainState, getLatestOnChainState, decodeOnChainState } from '../src/ottochain/snapshot';
 
 // Mock HttpClient
 jest.mock('@constellation-network/metagraph-sdk/network', () => {
@@ -130,7 +126,7 @@ describe('MetagraphClient', () => {
 
   describe('getScripts', () => {
     it('fetches all scripts without filter', async () => {
-      const scripts = { 's1': { status: 'Active' } };
+      const scripts = { s1: { status: 'Active' } };
       mockMl0Get.mockResolvedValue(scripts);
       const result = await client.getScripts();
       expect(result).toEqual(scripts);

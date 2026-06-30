@@ -273,9 +273,7 @@ export function createInvokeScriptPayload(params: InvokeScriptParams): InvokeScr
 // with {@link signTransaction} (the canonical `JCS(dropNulls)` path drops any omitted optionals).
 
 /** Wrap a {@link CreateAssetPolicy} (publish an asset-policy package version). */
-export function createAssetPolicyPayload(
-  params: CreateAssetPolicy,
-): { CreateAssetPolicy: CreateAssetPolicy } {
+export function createAssetPolicyPayload(params: CreateAssetPolicy): { CreateAssetPolicy: CreateAssetPolicy } {
   return { CreateAssetPolicy: params };
 }
 
@@ -290,23 +288,19 @@ export function createApplyMorphismPayload(params: ApplyMorphism): { ApplyMorphi
 }
 
 /** Wrap an {@link AuthorizeCompose} (commit half of the symmetric-compose handshake). */
-export function createAuthorizeComposePayload(
-  params: AuthorizeCompose,
-): { AuthorizeCompose: AuthorizeCompose } {
+export function createAuthorizeComposePayload(params: AuthorizeCompose): { AuthorizeCompose: AuthorizeCompose } {
   return { AuthorizeCompose: params };
 }
 
 /** Wrap a {@link PublishMachineVersion} (create-or-append a STATE-MACHINE registry version). */
-export function createPublishMachineVersionPayload(
-  params: PublishMachineVersion,
-): { PublishMachineVersion: PublishMachineVersion } {
+export function createPublishMachineVersionPayload(params: PublishMachineVersion): {
+  PublishMachineVersion: PublishMachineVersion;
+} {
   return { PublishMachineVersion: params };
 }
 
 /** Wrap an {@link UpgradeFiber} (re-pin a fiber to another registered version of the SAME package). */
-export function createUpgradeFiberPayload(
-  params: UpgradeFiber,
-): { UpgradeFiber: UpgradeFiber } {
+export function createUpgradeFiberPayload(params: UpgradeFiber): { UpgradeFiber: UpgradeFiber } {
   return { UpgradeFiber: params };
 }
 
@@ -352,10 +346,7 @@ export function createUpgradeFiberPayload(
  * });
  * ```
  */
-export async function signTransaction<T>(
-  message: T,
-  privateKey: string
-): Promise<Signed<T>> {
+export async function signTransaction<T>(message: T, privateKey: string): Promise<Signed<T>> {
   const proof = await signDataUpdate(message, privateKey);
   return {
     value: message,
@@ -409,10 +400,7 @@ export function createDataTransactionRequest<T>(signed: Signed<T>): DataTransact
  * @param privateKey - Additional signer's private key
  * @returns Transaction with additional signature
  */
-export async function addTransactionSignature<T>(
-  signed: Signed<T>,
-  privateKey: string
-): Promise<Signed<T>> {
+export async function addTransactionSignature<T>(signed: Signed<T>, privateKey: string): Promise<Signed<T>> {
   const newProof = await signDataUpdate(signed.value, privateKey);
   return {
     value: signed.value,

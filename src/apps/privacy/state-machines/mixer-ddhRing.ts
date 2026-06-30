@@ -1,5 +1,5 @@
-import { defineFiberApp } from "../../../schema/fiber-app.js";
-import type { JsonLogicRule } from "../../../schema/fiber-app.js";
+import { defineFiberApp } from '../../../schema/fiber-app.js';
+import type { JsonLogicRule } from '../../../schema/fiber-app.js';
 
 /**
  * sigma-mixer — a CDS OR-of-`dhtuple` Σ-protocol ring mixer.
@@ -62,14 +62,14 @@ export function sigmaDdhRingOf(
   const children: JsonLogicRule[] = [];
   for (let k = 0; k < n; k++) {
     children.push({
-      type: "dhtuple",
+      type: 'dhtuple',
       g: gHex,
       h: hHex,
       u: { var: `${pointsVar}.${k}` },
       v: { var: nullifierVar },
     });
   }
-  return { type: "or", children };
+  return { type: 'or', children };
 }
 
 /**
@@ -80,23 +80,19 @@ function withdrawVerifyClauses(gHex: string, hHex: string, n: number): JsonLogic
   return [
     {
       sigma_verify: [
-        sigmaDdhRingOf("state.points", "event.nullifier", gHex, hHex, n),
-        { var: "event.proof" },
-        { var: "event.message" },
+        sigmaDdhRingOf('state.points', 'event.nullifier', gHex, hHex, n),
+        { var: 'event.proof' },
+        { var: 'event.message' },
       ],
     },
     // Double-withdraw prevention: the witness-bound nullifier must be unseen.
-    { "!": { has: [{ var: "state.spentNullifiers" }, { var: "event.nullifier" }] } },
+    { '!': { has: [{ var: 'state.spentNullifiers' }, { var: 'event.nullifier' }] } },
     // Recipient binding (anti-front-run): message == Nf ‖ recipientHex.
     {
-      "===": [
-        { var: "event.message" },
+      '===': [
+        { var: 'event.message' },
         {
-          cat: [
-            "0x",
-            { substr: [{ var: "event.nullifier" }, 2] },
-            { substr: [{ var: "event.recipientHex" }, 2] },
-          ],
+          cat: ['0x', { substr: [{ var: 'event.nullifier' }, 2] }, { substr: [{ var: 'event.recipientHex' }, 2] }],
         },
       ],
     },
@@ -107,12 +103,12 @@ function withdrawVerifyClauses(gHex: string, hHex: string, n: number): JsonLogic
 function withdrawEffect(extra: Record<string, unknown>): JsonLogicRule {
   return {
     merge: [
-      { var: "state" },
+      { var: 'state' },
       {
         spentNullifiers: {
-          set: [{ var: "state.spentNullifiers" }, { var: "event.nullifier" }, true],
+          set: [{ var: 'state.spentNullifiers' }, { var: 'event.nullifier' }, true],
         },
-        withdrawCount: { "+": [{ var: "state.withdrawCount" }, 1] },
+        withdrawCount: { '+': [{ var: 'state.withdrawCount' }, 1] },
         ...extra,
       },
     ],
@@ -122,9 +118,9 @@ function withdrawEffect(extra: Record<string, unknown>): JsonLogicRule {
 // G=(1,2) and the NUMS H are the e2e defaults (derived by scripts/gen-sigma-mixer-fixture.ts).
 // Downstream apps pass their own audited H via the builder; these are the pinned-ring v1 demo values.
 const G_HEX =
-  "0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002";
+  '0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002';
 const H_HEX =
-  "0x039c846e3a79217fd140d094eec09fe4f398085d01dee70506edde1eb6a9d81608922722cc3a6c3a7ae4929e78e82dc5f25e91598a69f7f8b9b3adb95badb3d0";
+  '0x039c846e3a79217fd140d094eec09fe4f398085d01dee70506edde1eb6a9d81608922722cc3a6c3a7ae4929e78e82dc5f25e91598a69f7f8b9b3adb95badb3d0';
 const RING_N = 4;
 
 /**
@@ -138,118 +134,117 @@ const RING_N = 4;
  */
 export const mixerDdhRingDef = defineFiberApp({
   metadata: {
-    name: "MixerDdhRing",
-    app: "privacy",
-    type: "sigma-mixer",
-    version: "1.0.0",
+    name: 'MixerDdhRing',
+    app: 'privacy',
+    type: 'sigma-mixer',
+    version: '1.0.0',
     description:
-      "CDS OR-of-dhtuple Σ-protocol ring mixer. Anonymity via sigma_verify over an " +
-      "OR of DDH tuples (G,H,P_i,nullifier); the revealed nullifier Nf=x_j·H is " +
-      "witness-bound (H has unknown dlog wrt G), closing the ring-drain double-spend. " +
-      "Frozen-ring lifecycle (filling→open→drained) + message-bound recipient.",
+      'CDS OR-of-dhtuple Σ-protocol ring mixer. Anonymity via sigma_verify over an ' +
+      'OR of DDH tuples (G,H,P_i,nullifier); the revealed nullifier Nf=x_j·H is ' +
+      'witness-bound (H has unknown dlog wrt G), closing the ring-drain double-spend. ' +
+      'Frozen-ring lifecycle (filling→open→drained) + message-bound recipient.',
   },
 
   createSchema: {
-    required: ["mixerId", "denomination", "anonymityTarget"] as const,
+    required: ['mixerId', 'denomination', 'anonymityTarget'] as const,
     properties: {
-      mixerId: { type: "string", immutable: true, description: "Mixer instance id." },
+      mixerId: { type: 'string', immutable: true, description: 'Mixer instance id.' },
       denomination: {
-        type: "integer",
+        type: 'integer',
         immutable: true,
-        description: "Equal denomination per deposit/withdraw (production custody).",
+        description: 'Equal denomination per deposit/withdraw (production custody).',
       },
       nullifierBaseH: {
-        type: "string",
+        type: 'string',
         immutable: true,
-        description: "The NUMS second base H (64B G1 hex); informational — H is inlined in the proposition.",
+        description: 'The NUMS second base H (64B G1 hex); informational — H is inlined in the proposition.',
       },
       anonymityTarget: {
-        type: "integer",
+        type: 'integer',
         immutable: true,
-        description: "Ring size n; the ring opens once depositCount == anonymityTarget.",
+        description: 'Ring size n; the ring opens once depositCount == anonymityTarget.',
       },
       points: {
-        type: "array",
-        items: { type: "string" },
+        type: 'array',
+        items: { type: 'string' },
         default: [],
-        description: "Ordered ring commitments P_i = x_i·G (64B G1 hex).",
+        description: 'Ordered ring commitments P_i = x_i·G (64B G1 hex).',
       },
       spentNullifiers: {
-        type: "object",
+        type: 'object',
         default: {},
-        description: "FLAT map nullifierHex -> true. MUST be {} (never null): has/set throw on null.",
+        description: 'FLAT map nullifierHex -> true. MUST be {} (never null): has/set throw on null.',
       },
-      depositCount: { type: "integer", default: 0 },
-      withdrawCount: { type: "integer", default: 0 },
-      status: { type: "string", default: "filling", description: "filling → open → drained." },
+      depositCount: { type: 'integer', default: 0 },
+      withdrawCount: { type: 'integer', default: 0 },
+      status: { type: 'string', default: 'filling', description: 'filling → open → drained.' },
     },
   },
 
   stateSchema: {
     properties: {
-      mixerId: { type: "string", immutable: true },
-      denomination: { type: "integer", immutable: true },
-      nullifierBaseH: { type: "string", immutable: true },
-      anonymityTarget: { type: "integer", immutable: true },
-      points: { type: "array", items: { type: "string" }, computed: true },
-      spentNullifiers: { type: "object", computed: true },
-      depositCount: { type: "integer", computed: true },
-      withdrawCount: { type: "integer", computed: true },
-      status: { type: "string", computed: true },
+      mixerId: { type: 'string', immutable: true },
+      denomination: { type: 'integer', immutable: true },
+      nullifierBaseH: { type: 'string', immutable: true },
+      anonymityTarget: { type: 'integer', immutable: true },
+      points: { type: 'array', items: { type: 'string' }, computed: true },
+      spentNullifiers: { type: 'object', computed: true },
+      depositCount: { type: 'integer', computed: true },
+      withdrawCount: { type: 'integer', computed: true },
+      status: { type: 'string', computed: true },
     },
   },
 
   eventSchemas: {
-    deposit: { description: "Register a ring commitment point P_i = x_i·G." },
+    deposit: { description: 'Register a ring commitment point P_i = x_i·G.' },
     withdraw: {
-      description:
-        "Spend one ring slot: a CDS OR-of-dhtuple proof + witness-bound nullifier + bound recipient.",
+      description: 'Spend one ring slot: a CDS OR-of-dhtuple proof + witness-bound nullifier + bound recipient.',
     },
   },
 
   states: {
     filling: {
-      id: "filling",
+      id: 'filling',
       isFinal: false,
-      metadata: { label: "Filling", description: "Ring accepting deposits.", category: "active" },
+      metadata: { label: 'Filling', description: 'Ring accepting deposits.', category: 'active' },
     },
     open: {
-      id: "open",
+      id: 'open',
       isFinal: false,
-      metadata: { label: "Open", description: "Ring frozen; withdrawals allowed.", category: "active" },
+      metadata: { label: 'Open', description: 'Ring frozen; withdrawals allowed.', category: 'active' },
     },
     drained: {
-      id: "drained",
+      id: 'drained',
       isFinal: true,
-      metadata: { label: "Drained", description: "All slots withdrawn; one-shot.", category: "terminal" },
+      metadata: { label: 'Drained', description: 'All slots withdrawn; one-shot.', category: 'terminal' },
     },
   },
 
-  initialState: "filling",
+  initialState: 'filling',
 
   // ORDER IS LOAD-BEARING: the open-flip deposit is declared FIRST (exact
   // boundary), the drained-flip withdraw is declared FIRST (exact boundary).
   transitions: [
     // Deposit A — the LAST deposit: filling → open. Declared FIRST.
     {
-      from: "filling",
-      to: "open",
-      eventName: "deposit",
+      from: 'filling',
+      to: 'open',
+      eventName: 'deposit',
       guard: {
         and: [
-          { "===": [{ "+": [{ var: "state.depositCount" }, 1] }, { var: "state.anonymityTarget" }] },
-          { "!!": [{ var: "event.point" }] },
-          { none: [{ var: "state.points" }, { "===": [{ var: "" }, { var: "event.point" }] }] },
+          { '===': [{ '+': [{ var: 'state.depositCount' }, 1] }, { var: 'state.anonymityTarget' }] },
+          { '!!': [{ var: 'event.point' }] },
+          { none: [{ var: 'state.points' }, { '===': [{ var: '' }, { var: 'event.point' }] }] },
         ],
       },
       effect: {
         merge: [
-          { var: "state" },
+          { var: 'state' },
           {
             // Array append = merge([arr,[item]]) (verified: opMerge flattens one level).
-            points: { merge: [{ var: "state.points" }, [{ var: "event.point" }]] },
-            depositCount: { "+": [{ var: "state.depositCount" }, 1] },
-            status: "open",
+            points: { merge: [{ var: 'state.points' }, [{ var: 'event.point' }]] },
+            depositCount: { '+': [{ var: 'state.depositCount' }, 1] },
+            status: 'open',
           },
         ],
       },
@@ -257,22 +252,22 @@ export const mixerDdhRingDef = defineFiberApp({
     },
     // Deposit B — not-yet-last: filling → filling. Declared SECOND.
     {
-      from: "filling",
-      to: "filling",
-      eventName: "deposit",
+      from: 'filling',
+      to: 'filling',
+      eventName: 'deposit',
       guard: {
         and: [
-          { "<": [{ "+": [{ var: "state.depositCount" }, 1] }, { var: "state.anonymityTarget" }] },
-          { "!!": [{ var: "event.point" }] },
-          { none: [{ var: "state.points" }, { "===": [{ var: "" }, { var: "event.point" }] }] },
+          { '<': [{ '+': [{ var: 'state.depositCount' }, 1] }, { var: 'state.anonymityTarget' }] },
+          { '!!': [{ var: 'event.point' }] },
+          { none: [{ var: 'state.points' }, { '===': [{ var: '' }, { var: 'event.point' }] }] },
         ],
       },
       effect: {
         merge: [
-          { var: "state" },
+          { var: 'state' },
           {
-            points: { merge: [{ var: "state.points" }, [{ var: "event.point" }]] },
-            depositCount: { "+": [{ var: "state.depositCount" }, 1] },
+            points: { merge: [{ var: 'state.points' }, [{ var: 'event.point' }]] },
+            depositCount: { '+': [{ var: 'state.depositCount' }, 1] },
           },
         ],
       },
@@ -280,27 +275,27 @@ export const mixerDdhRingDef = defineFiberApp({
     },
     // Withdraw → drained (the LAST withdrawal). Declared FIRST.
     {
-      from: "open",
-      to: "drained",
-      eventName: "withdraw",
+      from: 'open',
+      to: 'drained',
+      eventName: 'withdraw',
       guard: {
         and: [
           ...withdrawVerifyClauses(G_HEX, H_HEX, RING_N),
-          { "===": [{ "+": [{ var: "state.withdrawCount" }, 1] }, { var: "state.anonymityTarget" }] },
+          { '===': [{ '+': [{ var: 'state.withdrawCount' }, 1] }, { var: 'state.anonymityTarget' }] },
         ],
       },
-      effect: withdrawEffect({ status: "drained" }),
+      effect: withdrawEffect({ status: 'drained' }),
       dependencies: [],
     },
     // Withdraw → open (not-yet-last). Declared SECOND.
     {
-      from: "open",
-      to: "open",
-      eventName: "withdraw",
+      from: 'open',
+      to: 'open',
+      eventName: 'withdraw',
       guard: {
         and: [
           ...withdrawVerifyClauses(G_HEX, H_HEX, RING_N),
-          { "<": [{ "+": [{ var: "state.withdrawCount" }, 1] }, { var: "state.anonymityTarget" }] },
+          { '<': [{ '+': [{ var: 'state.withdrawCount' }, 1] }, { var: 'state.anonymityTarget' }] },
         ],
       },
       effect: withdrawEffect({}),

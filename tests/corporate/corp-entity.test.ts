@@ -22,7 +22,7 @@ describe('CorpEntity State Machine', () => {
     it('should define all required states', () => {
       const expectedStates = ['INCORPORATING', 'ACTIVE', 'SUSPENDED', 'DISSOLVED'];
       const actualStates = Object.keys(corpEntityDef.states);
-      expectedStates.forEach(state => {
+      expectedStates.forEach((state) => {
         expect(actualStates).toContain(state);
       });
     });
@@ -42,7 +42,7 @@ describe('CorpEntity State Machine', () => {
     });
 
     it('should have descriptions for all states', () => {
-      Object.values(corpEntityDef.states).forEach(state => {
+      Object.values(corpEntityDef.states).forEach((state) => {
         expect(state.description).toBeDefined();
         expect(state.description.length).toBeGreaterThan(0);
       });
@@ -52,56 +52,56 @@ describe('CorpEntity State Machine', () => {
   describe('State Transitions', () => {
     it('should allow incorporate transition from INCORPORATING to ACTIVE', () => {
       const transition = corpEntityDef.transitions.find(
-        t => t.from === 'INCORPORATING' && t.to === 'ACTIVE' && t.eventName === 'incorporate'
+        (t) => t.from === 'INCORPORATING' && t.to === 'ACTIVE' && t.eventName === 'incorporate',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow amend_charter transition from ACTIVE to ACTIVE', () => {
       const transition = corpEntityDef.transitions.find(
-        t => t.from === 'ACTIVE' && t.to === 'ACTIVE' && t.eventName === 'amend_charter'
+        (t) => t.from === 'ACTIVE' && t.to === 'ACTIVE' && t.eventName === 'amend_charter',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow update_share_class transition from ACTIVE to ACTIVE', () => {
       const transition = corpEntityDef.transitions.find(
-        t => t.from === 'ACTIVE' && t.to === 'ACTIVE' && t.eventName === 'update_share_class'
+        (t) => t.from === 'ACTIVE' && t.to === 'ACTIVE' && t.eventName === 'update_share_class',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow update_registered_agent transition from ACTIVE to ACTIVE', () => {
       const transition = corpEntityDef.transitions.find(
-        t => t.from === 'ACTIVE' && t.to === 'ACTIVE' && t.eventName === 'update_registered_agent'
+        (t) => t.from === 'ACTIVE' && t.to === 'ACTIVE' && t.eventName === 'update_registered_agent',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow suspend transition from ACTIVE to SUSPENDED', () => {
       const transition = corpEntityDef.transitions.find(
-        t => t.from === 'ACTIVE' && t.to === 'SUSPENDED' && t.eventName === 'suspend'
+        (t) => t.from === 'ACTIVE' && t.to === 'SUSPENDED' && t.eventName === 'suspend',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow reinstate transition from SUSPENDED to ACTIVE', () => {
       const transition = corpEntityDef.transitions.find(
-        t => t.from === 'SUSPENDED' && t.to === 'ACTIVE' && t.eventName === 'reinstate'
+        (t) => t.from === 'SUSPENDED' && t.to === 'ACTIVE' && t.eventName === 'reinstate',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow dissolve_voluntary transition from ACTIVE to DISSOLVED', () => {
       const transition = corpEntityDef.transitions.find(
-        t => t.from === 'ACTIVE' && t.to === 'DISSOLVED' && t.eventName === 'dissolve_voluntary'
+        (t) => t.from === 'ACTIVE' && t.to === 'DISSOLVED' && t.eventName === 'dissolve_voluntary',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow dissolve_administrative transition from SUSPENDED to DISSOLVED', () => {
       const transition = corpEntityDef.transitions.find(
-        t => t.from === 'SUSPENDED' && t.to === 'DISSOLVED' && t.eventName === 'dissolve_administrative'
+        (t) => t.from === 'SUSPENDED' && t.to === 'DISSOLVED' && t.eventName === 'dissolve_administrative',
       );
       expect(transition).toBeDefined();
     });
@@ -109,44 +109,32 @@ describe('CorpEntity State Machine', () => {
 
   describe('Transition Guards and Effects', () => {
     it('should have guard on incorporate transition', () => {
-      const transition = corpEntityDef.transitions.find(
-        t => t.eventName === 'incorporate'
-      );
+      const transition = corpEntityDef.transitions.find((t) => t.eventName === 'incorporate');
       expect(transition?.guard).toBeDefined();
     });
 
     it('should have effect on incorporate transition', () => {
-      const transition = corpEntityDef.transitions.find(
-        t => t.eventName === 'incorporate'
-      );
+      const transition = corpEntityDef.transitions.find((t) => t.eventName === 'incorporate');
       expect(transition?.effect).toBeDefined();
     });
 
     it('should emit CORPORATION_FORMED on incorporate', () => {
-      const transition = corpEntityDef.transitions.find(
-        t => t.eventName === 'incorporate'
-      );
+      const transition = corpEntityDef.transitions.find((t) => t.eventName === 'incorporate');
       expect(JSON.stringify(transition?.effect)).toContain('CORPORATION_FORMED');
     });
 
     it('should emit CHARTER_AMENDED on amend_charter', () => {
-      const transition = corpEntityDef.transitions.find(
-        t => t.eventName === 'amend_charter'
-      );
+      const transition = corpEntityDef.transitions.find((t) => t.eventName === 'amend_charter');
       expect(JSON.stringify(transition?.effect)).toContain('CHARTER_AMENDED');
     });
 
     it('should emit CORPORATION_SUSPENDED on suspend', () => {
-      const transition = corpEntityDef.transitions.find(
-        t => t.eventName === 'suspend'
-      );
+      const transition = corpEntityDef.transitions.find((t) => t.eventName === 'suspend');
       expect(JSON.stringify(transition?.effect)).toContain('CORPORATION_SUSPENDED');
     });
 
     it('should emit CORPORATION_DISSOLVED on voluntary dissolution', () => {
-      const transition = corpEntityDef.transitions.find(
-        t => t.eventName === 'dissolve_voluntary'
-      );
+      const transition = corpEntityDef.transitions.find((t) => t.eventName === 'dissolve_voluntary');
       expect(JSON.stringify(transition?.effect)).toContain('CORPORATION_DISSOLVED');
     });
   });
@@ -251,9 +239,7 @@ describe('CorpEntity State Machine', () => {
 
   describe('Two-phase resolution gating (#24)', () => {
     it('propose_amend_charter binds the approving resolution via _addDependency', () => {
-      const propose = corpEntityDef.transitions.find(
-        t => t.eventName === 'propose_amend_charter'
-      );
+      const propose = corpEntityDef.transitions.find((t) => t.eventName === 'propose_amend_charter');
       expect(propose).toBeDefined();
       const effectStr = JSON.stringify(propose?.effect);
       expect(effectStr).toContain('_addDependency');
@@ -261,9 +247,7 @@ describe('CorpEntity State Machine', () => {
     });
 
     it('amend_charter gates on the bound resolution reaching EXECUTED (depInState), not a dropped object-dep', () => {
-      const transition = corpEntityDef.transitions.find(
-        t => t.eventName === 'amend_charter'
-      );
+      const transition = corpEntityDef.transitions.find((t) => t.eventName === 'amend_charter');
       const guardStr = JSON.stringify(transition?.guard);
       // dynamic currentStateId assert on the bound resolution + the recorded proposal match
       expect(guardStr).toContain('EXECUTED');
@@ -273,9 +257,7 @@ describe('CorpEntity State Machine', () => {
     });
 
     it('propose_dissolve_voluntary binds BOTH executing resolutions via _addDependency', () => {
-      const propose = corpEntityDef.transitions.find(
-        t => t.eventName === 'propose_dissolve_voluntary'
-      );
+      const propose = corpEntityDef.transitions.find((t) => t.eventName === 'propose_dissolve_voluntary');
       expect(propose).toBeDefined();
       const effectStr = JSON.stringify(propose?.effect);
       expect(effectStr).toContain('_addDependency');
@@ -284,9 +266,7 @@ describe('CorpEntity State Machine', () => {
     });
 
     it('dissolve_voluntary gates on BOTH bound resolutions reaching EXECUTED (depInState), not dropped object-deps', () => {
-      const transition = corpEntityDef.transitions.find(
-        t => t.eventName === 'dissolve_voluntary'
-      );
+      const transition = corpEntityDef.transitions.find((t) => t.eventName === 'dissolve_voluntary');
       const guardStr = JSON.stringify(transition?.guard);
       expect(guardStr).toContain('EXECUTED');
       expect(guardStr).toContain('pendingDissolveVoluntary');
@@ -300,15 +280,9 @@ describe('CorpEntity State Machine', () => {
 
   describe('Authorization (identity hardening)', () => {
     const guardOf = (eventName: string) =>
-      JSON.stringify(corpEntityDef.transitions.find(t => t.eventName === eventName)?.guard);
-    const createProps = corpEntityDef.createSchema.properties as Record<
-      string,
-      { type?: string; immutable?: boolean }
-    >;
-    const stateProps = corpEntityDef.stateSchema.properties as Record<
-      string,
-      { type?: string; immutable?: boolean }
-    >;
+      JSON.stringify(corpEntityDef.transitions.find((t) => t.eventName === eventName)?.guard);
+    const createProps = corpEntityDef.createSchema.properties as Record<string, { type?: string; immutable?: boolean }>;
+    const stateProps = corpEntityDef.stateSchema.properties as Record<string, { type?: string; immutable?: boolean }>;
 
     it.each(['charterAuthority', 'boardAuthority', 'shareholderAuthority', 'stateAuthority'])(
       'should pin %s as a required, immutable authority address',
@@ -318,7 +292,7 @@ describe('CorpEntity State Machine', () => {
         expect(createProps[field].immutable).toBe(true);
         expect(stateProps[field]).toBeDefined();
         expect(stateProps[field].immutable).toBe(true);
-      }
+      },
     );
 
     it('should gate amend_charter on state.charterAuthority and drop the event.resolutionRef non-null check', () => {

@@ -12,15 +12,7 @@
 // Re-export primitive types from src/types.ts
 // ---------------------------------------------------------------------------
 
-export type {
-  Address,
-  FiberId,
-  StateId,
-  HashValue,
-  FiberOrdinal,
-  SnapshotOrdinal,
-  Timestamp,
-} from '../types.js';
+export type { Address, FiberId, StateId, HashValue, FiberOrdinal, SnapshotOrdinal, Timestamp } from '../types.js';
 
 // ---------------------------------------------------------------------------
 // JSON Logic types
@@ -59,9 +51,7 @@ export type FiberStatus = 'ACTIVE' | 'ARCHIVED' | 'FAILED';
  * Wire format: discriminated union with type key.
  */
 export type AccessControlPolicy =
-  | { Public: Record<string, never> }
-  | { Whitelist: { addresses: string[] } }
-  | { FiberOwned: { fiberId: string } };
+  { Public: Record<string, never> } | { Whitelist: { addresses: string[] } } | { FiberOwned: { fiberId: string } };
 
 // ---------------------------------------------------------------------------
 // State machine definition
@@ -73,7 +63,7 @@ export type AccessControlPolicy =
  */
 export interface StateMachineDefinition {
   states: Record<string, unknown>;
-  initialState: string;  // Plain string, not { value: string }
+  initialState: string; // Plain string, not { value: string }
   transitions: unknown[];
   metadata?: JsonLogicValue;
 }
@@ -308,11 +298,11 @@ export interface EmittedEvent {
  */
 export interface EventReceipt {
   fiberId: string;
-  sequenceNumber: number;  // Plain number
+  sequenceNumber: number; // Plain number
   eventName: string;
-  ordinal: number;  // Plain number (snapshot ordinal)
-  fromState: string;  // Plain string
-  toState: string;  // Plain string
+  ordinal: number; // Plain number (snapshot ordinal)
+  fromState: string; // Plain string
+  toState: string; // Plain string
   success: boolean;
   gasUsed: number;
   triggersFired: number;
@@ -330,8 +320,8 @@ export interface ScriptInvocation {
   args: JsonLogicValue;
   result: JsonLogicValue;
   gasUsed: number;
-  invokedAt: number;  // Plain number (snapshot ordinal)
-  invokedBy: string;  // Plain string (address)
+  invokedAt: number; // Plain number (snapshot ordinal)
+  invokedBy: string; // Plain string (address)
 }
 
 /**
@@ -386,12 +376,7 @@ export interface RejectionReceipt {
 /**
  * Union type for all fiber log entries.
  */
-export type FiberLogEntry =
-  | EventReceipt
-  | ScriptInvocation
-  | CreationReceipt
-  | UpgradeReceipt
-  | RejectionReceipt;
+export type FiberLogEntry = EventReceipt | ScriptInvocation | CreationReceipt | UpgradeReceipt | RejectionReceipt;
 
 // ---------------------------------------------------------------------------
 // Fiber records
@@ -407,11 +392,11 @@ export interface StateMachineFiberRecord {
   previousUpdateOrdinal: number;
   latestUpdateOrdinal: number;
   definition: StateMachineDefinition;
-  currentState: string;  // Plain string
+  currentState: string; // Plain string
   stateData: JsonLogicValue;
-  stateDataHash: string;  // Plain string
+  stateDataHash: string; // Plain string
   sequenceNumber: number;
-  owners: string[];  // Plain string array (addresses)
+  owners: string[]; // Plain string array (addresses)
   status: FiberStatus;
   lastReceipt?: EventReceipt;
   parentFiberId?: string;
@@ -431,10 +416,10 @@ export interface ScriptFiberRecord {
   latestUpdateOrdinal: number;
   scriptProgram: JsonLogicExpression;
   stateData?: JsonLogicValue;
-  stateDataHash?: string;  // Plain string
+  stateDataHash?: string; // Plain string
   accessControl: AccessControlPolicy;
   sequenceNumber: number;
-  owners: string[];  // Plain string array
+  owners: string[]; // Plain string array
   status: FiberStatus;
   lastInvocation?: ScriptInvocation;
   /** The resolved, pinned registry binding, present when created from a registered version. */
@@ -454,8 +439,8 @@ export type FiberRecord = StateMachineFiberRecord | ScriptFiberRecord;
  * Commit hash for a single fiber in the on-chain state.
  */
 export interface FiberCommit {
-  recordHash: string;  // Plain string
-  stateDataHash?: string;  // Plain string
+  recordHash: string; // Plain string
+  stateDataHash?: string; // Plain string
   sequenceNumber: number;
 }
 
@@ -658,8 +643,7 @@ export interface RegisterAlias {
  * Typed asset morphism verb. Wire form: the UPPERCASE entry name (also used as a `morphisms` map key).
  * @see modules/models/.../schema/asset/MorphismKind.scala
  */
-export type MorphismKind =
-  | 'TRANSFER' | 'BURN' | 'FRACTIONALIZE' | 'COMPOSE' | 'DECOMPOSE' | 'POOL' | 'WRAP' | 'STAKE';
+export type MorphismKind = 'TRANSFER' | 'BURN' | 'FRACTIONALIZE' | 'COMPOSE' | 'DECOMPOSE' | 'POOL' | 'WRAP' | 'STAKE';
 
 /**
  * Access-control level of one morphism on an asset policy. Wire form: UPPERCASE entry name.
@@ -720,9 +704,7 @@ export interface MorphismSpec {
  * Wire form: single-key variant `{"Wallet":{"address":..}}` / `{"Fiber":{"fiberId":..}}`.
  * @see modules/models/.../schema/asset/AssetHolder.scala
  */
-export type AssetHolder =
-  | { Wallet: { address: string } }
-  | { Fiber: { fiberId: string } };
+export type AssetHolder = { Wallet: { address: string } } | { Fiber: { fiberId: string } };
 
 /**
  * Cross-chain provenance for a bridged-in (wrapped) asset (the IBC denom-trace analogue).

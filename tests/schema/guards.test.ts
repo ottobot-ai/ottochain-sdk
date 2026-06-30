@@ -92,7 +92,10 @@ describe('schema/guards — authorization binds to verified signers, not event/w
 
   it('signerIsNotParty blocks only when the pinned party actually signed', () => {
     const g = signerIsNotParty('state.author');
-    const ctx = (signers: string[]) => ({ state: { author: '0xauthor' }, proofs: signers.map((a) => ({ address: a })) });
+    const ctx = (signers: string[]) => ({
+      state: { author: '0xauthor' },
+      proofs: signers.map((a) => ({ address: a })),
+    });
     expect(apply(g, ctx(['0xother']))).toBe(true); // author did not sign → allowed
     expect(apply(g, ctx(['0xauthor']))).toBe(false); // author signed → blocked (no self-action)
     expect(g).toEqual({ '!': [signerIsParty('state.author')] });

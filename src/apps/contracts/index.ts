@@ -33,25 +33,21 @@ export {
   ContractDefinition,
   stateFromJSON,
   stateToJSON,
-} from "../../generated/ottochain/apps/contracts/v1/contract.js";
+} from '../../generated/ottochain/apps/contracts/v1/contract.js';
 
 // Deprecated app-prefixed alias (renamed to State); kept for compat.
 export {
   State as ContractState,
   stateFromJSON as contractStateFromJSON,
   stateToJSON as contractStateToJSON,
-} from "../../generated/ottochain/apps/contracts/v1/contract.js";
+} from '../../generated/ottochain/apps/contracts/v1/contract.js';
 
 // ---------------------------------------------------------------------------
 // State Machine Definitions (generated from JSON at build time)
 // ---------------------------------------------------------------------------
 
-import {
-  contractUniversalDef,
-  contractAgreementDef,
-  contractEscrowDef,
-} from "./state-machines/index.js";
-import type { FiberAppDefinition } from "../../schema/fiber-app.js";
+import { contractUniversalDef, contractAgreementDef, contractEscrowDef } from './state-machines/index.js';
+import type { FiberAppDefinition } from '../../schema/fiber-app.js';
 
 export { contractUniversalDef, contractAgreementDef, contractEscrowDef };
 
@@ -68,9 +64,7 @@ export type ContractType = keyof typeof CONTRACTS_DEFINITIONS;
  * Get a contract state machine definition by type.
  * @param type - 'universal' | 'agreement' | 'escrow' (default: 'agreement')
  */
-export function getContractDefinition(
-  type: ContractType = "agreement",
-): FiberAppDefinition {
+export function getContractDefinition(type: ContractType = 'agreement'): FiberAppDefinition {
   return CONTRACTS_DEFINITIONS[type];
 }
 

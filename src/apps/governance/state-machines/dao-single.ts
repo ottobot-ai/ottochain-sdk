@@ -1,31 +1,30 @@
-import { defineFiberApp } from "../../../schema/fiber-app.js";
-import { signerIsParty } from "../../../schema/guards.js";
+import { defineFiberApp } from '../../../schema/fiber-app.js';
+import { signerIsParty } from '../../../schema/guards.js';
 
 /**
  * Single owner controls all actions. Simplest governance model.
  */
 export const daoSingleDef = defineFiberApp({
   metadata: {
-    name: "SingleOwnerDAO",
-    app: "governance",
-    type: "daoSingle",
-    version: "1.0.0",
-    description:
-      "Single owner controls all actions. Simplest governance model.",
-    category: "governance/dao",
+    name: 'SingleOwnerDAO',
+    app: 'governance',
+    type: 'daoSingle',
+    version: '1.0.0',
+    description: 'Single owner controls all actions. Simplest governance model.',
+    category: 'governance/dao',
     crossReferences: {
-      Identity: "owner registration",
-      Contract: "action execution targets",
-      Treasury: "fund management",
+      Identity: 'owner registration',
+      Contract: 'action execution targets',
+      Treasury: 'fund management',
     },
   },
 
   createSchema: {
-    required: ["owner"] as const,
+    required: ['owner'] as const,
     properties: {
       owner: {
-        type: "address",
-        description: "DAG address of the initial owner",
+        type: 'address',
+        description: 'DAG address of the initial owner',
         immutable: false,
       },
     },
@@ -33,106 +32,106 @@ export const daoSingleDef = defineFiberApp({
 
   stateSchema: {
     properties: {
-      owner: { type: "address" },
-      pendingOwner: { type: "address" },
-      transferInitiatedAt: { type: "timestamp" },
-      ownershipHistory: { type: "array", computed: true },
-      actions: { type: "array", computed: true },
-      status: { type: "string", computed: true },
+      owner: { type: 'address' },
+      pendingOwner: { type: 'address' },
+      transferInitiatedAt: { type: 'timestamp' },
+      ownershipHistory: { type: 'array', computed: true },
+      actions: { type: 'array', computed: true },
+      status: { type: 'string', computed: true },
     },
   },
 
   eventSchemas: {
     execute: {
-      description: "Execute an action (owner only)",
-      required: ["actionId", "actionType", "payload"] as const,
+      description: 'Execute an action (owner only)',
+      required: ['actionId', 'actionType', 'payload'] as const,
       properties: {
-        agent: { type: "address" },
-        actionId: { type: "string" },
-        actionType: { type: "string" },
-        payload: { type: "object" },
+        agent: { type: 'address' },
+        actionId: { type: 'string' },
+        actionType: { type: 'string' },
+        payload: { type: 'object' },
       },
     },
     transfer_ownership: {
-      description: "Initiate ownership transfer (owner only)",
-      required: ["newOwner"] as const,
+      description: 'Initiate ownership transfer (owner only)',
+      required: ['newOwner'] as const,
       properties: {
-        agent: { type: "address" },
-        newOwner: { type: "address" },
+        agent: { type: 'address' },
+        newOwner: { type: 'address' },
       },
     },
     accept_ownership: {
-      description: "Accept ownership (pending owner only)",
+      description: 'Accept ownership (pending owner only)',
       properties: {
-        agent: { type: "address" },
+        agent: { type: 'address' },
       },
     },
     cancel_transfer: {
-      description: "Cancel pending ownership transfer (owner only)",
+      description: 'Cancel pending ownership transfer (owner only)',
       properties: {
-        agent: { type: "address" },
+        agent: { type: 'address' },
       },
     },
     dissolve: {
-      description: "Dissolve the DAO (owner only)",
+      description: 'Dissolve the DAO (owner only)',
       properties: {
-        agent: { type: "address" },
+        agent: { type: 'address' },
       },
     },
   },
 
   states: {
     ACTIVE: {
-      id: "ACTIVE",
+      id: 'ACTIVE',
       isFinal: false,
       metadata: {
-        label: "Active",
-        description: "Single owner controls the DAO and may act or transfer ownership",
-        category: "initial",
+        label: 'Active',
+        description: 'Single owner controls the DAO and may act or transfer ownership',
+        category: 'initial',
       },
     },
     TRANSFERRING: {
-      id: "TRANSFERRING",
+      id: 'TRANSFERRING',
       isFinal: false,
       metadata: {
-        label: "Transferring",
-        description: "Ownership transfer proposed; awaiting acceptance",
-        category: "pending",
+        label: 'Transferring',
+        description: 'Ownership transfer proposed; awaiting acceptance',
+        category: 'pending',
       },
     },
     DISSOLVED: {
-      id: "DISSOLVED",
+      id: 'DISSOLVED',
       isFinal: true,
       metadata: {
-        label: "Dissolved",
-        description: "DAO dissolved by its owner (terminal)",
-        category: "terminal",
+        label: 'Dissolved',
+        description: 'DAO dissolved by its owner (terminal)',
+        category: 'terminal',
       },
     },
   },
 
-  initialState: "ACTIVE",
+  initialState: 'ACTIVE',
 
   transitions: [
     // ACTIVE → ACTIVE: execute (owner only)
     {
-      from: "ACTIVE",
-      to: "ACTIVE",
-      eventName: "execute",
-      guard: signerIsParty("state.owner"),
+      from: 'ACTIVE',
+      to: 'ACTIVE',
+      eventName: 'execute',
+      guard: signerIsParty('state.owner'),
       effect: {
         merge: [
-          { var: "state" },
+          { var: 'state' },
           {
             actions: {
               cat: [
-                { var: "state.actions" },
+                { var: 'state.actions' },
                 [
                   {
-                    id: { var: "event.actionId" },
-                    type: { var: "event.actionType" },
-                    payload: { var: "event.payload" },
-                    executedAt: { var: "$ordinal" },
+                    id: { var: 'event.actionId' },
+                    type: { var: 'event.actionType' },
+                    payload: { var: 'event.payload' },
+                    executedAt: { var: '$ordinal' },
                   },
                 ],
               ],
@@ -141,9 +140,9 @@ export const daoSingleDef = defineFiberApp({
             // under the reserved `_emit` key (extracted as an EmittedEvent, stripped from state).
             _emit: [
               {
-                name: "action_executed",
-                data: { actionId: { var: "event.actionId" } },
-                destination: "external",
+                name: 'action_executed',
+                data: { actionId: { var: 'event.actionId' } },
+                destination: 'external',
               },
             ],
           },
@@ -153,16 +152,16 @@ export const daoSingleDef = defineFiberApp({
     },
     // ACTIVE → TRANSFERRING: transfer_ownership (owner only)
     {
-      from: "ACTIVE",
-      to: "TRANSFERRING",
-      eventName: "transfer_ownership",
-      guard: signerIsParty("state.owner"),
+      from: 'ACTIVE',
+      to: 'TRANSFERRING',
+      eventName: 'transfer_ownership',
+      guard: signerIsParty('state.owner'),
       effect: {
         merge: [
-          { var: "state" },
+          { var: 'state' },
           {
-            pendingOwner: { var: "event.newOwner" },
-            transferInitiatedAt: { var: "$ordinal" },
+            pendingOwner: { var: 'event.newOwner' },
+            transferInitiatedAt: { var: '$ordinal' },
           },
         ],
       },
@@ -170,25 +169,25 @@ export const daoSingleDef = defineFiberApp({
     },
     // TRANSFERRING → ACTIVE: accept_ownership (pending owner only)
     {
-      from: "TRANSFERRING",
-      to: "ACTIVE",
-      eventName: "accept_ownership",
-      guard: signerIsParty("state.pendingOwner"),
+      from: 'TRANSFERRING',
+      to: 'ACTIVE',
+      eventName: 'accept_ownership',
+      guard: signerIsParty('state.pendingOwner'),
       effect: {
         merge: [
-          { var: "state" },
+          { var: 'state' },
           {
-            owner: { var: "state.pendingOwner" },
+            owner: { var: 'state.pendingOwner' },
             pendingOwner: null,
             transferInitiatedAt: null,
             ownershipHistory: {
               cat: [
-                { var: "state.ownershipHistory" },
+                { var: 'state.ownershipHistory' },
                 [
                   {
-                    from: { var: "state.owner" },
-                    to: { var: "state.pendingOwner" },
-                    at: { var: "$ordinal" },
+                    from: { var: 'state.owner' },
+                    to: { var: 'state.pendingOwner' },
+                    at: { var: '$ordinal' },
                   },
                 ],
               ],
@@ -197,9 +196,9 @@ export const daoSingleDef = defineFiberApp({
             // under the reserved `_emit` key (extracted as an EmittedEvent, stripped from state).
             _emit: [
               {
-                name: "ownership_transferred",
-                data: { var: "event" },
-                destination: "Identity",
+                name: 'ownership_transferred',
+                data: { var: 'event' },
+                destination: 'Identity',
               },
             ],
           },
@@ -209,13 +208,13 @@ export const daoSingleDef = defineFiberApp({
     },
     // TRANSFERRING → ACTIVE: cancel_transfer (owner only)
     {
-      from: "TRANSFERRING",
-      to: "ACTIVE",
-      eventName: "cancel_transfer",
-      guard: signerIsParty("state.owner"),
+      from: 'TRANSFERRING',
+      to: 'ACTIVE',
+      eventName: 'cancel_transfer',
+      guard: signerIsParty('state.owner'),
       effect: {
         merge: [
-          { var: "state" },
+          { var: 'state' },
           {
             pendingOwner: null,
             transferInitiatedAt: null,
@@ -226,16 +225,16 @@ export const daoSingleDef = defineFiberApp({
     },
     // ACTIVE → DISSOLVED: dissolve (owner only)
     {
-      from: "ACTIVE",
-      to: "DISSOLVED",
-      eventName: "dissolve",
-      guard: signerIsParty("state.owner"),
+      from: 'ACTIVE',
+      to: 'DISSOLVED',
+      eventName: 'dissolve',
+      guard: signerIsParty('state.owner'),
       effect: {
         merge: [
-          { var: "state" },
+          { var: 'state' },
           {
-            dissolvedAt: { var: "$ordinal" },
-            status: "DISSOLVED",
+            dissolvedAt: { var: '$ordinal' },
+            status: 'DISSOLVED',
           },
         ],
       },

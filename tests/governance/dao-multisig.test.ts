@@ -14,7 +14,7 @@ describe('MultisigDAO State Machine', () => {
     it('should have correct metadata', () => {
       expect(daoMultisigDef.metadata.name).toBe('MultisigDAO');
       expect(daoMultisigDef.metadata.description).toBe(
-        'N-of-M multisig governance. Requires threshold signatures for actions.'
+        'N-of-M multisig governance. Requires threshold signatures for actions.',
       );
       expect(daoMultisigDef.metadata.version).toBe('1.0.0');
       expect(daoMultisigDef.metadata.category).toBe('governance/dao');
@@ -44,7 +44,7 @@ describe('MultisigDAO State Machine', () => {
   describe('State Transitions', () => {
     it('should allow propose transition from ACTIVE to PENDING', () => {
       const proposeTransition = daoMultisigDef.transitions.find(
-        (t) => t.from === 'ACTIVE' && t.to === 'PENDING' && t.eventName === 'propose'
+        (t) => t.from === 'ACTIVE' && t.to === 'PENDING' && t.eventName === 'propose',
       );
 
       expect(proposeTransition).toBeDefined();
@@ -54,7 +54,7 @@ describe('MultisigDAO State Machine', () => {
 
     it('should allow sign transition from PENDING to PENDING', () => {
       const signTransition = daoMultisigDef.transitions.find(
-        (t) => t.from === 'PENDING' && t.to === 'PENDING' && t.eventName === 'sign'
+        (t) => t.from === 'PENDING' && t.to === 'PENDING' && t.eventName === 'sign',
       );
 
       expect(signTransition).toBeDefined();
@@ -64,7 +64,7 @@ describe('MultisigDAO State Machine', () => {
 
     it('should allow execute transition from PENDING to ACTIVE', () => {
       const executeTransition = daoMultisigDef.transitions.find(
-        (t) => t.from === 'PENDING' && t.to === 'ACTIVE' && t.eventName === 'execute'
+        (t) => t.from === 'PENDING' && t.to === 'ACTIVE' && t.eventName === 'execute',
       );
 
       expect(executeTransition).toBeDefined();
@@ -74,7 +74,7 @@ describe('MultisigDAO State Machine', () => {
 
     it('should allow cancel transition from PENDING to ACTIVE', () => {
       const cancelTransition = daoMultisigDef.transitions.find(
-        (t) => t.from === 'PENDING' && t.to === 'ACTIVE' && t.eventName === 'cancel'
+        (t) => t.from === 'PENDING' && t.to === 'ACTIVE' && t.eventName === 'cancel',
       );
 
       expect(cancelTransition).toBeDefined();
@@ -83,7 +83,7 @@ describe('MultisigDAO State Machine', () => {
 
     it('should allow dissolve transition from ACTIVE to DISSOLVED', () => {
       const dissolveTransition = daoMultisigDef.transitions.find(
-        (t) => t.from === 'ACTIVE' && t.to === 'DISSOLVED' && t.eventName === 'dissolve'
+        (t) => t.from === 'ACTIVE' && t.to === 'DISSOLVED' && t.eventName === 'dissolve',
       );
 
       expect(dissolveTransition).toBeDefined();
@@ -93,36 +93,28 @@ describe('MultisigDAO State Machine', () => {
 
   describe('Signer Management Transitions', () => {
     it('should support propose_add_signer transition', () => {
-      const transition = daoMultisigDef.transitions.find(
-        (t) => t.eventName === 'propose_add_signer'
-      );
+      const transition = daoMultisigDef.transitions.find((t) => t.eventName === 'propose_add_signer');
       expect(transition).toBeDefined();
       expect(transition!.from).toBe('ACTIVE');
       expect(transition!.to).toBe('PENDING');
     });
 
     it('should support propose_remove_signer transition', () => {
-      const transition = daoMultisigDef.transitions.find(
-        (t) => t.eventName === 'propose_remove_signer'
-      );
+      const transition = daoMultisigDef.transitions.find((t) => t.eventName === 'propose_remove_signer');
       expect(transition).toBeDefined();
       expect(transition!.from).toBe('ACTIVE');
       expect(transition!.to).toBe('PENDING');
     });
 
     it('should support propose_change_threshold transition', () => {
-      const transition = daoMultisigDef.transitions.find(
-        (t) => t.eventName === 'propose_change_threshold'
-      );
+      const transition = daoMultisigDef.transitions.find((t) => t.eventName === 'propose_change_threshold');
       expect(transition).toBeDefined();
       expect(transition!.from).toBe('ACTIVE');
       expect(transition!.to).toBe('PENDING');
     });
 
     it('should support apply_signer_change transition', () => {
-      const transition = daoMultisigDef.transitions.find(
-        (t) => t.eventName === 'apply_signer_change'
-      );
+      const transition = daoMultisigDef.transitions.find((t) => t.eventName === 'apply_signer_change');
       expect(transition).toBeDefined();
       expect(transition!.from).toBe('PENDING');
       expect(transition!.to).toBe('ACTIVE');
@@ -131,9 +123,7 @@ describe('MultisigDAO State Machine', () => {
     it('should count the signer array with the length opcode (A2), not size', () => {
       // size is not a JLVM opcode; signers is an array so length applies directly.
       for (const name of ['propose_remove_signer', 'propose_change_threshold']) {
-        const transition = daoMultisigDef.transitions.find(
-          (t) => t.eventName === name
-        );
+        const transition = daoMultisigDef.transitions.find((t) => t.eventName === name);
         const guardStr = JSON.stringify(transition!.guard);
         expect(guardStr).toContain('length');
         expect(guardStr).not.toContain('"size"');
@@ -145,7 +135,7 @@ describe('MultisigDAO State Machine', () => {
   describe('Guard Logic', () => {
     it('should guard propose to only signers', () => {
       const proposeTransition = daoMultisigDef.transitions.find(
-        (t) => t.eventName === 'propose' && t.from === 'ACTIVE'
+        (t) => t.eventName === 'propose' && t.from === 'ACTIVE',
       );
 
       // S1 coupled fix: actorInSet binds event.agent to a verified signer who is in state.signers, so
@@ -159,9 +149,7 @@ describe('MultisigDAO State Machine', () => {
     });
 
     it('should guard sign to prevent double-signing', () => {
-      const signTransition = daoMultisigDef.transitions.find(
-        (t) => t.eventName === 'sign'
-      );
+      const signTransition = daoMultisigDef.transitions.find((t) => t.eventName === 'sign');
 
       expect(signTransition!.guard).toHaveProperty('and');
       const guardStr = JSON.stringify(signTransition!.guard);
@@ -169,25 +157,19 @@ describe('MultisigDAO State Machine', () => {
     });
 
     it('should guard execute to require threshold signatures', () => {
-      const executeTransition = daoMultisigDef.transitions.find(
-        (t) => t.eventName === 'execute'
-      );
+      const executeTransition = daoMultisigDef.transitions.find((t) => t.eventName === 'execute');
 
       expect(executeTransition!.guard).toHaveProperty('>=');
     });
 
     it('should guard cancel to proposer or expired', () => {
-      const cancelTransition = daoMultisigDef.transitions.find(
-        (t) => t.eventName === 'cancel'
-      );
+      const cancelTransition = daoMultisigDef.transitions.find((t) => t.eventName === 'cancel');
 
       expect(cancelTransition!.guard).toHaveProperty('or');
     });
 
     it('should guard dissolve to verified unanimity of all signers', () => {
-      const dissolveTransition = daoMultisigDef.transitions.find(
-        (t) => t.eventName === 'dissolve'
-      );
+      const dissolveTransition = daoMultisigDef.transitions.find((t) => t.eventName === 'dissolve');
 
       // S2 fix: dissolution is gated on CHAIN-VERIFIED unanimity — every signer in
       // state.signers must be among proofs[].address (non-empty) — never on the
@@ -203,9 +185,8 @@ describe('MultisigDAO State Machine', () => {
 
     it('should not declare an attacker-supplied signatureCount on dissolve', () => {
       // The forgeable count field is removed from the event schema (S2).
-      const dissolveSchema = (
-        daoMultisigDef.eventSchemas as Record<string, { properties?: Record<string, unknown> }>
-      ).dissolve;
+      const dissolveSchema = (daoMultisigDef.eventSchemas as Record<string, { properties?: Record<string, unknown> }>)
+        .dissolve;
       expect(dissolveSchema.properties).not.toHaveProperty('signatureCount');
     });
   });
@@ -213,7 +194,7 @@ describe('MultisigDAO State Machine', () => {
   describe('Effect Logic', () => {
     it('should create proposal with metadata on propose', () => {
       const proposeTransition = daoMultisigDef.transitions.find(
-        (t) => t.eventName === 'propose' && t.from === 'ACTIVE'
+        (t) => t.eventName === 'propose' && t.from === 'ACTIVE',
       );
 
       const effectStr = JSON.stringify(proposeTransition!.effect);
@@ -224,9 +205,7 @@ describe('MultisigDAO State Machine', () => {
     });
 
     it('should add signature on sign', () => {
-      const signTransition = daoMultisigDef.transitions.find(
-        (t) => t.eventName === 'sign'
-      );
+      const signTransition = daoMultisigDef.transitions.find((t) => t.eventName === 'sign');
 
       const effectStr = JSON.stringify(signTransition!.effect);
       expect(effectStr).toContain('signatures');
@@ -235,9 +214,7 @@ describe('MultisigDAO State Machine', () => {
     });
 
     it('should record executed action on execute', () => {
-      const executeTransition = daoMultisigDef.transitions.find(
-        (t) => t.eventName === 'execute'
-      );
+      const executeTransition = daoMultisigDef.transitions.find((t) => t.eventName === 'execute');
 
       const effectStr = JSON.stringify(executeTransition!.effect);
       expect(effectStr).toContain('actions');

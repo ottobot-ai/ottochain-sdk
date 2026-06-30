@@ -34,9 +34,7 @@ describe('MarketGroupBuy State Machine', () => {
   });
 
   it('should track orders with totalQuantity', () => {
-    const order = marketGroupBuyDef.transitions.find(
-      t => t.eventName === 'order' && t.from === 'OPEN'
-    );
+    const order = marketGroupBuyDef.transitions.find((t) => t.eventName === 'order' && t.from === 'OPEN');
     expect(order).toBeDefined();
     const effectStr = JSON.stringify(order?.effect);
     expect(effectStr).toContain('totalQuantity');
@@ -44,7 +42,7 @@ describe('MarketGroupBuy State Machine', () => {
   });
 
   it('should transition to THRESHOLD_MET when minQuantity reached', () => {
-    const threshold = marketGroupBuyDef.transitions.find(t => t.eventName === 'check_threshold');
+    const threshold = marketGroupBuyDef.transitions.find((t) => t.eventName === 'check_threshold');
     expect(threshold).toBeDefined();
     expect(threshold?.to).toBe('THRESHOLD_MET');
     const guardStr = JSON.stringify(threshold?.guard);
@@ -52,24 +50,20 @@ describe('MarketGroupBuy State Machine', () => {
   });
 
   it('should support ordering in THRESHOLD_MET state', () => {
-    const order = marketGroupBuyDef.transitions.find(
-      t => t.eventName === 'order' && t.from === 'THRESHOLD_MET'
-    );
+    const order = marketGroupBuyDef.transitions.find((t) => t.eventName === 'order' && t.from === 'THRESHOLD_MET');
     expect(order).toBeDefined();
     expect(order?.to).toBe('THRESHOLD_MET');
   });
 
   it('should update price tier when ordering in THRESHOLD_MET', () => {
-    const order = marketGroupBuyDef.transitions.find(
-      t => t.eventName === 'order' && t.from === 'THRESHOLD_MET'
-    );
+    const order = marketGroupBuyDef.transitions.find((t) => t.eventName === 'order' && t.from === 'THRESHOLD_MET');
     const effectStr = JSON.stringify(order?.effect);
     expect(effectStr).toContain('currentTier');
   });
 
   it('should finalize to PROCESSING from THRESHOLD_MET', () => {
     const finalize = marketGroupBuyDef.transitions.find(
-      t => t.eventName === 'finalize' && t.from === 'THRESHOLD_MET'
+      (t) => t.eventName === 'finalize' && t.from === 'THRESHOLD_MET',
     );
     expect(finalize).toBeDefined();
     expect(finalize?.to).toBe('PROCESSING');
@@ -78,7 +72,7 @@ describe('MarketGroupBuy State Machine', () => {
   });
 
   it('should support fulfill by vendor or organizer', () => {
-    const fulfill = marketGroupBuyDef.transitions.find(t => t.eventName === 'fulfill');
+    const fulfill = marketGroupBuyDef.transitions.find((t) => t.eventName === 'fulfill');
     expect(fulfill).toBeDefined();
     expect(fulfill?.to).toBe('FULFILLED');
     const guardStr = JSON.stringify(fulfill?.guard);
@@ -88,7 +82,7 @@ describe('MarketGroupBuy State Machine', () => {
 
   it('should refund when threshold not met by deadline', () => {
     const refund = marketGroupBuyDef.transitions.find(
-      t => t.eventName === 'finalize' && t.from === 'OPEN' && t.to === 'REFUNDED'
+      (t) => t.eventName === 'finalize' && t.from === 'OPEN' && t.to === 'REFUNDED',
     );
     expect(refund).toBeDefined();
     const guardStr = JSON.stringify(refund?.guard);
@@ -96,7 +90,7 @@ describe('MarketGroupBuy State Machine', () => {
   });
 
   it('should support claim_refund with deduplication', () => {
-    const claimRefund = marketGroupBuyDef.transitions.find(t => t.eventName === 'claim_refund');
+    const claimRefund = marketGroupBuyDef.transitions.find((t) => t.eventName === 'claim_refund');
     expect(claimRefund).toBeDefined();
     const guardStr = JSON.stringify(claimRefund?.guard);
     expect(guardStr).toContain('refundsClaimed');

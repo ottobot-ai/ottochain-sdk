@@ -69,7 +69,7 @@ describe('Contracts App Integration', () => {
     it('should maintain consistent cross-references between contract types', () => {
       // Agreement contracts should reference escrow
       expect(contractAgreementDef.metadata.crossReferences).toHaveProperty('escrowId');
-      
+
       // Escrow should reference contracts
       expect(contractEscrowDef.metadata.crossReferences).toHaveProperty('contractId');
     });
@@ -80,12 +80,12 @@ describe('Contracts App Integration', () => {
       const escrowStates = Object.keys(contractEscrowDef.states);
 
       // All should use UPPER_CASE state names
-      [...agreementStates, ...universalStates, ...escrowStates].forEach(state => {
+      [...agreementStates, ...universalStates, ...escrowStates].forEach((state) => {
         expect(state).toMatch(/^[A-Z_]+$/);
       });
 
       // Universal states should be a subset of agreement states
-      universalStates.forEach(state => {
+      universalStates.forEach((state) => {
         if (state !== 'DISPUTED' && state !== 'REJECTED') {
           expect(agreementStates).toContain(state);
         }
@@ -102,7 +102,7 @@ describe('Contracts App Integration', () => {
     });
 
     it('should preserve all state machine metadata', () => {
-      [contractAgreementDef, contractUniversalDef, contractEscrowDef].forEach(def => {
+      [contractAgreementDef, contractUniversalDef, contractEscrowDef].forEach((def) => {
         expect(def.metadata.name).toBeDefined();
         expect(def.metadata.description).toBeDefined();
         expect(def.metadata.version).toBe('1.0.0');
@@ -114,7 +114,7 @@ describe('Contracts App Integration', () => {
       // This is a placeholder for more specific functional tests
       // that would validate the JSON Logic expressions work identically
       // in both the JSON and TypeScript versions
-      
+
       // Example: Test that guard conditions produce identical results
       // (Actual JSON Logic evaluation would be needed to validate guard behavior)
       // sampleState: { proposer: 'alice', counterparty: 'bob', completions: [] }

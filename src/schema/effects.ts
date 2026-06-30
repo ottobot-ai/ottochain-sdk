@@ -15,7 +15,7 @@
  * ```
  */
 
-import type { ProtoStateMachineDefinition } from "./fiber-app.js";
+import type { ProtoStateMachineDefinition } from './fiber-app.js';
 
 /** A JSON-Logic value: a literal (string/number/bool) or a `{var}`/operator expression. */
 type JsonLogicValue = unknown;
@@ -28,9 +28,7 @@ type JsonLogicValue = unknown;
  * Because the `machines` context is built BEFORE the effect runs, the bound dependency is readable only
  * from the NEXT transition onward (two-phase: bind, then read).
  */
-export const addDependency = (
-  fiberId: JsonLogicValue,
-): Record<string, unknown> => ({
+export const addDependency = (fiberId: JsonLogicValue): Record<string, unknown> => ({
   _addDependency: [{ fiberId }],
 });
 
@@ -39,10 +37,7 @@ export const addDependency = (
  * deactivation simply drops it from the `machines` context (and it can be cheaply re-activated). `fiberId`
  * may be a literal or an expression.
  */
-export const setDependencyActive = (
-  fiberId: JsonLogicValue,
-  active: boolean,
-): Record<string, unknown> => ({
+export const setDependencyActive = (fiberId: JsonLogicValue, active: boolean): Record<string, unknown> => ({
   _setDependencyActive: [{ fiberId, active }],
 });
 
@@ -157,9 +152,9 @@ export const spawn = (
  * name, `data` the body (a literal or an expression), and `destination` an OPTIONAL routing target —
  * omit it when absent (callers never pass `null`, so it is simply absent on the wire).
  */
-export const emit = (
-  es: { name: string; data: JsonLogicValue; destination?: string }[],
-): Record<string, unknown> => ({ _emit: es });
+export const emit = (es: { name: string; data: JsonLogicValue; destination?: string }[]): Record<string, unknown> => ({
+  _emit: es,
+});
 
 /**
  * The complete set of `_`-prefixed RESERVED effect keys the chain's `EffectExtractor` consumes and
@@ -168,11 +163,11 @@ export const emit = (
  * persisted state.
  */
 export const RESERVED_EFFECT_KEYS = [
-  "_triggers",
-  "_spawn",
-  "_emit",
-  "_transferAsset",
-  "_scriptCall",
-  "_addDependency",
-  "_setDependencyActive",
+  '_triggers',
+  '_spawn',
+  '_emit',
+  '_transferAsset',
+  '_scriptCall',
+  '_addDependency',
+  '_setDependencyActive',
 ] as const;

@@ -14,7 +14,7 @@ describe('GovernanceUniversal State Machine', () => {
     it('should have correct metadata', () => {
       expect(govUniversalDef.metadata.name).toBe('GovernanceUniversal');
       expect(govUniversalDef.metadata.description).toBe(
-        'Minimal governance state machine - extend for custom use cases'
+        'Minimal governance state machine - extend for custom use cases',
       );
       expect(govUniversalDef.metadata.version).toBe('1.0.0');
     });
@@ -43,7 +43,7 @@ describe('GovernanceUniversal State Machine', () => {
   describe('State Transitions', () => {
     it('should allow propose transition from ACTIVE to VOTING', () => {
       const proposeTransition = govUniversalDef.transitions.find(
-        (t) => t.from === 'ACTIVE' && t.to === 'VOTING' && t.eventName === 'propose'
+        (t) => t.from === 'ACTIVE' && t.to === 'VOTING' && t.eventName === 'propose',
       );
 
       expect(proposeTransition).toBeDefined();
@@ -53,7 +53,7 @@ describe('GovernanceUniversal State Machine', () => {
 
     it('should allow vote transition from VOTING to VOTING', () => {
       const voteTransition = govUniversalDef.transitions.find(
-        (t) => t.from === 'VOTING' && t.to === 'VOTING' && t.eventName === 'vote'
+        (t) => t.from === 'VOTING' && t.to === 'VOTING' && t.eventName === 'vote',
       );
 
       expect(voteTransition).toBeDefined();
@@ -63,7 +63,7 @@ describe('GovernanceUniversal State Machine', () => {
 
     it('should allow finalize transition from VOTING to ACTIVE', () => {
       const finalizeTransition = govUniversalDef.transitions.find(
-        (t) => t.from === 'VOTING' && t.to === 'ACTIVE' && t.eventName === 'finalize'
+        (t) => t.from === 'VOTING' && t.to === 'ACTIVE' && t.eventName === 'finalize',
       );
 
       expect(finalizeTransition).toBeDefined();
@@ -73,7 +73,7 @@ describe('GovernanceUniversal State Machine', () => {
 
     it('should allow dissolve transition from ACTIVE to DISSOLVED', () => {
       const dissolveTransition = govUniversalDef.transitions.find(
-        (t) => t.from === 'ACTIVE' && t.to === 'DISSOLVED' && t.eventName === 'dissolve'
+        (t) => t.from === 'ACTIVE' && t.to === 'DISSOLVED' && t.eventName === 'dissolve',
       );
 
       expect(dissolveTransition).toBeDefined();
@@ -102,9 +102,7 @@ describe('GovernanceUniversal State Machine', () => {
 
   describe('Effect Logic', () => {
     it('should set proposal and status on propose', () => {
-      const proposeTransition = govUniversalDef.transitions.find(
-        (t) => t.eventName === 'propose'
-      );
+      const proposeTransition = govUniversalDef.transitions.find((t) => t.eventName === 'propose');
 
       const effectStr = JSON.stringify(proposeTransition!.effect);
       expect(effectStr).toContain('proposal');
@@ -115,9 +113,7 @@ describe('GovernanceUniversal State Machine', () => {
     });
 
     it('should merge votes on vote', () => {
-      const voteTransition = govUniversalDef.transitions.find(
-        (t) => t.eventName === 'vote'
-      );
+      const voteTransition = govUniversalDef.transitions.find((t) => t.eventName === 'vote');
 
       const effectStr = JSON.stringify(voteTransition!.effect);
       expect(effectStr).toContain('votes');
@@ -125,9 +121,7 @@ describe('GovernanceUniversal State Machine', () => {
     });
 
     it('should record last result on finalize', () => {
-      const finalizeTransition = govUniversalDef.transitions.find(
-        (t) => t.eventName === 'finalize'
-      );
+      const finalizeTransition = govUniversalDef.transitions.find((t) => t.eventName === 'finalize');
 
       const effectStr = JSON.stringify(finalizeTransition!.effect);
       expect(effectStr).toContain('lastProposal');
@@ -137,9 +131,7 @@ describe('GovernanceUniversal State Machine', () => {
     });
 
     it('should set dissolved status on dissolve', () => {
-      const dissolveTransition = govUniversalDef.transitions.find(
-        (t) => t.eventName === 'dissolve'
-      );
+      const dissolveTransition = govUniversalDef.transitions.find((t) => t.eventName === 'dissolve');
 
       const effectStr = JSON.stringify(dissolveTransition!.effect);
       expect(effectStr).toContain('status');

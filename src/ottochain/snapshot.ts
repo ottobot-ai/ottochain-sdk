@@ -50,10 +50,7 @@ export interface CurrencySnapshotResponse {
  * @param ordinal - Snapshot ordinal number
  * @returns Decoded OnChain state, or null if no data application part
  */
-export async function getSnapshotOnChainState(
-  ml0BaseUrl: string,
-  ordinal: number
-): Promise<OnChain | null> {
+export async function getSnapshotOnChainState(ml0BaseUrl: string, ordinal: number): Promise<OnChain | null> {
   const client = new HttpClient(ml0BaseUrl);
   const snapshot = await client.get<CurrencySnapshotResponse>(`/snapshots/${ordinal}`);
   return extractOnChainState(snapshot);
@@ -65,9 +62,7 @@ export async function getSnapshotOnChainState(
  * @param ml0BaseUrl - Metagraph L0 node base URL (e.g., 'http://localhost:9200')
  * @returns Decoded OnChain state, or null if no data application part
  */
-export async function getLatestOnChainState(
-  ml0BaseUrl: string
-): Promise<OnChain | null> {
+export async function getLatestOnChainState(ml0BaseUrl: string): Promise<OnChain | null> {
   const client = new HttpClient(ml0BaseUrl);
   const snapshot = await client.get<CurrencySnapshotResponse>('/snapshots/latest');
   return extractOnChainState(snapshot);
@@ -112,8 +107,9 @@ export function getLogsForFiber(onChain: OnChain, fiberId: string): FiberLogEntr
  * @returns Array of EventReceipt entries
  */
 export function getEventReceipts(onChain: OnChain, fiberId: string): EventReceipt[] {
-  return getLogsForFiber(onChain, fiberId)
-    .filter((entry): entry is EventReceipt => 'eventName' in entry && 'success' in entry);
+  return getLogsForFiber(onChain, fiberId).filter(
+    (entry): entry is EventReceipt => 'eventName' in entry && 'success' in entry,
+  );
 }
 
 /**
@@ -127,6 +123,7 @@ export function getEventReceipts(onChain: OnChain, fiberId: string): EventReceip
  * @returns Array of ScriptInvocation entries
  */
 export function getScriptInvocations(onChain: OnChain, fiberId: string): ScriptInvocation[] {
-  return getLogsForFiber(onChain, fiberId)
-    .filter((entry): entry is ScriptInvocation => 'method' in entry && 'result' in entry);
+  return getLogsForFiber(onChain, fiberId).filter(
+    (entry): entry is ScriptInvocation => 'method' in entry && 'result' in entry,
+  );
 }

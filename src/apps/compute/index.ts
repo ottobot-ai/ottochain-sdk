@@ -15,8 +15,8 @@
  * @packageDocumentation
  */
 
-import { computeRule110Def } from "./state-machines/index.js";
-import type { FiberAppDefinition } from "../../schema/fiber-app.js";
+import { computeRule110Def } from './state-machines/index.js';
+import type { FiberAppDefinition } from '../../schema/fiber-app.js';
 
 export { computeRule110Def };
 
@@ -31,8 +31,6 @@ export type ComputeDefType = keyof typeof COMPUTE_DEFINITIONS;
  * Get a compute state machine definition by type.
  * @param type - 'rule110' (default).
  */
-export function getComputeDefinition(
-  type: ComputeDefType = "rule110",
-): FiberAppDefinition {
+export function getComputeDefinition(type: ComputeDefType = 'rule110'): FiberAppDefinition {
   return COMPUTE_DEFINITIONS[type];
 }

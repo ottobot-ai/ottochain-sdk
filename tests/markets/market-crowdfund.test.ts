@@ -32,7 +32,7 @@ describe('MarketCrowdfund State Machine', () => {
   });
 
   it('should guard creator from pledging their own campaign', () => {
-    const pledge = marketCrowdfundDef.transitions.find(t => t.eventName === 'pledge');
+    const pledge = marketCrowdfundDef.transitions.find((t) => t.eventName === 'pledge');
     expect(pledge).toBeDefined();
     const guardStr = JSON.stringify(pledge?.guard);
     // Anti-self check binds to the VERIFIED signer set (proofs[].address), not the
@@ -45,60 +45,51 @@ describe('MarketCrowdfund State Machine', () => {
           {
             '!': [
               {
-                in: [
-                  { var: 'state.creator' },
-                  { map: [{ var: 'proofs' }, { var: 'address' }] },
-                ],
+                in: [{ var: 'state.creator' }, { map: [{ var: 'proofs' }, { var: 'address' }] }],
               },
             ],
           },
         ]),
-      })
+      }),
     );
   });
 
   it('should increment totalPledged and backerCount on pledge', () => {
-    const pledge = marketCrowdfundDef.transitions.find(t => t.eventName === 'pledge');
+    const pledge = marketCrowdfundDef.transitions.find((t) => t.eventName === 'pledge');
     const effectStr = JSON.stringify(pledge?.effect);
     expect(effectStr).toContain('totalPledged');
     expect(effectStr).toContain('backerCount');
   });
 
   it('should support increase_pledge event', () => {
-    const increase = marketCrowdfundDef.transitions.find(t => t.eventName === 'increase_pledge');
+    const increase = marketCrowdfundDef.transitions.find((t) => t.eventName === 'increase_pledge');
     expect(increase).toBeDefined();
     expect(increase?.from).toBe('OPEN');
     expect(increase?.to).toBe('OPEN');
   });
 
   it('should finalize to FUNDED when threshold met', () => {
-    const funded = marketCrowdfundDef.transitions.find(
-      t => t.eventName === 'finalize' && t.to === 'FUNDED'
-    );
+    const funded = marketCrowdfundDef.transitions.find((t) => t.eventName === 'finalize' && t.to === 'FUNDED');
     expect(funded).toBeDefined();
     const guardStr = JSON.stringify(funded?.guard);
     expect(guardStr).toContain('threshold');
   });
 
   it('should finalize to REFUNDED when threshold not met', () => {
-    const refunded = marketCrowdfundDef.transitions.find(
-      t => t.eventName === 'finalize' && t.to === 'REFUNDED'
-    );
+    const refunded = marketCrowdfundDef.transitions.find((t) => t.eventName === 'finalize' && t.to === 'REFUNDED');
     expect(refunded).toBeDefined();
     const effectStr = JSON.stringify(refunded?.effect);
     expect(effectStr).toContain('threshold_not_met');
   });
 
   it('should support stretch goals in FUNDED effect', () => {
-    const funded = marketCrowdfundDef.transitions.find(
-      t => t.eventName === 'finalize' && t.to === 'FUNDED'
-    );
+    const funded = marketCrowdfundDef.transitions.find((t) => t.eventName === 'finalize' && t.to === 'FUNDED');
     const effectStr = JSON.stringify(funded?.effect);
     expect(effectStr).toContain('stretchGoalsReached');
   });
 
   it('should support claim_refund after REFUNDED', () => {
-    const claimRefund = marketCrowdfundDef.transitions.find(t => t.eventName === 'claim_refund');
+    const claimRefund = marketCrowdfundDef.transitions.find((t) => t.eventName === 'claim_refund');
     expect(claimRefund).toBeDefined();
     expect(claimRefund?.from).toBe('REFUNDED');
     expect(claimRefund?.to).toBe('REFUNDED');

@@ -28,12 +28,12 @@
  */
 
 // Re-export as namespaces for organized access
-export * as identity from "./identity/index.js";
-export * as contracts from "./contracts/index.js";
-export * as markets from "./markets/index.js";
-export * as governance from "./governance/index.js";
-export * as corporate from "./corporate/index.js";
-export * as lending from "./lending/index.js";
-export * as compute from "./compute/index.js";
-export * as stakedPool from "./staked-pool/index.js";
-export * as privacy from "./privacy/index.js";
+export * as identity from './identity/index.js';
+export * as contracts from './contracts/index.js';
+export * as markets from './markets/index.js';
+export * as governance from './governance/index.js';
+export * as corporate from './corporate/index.js';
+export * as lending from './lending/index.js';
+export * as compute from './compute/index.js';
+export * as stakedPool from './staked-pool/index.js';
+export * as privacy from './privacy/index.js';

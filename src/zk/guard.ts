@@ -79,10 +79,7 @@ export interface BindingResult {
  */
 export function verifyGroth16Bundle(bundle: Groth16Bundle): boolean {
   try {
-    return jsonLogic.apply(
-      { groth16_verify: [bundle.vkey, bundle.publicValues, bundle.proof] },
-      {},
-    ) === true;
+    return jsonLogic.apply({ groth16_verify: [bundle.vkey, bundle.publicValues, bundle.proof] }, {}) === true;
   } catch {
     return false;
   }

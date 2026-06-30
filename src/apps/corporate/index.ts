@@ -70,19 +70,14 @@ export {
   boardMeetingTypeToJSON,
   resolutionStatusFromJSON,
   resolutionStatusToJSON,
-} from "../../generated/ottochain/apps/corporate/v1/corporate.js";
+} from '../../generated/ottochain/apps/corporate/v1/corporate.js';
 
 // ---------------------------------------------------------------------------
 // State Machine Definitions (generated from JSON at build time)
 // ---------------------------------------------------------------------------
 
-import {
-  corpEntityDef,
-  corpBoardDef,
-  corpShareholdersDef,
-  corpSecuritiesDef,
-} from "./state-machines/index.js";
-import type { FiberAppDefinition } from "../../schema/fiber-app.js";
+import { corpEntityDef, corpBoardDef, corpShareholdersDef, corpSecuritiesDef } from './state-machines/index.js';
+import type { FiberAppDefinition } from '../../schema/fiber-app.js';
 
 export { corpEntityDef, corpBoardDef, corpShareholdersDef, corpSecuritiesDef };
 
