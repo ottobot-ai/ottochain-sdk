@@ -1,0 +1,13 @@
+# Generated code — re-emitted by `buf generate` / `gen:openapi`, never hand-edited.
+# Formatting it would just be undone by the next codegen run (and re-break the gate).
+src/generated/
+
+# Build output
+dist/
+coverage/
+node_modules/
+
+# Byte-sensitive JSON: signed-canonical state-machine archives and ZK proof
+# fixtures are compared/hashed verbatim by tests — reformatting changes their
+# bytes and breaks those tests. The format gate is TypeScript-only.
+**/*.json

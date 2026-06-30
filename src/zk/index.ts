@@ -10,13 +10,7 @@
  * `canonicalForSigning(data)`, so a proof's `exprHash` word equals {@link exprHash}`(rule)` equals a
  * policy's `logicHash` — see {@link proverPreimage} and docs/design/client-side-private-data.md §3.0.
  */
-export {
-  canonicalForSigning,
-  proverPreimage,
-  exprHash,
-  dataHash,
-  KECCAK_TRUE,
-} from './preimage';
+export { canonicalForSigning, proverPreimage, exprHash, dataHash, KECCAK_TRUE } from './preimage';
 
 export {
   type FrHex,
@@ -30,28 +24,11 @@ export {
   openCommitment,
 } from './commit';
 
-export {
-  type DecodedPublicValues,
-  type Groth16Bundle,
-  decodeJlvmPublicValues,
-} from './types';
+export { type DecodedPublicValues, type Groth16Bundle, decodeJlvmPublicValues } from './types';
 
-export {
-  type Groth16WitnessMap,
-  type Groth16Witness,
-  groth16Witness,
-  type PmtWitnessMap,
-  pmtWitness,
-} from './witness';
+export { type Groth16WitnessMap, type Groth16Witness, groth16Witness, type PmtWitnessMap, pmtWitness } from './witness';
 
-export {
-  type RegisteredRule,
-  ExprRegistry,
-  type Comparator,
-  boundRule,
-  atLeast,
-  atMost,
-} from './registry';
+export { type RegisteredRule, ExprRegistry, type Comparator, boundRule, atLeast, atMost } from './registry';
 
 export {
   type SemiPrivateGuardOptions,

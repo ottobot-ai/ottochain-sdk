@@ -20,15 +20,11 @@
  * (the strongest form), have the SP1 rule additionally `schnorr_verify` the reputation issuer's
  * signature over `(subject, score)` — see {@link reputationAuthorityClause}.
  */
-import {
-  Attestation,
-  ReputationConfig,
-  DEFAULT_REPUTATION_CONFIG,
-} from "../identity/index.js";
-import { lendingRule, type LendingRuleParams, type JsonLogicRule } from "./eligibility.js";
+import { Attestation, ReputationConfig, DEFAULT_REPUTATION_CONFIG } from '../identity/index.js';
+import { lendingRule, type LendingRuleParams, type JsonLogicRule } from './eligibility.js';
 
 /** The reputation config fields credit scoring needs (a subset of the identity {@link ReputationConfig}). */
-export type CreditScoreConfig = Pick<ReputationConfig, "baseReputation" | "minReputation">;
+export type CreditScoreConfig = Pick<ReputationConfig, 'baseReputation' | 'minReputation'>;
 
 /**
  * Derive an agent's credit score from their identity reputation attestations:
@@ -36,7 +32,7 @@ export type CreditScoreConfig = Pick<ReputationConfig, "baseReputation" | "minRe
  * a zk-loan's creditScore is the borrower's identity reputation, not an independent number.
  */
 export function reputationScore(
-  attestations: ReadonlyArray<Pick<Attestation, "delta">>,
+  attestations: ReadonlyArray<Pick<Attestation, 'delta'>>,
   config: CreditScoreConfig = DEFAULT_REPUTATION_CONFIG,
 ): number {
   const raw = attestations.reduce((sum, a) => sum + (a.delta ?? 0), config.baseReputation);
@@ -67,8 +63,8 @@ export interface CreditDataContext {
  */
 export function reputationCreditRule(params: ReputationCreditParams): JsonLogicRule {
   const base = lendingRule(params); // coverage, or {and:[coverage, creditScore floor]}
-  const subjectBound: JsonLogicRule = { "===": [{ var: "subject" }, params.borrowerId] };
-  const clauses = "and" in base ? (base.and as unknown[]) : [base];
+  const subjectBound: JsonLogicRule = { '===': [{ var: 'subject' }, params.borrowerId] };
+  const clauses = 'and' in base ? (base.and as unknown[]) : [base];
   return { and: [...clauses, subjectBound] };
 }
 
@@ -79,7 +75,7 @@ export function reputationCreditRule(params: ReputationCreditParams): JsonLogicR
  */
 export function buildCreditDataContext(args: {
   borrowerId: string;
-  attestations: ReadonlyArray<Pick<Attestation, "delta">>;
+  attestations: ReadonlyArray<Pick<Attestation, 'delta'>>;
   collateralValue: number;
   config?: CreditScoreConfig;
 }): CreditDataContext {
@@ -109,8 +105,8 @@ export function reputationAuthorityClause(authorityPubKey: string): JsonLogicRul
   return {
     schnorr_verify: [
       authorityPubKey, // the reputation authority's public key — PINNED literal, not witness-supplied
-      { var: "scoreCommit" }, // the signed message: a commitment over (subject, creditScore)
-      { var: "repSig" }, // the authority's signature over scoreCommit
+      { var: 'scoreCommit' }, // the signed message: a commitment over (subject, creditScore)
+      { var: 'repSig' }, // the authority's signature over scoreCommit
     ],
   };
 }

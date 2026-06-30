@@ -128,9 +128,9 @@ describe('OttoChain Errors', () => {
     });
 
     it('should include details', () => {
-      const error = new ValidationError('Invalid', { 
+      const error = new ValidationError('Invalid', {
         field: 'amount',
-        details: { min: 0, max: 100 }
+        details: { min: 0, max: 100 },
       });
       expect(error.details).toEqual({ min: 0, max: 100 });
     });
@@ -182,20 +182,14 @@ describe('OttoChain Errors', () => {
     });
 
     it('should include transaction hash', () => {
-      const error = new TransactionError(
-        ErrorCode.TRANSACTION_REJECTED,
-        'Rejected',
-        { transactionHash: 'abc123' }
-      );
+      const error = new TransactionError(ErrorCode.TRANSACTION_REJECTED, 'Rejected', { transactionHash: 'abc123' });
       expect(error.transactionHash).toBe('abc123');
     });
 
     it('should include rejection reason', () => {
-      const error = new TransactionError(
-        ErrorCode.TRANSACTION_REJECTED,
-        'Rejected',
-        { rejectionReason: 'Insufficient funds' }
-      );
+      const error = new TransactionError(ErrorCode.TRANSACTION_REJECTED, 'Rejected', {
+        rejectionReason: 'Insufficient funds',
+      });
       expect(error.rejectionReason).toBe('Insufficient funds');
     });
 
@@ -220,11 +214,10 @@ describe('OttoChain Errors', () => {
     });
 
     it('should convert to JSON with transaction info', () => {
-      const error = new TransactionError(
-        ErrorCode.TRANSACTION_REJECTED,
-        'Rejected',
-        { transactionHash: 'abc', rejectionReason: 'reason' }
-      );
+      const error = new TransactionError(ErrorCode.TRANSACTION_REJECTED, 'Rejected', {
+        transactionHash: 'abc',
+        rejectionReason: 'reason',
+      });
       const json = error.toJSON();
       expect(json.transactionHash).toBe('abc');
       expect(json.rejectionReason).toBe('reason');

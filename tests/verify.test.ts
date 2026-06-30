@@ -3,7 +3,7 @@ import {
   sign,
   signDataUpdate,
   createSignedObject,
-  generateKeyPair
+  generateKeyPair,
 } from '@constellation-network/metagraph-sdk';
 
 describe('verify module', () => {
@@ -15,7 +15,7 @@ describe('verify module', () => {
       const proof = await sign(data, keyPair.privateKey);
       const signedObject = {
         value: data,
-        proofs: [proof]
+        proofs: [proof],
       };
 
       const result = await verify(signedObject, false);
@@ -31,13 +31,13 @@ describe('verify module', () => {
       const proof = await sign(data, keyPair.privateKey);
       const signedObject = {
         value: data,
-        proofs: [proof]
+        proofs: [proof],
       };
 
       // Tamper with the data
       const tamperedObject = {
         ...signedObject,
-        value: { test: 'tampered' }
+        value: { test: 'tampered' },
       };
 
       const result = await verify(tamperedObject, false);
@@ -53,7 +53,7 @@ describe('verify module', () => {
       const proof = await sign(data, keyPair.privateKey);
       const signedObject = {
         value: data,
-        proofs: [{ ...proof, id: '0'.repeat(128) }]
+        proofs: [{ ...proof, id: '0'.repeat(128) }],
       };
 
       const result = await verify(signedObject, false);
@@ -69,7 +69,7 @@ describe('verify module', () => {
       const proof = await sign(data, keyPair.privateKey);
       const signedObject = {
         value: data,
-        proofs: [{ ...proof, signature: 'invalid-signature' }]
+        proofs: [{ ...proof, signature: 'invalid-signature' }],
       };
 
       const result = await verify(signedObject, false);
@@ -87,7 +87,7 @@ describe('verify module', () => {
       const proof = await signDataUpdate(data, keyPair.privateKey);
       const signedObject = {
         value: data,
-        proofs: [proof]
+        proofs: [proof],
       };
 
       // Use isDataUpdate=true
@@ -104,7 +104,7 @@ describe('verify module', () => {
       const proof = await signDataUpdate(data, keyPair.privateKey);
       const tamperedObject = {
         value: { test: 'tampered' },
-        proofs: [proof]
+        proofs: [proof],
       };
 
       const result = await verify(tamperedObject, true);
@@ -118,7 +118,7 @@ describe('verify module', () => {
       const proof = await signDataUpdate(data, keyPair.privateKey);
       const signedObject = {
         value: data,
-        proofs: [proof]
+        proofs: [proof],
       };
 
       // Use isDataUpdate=false (wrong mode)
@@ -158,7 +158,7 @@ describe('verify module', () => {
       // Tamper with the signature
       const tamperedObject = {
         ...signedObject,
-        proofs: [{ ...signedObject.proofs[0], signature: 'invalid-signature' }]
+        proofs: [{ ...signedObject.proofs[0], signature: 'invalid-signature' }],
       };
 
       const result = await verify(tamperedObject);
@@ -174,10 +174,7 @@ describe('verify module', () => {
       // Create a multi-sig object manually
       const multiSigObject = {
         value: data,
-        proofs: [
-          await sign(data, keyPair1.privateKey),
-          await sign(data, keyPair2.privateKey)
-        ]
+        proofs: [await sign(data, keyPair1.privateKey), await sign(data, keyPair2.privateKey)],
       };
 
       const result = await verify(multiSigObject);
@@ -192,11 +189,11 @@ describe('verify module', () => {
       const data = { test: 'data' };
 
       const validProof = await sign(data, keyPair1.privateKey);
-      const invalidProof = { ...await sign(data, keyPair2.privateKey), signature: 'bad' };
+      const invalidProof = { ...(await sign(data, keyPair2.privateKey)), signature: 'bad' };
 
       const multiSigObject = {
         value: data,
-        proofs: [validProof, invalidProof]
+        proofs: [validProof, invalidProof],
       };
 
       const result = await verify(multiSigObject);

@@ -60,7 +60,7 @@ describe('Currency Transactions', () => {
           fee: 0,
         },
         keyPair.privateKey,
-        lastRef
+        lastRef,
       );
 
       expect(tx).toBeDefined();
@@ -82,15 +82,16 @@ describe('Currency Transactions', () => {
         ordinal: 0,
       };
 
-      expect(() => createCurrencyTransaction(
+      expect(() =>
+        createCurrencyTransaction(
           {
             destination: 'invalid',
             amount: 100,
             fee: 0,
           },
           keyPair.privateKey,
-          lastRef
-        )
+          lastRef,
+        ),
       ).toThrow('Invalid destination address');
     });
 
@@ -102,15 +103,16 @@ describe('Currency Transactions', () => {
         ordinal: 0,
       };
 
-      expect(() => createCurrencyTransaction(
+      expect(() =>
+        createCurrencyTransaction(
           {
             destination: keyPair.address,
             amount: 100,
             fee: 0,
           },
           keyPair.privateKey,
-          lastRef
-        )
+          lastRef,
+        ),
       ).toThrow('Source and destination addresses cannot be the same');
     });
 
@@ -123,15 +125,16 @@ describe('Currency Transactions', () => {
         ordinal: 0,
       };
 
-      expect(() => createCurrencyTransaction(
+      expect(() =>
+        createCurrencyTransaction(
           {
             destination: keyPair2.address,
             amount: 0.000000001, // Less than 1e-8
             fee: 0,
           },
           keyPair.privateKey,
-          lastRef
-        )
+          lastRef,
+        ),
       ).toThrow('Transfer amount must be greater than 1e-8');
     });
 
@@ -144,15 +147,16 @@ describe('Currency Transactions', () => {
         ordinal: 0,
       };
 
-      expect(() => createCurrencyTransaction(
+      expect(() =>
+        createCurrencyTransaction(
           {
             destination: keyPair2.address,
             amount: 100,
             fee: -1,
           },
           keyPair.privateKey,
-          lastRef
-        )
+          lastRef,
+        ),
       ).toThrow('Fee must be greater than or equal to zero');
     });
   });
@@ -175,11 +179,7 @@ describe('Currency Transactions', () => {
         { destination: recipient3.address, amount: 30 },
       ];
 
-      const txns = await createCurrencyTransactionBatch(
-        transfers,
-        keyPair.privateKey,
-        lastRef
-      );
+      const txns = await createCurrencyTransactionBatch(transfers, keyPair.privateKey, lastRef);
 
       expect(txns).toHaveLength(3);
       expect(txns[0].value.amount).toBe(1000000000); // 10 * 1e8
@@ -210,7 +210,7 @@ describe('Currency Transactions', () => {
           fee: 0,
         },
         keyPair.privateKey,
-        lastRef
+        lastRef,
       );
 
       const result = await verifyCurrencyTransaction(tx);
@@ -236,7 +236,7 @@ describe('Currency Transactions', () => {
           fee: 0,
         },
         keyPair.privateKey,
-        lastRef
+        lastRef,
       );
 
       // Corrupt the signature
@@ -269,7 +269,7 @@ describe('Currency Transactions', () => {
           fee: 0,
         },
         keyPair1.privateKey,
-        lastRef
+        lastRef,
       );
 
       expect(tx.proofs).toHaveLength(1);
@@ -305,7 +305,7 @@ describe('Currency Transactions', () => {
           fee: 0,
         },
         keyPair.privateKey,
-        lastRef
+        lastRef,
       );
 
       const hash1 = await hashCurrencyTransaction(tx);
@@ -332,7 +332,7 @@ describe('Currency Transactions', () => {
           fee: 0,
         },
         keyPair.privateKey,
-        lastRef
+        lastRef,
       );
 
       const ref = await getTransactionReference(tx, 1);

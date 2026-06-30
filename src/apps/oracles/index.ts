@@ -20,13 +20,13 @@ export {
   IdentityDefinition as OracleDefinition,
   identityStateFromJSON as oracleStateFromJSON,
   identityStateToJSON as oracleStateToJSON,
-} from "../identity/index.js";
+} from '../identity/index.js';
 
-import { getIdentityDefinition } from "../identity/index.js";
+import { getIdentityDefinition } from '../identity/index.js';
 
 /** @deprecated Use `getIdentityDefinition('oracle')` from `@ottochain/sdk/apps/identity` */
 export function getOracleDefinition(_type?: string): unknown {
-  return getIdentityDefinition("oracle");
+  return getIdentityDefinition('oracle');
 }
 
 /** @deprecated Use `DEFAULT_REPUTATION_CONFIG` from `@ottochain/sdk/apps/identity` */

@@ -46,39 +46,29 @@ describe('MarketPrediction State Machine', () => {
 
   it('should have take_position transition from OPEN to OPEN', () => {
     const t = marketPredictionDef.transitions.find(
-      t => t.eventName === 'take_position' && t.from === 'OPEN' && t.to === 'OPEN'
+      (t) => t.eventName === 'take_position' && t.from === 'OPEN' && t.to === 'OPEN',
     );
     expect(t).toBeDefined();
   });
 
   it('should guard oracle resolution submission to authorized oracles', () => {
-    const t = marketPredictionDef.transitions.find(
-      t => t.eventName === 'submit_resolution' && t.from === 'CLOSED'
-    );
+    const t = marketPredictionDef.transitions.find((t) => t.eventName === 'submit_resolution' && t.from === 'CLOSED');
     expect(t).toBeDefined();
     // Oracle allowlist binds to VERIFIED signers (proofs[].address), not the
     // forgeable event.agent — signerInSet('state.oracles').
     expect(t?.guard).toEqual({
-      some: [
-        { map: [{ var: 'proofs' }, { var: 'address' }] },
-        { in: [{ var: '' }, { var: 'state.oracles' }] },
-      ],
+      some: [{ map: [{ var: 'proofs' }, { var: 'address' }] }, { in: [{ var: '' }, { var: 'state.oracles' }] }],
     });
   });
 
   it('should require an oracle signer AND quorum (count, not size) for finalization', () => {
-    const t = marketPredictionDef.transitions.find(
-      t => t.eventName === 'finalize' && t.to === 'SETTLED'
-    );
+    const t = marketPredictionDef.transitions.find((t) => t.eventName === 'finalize' && t.to === 'SETTLED');
     expect(t).toBeDefined();
     // S2 fix: finalize is gated on a verified oracle signer plus the quorum count,
     // and the settled outcome derives from state.resolutions — never event.outcome.
     expect(t?.guard).toHaveProperty('and');
     expect(t?.guard.and[0]).toEqual({
-      some: [
-        { map: [{ var: 'proofs' }, { var: 'address' }] },
-        { in: [{ var: '' }, { var: 'state.oracles' }] },
-      ],
+      some: [{ map: [{ var: 'proofs' }, { var: 'address' }] }, { in: [{ var: '' }, { var: 'state.oracles' }] }],
     });
     expect(t?.guard.and[1]).toEqual({
       '>=': [{ count: { var: 'state.resolutions' } }, { var: 'state.quorum' }],
@@ -97,8 +87,8 @@ describe('MarketPrediction State Machine', () => {
   });
 
   it('should gate the dispute ruling on the state-pinned arbiter, not event.judicialRuling', () => {
-    const dispute = marketPredictionDef.transitions.find(t => t.eventName === 'dispute');
-    const ruling = marketPredictionDef.transitions.find(t => t.eventName === 'ruling');
+    const dispute = marketPredictionDef.transitions.find((t) => t.eventName === 'dispute');
+    const ruling = marketPredictionDef.transitions.find((t) => t.eventName === 'ruling');
     expect(dispute).toBeDefined();
     expect(ruling).toBeDefined();
     // S2 fix: signer must be the pinned arbiter AND finalOutcome must be a valid outcome.
@@ -115,13 +105,13 @@ describe('MarketPrediction State Machine', () => {
   });
 
   it('should support invalidation by oracle consensus', () => {
-    const invalidate = marketPredictionDef.transitions.find(t => t.eventName === 'invalidate');
+    const invalidate = marketPredictionDef.transitions.find((t) => t.eventName === 'invalidate');
     expect(invalidate).toBeDefined();
     expect(invalidate?.to).toBe('REFUNDED');
   });
 
   it('should support claim after settlement', () => {
-    const claim = marketPredictionDef.transitions.find(t => t.eventName === 'claim');
+    const claim = marketPredictionDef.transitions.find((t) => t.eventName === 'claim');
     expect(claim).toBeDefined();
     expect(claim?.from).toBe('SETTLED');
     expect(claim?.to).toBe('SETTLED');

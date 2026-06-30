@@ -137,11 +137,7 @@ describeWithDag4('Integration tests', () => {
         const keyPair3 = generateKeyPair();
         const data = { action: 'batch', value: 'test' };
 
-        const signed = await batchSign(data, [
-          keyPair.privateKey,
-          keyPair2.privateKey,
-          keyPair3.privateKey,
-        ]);
+        const signed = await batchSign(data, [keyPair.privateKey, keyPair2.privateKey, keyPair3.privateKey]);
 
         expect(signed.proofs.length).toBe(3);
 

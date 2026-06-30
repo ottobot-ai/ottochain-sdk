@@ -38,11 +38,7 @@
  */
 
 import { KNOWN_OPERATORS as KNOWN_OPERATORS_TYPED } from '@constellation-network/metagraph-sdk-jlvm';
-import type {
-  FiberAppDefinition,
-  Transition,
-  JsonLogicRule,
-} from './fiber-app.js';
+import type { FiberAppDefinition, Transition, JsonLogicRule } from './fiber-app.js';
 
 /**
  * Canonical set of valid JLVM operator tags, imported from metakit (the same
@@ -88,11 +84,7 @@ export const LINT_CODES = {
  * The ONLY `$`-prefixed keys the engine injects (`ReservedKeys`). Anything else
  * (`$timestamp`, `$now`, ...) resolves to null on chain.
  */
-export const INJECTED_RESERVED_VARS: ReadonlySet<string> = new Set([
-  '$ordinal',
-  '$lastSnapshotHash',
-  '$epochProgress',
-]);
+export const INJECTED_RESERVED_VARS: ReadonlySet<string> = new Set(['$ordinal', '$lastSnapshotHash', '$epochProgress']);
 
 /**
  * Tags that LOOK like opcodes and appear in real definitions but are NOT valid
@@ -175,11 +167,7 @@ export function lintGuardExpression(
     // The reference may be a string, or `[path, default]`, or (rarely) a
     // nested expression; only string refs carry the patterns we check.
     const refStr =
-      typeof ref === 'string'
-        ? ref
-        : Array.isArray(ref) && typeof ref[0] === 'string'
-          ? (ref[0] as string)
-          : undefined;
+      typeof ref === 'string' ? ref : Array.isArray(ref) && typeof ref[0] === 'string' ? (ref[0] as string) : undefined;
 
     if (refStr !== undefined) {
       // rule 1 — unknown reserved `$`-key
@@ -213,10 +201,7 @@ export function lintGuardExpression(
       }
 
       // rule 3 — `witness.*` read inside a fiber transition
-      if (
-        ctx.flagWitness &&
-        (refStr === 'witness' || refStr.startsWith('witness.'))
-      ) {
+      if (ctx.flagWitness && (refStr === 'witness' || refStr.startsWith('witness.'))) {
         out.push({
           app: ctx.app,
           transition: ctx.transition,
@@ -271,14 +256,7 @@ export function lintGuardExpression(
         operand.forEach((child, i) => {
           // First operand is the base collection (an expression); the rest are
           // the literal field maps merged/appended onto it.
-          out.push(
-            ...lintGuardExpression(
-              child,
-              ctx,
-              `${path}.${tag}[${i}]`,
-              i > 0 ? true : inDataLiteral,
-            ),
-          );
+          out.push(...lintGuardExpression(child, ctx, `${path}.${tag}[${i}]`, i > 0 ? true : inDataLiteral));
         });
       } else {
         out.push(...lintGuardExpression(operand, ctx, `${path}.${tag}`, inDataLiteral));

@@ -22,7 +22,7 @@ describe('CorpBoard State Machine', () => {
     it('should define all required states', () => {
       const expectedStates = ['ACTIVE', 'IN_MEETING', 'QUORUM_LOST'];
       const actualStates = Object.keys(corpBoardDef.states);
-      expectedStates.forEach(state => {
+      expectedStates.forEach((state) => {
         expect(actualStates).toContain(state);
       });
     });
@@ -38,7 +38,7 @@ describe('CorpBoard State Machine', () => {
     });
 
     it('should have descriptions for all states', () => {
-      Object.values(corpBoardDef.states).forEach(state => {
+      Object.values(corpBoardDef.states).forEach((state) => {
         expect(state.description).toBeDefined();
         expect(state.description.length).toBeGreaterThan(0);
       });
@@ -48,98 +48,98 @@ describe('CorpBoard State Machine', () => {
   describe('State Transitions', () => {
     it('should allow elect_director transition from ACTIVE to ACTIVE', () => {
       const transition = corpBoardDef.transitions.find(
-        t => t.from === 'ACTIVE' && t.to === 'ACTIVE' && t.eventName === 'elect_director'
+        (t) => t.from === 'ACTIVE' && t.to === 'ACTIVE' && t.eventName === 'elect_director',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow resign_director transition from ACTIVE to ACTIVE', () => {
       const transition = corpBoardDef.transitions.find(
-        t => t.from === 'ACTIVE' && t.to === 'ACTIVE' && t.eventName === 'resign_director'
+        (t) => t.from === 'ACTIVE' && t.to === 'ACTIVE' && t.eventName === 'resign_director',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow resign_director transition from IN_MEETING to ACTIVE', () => {
       const transition = corpBoardDef.transitions.find(
-        t => t.from === 'IN_MEETING' && t.to === 'ACTIVE' && t.eventName === 'resign_director'
+        (t) => t.from === 'IN_MEETING' && t.to === 'ACTIVE' && t.eventName === 'resign_director',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow remove_for_cause transition from ACTIVE to ACTIVE', () => {
       const transition = corpBoardDef.transitions.find(
-        t => t.from === 'ACTIVE' && t.to === 'ACTIVE' && t.eventName === 'remove_for_cause'
+        (t) => t.from === 'ACTIVE' && t.to === 'ACTIVE' && t.eventName === 'remove_for_cause',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow designate_chair transition from ACTIVE to ACTIVE', () => {
       const transition = corpBoardDef.transitions.find(
-        t => t.from === 'ACTIVE' && t.to === 'ACTIVE' && t.eventName === 'designate_chair'
+        (t) => t.from === 'ACTIVE' && t.to === 'ACTIVE' && t.eventName === 'designate_chair',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow call_meeting transition from ACTIVE to ACTIVE', () => {
       const transition = corpBoardDef.transitions.find(
-        t => t.from === 'ACTIVE' && t.to === 'ACTIVE' && t.eventName === 'call_meeting'
+        (t) => t.from === 'ACTIVE' && t.to === 'ACTIVE' && t.eventName === 'call_meeting',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow record_attendance transition from ACTIVE to ACTIVE', () => {
       const transition = corpBoardDef.transitions.find(
-        t => t.from === 'ACTIVE' && t.to === 'ACTIVE' && t.eventName === 'record_attendance'
+        (t) => t.from === 'ACTIVE' && t.to === 'ACTIVE' && t.eventName === 'record_attendance',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow open_meeting transition from ACTIVE to IN_MEETING', () => {
       const transition = corpBoardDef.transitions.find(
-        t => t.from === 'ACTIVE' && t.to === 'IN_MEETING' && t.eventName === 'open_meeting'
+        (t) => t.from === 'ACTIVE' && t.to === 'IN_MEETING' && t.eventName === 'open_meeting',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow director_departs transition from IN_MEETING to IN_MEETING', () => {
       const transition = corpBoardDef.transitions.find(
-        t => t.from === 'IN_MEETING' && t.to === 'IN_MEETING' && t.eventName === 'director_departs'
+        (t) => t.from === 'IN_MEETING' && t.to === 'IN_MEETING' && t.eventName === 'director_departs',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow quorum_lost transition from IN_MEETING to QUORUM_LOST', () => {
       const transition = corpBoardDef.transitions.find(
-        t => t.from === 'IN_MEETING' && t.to === 'QUORUM_LOST' && t.eventName === 'quorum_lost'
+        (t) => t.from === 'IN_MEETING' && t.to === 'QUORUM_LOST' && t.eventName === 'quorum_lost',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow quorum_restored transition from QUORUM_LOST to IN_MEETING', () => {
       const transition = corpBoardDef.transitions.find(
-        t => t.from === 'QUORUM_LOST' && t.to === 'IN_MEETING' && t.eventName === 'quorum_restored'
+        (t) => t.from === 'QUORUM_LOST' && t.to === 'IN_MEETING' && t.eventName === 'quorum_restored',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow adjourn transition from IN_MEETING to ACTIVE', () => {
       const transition = corpBoardDef.transitions.find(
-        t => t.from === 'IN_MEETING' && t.to === 'ACTIVE' && t.eventName === 'adjourn'
+        (t) => t.from === 'IN_MEETING' && t.to === 'ACTIVE' && t.eventName === 'adjourn',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow adjourn transition from QUORUM_LOST to ACTIVE', () => {
       const transition = corpBoardDef.transitions.find(
-        t => t.from === 'QUORUM_LOST' && t.to === 'ACTIVE' && t.eventName === 'adjourn'
+        (t) => t.from === 'QUORUM_LOST' && t.to === 'ACTIVE' && t.eventName === 'adjourn',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow update_seats transition from ACTIVE to ACTIVE', () => {
       const transition = corpBoardDef.transitions.find(
-        t => t.from === 'ACTIVE' && t.to === 'ACTIVE' && t.eventName === 'update_seats'
+        (t) => t.from === 'ACTIVE' && t.to === 'ACTIVE' && t.eventName === 'update_seats',
       );
       expect(transition).toBeDefined();
     });
@@ -147,65 +147,47 @@ describe('CorpBoard State Machine', () => {
 
   describe('Transition Guards and Effects', () => {
     it('should have guard on elect_director transition', () => {
-      const transition = corpBoardDef.transitions.find(
-        t => t.eventName === 'elect_director'
-      );
+      const transition = corpBoardDef.transitions.find((t) => t.eventName === 'elect_director');
       expect(transition?.guard).toBeDefined();
     });
 
     it('should have effect on elect_director transition', () => {
-      const transition = corpBoardDef.transitions.find(
-        t => t.eventName === 'elect_director'
-      );
+      const transition = corpBoardDef.transitions.find((t) => t.eventName === 'elect_director');
       expect(transition?.effect).toBeDefined();
     });
 
     it('should emit DIRECTOR_ELECTED on elect_director', () => {
-      const transition = corpBoardDef.transitions.find(
-        t => t.eventName === 'elect_director'
-      );
+      const transition = corpBoardDef.transitions.find((t) => t.eventName === 'elect_director');
       expect(JSON.stringify(transition?.effect)).toContain('DIRECTOR_ELECTED');
     });
 
     it('should emit DIRECTOR_RESIGNED on resign_director', () => {
-      const transition = corpBoardDef.transitions.find(
-        t => t.from === 'ACTIVE' && t.eventName === 'resign_director'
-      );
+      const transition = corpBoardDef.transitions.find((t) => t.from === 'ACTIVE' && t.eventName === 'resign_director');
       expect(JSON.stringify(transition?.effect)).toContain('DIRECTOR_RESIGNED');
     });
 
     it('should emit DIRECTOR_REMOVED on remove_for_cause', () => {
-      const transition = corpBoardDef.transitions.find(
-        t => t.eventName === 'remove_for_cause'
-      );
+      const transition = corpBoardDef.transitions.find((t) => t.eventName === 'remove_for_cause');
       expect(JSON.stringify(transition?.effect)).toContain('DIRECTOR_REMOVED');
     });
 
     it('should emit BOARD_MEETING_SCHEDULED on call_meeting', () => {
-      const transition = corpBoardDef.transitions.find(
-        t => t.eventName === 'call_meeting'
-      );
+      const transition = corpBoardDef.transitions.find((t) => t.eventName === 'call_meeting');
       expect(JSON.stringify(transition?.effect)).toContain('BOARD_MEETING_SCHEDULED');
     });
 
     it('should emit BOARD_MEETING_OPENED on open_meeting', () => {
-      const transition = corpBoardDef.transitions.find(
-        t => t.eventName === 'open_meeting'
-      );
+      const transition = corpBoardDef.transitions.find((t) => t.eventName === 'open_meeting');
       expect(JSON.stringify(transition?.effect)).toContain('BOARD_MEETING_OPENED');
     });
 
     it('should emit BOARD_QUORUM_LOST on quorum_lost', () => {
-      const transition = corpBoardDef.transitions.find(
-        t => t.eventName === 'quorum_lost'
-      );
+      const transition = corpBoardDef.transitions.find((t) => t.eventName === 'quorum_lost');
       expect(JSON.stringify(transition?.effect)).toContain('BOARD_QUORUM_LOST');
     });
 
     it('should emit BOARD_MEETING_ADJOURNED on adjourn', () => {
-      const transition = corpBoardDef.transitions.find(
-        t => t.from === 'IN_MEETING' && t.eventName === 'adjourn'
-      );
+      const transition = corpBoardDef.transitions.find((t) => t.from === 'IN_MEETING' && t.eventName === 'adjourn');
       expect(JSON.stringify(transition?.effect)).toContain('BOARD_MEETING_ADJOURNED');
     });
   });
@@ -319,9 +301,7 @@ describe('CorpBoard State Machine', () => {
 
   describe('Two-phase for-cause removal (#24)', () => {
     it('propose_removal binds the removal resolution via _addDependency', () => {
-      const propose = corpBoardDef.transitions.find(
-        t => t.eventName === 'propose_removal'
-      );
+      const propose = corpBoardDef.transitions.find((t) => t.eventName === 'propose_removal');
       expect(propose).toBeDefined();
       const effectStr = JSON.stringify(propose?.effect);
       expect(effectStr).toContain('_addDependency');
@@ -329,9 +309,7 @@ describe('CorpBoard State Machine', () => {
     });
 
     it('remove_for_cause gates on the bound resolution reaching EXECUTED (depInState), not a dropped object-dep', () => {
-      const transition = corpBoardDef.transitions.find(
-        t => t.eventName === 'remove_for_cause'
-      );
+      const transition = corpBoardDef.transitions.find((t) => t.eventName === 'remove_for_cause');
       const guardStr = JSON.stringify(transition?.guard);
       // dynamic currentStateId assert on the bound resolution + the recorded proposal match
       expect(guardStr).toContain('EXECUTED');
@@ -343,7 +321,7 @@ describe('CorpBoard State Machine', () => {
 
   describe('Authorization (identity hardening)', () => {
     const guardOf = (eventName: string) =>
-      JSON.stringify(corpBoardDef.transitions.find(t => t.eventName === eventName)?.guard);
+      JSON.stringify(corpBoardDef.transitions.find((t) => t.eventName === eventName)?.guard);
 
     it('should pin authorizedRemovers as a required address-set createSchema/stateSchema field', () => {
       expect(corpBoardDef.createSchema.required).toContain('authorizedRemovers');
@@ -364,7 +342,7 @@ describe('CorpBoard State Machine', () => {
       // The runtime-dep resolution-state assert is LIVE (#24): propose_removal binds the resolution via
       // _addDependency and remove_for_cause asserts it reached EXECUTED via depInState — the dropped
       // object-form dependency is gone.
-      const transition = corpBoardDef.transitions.find(t => t.eventName === 'remove_for_cause');
+      const transition = corpBoardDef.transitions.find((t) => t.eventName === 'remove_for_cause');
       expect(transition?.dependencies).toEqual([]);
       expect(JSON.stringify(transition?.guard)).toContain('EXECUTED');
     });

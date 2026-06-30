@@ -26,7 +26,7 @@ import {
   type ApplyMorphismMessage,
   type PolicyRef,
   type JsonLogicRule,
-} from "../lending/assets.js";
+} from '../lending/assets.js';
 
 export {
   createAssetPolicyPayload,
@@ -43,10 +43,7 @@ export type { CreateAssetPolicyParams, MintAssetMessage, ApplyMorphismMessage, P
  * Transferable so withdraw/slash can return it (a soulbound stake would fail the R1 transferable check
  * on withdraw — see design §11; not the default here).
  */
-export function stakePolicy(
-  name = "staked-pool-stake-v1.asset",
-  version = "1.0.0",
-): CreateAssetPolicyParams {
+export function stakePolicy(name = 'staked-pool-stake-v1.asset', version = '1.0.0'): CreateAssetPolicyParams {
   return {
     name,
     version,
@@ -55,16 +52,16 @@ export function stakePolicy(
       maxSupply: null,
       mintPolicy: null,
       // Only the holder may burn their own stake (defensive; the pool moves it via Transfer, not Burn).
-      burnPolicy: { in: [{ var: "holder.Wallet.address" }, { var: "signers" }] },
+      burnPolicy: { in: [{ var: 'holder.Wallet.address' }, { var: 'signers' }] },
       decimals: 0,
     },
     morphisms: {
       // Custody Transfer is the join/withdraw mechanism; gated so the pool fiber authorizes movement.
-      Transfer: { visibility: "Public" },
-      Burn: { visibility: "Public" },
+      Transfer: { visibility: 'Public' },
+      Burn: { visibility: 'Public' },
     },
     stateShape: {},
-    metadata: { family: "staked-pool", role: "stake" },
+    metadata: { family: 'staked-pool', role: 'stake' },
   };
 }
 
@@ -75,8 +72,8 @@ export function stakePolicy(
  */
 export function rewardPotPolicy(
   mintGuard: JsonLogicRule | null = null,
-  name = "staked-pool-reward-v1.asset",
-  version = "1.0.0",
+  name = 'staked-pool-reward-v1.asset',
+  version = '1.0.0',
 ): CreateAssetPolicyParams {
   return {
     name,
@@ -89,10 +86,10 @@ export function rewardPotPolicy(
       decimals: 0,
     },
     morphisms: {
-      Transfer: { visibility: "Public" },
+      Transfer: { visibility: 'Public' },
     },
     stateShape: {},
-    metadata: { family: "staked-pool", role: "reward" },
+    metadata: { family: 'staked-pool', role: 'reward' },
   };
 }
 
@@ -107,7 +104,7 @@ export function stakeJoinOp(args: {
 }): ApplyMorphismMessage {
   return createApplyMorphismPayload({
     assetId: args.stakeAssetId,
-    kind: "Transfer",
+    kind: 'Transfer',
     recipient: fiberHolder(args.poolFiberId),
     targetSequenceNumber: args.targetSequenceNumber,
   });

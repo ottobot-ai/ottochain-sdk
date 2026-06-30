@@ -11,15 +11,15 @@ describe('Wallet Tests', () => {
   describe('generateKeyPair', () => {
     it('should generate valid key pair with correct formats', () => {
       const keyPair = generateKeyPair();
-      
+
       expect(keyPair.privateKey).toBeDefined();
       expect(keyPair.privateKey).toHaveLength(64);
       expect(keyPair.privateKey).toMatch(/^[0-9a-fA-F]+$/);
-      
+
       expect(keyPair.publicKey).toBeDefined();
       expect(keyPair.publicKey).toHaveLength(130);
       expect(keyPair.publicKey).toMatch(/^04[0-9a-fA-F]+$/);
-      
+
       expect(keyPair.address).toBeDefined();
       expect(keyPair.address).toMatch(/^DAG/);
     });
@@ -30,7 +30,7 @@ describe('Wallet Tests', () => {
       const privateKey = 'a'.repeat(64);
       const keyPair1 = keyPairFromPrivateKey(privateKey);
       const keyPair2 = keyPairFromPrivateKey(privateKey);
-      
+
       expect(keyPair2.publicKey).toBe(keyPair1.publicKey);
       expect(keyPair2.address).toBe(keyPair1.address);
     });
@@ -63,7 +63,7 @@ describe('Wallet Tests', () => {
     it('should return 128-character string without 04 prefix', () => {
       const privateKey = 'a'.repeat(64);
       const publicKeyId = getPublicKeyId(privateKey);
-      
+
       expect(publicKeyId).toHaveLength(128);
       expect(publicKeyId).toMatch(/^[0-9a-fA-F]+$/);
       expect(publicKeyId).not.toMatch(/^04/);
@@ -74,7 +74,7 @@ describe('Wallet Tests', () => {
     it('should return uncompressed public key with 04 prefix', () => {
       const privateKey = 'a'.repeat(64);
       const publicKey = getPublicKeyHex(privateKey, false);
-      
+
       expect(publicKey).toHaveLength(130);
       expect(publicKey).toMatch(/^04[0-9a-fA-F]+$/);
     });
@@ -82,7 +82,7 @@ describe('Wallet Tests', () => {
     it('should return compressed public key with 33 characters', () => {
       const privateKey = 'a'.repeat(64);
       const publicKey = getPublicKeyHex(privateKey, true);
-      
+
       expect(publicKey).toHaveLength(66); // 33 bytes in hex
       expect(publicKey).toMatch(/^[0-9a-fA-F]+$/);
     });
@@ -93,7 +93,7 @@ describe('Wallet Tests', () => {
       const privateKey = 'a'.repeat(64);
       const publicKey = getPublicKeyHex(privateKey, false);
       const address = getAddress(publicKey);
-      
+
       expect(address).toBeDefined();
       expect(address).toMatch(/^DAG/);
     });

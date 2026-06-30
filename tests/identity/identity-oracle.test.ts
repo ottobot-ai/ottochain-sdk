@@ -13,8 +13,8 @@ describe('Identity Oracle State Machine', () => {
     });
 
     it('should keep the oracle lifecycle states', () => {
-      ['UNREGISTERED', 'REGISTERED', 'ACTIVE', 'SLASHED', 'WITHDRAWN'].forEach(s =>
-        expect(identityOracleDef.states).toHaveProperty(s)
+      ['UNREGISTERED', 'REGISTERED', 'ACTIVE', 'SLASHED', 'WITHDRAWN'].forEach((s) =>
+        expect(identityOracleDef.states).toHaveProperty(s),
       );
       expect(identityOracleDef.states.WITHDRAWN.isFinal).toBe(true);
     });
@@ -30,16 +30,14 @@ describe('Identity Oracle State Machine', () => {
     });
 
     it('should remove the forgeable adminOverride field from the activate event', () => {
-      expect(identityOracleDef.eventSchemas.activate.properties).not.toHaveProperty(
-        'adminOverride'
-      );
+      expect(identityOracleDef.eventSchemas.activate.properties).not.toHaveProperty('adminOverride');
     });
   });
 
   describe('S2 / missing-authority hardening', () => {
     it('activate: gated solely on the verified owner signer (no adminOverride bypass)', () => {
       const activate = identityOracleDef.transitions.find(
-        t => t.from === 'REGISTERED' && t.to === 'ACTIVE' && t.eventName === 'activate'
+        (t) => t.from === 'REGISTERED' && t.to === 'ACTIVE' && t.eventName === 'activate',
       );
       // The bypass disjunct is gone — activation goes through the signer path only.
       expect(activate!.guard).toEqual(signerIsParty('state.address'));
@@ -48,7 +46,7 @@ describe('Identity Oracle State Machine', () => {
 
     it('slash: requires the pinned slasher signer AND keeps the amount bounds', () => {
       const slash = identityOracleDef.transitions.find(
-        t => t.from === 'ACTIVE' && t.to === 'SLASHED' && t.eventName === 'slash'
+        (t) => t.from === 'ACTIVE' && t.to === 'SLASHED' && t.eventName === 'slash',
       );
       expect(slash!.guard).toHaveProperty('and');
       // who-check: the slasher is a verified signer (was previously absent).
@@ -64,7 +62,7 @@ describe('Identity Oracle State Machine', () => {
 
     it('slash: still records reason/amount in the effect (data, not authorization)', () => {
       const slash = identityOracleDef.transitions.find(
-        t => t.from === 'ACTIVE' && t.to === 'SLASHED' && t.eventName === 'slash'
+        (t) => t.from === 'ACTIVE' && t.to === 'SLASHED' && t.eventName === 'slash',
       );
       const appended = slash!.effect.merge[1].slashingHistory.cat[1][0];
       expect(appended.reason).toEqual({ var: 'event.reason' });

@@ -5,12 +5,7 @@
  * fields, PRESERVE array nulls, then RFC 8785 canonicalize. Absent and
  * explicit-null optional fields must produce identical signatures.
  */
-import {
-  signDataUpdate,
-  createSignedObject,
-  addSignature,
-  batchSign,
-} from '../src/signing.js';
+import { signDataUpdate, createSignedObject, addSignature, batchSign } from '../src/signing.js';
 import { verify } from '../src/verify.js';
 import { signTransaction, addTransactionSignature, createTransitionPayload } from '../src/ottochain/transaction.js';
 import { dropNulls } from '../src/ottochain/drop-nulls.js';

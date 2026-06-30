@@ -23,12 +23,7 @@ import {
   addSignature as baseAddSignature,
   batchSign as baseBatchSign,
 } from '@constellation-network/metagraph-sdk';
-import type {
-  SignatureProof,
-  Signed,
-  SigningOptions,
-  SigningMode,
-} from '@constellation-network/metagraph-sdk';
+import type { SignatureProof, Signed, SigningOptions, SigningMode } from '@constellation-network/metagraph-sdk';
 import { dropNulls } from './ottochain/drop-nulls.js';
 
 function resolveMode(options: SigningOptions = {}): SigningMode {
@@ -53,11 +48,7 @@ export function signDataUpdate<T>(data: T, privateKey: string): SignatureProof {
  * over the null-dropped canonical bytes (the returned `value` is the
  * caller's original payload, untouched).
  */
-export function createSignedObject<T>(
-  value: T,
-  privateKey: string,
-  options: SigningOptions = {}
-): Signed<T> {
+export function createSignedObject<T>(value: T, privateKey: string, options: SigningOptions = {}): Signed<T> {
   if (resolveMode(options) === 'dataUpdate') {
     const signed = baseCreateSignedObject(dropNulls(value), privateKey, options);
     return { ...signed, value };
@@ -70,11 +61,7 @@ export function createSignedObject<T>(
  * `dataUpdate` mode the new signature is computed over the null-dropped
  * canonical bytes of `signed.value`.
  */
-export function addSignature<T>(
-  signed: Signed<T>,
-  privateKey: string,
-  options?: SigningOptions
-): Signed<T> {
+export function addSignature<T>(signed: Signed<T>, privateKey: string, options?: SigningOptions): Signed<T> {
   const mode = options ? resolveMode(options) : ((signed as Signed<T> & { mode?: SigningMode }).mode ?? 'standard');
   if (mode === 'dataUpdate') {
     const result = baseAddSignature({ ...signed, value: dropNulls(signed.value) }, privateKey, options);
@@ -88,11 +75,7 @@ export function addSignature<T>(
  * `dataUpdate` mode all signatures are computed over the null-dropped
  * canonical bytes (the returned `value` is the caller's original payload).
  */
-export function batchSign<T>(
-  value: T,
-  privateKeys: string[],
-  options: SigningOptions = {}
-): Signed<T> {
+export function batchSign<T>(value: T, privateKeys: string[], options: SigningOptions = {}): Signed<T> {
   if (resolveMode(options) === 'dataUpdate') {
     const signed = baseBatchSign(dropNulls(value), privateKeys, options);
     return { ...signed, value };

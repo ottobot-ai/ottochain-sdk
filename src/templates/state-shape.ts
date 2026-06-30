@@ -22,10 +22,7 @@ export interface StateShape {
  * @example seedState({ fields: { purchaseCount: { default: 0 }, status: { default: 'ACTIVE' } } })
  *          // => { purchaseCount: 0, status: 'ACTIVE' }
  */
-export function seedState(
-  shape: StateShape,
-  overrides?: Record<string, unknown>,
-): Record<string, unknown> {
+export function seedState(shape: StateShape, overrides?: Record<string, unknown>): Record<string, unknown> {
   const seeded: Record<string, unknown> = {};
   for (const [name, field] of Object.entries(shape.fields)) {
     seeded[name] =

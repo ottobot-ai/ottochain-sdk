@@ -1,367 +1,347 @@
-import { defineFiberApp } from "../../../schema/fiber-app.js";
-import { signerIsParty } from "../../../schema/guards.js";
+import { defineFiberApp } from '../../../schema/fiber-app.js';
+import { signerIsParty } from '../../../schema/guards.js';
 
 /**
  * Oracle identity with staking, attestations, reputation, and slashing mechanics.
  */
 export const identityOracleDef = defineFiberApp({
   metadata: {
-    name: "IdentityOracle",
-    app: "identity",
-    type: "oracle",
-    version: "1.0.0",
-    description:
-      "Oracle identity with staking, attestations, reputation, and slashing mechanics",
+    name: 'IdentityOracle',
+    app: 'identity',
+    type: 'oracle',
+    version: '1.0.0',
+    description: 'Oracle identity with staking, attestations, reputation, and slashing mechanics',
   },
 
   createSchema: {
-    required: ["owner", "stake", "domains", "slasher"] as const,
+    required: ['owner', 'stake', 'domains', 'slasher'] as const,
     properties: {
       owner: {
-        type: "address",
-        description: "Oracle owner DAG address",
+        type: 'address',
+        description: 'Oracle owner DAG address',
         immutable: true,
       },
       slasher: {
-        type: "address",
-        description:
-          "DAG address of the slasher authorized to penalize this oracle's stake",
+        type: 'address',
+        description: "DAG address of the slasher authorized to penalize this oracle's stake",
         immutable: true,
       },
       stake: {
-        type: "integer",
+        type: 'integer',
         minimum: 0,
-        description: "Initial stake amount",
+        description: 'Initial stake amount',
       },
       domains: {
-        type: "array",
-        items: { type: "string" },
-        description: "Oracle specialization domains",
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Oracle specialization domains',
       },
       minStake: {
-        type: "integer",
+        type: 'integer',
         default: 1000,
-        description: "Minimum stake required",
+        description: 'Minimum stake required',
       },
     },
   },
 
   stateSchema: {
     properties: {
-      owner: { type: "address", immutable: true },
-      slasher: { type: "address", immutable: true },
-      address: { type: "address", computed: true },
-      stake: { type: "integer", computed: true },
-      minStake: { type: "integer" },
-      domains: { type: "array", items: { type: "string" } },
+      owner: { type: 'address', immutable: true },
+      slasher: { type: 'address', immutable: true },
+      address: { type: 'address', computed: true },
+      stake: { type: 'integer', computed: true },
+      minStake: { type: 'integer' },
+      domains: { type: 'array', items: { type: 'string' } },
       status: {
-        type: "string",
-        enum: [
-          "UNREGISTERED",
-          "REGISTERED",
-          "ACTIVE",
-          "SLASHED",
-          "WITHDRAWN",
-        ] as const,
+        type: 'string',
+        enum: ['UNREGISTERED', 'REGISTERED', 'ACTIVE', 'SLASHED', 'WITHDRAWN'] as const,
         computed: true,
       },
       reputation: {
-        type: "object",
+        type: 'object',
         properties: {
-          accuracy: { type: "integer" },
-          totalResolutions: { type: "integer" },
-          disputesWon: { type: "integer" },
-          disputesLost: { type: "integer" },
+          accuracy: { type: 'integer' },
+          totalResolutions: { type: 'integer' },
+          disputesWon: { type: 'integer' },
+          disputesLost: { type: 'integer' },
         },
         computed: true,
       },
-      slashingHistory: { type: "array", computed: true },
-      registeredAt: { type: "timestamp", computed: true },
-      activatedAt: { type: "timestamp", computed: true },
-      slashedAt: { type: "timestamp", computed: true },
-      withdrawnAt: { type: "timestamp", computed: true },
+      slashingHistory: { type: 'array', computed: true },
+      registeredAt: { type: 'timestamp', computed: true },
+      activatedAt: { type: 'timestamp', computed: true },
+      slashedAt: { type: 'timestamp', computed: true },
+      withdrawnAt: { type: 'timestamp', computed: true },
     },
   },
 
   eventSchemas: {
     register: {
-      description: "Register as an oracle with initial stake",
-      required: ["agent", "stake", "domains"] as const,
+      description: 'Register as an oracle with initial stake',
+      required: ['agent', 'stake', 'domains'] as const,
       properties: {
-        agent: { type: "address" },
-        stake: { type: "integer", minimum: 0 },
-        domains: { type: "array", items: { type: "string" } },
+        agent: { type: 'address' },
+        stake: { type: 'integer', minimum: 0 },
+        domains: { type: 'array', items: { type: 'string' } },
       },
     },
     activate: {
-      description: "Activate a registered oracle",
-      required: ["agent"] as const,
+      description: 'Activate a registered oracle',
+      required: ['agent'] as const,
       properties: {
-        agent: { type: "address" },
+        agent: { type: 'address' },
       },
     },
     add_stake: {
-      description: "Add stake to an active oracle",
-      required: ["agent", "amount"] as const,
+      description: 'Add stake to an active oracle',
+      required: ['agent', 'amount'] as const,
       properties: {
-        agent: { type: "address" },
-        amount: { type: "integer", minimum: 1 },
+        agent: { type: 'address' },
+        amount: { type: 'integer', minimum: 1 },
       },
     },
     record_resolution: {
-      description: "Record a market resolution outcome",
-      required: ["marketId", "correct"] as const,
+      description: 'Record a market resolution outcome',
+      required: ['marketId', 'correct'] as const,
       properties: {
-        marketId: { type: "uuid" },
-        correct: { type: "boolean" },
+        marketId: { type: 'uuid' },
+        correct: { type: 'boolean' },
       },
     },
     slash: {
-      description: "Slash oracle stake for misconduct",
-      required: ["reason", "amount"] as const,
+      description: 'Slash oracle stake for misconduct',
+      required: ['reason', 'amount'] as const,
       properties: {
-        reason: { type: "string" },
-        amount: { type: "integer", minimum: 1 },
-        marketId: { type: "uuid" },
+        reason: { type: 'string' },
+        amount: { type: 'integer', minimum: 1 },
+        marketId: { type: 'uuid' },
       },
     },
     reactivate: {
-      description: "Reactivate a slashed oracle",
-      required: ["agent"] as const,
+      description: 'Reactivate a slashed oracle',
+      required: ['agent'] as const,
       properties: {
-        agent: { type: "address" },
+        agent: { type: 'address' },
       },
     },
     withdraw: {
-      description: "Withdraw oracle and reclaim stake",
-      required: ["agent"] as const,
+      description: 'Withdraw oracle and reclaim stake',
+      required: ['agent'] as const,
       properties: {
-        agent: { type: "address" },
+        agent: { type: 'address' },
       },
     },
   },
 
   states: {
     UNREGISTERED: {
-      id: "UNREGISTERED",
+      id: 'UNREGISTERED',
       isFinal: false,
       metadata: {
-        label: "Unregistered",
-        description: "Oracle not yet registered; awaiting stake",
-        category: "initial",
+        label: 'Unregistered',
+        description: 'Oracle not yet registered; awaiting stake',
+        category: 'initial',
       },
     },
     REGISTERED: {
-      id: "REGISTERED",
+      id: 'REGISTERED',
       isFinal: false,
       metadata: {
-        label: "Registered",
-        description: "Oracle staked and registered but not yet active",
-        category: "pending",
+        label: 'Registered',
+        description: 'Oracle staked and registered but not yet active',
+        category: 'pending',
       },
     },
     ACTIVE: {
-      id: "ACTIVE",
+      id: 'ACTIVE',
       isFinal: false,
       metadata: {
-        label: "Active",
-        description: "Oracle is active and may submit resolutions",
-        category: "active",
+        label: 'Active',
+        description: 'Oracle is active and may submit resolutions',
+        category: 'active',
       },
     },
     SLASHED: {
-      id: "SLASHED",
+      id: 'SLASHED',
       isFinal: false,
       metadata: {
-        label: "Slashed",
-        description: "Oracle penalized for a lost dispute; stake reduced",
-        category: "pending",
+        label: 'Slashed',
+        description: 'Oracle penalized for a lost dispute; stake reduced',
+        category: 'pending',
       },
     },
     WITHDRAWN: {
-      id: "WITHDRAWN",
+      id: 'WITHDRAWN',
       isFinal: true,
       metadata: {
-        label: "Withdrawn",
-        description: "Oracle withdrawn and stake reclaimed (terminal)",
-        category: "terminal",
+        label: 'Withdrawn',
+        description: 'Oracle withdrawn and stake reclaimed (terminal)',
+        category: 'terminal',
       },
     },
   },
 
-  initialState: "UNREGISTERED",
+  initialState: 'UNREGISTERED',
 
   transitions: [
     {
-      from: "UNREGISTERED",
-      to: "REGISTERED",
-      eventName: "register",
-      guard: { ">=": [{ var: "event.stake" }, { var: "state.minStake" }] },
+      from: 'UNREGISTERED',
+      to: 'REGISTERED',
+      eventName: 'register',
+      guard: { '>=': [{ var: 'event.stake' }, { var: 'state.minStake' }] },
       effect: {
         merge: [
-          { var: "state" },
+          { var: 'state' },
           {
-            status: "REGISTERED",
-            address: { var: "event.agent" },
-            stake: { var: "event.stake" },
-            registeredAt: { var: "$ordinal" },
+            status: 'REGISTERED',
+            address: { var: 'event.agent' },
+            stake: { var: 'event.stake' },
+            registeredAt: { var: '$ordinal' },
             reputation: {
               accuracy: 100,
               totalResolutions: 0,
               disputesWon: 0,
               disputesLost: 0,
             },
-            domains: { var: "event.domains" },
+            domains: { var: 'event.domains' },
             slashingHistory: [],
           },
         ],
       },
     },
     {
-      from: "REGISTERED",
-      to: "ACTIVE",
-      eventName: "activate",
+      from: 'REGISTERED',
+      to: 'ACTIVE',
+      eventName: 'activate',
       // authority gate — an ARBITER/SLASHER attestation check layers on additively when the identity registry lands (see docs/design/app-hardening-identity-integration.md §4.2)
-      guard: signerIsParty("state.address"),
+      guard: signerIsParty('state.address'),
       effect: {
-        merge: [
-          { var: "state" },
-          { status: "ACTIVE", activatedAt: { var: "$ordinal" } },
-        ],
+        merge: [{ var: 'state' }, { status: 'ACTIVE', activatedAt: { var: '$ordinal' } }],
       },
     },
     {
-      from: "ACTIVE",
-      to: "ACTIVE",
-      eventName: "add_stake",
+      from: 'ACTIVE',
+      to: 'ACTIVE',
+      eventName: 'add_stake',
       guard: {
-        and: [
-          signerIsParty("state.address"),
-          { ">": [{ var: "event.amount" }, 0] },
-        ],
+        and: [signerIsParty('state.address'), { '>': [{ var: 'event.amount' }, 0] }],
       },
       effect: {
         merge: [
-          { var: "state" },
+          { var: 'state' },
           {
-            stake: { "+": [{ var: "state.stake" }, { var: "event.amount" }] },
-            lastStakeAt: { var: "$ordinal" },
+            stake: { '+': [{ var: 'state.stake' }, { var: 'event.amount' }] },
+            lastStakeAt: { var: '$ordinal' },
           },
         ],
       },
     },
     {
-      from: "ACTIVE",
-      to: "ACTIVE",
-      eventName: "record_resolution",
-      guard: { var: "event.marketId" },
+      from: 'ACTIVE',
+      to: 'ACTIVE',
+      eventName: 'record_resolution',
+      guard: { var: 'event.marketId' },
       effect: {
         merge: [
-          { var: "state" },
+          { var: 'state' },
           {
             reputation: {
               merge: [
-                { var: "state.reputation" },
+                { var: 'state.reputation' },
                 {
                   totalResolutions: {
-                    "+": [{ var: "state.reputation.totalResolutions" }, 1],
+                    '+': [{ var: 'state.reputation.totalResolutions' }, 1],
                   },
                   accuracy: {
                     if: [
-                      { var: "event.correct" },
-                      { var: "state.reputation.accuracy" },
-                      { "-": [{ var: "state.reputation.accuracy" }, 5] },
+                      { var: 'event.correct' },
+                      { var: 'state.reputation.accuracy' },
+                      { '-': [{ var: 'state.reputation.accuracy' }, 5] },
                     ],
                   },
                 },
               ],
             },
-            lastResolutionAt: { var: "$ordinal" },
+            lastResolutionAt: { var: '$ordinal' },
           },
         ],
       },
     },
     {
-      from: "ACTIVE",
-      to: "SLASHED",
-      eventName: "slash",
+      from: 'ACTIVE',
+      to: 'SLASHED',
+      eventName: 'slash',
       // authority gate — an ARBITER/SLASHER attestation check layers on additively when the identity registry lands (see docs/design/app-hardening-identity-integration.md §4.2)
       guard: {
         and: [
-          signerIsParty("state.slasher"),
-          { ">": [{ var: "event.amount" }, 0] },
-          { "<=": [{ var: "event.amount" }, { var: "state.stake" }] },
+          signerIsParty('state.slasher'),
+          { '>': [{ var: 'event.amount' }, 0] },
+          { '<=': [{ var: 'event.amount' }, { var: 'state.stake' }] },
         ],
       },
       effect: {
         merge: [
-          { var: "state" },
+          { var: 'state' },
           {
-            status: "SLASHED",
-            stake: { "-": [{ var: "state.stake" }, { var: "event.amount" }] },
+            status: 'SLASHED',
+            stake: { '-': [{ var: 'state.stake' }, { var: 'event.amount' }] },
             slashingHistory: {
               cat: [
-                { var: "state.slashingHistory" },
+                { var: 'state.slashingHistory' },
                 [
                   {
-                    reason: { var: "event.reason" },
-                    amount: { var: "event.amount" },
-                    marketId: { var: "event.marketId" },
-                    slashedAt: { var: "$ordinal" },
+                    reason: { var: 'event.reason' },
+                    amount: { var: 'event.amount' },
+                    marketId: { var: 'event.marketId' },
+                    slashedAt: { var: '$ordinal' },
                   },
                 ],
               ],
             },
-            slashedAt: { var: "$ordinal" },
+            slashedAt: { var: '$ordinal' },
           },
         ],
       },
     },
     {
-      from: "SLASHED",
-      to: "ACTIVE",
-      eventName: "reactivate",
+      from: 'SLASHED',
+      to: 'ACTIVE',
+      eventName: 'reactivate',
       guard: {
-        and: [
-          signerIsParty("state.address"),
-          { ">=": [{ var: "state.stake" }, { var: "state.minStake" }] },
-        ],
+        and: [signerIsParty('state.address'), { '>=': [{ var: 'state.stake' }, { var: 'state.minStake' }] }],
       },
       effect: {
-        merge: [
-          { var: "state" },
-          { status: "ACTIVE", reactivatedAt: { var: "$ordinal" } },
-        ],
+        merge: [{ var: 'state' }, { status: 'ACTIVE', reactivatedAt: { var: '$ordinal' } }],
       },
     },
     {
-      from: "ACTIVE",
-      to: "WITHDRAWN",
-      eventName: "withdraw",
-      guard: signerIsParty("state.address"),
+      from: 'ACTIVE',
+      to: 'WITHDRAWN',
+      eventName: 'withdraw',
+      guard: signerIsParty('state.address'),
       effect: {
         merge: [
-          { var: "state" },
+          { var: 'state' },
           {
-            status: "WITHDRAWN",
-            withdrawnAt: { var: "$ordinal" },
-            finalStake: { var: "state.stake" },
+            status: 'WITHDRAWN',
+            withdrawnAt: { var: '$ordinal' },
+            finalStake: { var: 'state.stake' },
           },
         ],
       },
     },
     {
-      from: "SLASHED",
-      to: "WITHDRAWN",
-      eventName: "withdraw",
-      guard: signerIsParty("state.address"),
+      from: 'SLASHED',
+      to: 'WITHDRAWN',
+      eventName: 'withdraw',
+      guard: signerIsParty('state.address'),
       effect: {
         merge: [
-          { var: "state" },
+          { var: 'state' },
           {
-            status: "WITHDRAWN",
-            withdrawnAt: { var: "$ordinal" },
-            finalStake: { var: "state.stake" },
+            status: 'WITHDRAWN',
+            withdrawnAt: { var: '$ordinal' },
+            finalStake: { var: 'state.stake' },
           },
         ],
       },
@@ -370,5 +350,4 @@ export const identityOracleDef = defineFiberApp({
 });
 
 export type OracleState = keyof typeof identityOracleDef.states;
-export type OracleEvent =
-  (typeof identityOracleDef.transitions)[number]["eventName"];
+export type OracleEvent = (typeof identityOracleDef.transitions)[number]['eventName'];

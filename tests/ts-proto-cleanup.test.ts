@@ -36,7 +36,7 @@ describe('Group 1: Dependency Cleanup', () => {
 
   it('package.json should contain @bufbuild/protobuf in dependencies (not devDependencies)', () => {
     // Runtime dep — ts-proto generated files import BinaryReader/BinaryWriter from it
-    const deps    = pkg.dependencies    ?? {};
+    const deps = pkg.dependencies ?? {};
     const devDeps = pkg.devDependencies ?? {};
     expect(deps).toHaveProperty('@bufbuild/protobuf');
     expect(devDeps).not.toHaveProperty('@bufbuild/protobuf');
@@ -53,7 +53,8 @@ describe('Group 2: Dist Artifact Cleanup', () => {
     let found: string[] = [];
     try {
       const result = execSync('find dist/ -name "*_pb.js" -o -name "*_pb.d.ts" 2>/dev/null', {
-        cwd: ROOT, encoding: 'utf8'
+        cwd: ROOT,
+        encoding: 'utf8',
       }).trim();
       found = result ? result.split('\n').filter(Boolean) : [];
     } catch {
@@ -141,14 +142,14 @@ describe('Group 4: FiberStatus Type Distinction', () => {
     // They must be in different files
     expect(generatedPath).not.toBe(wireFormatPath);
     // Neither file should import the FiberStatus from the other
-    const genContent  = readFileSync(generatedPath, 'utf8');
+    const genContent = readFileSync(generatedPath, 'utf8');
     const wireContent = readFileSync(wireFormatPath, 'utf8');
     // Generated should not import from wire-format types
     expect(genContent).not.toContain("from '../../ottochain/types'");
     expect(genContent).not.toContain("from '../../../ottochain/types'");
     // Wire-format should not import FiberStatus from generated
     const importsSrc = wireContent.match(/import.*FiberStatus.*from/g) ?? [];
-    const importsGenerated = importsSrc.filter(l => l.includes('generated'));
+    const importsGenerated = importsSrc.filter((l) => l.includes('generated'));
     expect(importsGenerated).toHaveLength(0);
   });
 });
@@ -170,7 +171,7 @@ describe('Group 5: CI Idempotency', () => {
 
   it('buf.yaml (or buf.gen.yaml) should be present and valid (buf lint sanity)', () => {
     // At minimum, the buf config must exist to enable `npm run generate`
-    const hasBufGen  = existsSync(join(ROOT, 'buf.gen.yaml'));
+    const hasBufGen = existsSync(join(ROOT, 'buf.gen.yaml'));
     const hasBufYaml = existsSync(join(ROOT, 'buf.yaml'));
     expect(hasBufGen || hasBufYaml).toBe(true);
   });
@@ -183,11 +184,11 @@ describe('Group 5: CI Idempotency', () => {
 describe('Group 6: Documentation Presence', () => {
   it('should have dual-type architecture documentation in CONTRIBUTING.md or docs/type-architecture.md', () => {
     const contributing = join(ROOT, 'CONTRIBUTING.md');
-    const typeArch     = join(ROOT, 'docs/type-architecture.md');
+    const typeArch = join(ROOT, 'docs/type-architecture.md');
 
-    const inContributing = existsSync(contributing) &&
-      readFileSync(contributing, 'utf8').toLowerCase().includes('dual-type');
-    const inTypeArch     = existsSync(typeArch);
+    const inContributing =
+      existsSync(contributing) && readFileSync(contributing, 'utf8').toLowerCase().includes('dual-type');
+    const inTypeArch = existsSync(typeArch);
 
     expect(inContributing || inTypeArch).toBe(true);
   });
@@ -196,10 +197,10 @@ describe('Group 6: Documentation Presence', () => {
     // Find TODO comment about PR #89 migration in src/ directory
     let found = false;
     try {
-      const result = execSync(
-        'grep -r "PR.*89\\|PR #89\\|migration" src/ --include="*.ts" -l 2>/dev/null',
-        { cwd: ROOT, encoding: 'utf8' }
-      ).trim();
+      const result = execSync('grep -r "PR.*89\\|PR #89\\|migration" src/ --include="*.ts" -l 2>/dev/null', {
+        cwd: ROOT,
+        encoding: 'utf8',
+      }).trim();
       found = result.length > 0;
     } catch {
       // grep exits non-zero if no matches; found stays false

@@ -184,7 +184,7 @@ export class ValidationError extends OttoChainError {
       value?: unknown;
       details?: Record<string, unknown>;
       cause?: Error;
-    }
+    },
   ) {
     super(ErrorCode.VALIDATION_ERROR, message, options?.cause);
     this.name = 'ValidationError';
@@ -268,7 +268,7 @@ export class TransactionError extends OttoChainError {
       transactionHash?: string;
       rejectionReason?: string;
       cause?: Error;
-    }
+    },
   ) {
     super(code, message, options?.cause);
     this.name = 'TransactionError';

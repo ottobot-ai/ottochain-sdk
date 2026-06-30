@@ -95,7 +95,7 @@ export interface SubscribeOptions {
  */
 export type FiberStateCallback = (
   current: StateMachineFiberRecord | null,
-  previous: StateMachineFiberRecord | null
+  previous: StateMachineFiberRecord | null,
 ) => void;
 
 /**
@@ -179,9 +179,7 @@ export class MetagraphClient {
    */
   async getStateMachines(status?: FiberStatus): Promise<Record<string, StateMachineFiberRecord>> {
     const query = status ? `?status=${status}` : '';
-    return this.ml0.get<Record<string, StateMachineFiberRecord>>(
-      `/data-application/v1/state-machines${query}`
-    );
+    return this.ml0.get<Record<string, StateMachineFiberRecord>>(`/data-application/v1/state-machines${query}`);
   }
 
   /**
@@ -189,9 +187,7 @@ export class MetagraphClient {
    */
   async getStateMachine(fiberId: string): Promise<StateMachineFiberRecord | null> {
     try {
-      return await this.ml0.get<StateMachineFiberRecord>(
-        `/data-application/v1/state-machines/${fiberId}`
-      );
+      return await this.ml0.get<StateMachineFiberRecord>(`/data-application/v1/state-machines/${fiberId}`);
     } catch (error) {
       if (error instanceof NetworkError && error.statusCode === 404) {
         return null;
@@ -204,9 +200,7 @@ export class MetagraphClient {
    * Get event receipts for a state machine from the current ordinal's logs.
    */
   async getStateMachineEvents(fiberId: string): Promise<EventReceipt[]> {
-    return this.ml0.get<EventReceipt[]>(
-      `/data-application/v1/state-machines/${fiberId}/events`
-    );
+    return this.ml0.get<EventReceipt[]>(`/data-application/v1/state-machines/${fiberId}/events`);
   }
 
   /**
@@ -214,9 +208,7 @@ export class MetagraphClient {
    */
   async getScripts(status?: FiberStatus): Promise<Record<string, ScriptFiberRecord>> {
     const query = status ? `?status=${status}` : '';
-    return this.ml0.get<Record<string, ScriptFiberRecord>>(
-      `/data-application/v1/scripts${query}`
-    );
+    return this.ml0.get<Record<string, ScriptFiberRecord>>(`/data-application/v1/scripts${query}`);
   }
 
   /**
@@ -224,9 +216,7 @@ export class MetagraphClient {
    */
   async getScript(scriptId: string): Promise<ScriptFiberRecord | null> {
     try {
-      return await this.ml0.get<ScriptFiberRecord>(
-        `/data-application/v1/scripts/${scriptId}`
-      );
+      return await this.ml0.get<ScriptFiberRecord>(`/data-application/v1/scripts/${scriptId}`);
     } catch (error) {
       if (error instanceof NetworkError && error.statusCode === 404) {
         return null;
@@ -239,9 +229,7 @@ export class MetagraphClient {
    * Get script invocations from the current ordinal's logs.
    */
   async getScriptInvocations(scriptId: string): Promise<ScriptInvocation[]> {
-    return this.ml0.get<ScriptInvocation[]>(
-      `/data-application/v1/scripts/${scriptId}/invocations`
-    );
+    return this.ml0.get<ScriptInvocation[]>(`/data-application/v1/scripts/${scriptId}/invocations`);
   }
 
   // -------------------------------------------------------------------------
@@ -261,9 +249,7 @@ export class MetagraphClient {
   /** Resolve a single registry entry by full name (`labels.tld`), or null if unregistered. */
   async getRegistryEntry(name: string): Promise<RegistryEntry | null> {
     try {
-      return await this.ml0.get<RegistryEntry>(
-        `/data-application/v1/registry/${encodeURIComponent(name)}`
-      );
+      return await this.ml0.get<RegistryEntry>(`/data-application/v1/registry/${encodeURIComponent(name)}`);
     } catch (error) {
       if (error instanceof NetworkError && error.statusCode === 404) return null;
       throw error;
@@ -288,28 +274,28 @@ export class MetagraphClient {
   /** Light-client state proof for a field of a state-machine fiber, against the committed root. */
   async getStateMachineStateProof(fiberId: string, field: string): Promise<StateProof> {
     return this.ml0.get<StateProof>(
-      `/data-application/v1/state-machines/${fiberId}/state-proof?field=${encodeURIComponent(field)}`
+      `/data-application/v1/state-machines/${fiberId}/state-proof?field=${encodeURIComponent(field)}`,
     );
   }
 
   /** Light-client state proof for a field of a script fiber. */
   async getScriptStateProof(fiberId: string, field: string): Promise<StateProof> {
     return this.ml0.get<StateProof>(
-      `/data-application/v1/scripts/${fiberId}/state-proof?field=${encodeURIComponent(field)}`
+      `/data-application/v1/scripts/${fiberId}/state-proof?field=${encodeURIComponent(field)}`,
     );
   }
 
   /** Light-client state proof for a field of an asset instance. */
   async getAssetStateProof(assetId: string, field: string): Promise<StateProof> {
     return this.ml0.get<StateProof>(
-      `/data-application/v1/assets/${assetId}/state-proof?field=${encodeURIComponent(field)}`
+      `/data-application/v1/assets/${assetId}/state-proof?field=${encodeURIComponent(field)}`,
     );
   }
 
   /** Estimate the fee/gas for a transition event on a state-machine fiber. */
   async estimateTransitionFee(fiberId: string, eventName: string): Promise<FeeEstimate> {
     return this.ml0.get<FeeEstimate>(
-      `/data-application/v1/state-machines/${fiberId}/estimate-fee?event=${encodeURIComponent(eventName)}`
+      `/data-application/v1/state-machines/${fiberId}/estimate-fee?event=${encodeURIComponent(eventName)}`,
     );
   }
 
@@ -381,25 +367,25 @@ export class MetagraphClient {
    * unsub();
    * ```
    */
-  subscribeFiberState(
-    fiberId: string,
-    callback: FiberStateCallback,
-    options?: SubscribeOptions,
-  ): Unsubscribe {
-    const intervalMs      = options?.pollIntervalMs ?? 2000;
-    const onError         = options?.onError ?? ((e: Error) => console.warn('[subscribeFiberState]', e));
+  subscribeFiberState(fiberId: string, callback: FiberStateCallback, options?: SubscribeOptions): Unsubscribe {
+    const intervalMs = options?.pollIntervalMs ?? 2000;
+    const onError = options?.onError ?? ((e: Error) => console.warn('[subscribeFiberState]', e));
     const fireImmediately = options?.fireImmediately ?? true;
 
-    let previous:  StateMachineFiberRecord | null = null;
-    let lastSeqNum: number | null                 = null;
-    let firstPoll  = true;  // Track first poll separately — handles null seqNum on missing fiber
-    let active     = true;
+    let previous: StateMachineFiberRecord | null = null;
+    let lastSeqNum: number | null = null;
+    let firstPoll = true; // Track first poll separately — handles null seqNum on missing fiber
+    let active = true;
 
     const invokeCallback = (current: StateMachineFiberRecord | null, prev: StateMachineFiberRecord | null): void => {
       try {
         callback(current, prev);
       } catch (cbErr) {
-        try { onError(cbErr instanceof Error ? cbErr : new Error(String(cbErr))); } catch { /* ignore */ }
+        try {
+          onError(cbErr instanceof Error ? cbErr : new Error(String(cbErr)));
+        } catch {
+          /* ignore */
+        }
       }
     };
 
@@ -412,7 +398,11 @@ export class MetagraphClient {
       } catch (err) {
         // Network / timeout error — notify and reschedule
         if (!active) return;
-        try { onError(err instanceof Error ? err : new Error(String(err))); } catch { /* ignore */ }
+        try {
+          onError(err instanceof Error ? err : new Error(String(err)));
+        } catch {
+          /* ignore */
+        }
         if (active) setTimeout(poll, intervalMs);
         return;
       }
@@ -423,16 +413,16 @@ export class MetagraphClient {
       const currentSeq = current?.sequenceNumber ?? null;
 
       if (firstPoll) {
-        firstPoll  = false;
+        firstPoll = false;
         lastSeqNum = currentSeq;
-        previous   = current;
+        previous = current;
         if (fireImmediately) {
           invokeCallback(current, null);
         }
       } else if (currentSeq !== lastSeqNum) {
         // State changed — sequenceNumber differs (handles null → value and value → null)
         const prev = previous;
-        previous   = current;
+        previous = current;
         lastSeqNum = currentSeq;
         invokeCallback(current, prev);
       }
@@ -447,7 +437,9 @@ export class MetagraphClient {
     // jest.runOnlyPendingTimersAsync() advances exactly one poll cycle.
     setTimeout(poll, 0);
 
-    return (): void => { active = false; };
+    return (): void => {
+      active = false;
+    };
   }
 
   /**
@@ -561,12 +553,17 @@ export class MetagraphClient {
       let pending = this.dl1Clients.length;
       for (const client of this.dl1Clients) {
         client.post<{ hash: string }>('/data', request).then(
-          (result) => { if (!settled) { settled = true; resolve(result); } },
+          (result) => {
+            if (!settled) {
+              settled = true;
+              resolve(result);
+            }
+          },
           (err) => {
             errors.push(err instanceof Error ? err : new Error(String(err)));
             pending--;
             if (pending === 0 && !settled) {
-              reject(new Error('All DL1 nodes failed: ' + errors.map(e => e.message).join('; ')));
+              reject(new Error('All DL1 nodes failed: ' + errors.map((e) => e.message).join('; ')));
             }
           },
         );

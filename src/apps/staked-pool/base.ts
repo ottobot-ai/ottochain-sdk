@@ -27,45 +27,26 @@
  *   stake_and_join ×2, claim_reward ×2, withdraw_stake ×2, close ×3.
  */
 
-import { defineFiberApp } from "../../schema/fiber-app.js";
-import type {
-  FiberAppDefinition,
-  JsonLogicRule,
-  Transition,
-} from "../../schema/fiber-app.js";
-import {
-  signerIsParty,
-  actorIsSigner,
-  signerHasReputationVia,
-  actorNotInArray,
-} from "../../schema/guards.js";
-import {
-  addDependency,
-  transferAsset,
-  toWallet,
-} from "../../schema/effects.js";
+import { defineFiberApp } from '../../schema/fiber-app.js';
+import type { FiberAppDefinition, JsonLogicRule, Transition } from '../../schema/fiber-app.js';
+import { signerIsParty, actorIsSigner, signerHasReputationVia, actorNotInArray } from '../../schema/guards.js';
+import { addDependency, transferAsset, toWallet } from '../../schema/effects.js';
 
 // ---------------------------------------------------------------------------
 // Shared guard fragments (composed from the canonical builders)
 // ---------------------------------------------------------------------------
 
 /** event.agent is among the verified signers (proofs[].address). */
-const isSigner = (): JsonLogicRule => actorIsSigner("event.agent");
+const isSigner = (): JsonLogicRule => actorIsSigner('event.agent');
 
 /** event.agent is a verified signer AND a key in the flat membership map `state.participants`. */
 const isJoinedParticipant = (): JsonLogicRule => ({
-  and: [
-    isSigner(),
-    { has: [{ var: "state.participants" }, { var: "event.agent" }] },
-  ],
+  and: [isSigner(), { has: [{ var: 'state.participants' }, { var: 'event.agent' }] }],
 });
 
 /** The submit window is still open: $ordinal <= epochStartedAt + epochLength. */
 const withinEpochWindow = (): JsonLogicRule => ({
-  "<=": [
-    { var: "$ordinal" },
-    { "+": [{ var: "state.epochStartedAt" }, { var: "state.epochLength" }] },
-  ],
+  '<=': [{ var: '$ordinal' }, { '+': [{ var: 'state.epochStartedAt' }, { var: 'state.epochLength' }] }],
 });
 
 /**
@@ -74,16 +55,13 @@ const withinEpochWindow = (): JsonLogicRule => ({
  */
 const poolHoldsStake = (): JsonLogicRule => ({
   and: [
-    { has: [{ var: "heldAssets" }, { var: "event.stakeAssetId" }] },
+    { has: [{ var: 'heldAssets' }, { var: 'event.stakeAssetId' }] },
     {
-      ">=": [
+      '>=': [
         {
-          get: [
-            { get: [{ var: "heldAssets" }, { var: "event.stakeAssetId" }] },
-            "amount",
-          ],
+          get: [{ get: [{ var: 'heldAssets' }, { var: 'event.stakeAssetId' }] }, 'amount'],
         },
-        { var: "state.stakeAmount" },
+        { var: 'state.stakeAmount' },
       ],
     },
   ],
@@ -98,16 +76,13 @@ const dep0 = { dependencies: [] as const };
 /** bind_registry FORMING→FORMING — #24 genesis bind site; MUST precede all reputation-gated joins. */
 function bindRegistryArm(): Transition {
   return {
-    from: "FORMING",
-    to: "FORMING",
-    eventName: "bind_registry",
-    guard: signerIsParty("state.authority"),
+    from: 'FORMING',
+    to: 'FORMING',
+    eventName: 'bind_registry',
+    guard: signerIsParty('state.authority'),
     // Only effect: bind the identity registry so machines.<registryId> is readable NEXT transition (#24).
     effect: {
-      merge: [
-        { var: "state" },
-        { ...addDependency({ var: "state.registryId" }) },
-      ],
+      merge: [{ var: 'state' }, { ...addDependency({ var: 'state.registryId' }) }],
     },
     ...dep0,
   };
@@ -121,40 +96,30 @@ function stakeAndJoinArm(state: string): Transition {
   return {
     from: state,
     to: state,
-    eventName: "stake_and_join",
+    eventName: 'stake_and_join',
     guard: {
       and: [
         isSigner(), // anti-S1: the written key == verified signer
-        { "===": [{ var: "event.stakeAmount" }, { var: "state.stakeAmount" }] },
+        { '===': [{ var: 'event.stakeAmount' }, { var: 'state.stakeAmount' }] },
         {
-          "!": [
-            { has: [{ var: "state.participants" }, { var: "event.agent" }] },
-          ],
+          '!': [{ has: [{ var: 'state.participants' }, { var: 'event.agent' }] }],
         }, // dedup
         poolHoldsStake(), // H5
-        signerHasReputationVia("state.registryId", "state.minReputation"), // #24 reputation gate
+        signerHasReputationVia('state.registryId', 'state.minReputation'), // #24 reputation gate
       ],
     },
     effect: {
       merge: [
-        { var: "state" },
+        { var: 'state' },
         {
           participants: {
-            set: [{ var: "state.participants" }, { var: "event.agent" }, true],
+            set: [{ var: 'state.participants' }, { var: 'event.agent' }, true],
           },
           stakes: {
-            set: [
-              { var: "state.stakes" },
-              { var: "event.agent" },
-              { var: "event.stakeAmount" },
-            ],
+            set: [{ var: 'state.stakes' }, { var: 'event.agent' }, { var: 'event.stakeAmount' }],
           },
           stakeAssetIds: {
-            set: [
-              { var: "state.stakeAssetIds" },
-              { var: "event.agent" },
-              { var: "event.stakeAssetId" },
-            ],
+            set: [{ var: 'state.stakeAssetIds' }, { var: 'event.agent' }, { var: 'event.stakeAssetId' }],
           },
         },
       ],
@@ -166,17 +131,17 @@ function stakeAndJoinArm(state: string): Transition {
 /** open_first_epoch FORMING→COLLECTING — authority opens epoch 1. */
 function openFirstEpochArm(): Transition {
   return {
-    from: "FORMING",
-    to: "COLLECTING",
-    eventName: "open_first_epoch",
-    guard: signerIsParty("state.authority"),
+    from: 'FORMING',
+    to: 'COLLECTING',
+    eventName: 'open_first_epoch',
+    guard: signerIsParty('state.authority'),
     effect: {
       merge: [
-        { var: "state" },
+        { var: 'state' },
         {
-          status: "COLLECTING",
+          status: 'COLLECTING',
           epoch: 1,
-          epochStartedAt: { var: "$ordinal" },
+          epochStartedAt: { var: '$ordinal' },
           submissions: [],
         },
       ],
@@ -188,17 +153,17 @@ function openFirstEpochArm(): Transition {
 /** reset_epoch SETTLED→COLLECTING — authority advances the epoch; clears submissions + inConsensus + claimed. */
 function resetEpochArm(): Transition {
   return {
-    from: "SETTLED",
-    to: "COLLECTING",
-    eventName: "reset_epoch",
-    guard: signerIsParty("state.authority"),
+    from: 'SETTLED',
+    to: 'COLLECTING',
+    eventName: 'reset_epoch',
+    guard: signerIsParty('state.authority'),
     effect: {
       merge: [
-        { var: "state" },
+        { var: 'state' },
         {
-          status: "COLLECTING",
-          epoch: { "+": [{ var: "state.epoch" }, 1] },
-          epochStartedAt: { var: "$ordinal" },
+          status: 'COLLECTING',
+          epoch: { '+': [{ var: 'state.epoch' }, 1] },
+          epochStartedAt: { var: '$ordinal' },
           submissions: [],
           inConsensus: [],
           claimed: {},
@@ -215,26 +180,19 @@ function resetEpochArm(): Transition {
  */
 export function defaultSubmitArm(): Transition {
   return {
-    from: "COLLECTING",
-    to: "COLLECTING",
-    eventName: "submit",
+    from: 'COLLECTING',
+    to: 'COLLECTING',
+    eventName: 'submit',
     guard: {
-      and: [
-        isJoinedParticipant(),
-        withinEpochWindow(),
-        actorNotInArray("state.submissions", "addr", "event.agent"),
-      ],
+      and: [isJoinedParticipant(), withinEpochWindow(), actorNotInArray('state.submissions', 'addr', 'event.agent')],
     },
     // Array append via merge (verified: merge[arr, [record]] concatenates).
     effect: {
       merge: [
-        { var: "state" },
+        { var: 'state' },
         {
           submissions: {
-            merge: [
-              { var: "state.submissions" },
-              [{ addr: { var: "event.agent" }, value: { var: "event.value" } }],
-            ],
+            merge: [{ var: 'state.submissions' }, [{ addr: { var: 'event.agent' }, value: { var: 'event.value' } }]],
           },
         },
       ],
@@ -251,31 +209,28 @@ function claimRewardArm(state: string): Transition {
   return {
     from: state,
     to: state,
-    eventName: "claim_reward",
+    eventName: 'claim_reward',
     guard: {
       and: [
         isSigner(), // anti-S1: recipient/claimed key == verified signer
         {
-          some: [
-            { var: "state.inConsensus" },
-            { "===": [{ var: "" }, { var: "event.agent" }] },
-          ],
+          some: [{ var: 'state.inConsensus' }, { '===': [{ var: '' }, { var: 'event.agent' }] }],
         }, // entitled
-        { "!": [{ has: [{ var: "state.claimed" }, { var: "event.agent" }] }] }, // not already claimed
-        { has: [{ var: "heldAssets" }, { var: "event.rewardAssetId" }] }, // pool holds the named instance
+        { '!': [{ has: [{ var: 'state.claimed' }, { var: 'event.agent' }] }] }, // not already claimed
+        { has: [{ var: 'heldAssets' }, { var: 'event.rewardAssetId' }] }, // pool holds the named instance
       ],
     },
     effect: {
       merge: [
-        { var: "state" },
+        { var: 'state' },
         {
           claimed: {
-            set: [{ var: "state.claimed" }, { var: "event.agent" }, true],
+            set: [{ var: 'state.claimed' }, { var: 'event.agent' }, true],
           },
           ...transferAsset([
             {
-              assetId: { var: "event.rewardAssetId" },
-              recipient: toWallet({ var: "event.agent" }),
+              assetId: { var: 'event.rewardAssetId' },
+              recipient: toWallet({ var: 'event.agent' }),
             },
           ]),
         },
@@ -294,27 +249,24 @@ function withdrawStakeArm(state: string): Transition {
   return {
     from: state,
     to: state,
-    eventName: "withdraw_stake",
+    eventName: 'withdraw_stake',
     guard: {
-      and: [
-        isSigner(),
-        { has: [{ var: "state.stakeAssetIds" }, { var: "event.agent" }] },
-      ],
+      and: [isSigner(), { has: [{ var: 'state.stakeAssetIds' }, { var: 'event.agent' }] }],
     },
     effect: {
       merge: [
-        { var: "state" },
+        { var: 'state' },
         {
-          stakes: { set: [{ var: "state.stakes" }, { var: "event.agent" }, 0] },
+          stakes: { set: [{ var: 'state.stakes' }, { var: 'event.agent' }, 0] },
           stakeAssetIds: {
-            unset: [{ var: "state.stakeAssetIds" }, { var: "event.agent" }],
+            unset: [{ var: 'state.stakeAssetIds' }, { var: 'event.agent' }],
           },
           ...transferAsset([
             {
               assetId: {
-                get: [{ var: "state.stakeAssetIds" }, { var: "event.agent" }],
+                get: [{ var: 'state.stakeAssetIds' }, { var: 'event.agent' }],
               }, // pre-merge read (H4)
-              recipient: toWallet({ var: "event.agent" }),
+              recipient: toWallet({ var: 'event.agent' }),
             },
           ]),
         },
@@ -328,14 +280,11 @@ function withdrawStakeArm(state: string): Transition {
 function closeArm(state: string): Transition {
   return {
     from: state,
-    to: "CLOSED",
-    eventName: "close",
-    guard: signerIsParty("state.authority"),
+    to: 'CLOSED',
+    eventName: 'close',
+    guard: signerIsParty('state.authority'),
     effect: {
-      merge: [
-        { var: "state" },
-        { status: "CLOSED", closedAt: { var: "$ordinal" } },
-      ],
+      merge: [{ var: 'state' }, { status: 'CLOSED', closedAt: { var: '$ordinal' } }],
     },
     ...dep0,
   };
@@ -347,61 +296,60 @@ function closeArm(state: string): Transition {
 
 const baseCreateSchema = {
   required: [
-    "authority",
-    "registryId",
-    "minReputation",
-    "stakePolicy",
-    "stakeAmount",
-    "quorum",
-    "epochLength",
-    "outlierBound",
-    "rewardPerEpoch",
+    'authority',
+    'registryId',
+    'minReputation',
+    'stakePolicy',
+    'stakeAmount',
+    'quorum',
+    'epochLength',
+    'outlierBound',
+    'rewardPerEpoch',
   ] as const,
   properties: {
     authority: {
-      type: "address",
-      description: "Pool authority (opens/resets/closes epochs).",
+      type: 'address',
+      description: 'Pool authority (opens/resets/closes epochs).',
       immutable: true,
     },
     registryId: {
-      type: "uuid",
-      description:
-        "Identity-registry fiber id, bound via _addDependency (#24).",
+      type: 'uuid',
+      description: 'Identity-registry fiber id, bound via _addDependency (#24).',
       immutable: true,
     },
     minReputation: {
-      type: "integer",
-      description: "Join reputation bar (signerHasReputationVia).",
+      type: 'integer',
+      description: 'Join reputation bar (signerHasReputationVia).',
       immutable: true,
     },
     stakePolicy: {
-      type: "string",
-      description: "Asset policy name of the stake token.",
+      type: 'string',
+      description: 'Asset policy name of the stake token.',
       immutable: true,
     },
     stakeAmount: {
-      type: "integer",
-      description: "Required stake (minor units); checked vs heldAssets (H5).",
+      type: 'integer',
+      description: 'Required stake (minor units); checked vs heldAssets (H5).',
       immutable: true,
     },
     quorum: {
-      type: "integer",
-      description: "Min submissions to finalize.",
+      type: 'integer',
+      description: 'Min submissions to finalize.',
       immutable: true,
     },
     epochLength: {
-      type: "integer",
-      description: "Ordinals per epoch (submit window).",
+      type: 'integer',
+      description: 'Ordinals per epoch (submit window).',
       immutable: true,
     },
     outlierBound: {
-      type: "integer",
-      description: "|x - center| <= bound ⇒ in-consensus.",
+      type: 'integer',
+      description: '|x - center| <= bound ⇒ in-consensus.',
       immutable: true,
     },
     rewardPerEpoch: {
-      type: "integer",
-      description: "Informational per-epoch reward budget.",
+      type: 'integer',
+      description: 'Informational per-epoch reward budget.',
       immutable: true,
     },
   },
@@ -409,55 +357,55 @@ const baseCreateSchema = {
 
 const baseStateSchema = {
   properties: {
-    status: { type: "string", computed: true },
-    epoch: { type: "integer", computed: true },
-    epochStartedAt: { type: "integer", computed: true },
-    authority: { type: "address", immutable: true },
-    registryId: { type: "uuid", immutable: true },
-    minReputation: { type: "integer", immutable: true },
-    stakePolicy: { type: "string", immutable: true },
-    stakeAmount: { type: "integer", immutable: true },
-    quorum: { type: "integer", immutable: true },
-    epochLength: { type: "integer", immutable: true },
-    outlierBound: { type: "integer", immutable: true },
-    rewardPerEpoch: { type: "integer", immutable: true },
+    status: { type: 'string', computed: true },
+    epoch: { type: 'integer', computed: true },
+    epochStartedAt: { type: 'integer', computed: true },
+    authority: { type: 'address', immutable: true },
+    registryId: { type: 'uuid', immutable: true },
+    minReputation: { type: 'integer', immutable: true },
+    stakePolicy: { type: 'string', immutable: true },
+    stakeAmount: { type: 'integer', immutable: true },
+    quorum: { type: 'integer', immutable: true },
+    epochLength: { type: 'integer', immutable: true },
+    outlierBound: { type: 'integer', immutable: true },
+    rewardPerEpoch: { type: 'integer', immutable: true },
     participants: {
-      type: "object",
+      type: 'object',
       computed: true,
-      description: "{ <addr>: true } flat membership.",
+      description: '{ <addr>: true } flat membership.',
     },
     stakes: {
-      type: "object",
+      type: 'object',
       computed: true,
-      description: "{ <addr>: int } staked amount.",
+      description: '{ <addr>: int } staked amount.',
     },
     stakeAssetIds: {
-      type: "object",
+      type: 'object',
       computed: true,
-      description: "{ <addr>: uuid } staked instance.",
+      description: '{ <addr>: uuid } staked instance.',
     },
     submissions: {
-      type: "array",
+      type: 'array',
       computed: true,
       description: "[ {addr,value} ] this epoch's datapoints.",
     },
     inConsensus: {
-      type: "array",
+      type: 'array',
       computed: true,
       description: "Last epoch's rewarded addresses (entitlement ledger).",
     },
     claimed: {
-      type: "object",
+      type: 'object',
       computed: true,
-      description: "{ <addr>: true } reward already claimed this epoch.",
+      description: '{ <addr>: true } reward already claimed this epoch.',
     },
     result: {
-      type: "object",
+      type: 'object',
       computed: true,
       nullable: true,
-      description: "Last finalized published result.",
+      description: 'Last finalized published result.',
     },
-    closedAt: { type: "integer", computed: true },
+    closedAt: { type: 'integer', computed: true },
   },
 } as const;
 
@@ -466,7 +414,7 @@ const baseStateSchema = {
  * on null hard-error). `epoch`/`epochStartedAt` are 0 until `open_first_epoch`.
  */
 export const baseInitialStateData = {
-  status: "FORMING",
+  status: 'FORMING',
   epoch: 0,
   epochStartedAt: 0,
   participants: {},
@@ -480,41 +428,39 @@ export const baseInitialStateData = {
 
 const baseStates = {
   FORMING: {
-    id: "FORMING",
+    id: 'FORMING',
     isFinal: false,
     metadata: {
-      label: "Forming",
-      description: "Accepting stake/join; registry bound; no epoch yet.",
-      category: "initial" as const,
+      label: 'Forming',
+      description: 'Accepting stake/join; registry bound; no epoch yet.',
+      category: 'initial' as const,
     },
   },
   COLLECTING: {
-    id: "COLLECTING",
+    id: 'COLLECTING',
     isFinal: false,
     metadata: {
-      label: "Collecting",
-      description: "Epoch open; participants submit datapoints.",
-      category: "active" as const,
+      label: 'Collecting',
+      description: 'Epoch open; participants submit datapoints.',
+      category: 'active' as const,
     },
   },
   SETTLED: {
-    id: "SETTLED",
+    id: 'SETTLED',
     isFinal: false,
     metadata: {
-      label: "Settled",
-      description:
-        "Result published; entitlement ledger credited; readable cross-fiber.",
-      category: "pending" as const,
+      label: 'Settled',
+      description: 'Result published; entitlement ledger credited; readable cross-fiber.',
+      category: 'pending' as const,
     },
   },
   CLOSED: {
-    id: "CLOSED",
+    id: 'CLOSED',
     isFinal: true,
     metadata: {
-      label: "Closed",
-      description:
-        "Wound down; stakes + unclaimed rewards still withdrawable/claimable.",
-      category: "terminal" as const,
+      label: 'Closed',
+      description: 'Wound down; stakes + unclaimed rewards still withdrawable/claimable.',
+      category: 'terminal' as const,
     },
   },
 };
@@ -538,10 +484,7 @@ export interface StakedPoolOverrides {
   /** Extra arms (e.g. governance propose/vote/resolve/challenge/slash) appended after the base arms. */
   extraTransitions?: readonly Transition[];
   /** Extra states (e.g. governance VOTING). */
-  extraStates?: Record<
-    string,
-    { id: string; isFinal: boolean; metadata?: unknown }
-  >;
+  extraStates?: Record<string, { id: string; isFinal: boolean; metadata?: unknown }>;
   /** Extra create-schema properties merged onto the base. */
   extraCreateProperties?: Record<string, unknown>;
   /** Extra state-schema properties merged onto the base. */
@@ -552,35 +495,33 @@ export interface StakedPoolOverrides {
  * Build a staked-pool definition from the shared base + a specialization's `submit`/`finalize` (+ extras).
  * Emits all SPLIT multi-`from` arms; no two emitted entries share both `from` and `eventName`.
  */
-export function makeStakedPoolDef(
-  overrides: StakedPoolOverrides,
-): FiberAppDefinition {
+export function makeStakedPoolDef(overrides: StakedPoolOverrides): FiberAppDefinition {
   const submit = overrides.submit ?? defaultSubmitArm();
 
   const transitions: Transition[] = [
     bindRegistryArm(),
-    stakeAndJoinArm("FORMING"),
-    stakeAndJoinArm("COLLECTING"),
+    stakeAndJoinArm('FORMING'),
+    stakeAndJoinArm('COLLECTING'),
     openFirstEpochArm(),
     resetEpochArm(),
     submit,
     overrides.finalize,
-    claimRewardArm("SETTLED"),
-    claimRewardArm("CLOSED"),
-    withdrawStakeArm("SETTLED"),
-    withdrawStakeArm("CLOSED"),
-    closeArm("FORMING"),
-    closeArm("COLLECTING"),
-    closeArm("SETTLED"),
+    claimRewardArm('SETTLED'),
+    claimRewardArm('CLOSED'),
+    withdrawStakeArm('SETTLED'),
+    withdrawStakeArm('CLOSED'),
+    closeArm('FORMING'),
+    closeArm('COLLECTING'),
+    closeArm('SETTLED'),
     ...(overrides.extraTransitions ?? []),
   ];
 
   return defineFiberApp({
     metadata: {
       name: overrides.metadata.name,
-      app: "staked-pool",
+      app: 'staked-pool',
       type: overrides.metadata.type,
-      version: overrides.metadata.version ?? "1.0.0",
+      version: overrides.metadata.version ?? '1.0.0',
       description: overrides.metadata.description,
     },
     createSchema: {
@@ -597,7 +538,7 @@ export function makeStakedPoolDef(
       },
     },
     states: { ...baseStates, ...(overrides.extraStates ?? {}) },
-    initialState: "FORMING",
+    initialState: 'FORMING',
     transitions,
   });
 }

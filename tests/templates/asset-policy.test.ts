@@ -137,9 +137,9 @@ describe('templates/asset-policy — preset shapes & options', () => {
 
   it('nftPolicy: transferable:false drops the T bit (bound collectible)', () => {
     expect(nftPolicy({ name: 'bound.asset', version: '1.0.0', transferable: false }).behavior).toBe(0);
-    expect(
-      nftPolicy({ name: 'bound.asset', version: '1.0.0', transferable: false, combinable: true }).behavior,
-    ).toBe(4);
+    expect(nftPolicy({ name: 'bound.asset', version: '1.0.0', transferable: false, combinable: true }).behavior).toBe(
+      4,
+    );
   });
 
   it('soulboundPolicy: G=1, no TRANSFER morphism, empty supply (mint closed)', () => {
@@ -176,8 +176,8 @@ describe('templates/asset-policy — pure & deterministic (same input ⇒ identi
     // mutating one output must not affect a fresh call (no shared references)
     a.morphisms.TRANSFER.visibility = 'DISABLED';
     expect(
-      fungiblePolicy({ name: 'rvd.asset', version: '1.0.0', mintable: true, burnable: true }).morphisms
-        .TRANSFER.visibility,
+      fungiblePolicy({ name: 'rvd.asset', version: '1.0.0', mintable: true, burnable: true }).morphisms.TRANSFER
+        .visibility,
     ).toBe('PUBLIC');
   });
 });

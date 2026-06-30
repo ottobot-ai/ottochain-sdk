@@ -27,7 +27,7 @@ describe('fiber-app schema helpers', () => {
     it('returns event names for REGISTERED state', () => {
       const events = getEventsFrom(def, 'REGISTERED' as any);
       expect(Array.isArray(events)).toBe(true);
-      expect(events.every(e => typeof e === 'string')).toBe(true);
+      expect(events.every((e) => typeof e === 'string')).toBe(true);
     });
 
     it('returns empty array for unknown state', () => {

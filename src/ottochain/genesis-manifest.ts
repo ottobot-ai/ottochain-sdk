@@ -141,13 +141,7 @@ export const GENESIS_MANIFEST_VERSION = 1;
 // with that suite; it is what guarantees the chain accepts them.
 
 /** Helper: a FieldShape with the two boolean defaults made explicit. */
-function field(
-  name: string,
-  number: number,
-  typeName: string,
-  repeated = false,
-  optional = false,
-): FieldShape {
+function field(name: string, number: number, typeName: string, repeated = false, optional = false): FieldShape {
   return { name, number, typeName, repeated, optional };
 }
 
@@ -248,9 +242,7 @@ function toWireDefinition(def: FiberAppDefinition): StateMachineDefinition {
     // `"Immutable"`), ABSENT for `Unconstrained`. The `policy` key is only set here when
     // `toProtoDefinition` emitted one, so an unconstrained def keeps NO `policy` key
     // (omit-on-unconstrained wire parity).
-    ...(proto.policy !== undefined
-      ? { policy: proto.policy as Record<string, unknown> | string }
-      : {}),
+    ...(proto.policy !== undefined ? { policy: proto.policy as Record<string, unknown> | string } : {}),
   };
 }
 

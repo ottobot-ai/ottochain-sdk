@@ -11,11 +11,7 @@ import {
   daoReputationDef,
 } from '../../src/apps/governance/state-machines';
 
-import {
-  GOVERNANCE_DEFINITIONS,
-  getGovernanceDefinition,
-  getDAODefinition,
-} from '../../src/apps/governance';
+import { GOVERNANCE_DEFINITIONS, getGovernanceDefinition, getDAODefinition } from '../../src/apps/governance';
 
 describe('Governance App Integration', () => {
   it('should export all 6 governance state machines from state-machines index', () => {
@@ -53,14 +49,7 @@ describe('Governance App Integration', () => {
   });
 
   it('all governance definitions should have required base fields', () => {
-    const defs = [
-      govUniversalDef,
-      govSimpleDef,
-      daoSingleDef,
-      daoMultisigDef,
-      daoTokenDef,
-      daoReputationDef,
-    ];
+    const defs = [govUniversalDef, govSimpleDef, daoSingleDef, daoMultisigDef, daoTokenDef, daoReputationDef];
     for (const def of defs) {
       expect(def.metadata).toBeDefined();
       expect(def.metadata.name).toBeTruthy();
@@ -71,31 +60,15 @@ describe('Governance App Integration', () => {
   });
 
   it('all governance definitions should have at least one final state', () => {
-    const defs = [
-      govUniversalDef,
-      govSimpleDef,
-      daoSingleDef,
-      daoMultisigDef,
-      daoTokenDef,
-      daoReputationDef,
-    ];
+    const defs = [govUniversalDef, govSimpleDef, daoSingleDef, daoMultisigDef, daoTokenDef, daoReputationDef];
     for (const def of defs) {
-      const finalStates = Object.values(def.states).filter(
-        (s: { isFinal: boolean }) => s.isFinal
-      );
+      const finalStates = Object.values(def.states).filter((s: { isFinal: boolean }) => s.isFinal);
       expect(finalStates.length).toBeGreaterThan(0);
     }
   });
 
   it('all transitions should have non-empty event names', () => {
-    const defs = [
-      govUniversalDef,
-      govSimpleDef,
-      daoSingleDef,
-      daoMultisigDef,
-      daoTokenDef,
-      daoReputationDef,
-    ];
+    const defs = [govUniversalDef, govSimpleDef, daoSingleDef, daoMultisigDef, daoTokenDef, daoReputationDef];
     for (const def of defs) {
       for (const t of def.transitions) {
         expect(t.eventName).toBeTruthy();
@@ -115,14 +88,7 @@ describe('Governance App Integration', () => {
   });
 
   it('all DAO definitions should have version 1.0.0', () => {
-    const defs = [
-      govUniversalDef,
-      govSimpleDef,
-      daoSingleDef,
-      daoMultisigDef,
-      daoTokenDef,
-      daoReputationDef,
-    ];
+    const defs = [govUniversalDef, govSimpleDef, daoSingleDef, daoMultisigDef, daoTokenDef, daoReputationDef];
     for (const def of defs) {
       expect(def.metadata.version).toBe('1.0.0');
     }
@@ -138,28 +104,14 @@ describe('Governance App Integration', () => {
 
   describe('State Machine Consistency', () => {
     it('all initial states should exist in states object', () => {
-      const defs = [
-        govUniversalDef,
-        govSimpleDef,
-        daoSingleDef,
-        daoMultisigDef,
-        daoTokenDef,
-        daoReputationDef,
-      ];
+      const defs = [govUniversalDef, govSimpleDef, daoSingleDef, daoMultisigDef, daoTokenDef, daoReputationDef];
       for (const def of defs) {
         expect(def.states).toHaveProperty(def.initialState);
       }
     });
 
     it('all transition from/to states should exist in states object', () => {
-      const defs = [
-        govUniversalDef,
-        govSimpleDef,
-        daoSingleDef,
-        daoMultisigDef,
-        daoTokenDef,
-        daoReputationDef,
-      ];
+      const defs = [govUniversalDef, govSimpleDef, daoSingleDef, daoMultisigDef, daoTokenDef, daoReputationDef];
       for (const def of defs) {
         const stateNames = Object.keys(def.states);
         for (const t of def.transitions) {
@@ -170,14 +122,7 @@ describe('Governance App Integration', () => {
     });
 
     it('initial states should not be final', () => {
-      const defs = [
-        govUniversalDef,
-        govSimpleDef,
-        daoSingleDef,
-        daoMultisigDef,
-        daoTokenDef,
-        daoReputationDef,
-      ];
+      const defs = [govUniversalDef, govSimpleDef, daoSingleDef, daoMultisigDef, daoTokenDef, daoReputationDef];
       for (const def of defs) {
         const initialState = def.states[def.initialState as keyof typeof def.states];
         expect(initialState.isFinal).toBe(false);
@@ -187,14 +132,7 @@ describe('Governance App Integration', () => {
 
   describe('Naming Conventions', () => {
     it('should use UPPER_CASE state names', () => {
-      const defs = [
-        govUniversalDef,
-        govSimpleDef,
-        daoSingleDef,
-        daoMultisigDef,
-        daoTokenDef,
-        daoReputationDef,
-      ];
+      const defs = [govUniversalDef, govSimpleDef, daoSingleDef, daoMultisigDef, daoTokenDef, daoReputationDef];
       for (const def of defs) {
         for (const state of Object.keys(def.states)) {
           expect(state).toMatch(/^[A-Z_]+$/);
@@ -203,14 +141,7 @@ describe('Governance App Integration', () => {
     });
 
     it('should use snake_case event names', () => {
-      const defs = [
-        govUniversalDef,
-        govSimpleDef,
-        daoSingleDef,
-        daoMultisigDef,
-        daoTokenDef,
-        daoReputationDef,
-      ];
+      const defs = [govUniversalDef, govSimpleDef, daoSingleDef, daoMultisigDef, daoTokenDef, daoReputationDef];
       for (const def of defs) {
         for (const t of def.transitions) {
           expect(t.eventName).toMatch(/^[a-z_]+$/);

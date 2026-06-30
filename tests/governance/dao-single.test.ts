@@ -13,9 +13,7 @@ describe('SingleOwnerDAO State Machine', () => {
 
     it('should have correct metadata', () => {
       expect(daoSingleDef.metadata.name).toBe('SingleOwnerDAO');
-      expect(daoSingleDef.metadata.description).toBe(
-        'Single owner controls all actions. Simplest governance model.'
-      );
+      expect(daoSingleDef.metadata.description).toBe('Single owner controls all actions. Simplest governance model.');
       expect(daoSingleDef.metadata.version).toBe('1.0.0');
       expect(daoSingleDef.metadata.category).toBe('governance/dao');
     });
@@ -44,7 +42,7 @@ describe('SingleOwnerDAO State Machine', () => {
   describe('State Transitions', () => {
     it('should allow execute transition from ACTIVE to ACTIVE', () => {
       const executeTransition = daoSingleDef.transitions.find(
-        (t) => t.from === 'ACTIVE' && t.to === 'ACTIVE' && t.eventName === 'execute'
+        (t) => t.from === 'ACTIVE' && t.to === 'ACTIVE' && t.eventName === 'execute',
       );
 
       expect(executeTransition).toBeDefined();
@@ -54,10 +52,7 @@ describe('SingleOwnerDAO State Machine', () => {
 
     it('should allow transfer_ownership transition from ACTIVE to TRANSFERRING', () => {
       const transferTransition = daoSingleDef.transitions.find(
-        (t) =>
-          t.from === 'ACTIVE' &&
-          t.to === 'TRANSFERRING' &&
-          t.eventName === 'transfer_ownership'
+        (t) => t.from === 'ACTIVE' && t.to === 'TRANSFERRING' && t.eventName === 'transfer_ownership',
       );
 
       expect(transferTransition).toBeDefined();
@@ -67,10 +62,7 @@ describe('SingleOwnerDAO State Machine', () => {
 
     it('should allow accept_ownership transition from TRANSFERRING to ACTIVE', () => {
       const acceptTransition = daoSingleDef.transitions.find(
-        (t) =>
-          t.from === 'TRANSFERRING' &&
-          t.to === 'ACTIVE' &&
-          t.eventName === 'accept_ownership'
+        (t) => t.from === 'TRANSFERRING' && t.to === 'ACTIVE' && t.eventName === 'accept_ownership',
       );
 
       expect(acceptTransition).toBeDefined();
@@ -80,10 +72,7 @@ describe('SingleOwnerDAO State Machine', () => {
 
     it('should allow cancel_transfer transition from TRANSFERRING to ACTIVE', () => {
       const cancelTransition = daoSingleDef.transitions.find(
-        (t) =>
-          t.from === 'TRANSFERRING' &&
-          t.to === 'ACTIVE' &&
-          t.eventName === 'cancel_transfer'
+        (t) => t.from === 'TRANSFERRING' && t.to === 'ACTIVE' && t.eventName === 'cancel_transfer',
       );
 
       expect(cancelTransition).toBeDefined();
@@ -92,7 +81,7 @@ describe('SingleOwnerDAO State Machine', () => {
 
     it('should allow dissolve transition from ACTIVE to DISSOLVED', () => {
       const dissolveTransition = daoSingleDef.transitions.find(
-        (t) => t.from === 'ACTIVE' && t.to === 'DISSOLVED' && t.eventName === 'dissolve'
+        (t) => t.from === 'ACTIVE' && t.to === 'DISSOLVED' && t.eventName === 'dissolve',
       );
 
       expect(dissolveTransition).toBeDefined();
@@ -102,9 +91,7 @@ describe('SingleOwnerDAO State Machine', () => {
 
   describe('Guard Logic', () => {
     it('should guard execute to owner only', () => {
-      const executeTransition = daoSingleDef.transitions.find(
-        (t) => t.eventName === 'execute'
-      );
+      const executeTransition = daoSingleDef.transitions.find((t) => t.eventName === 'execute');
 
       expect(executeTransition!.guard).toHaveProperty('in');
       const guardStr = JSON.stringify(executeTransition!.guard);
@@ -116,9 +103,7 @@ describe('SingleOwnerDAO State Machine', () => {
     });
 
     it('should guard transfer_ownership to owner only', () => {
-      const transferTransition = daoSingleDef.transitions.find(
-        (t) => t.eventName === 'transfer_ownership'
-      );
+      const transferTransition = daoSingleDef.transitions.find((t) => t.eventName === 'transfer_ownership');
 
       expect(transferTransition!.guard).toHaveProperty('in');
       const guardStr = JSON.stringify(transferTransition!.guard);
@@ -127,9 +112,7 @@ describe('SingleOwnerDAO State Machine', () => {
     });
 
     it('should guard accept_ownership to pending owner', () => {
-      const acceptTransition = daoSingleDef.transitions.find(
-        (t) => t.eventName === 'accept_ownership'
-      );
+      const acceptTransition = daoSingleDef.transitions.find((t) => t.eventName === 'accept_ownership');
 
       expect(acceptTransition!.guard).toHaveProperty('in');
       const guardStr = JSON.stringify(acceptTransition!.guard);
@@ -138,9 +121,7 @@ describe('SingleOwnerDAO State Machine', () => {
     });
 
     it('should guard cancel_transfer to current owner', () => {
-      const cancelTransition = daoSingleDef.transitions.find(
-        (t) => t.eventName === 'cancel_transfer'
-      );
+      const cancelTransition = daoSingleDef.transitions.find((t) => t.eventName === 'cancel_transfer');
 
       expect(cancelTransition!.guard).toHaveProperty('in');
       const guardStr = JSON.stringify(cancelTransition!.guard);
@@ -149,9 +130,7 @@ describe('SingleOwnerDAO State Machine', () => {
     });
 
     it('should guard dissolve to owner', () => {
-      const dissolveTransition = daoSingleDef.transitions.find(
-        (t) => t.eventName === 'dissolve'
-      );
+      const dissolveTransition = daoSingleDef.transitions.find((t) => t.eventName === 'dissolve');
 
       expect(dissolveTransition!.guard).toHaveProperty('in');
       const guardStr = JSON.stringify(dissolveTransition!.guard);
@@ -162,9 +141,7 @@ describe('SingleOwnerDAO State Machine', () => {
 
   describe('Effect Logic', () => {
     it('should record action on execute', () => {
-      const executeTransition = daoSingleDef.transitions.find(
-        (t) => t.eventName === 'execute'
-      );
+      const executeTransition = daoSingleDef.transitions.find((t) => t.eventName === 'execute');
 
       const effectStr = JSON.stringify(executeTransition!.effect);
       expect(effectStr).toContain('actions');
@@ -172,9 +149,7 @@ describe('SingleOwnerDAO State Machine', () => {
     });
 
     it('should set pending owner on transfer_ownership', () => {
-      const transferTransition = daoSingleDef.transitions.find(
-        (t) => t.eventName === 'transfer_ownership'
-      );
+      const transferTransition = daoSingleDef.transitions.find((t) => t.eventName === 'transfer_ownership');
 
       const effectStr = JSON.stringify(transferTransition!.effect);
       expect(effectStr).toContain('pendingOwner');
@@ -182,9 +157,7 @@ describe('SingleOwnerDAO State Machine', () => {
     });
 
     it('should update owner and record history on accept_ownership', () => {
-      const acceptTransition = daoSingleDef.transitions.find(
-        (t) => t.eventName === 'accept_ownership'
-      );
+      const acceptTransition = daoSingleDef.transitions.find((t) => t.eventName === 'accept_ownership');
 
       const effectStr = JSON.stringify(acceptTransition!.effect);
       expect(effectStr).toContain('owner');
@@ -192,9 +165,7 @@ describe('SingleOwnerDAO State Machine', () => {
     });
 
     it('should emit ownership_transferred event', () => {
-      const acceptTransition = daoSingleDef.transitions.find(
-        (t) => t.eventName === 'accept_ownership'
-      );
+      const acceptTransition = daoSingleDef.transitions.find((t) => t.eventName === 'accept_ownership');
 
       const effectStr = JSON.stringify(acceptTransition!.effect);
       expect(effectStr).toContain('_emit');
@@ -202,9 +173,7 @@ describe('SingleOwnerDAO State Machine', () => {
     });
 
     it('should set dissolvedAt on dissolve', () => {
-      const dissolveTransition = daoSingleDef.transitions.find(
-        (t) => t.eventName === 'dissolve'
-      );
+      const dissolveTransition = daoSingleDef.transitions.find((t) => t.eventName === 'dissolve');
 
       const effectStr = JSON.stringify(dissolveTransition!.effect);
       expect(effectStr).toContain('dissolvedAt');

@@ -22,7 +22,7 @@ describe('CorpShareholders State Machine', () => {
     it('should define all required states', () => {
       const expectedStates = ['SCHEDULED', 'RECORD_DATE_SET', 'PROXY_PERIOD', 'IN_SESSION', 'VOTING', 'CLOSED'];
       const actualStates = Object.keys(corpShareholdersDef.states);
-      expectedStates.forEach(state => {
+      expectedStates.forEach((state) => {
         expect(actualStates).toContain(state);
       });
     });
@@ -44,7 +44,7 @@ describe('CorpShareholders State Machine', () => {
     });
 
     it('should have descriptions for all states', () => {
-      Object.values(corpShareholdersDef.states).forEach(state => {
+      Object.values(corpShareholdersDef.states).forEach((state) => {
         expect(state.description).toBeDefined();
         expect(state.description.length).toBeGreaterThan(0);
       });
@@ -54,55 +54,58 @@ describe('CorpShareholders State Machine', () => {
   describe('State Transitions', () => {
     it('should allow propose_schedule_annual transition from SCHEDULED to SCHEDULED', () => {
       const transition = corpShareholdersDef.transitions.find(
-        t => t.from === 'SCHEDULED' && t.to === 'SCHEDULED' && t.eventName === 'propose_schedule_annual'
+        (t) => t.from === 'SCHEDULED' && t.to === 'SCHEDULED' && t.eventName === 'propose_schedule_annual',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow schedule_annual transition from SCHEDULED to SCHEDULED', () => {
       const transition = corpShareholdersDef.transitions.find(
-        t => t.from === 'SCHEDULED' && t.to === 'SCHEDULED' && t.eventName === 'schedule_annual'
+        (t) => t.from === 'SCHEDULED' && t.to === 'SCHEDULED' && t.eventName === 'schedule_annual',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow schedule_special transition from SCHEDULED to SCHEDULED', () => {
       const transition = corpShareholdersDef.transitions.find(
-        t => t.from === 'SCHEDULED' && t.to === 'SCHEDULED' && t.eventName === 'schedule_special'
+        (t) => t.from === 'SCHEDULED' && t.to === 'SCHEDULED' && t.eventName === 'schedule_special',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow set_record_date transition from SCHEDULED to RECORD_DATE_SET', () => {
       const transition = corpShareholdersDef.transitions.find(
-        t => t.from === 'SCHEDULED' && t.to === 'RECORD_DATE_SET' && t.eventName === 'set_record_date'
+        (t) => t.from === 'SCHEDULED' && t.to === 'RECORD_DATE_SET' && t.eventName === 'set_record_date',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow register_eligible_shareholders transition from RECORD_DATE_SET to RECORD_DATE_SET', () => {
       const transition = corpShareholdersDef.transitions.find(
-        t => t.from === 'RECORD_DATE_SET' && t.to === 'RECORD_DATE_SET' && t.eventName === 'register_eligible_shareholders'
+        (t) =>
+          t.from === 'RECORD_DATE_SET' &&
+          t.to === 'RECORD_DATE_SET' &&
+          t.eventName === 'register_eligible_shareholders',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow open_proxy_period transition from RECORD_DATE_SET to PROXY_PERIOD', () => {
       const transition = corpShareholdersDef.transitions.find(
-        t => t.from === 'RECORD_DATE_SET' && t.to === 'PROXY_PERIOD' && t.eventName === 'open_proxy_period'
+        (t) => t.from === 'RECORD_DATE_SET' && t.to === 'PROXY_PERIOD' && t.eventName === 'open_proxy_period',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow add_agenda_item from multiple states', () => {
       const fromScheduled = corpShareholdersDef.transitions.find(
-        t => t.from === 'SCHEDULED' && t.eventName === 'add_agenda_item'
+        (t) => t.from === 'SCHEDULED' && t.eventName === 'add_agenda_item',
       );
       const fromRecordDateSet = corpShareholdersDef.transitions.find(
-        t => t.from === 'RECORD_DATE_SET' && t.eventName === 'add_agenda_item'
+        (t) => t.from === 'RECORD_DATE_SET' && t.eventName === 'add_agenda_item',
       );
       const fromProxyPeriod = corpShareholdersDef.transitions.find(
-        t => t.from === 'PROXY_PERIOD' && t.eventName === 'add_agenda_item'
+        (t) => t.from === 'PROXY_PERIOD' && t.eventName === 'add_agenda_item',
       );
       expect(fromScheduled).toBeDefined();
       expect(fromRecordDateSet).toBeDefined();
@@ -111,49 +114,49 @@ describe('CorpShareholders State Machine', () => {
 
     it('should allow open_meeting transition from PROXY_PERIOD to IN_SESSION', () => {
       const transition = corpShareholdersDef.transitions.find(
-        t => t.from === 'PROXY_PERIOD' && t.to === 'IN_SESSION' && t.eventName === 'open_meeting'
+        (t) => t.from === 'PROXY_PERIOD' && t.to === 'IN_SESSION' && t.eventName === 'open_meeting',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow open_polls transition from IN_SESSION to VOTING', () => {
       const transition = corpShareholdersDef.transitions.find(
-        t => t.from === 'IN_SESSION' && t.to === 'VOTING' && t.eventName === 'open_polls'
+        (t) => t.from === 'IN_SESSION' && t.to === 'VOTING' && t.eventName === 'open_polls',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow cast_vote transition from VOTING to VOTING', () => {
       const transition = corpShareholdersDef.transitions.find(
-        t => t.from === 'VOTING' && t.to === 'VOTING' && t.eventName === 'cast_vote'
+        (t) => t.from === 'VOTING' && t.to === 'VOTING' && t.eventName === 'cast_vote',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow close_polls transition from VOTING to IN_SESSION', () => {
       const transition = corpShareholdersDef.transitions.find(
-        t => t.from === 'VOTING' && t.to === 'IN_SESSION' && t.eventName === 'close_polls'
+        (t) => t.from === 'VOTING' && t.to === 'IN_SESSION' && t.eventName === 'close_polls',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow certify_results transition from IN_SESSION to CLOSED', () => {
       const transition = corpShareholdersDef.transitions.find(
-        t => t.from === 'IN_SESSION' && t.to === 'CLOSED' && t.eventName === 'certify_results'
+        (t) => t.from === 'IN_SESSION' && t.to === 'CLOSED' && t.eventName === 'certify_results',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow adjourn_without_action from IN_SESSION to CLOSED', () => {
       const transition = corpShareholdersDef.transitions.find(
-        t => t.from === 'IN_SESSION' && t.to === 'CLOSED' && t.eventName === 'adjourn_without_action'
+        (t) => t.from === 'IN_SESSION' && t.to === 'CLOSED' && t.eventName === 'adjourn_without_action',
       );
       expect(transition).toBeDefined();
     });
 
     it('should allow adjourn_without_action from VOTING to CLOSED', () => {
       const transition = corpShareholdersDef.transitions.find(
-        t => t.from === 'VOTING' && t.to === 'CLOSED' && t.eventName === 'adjourn_without_action'
+        (t) => t.from === 'VOTING' && t.to === 'CLOSED' && t.eventName === 'adjourn_without_action',
       );
       expect(transition).toBeDefined();
     });
@@ -161,64 +164,48 @@ describe('CorpShareholders State Machine', () => {
 
   describe('Transition Guards and Effects', () => {
     it('should have guard on open_meeting transition', () => {
-      const transition = corpShareholdersDef.transitions.find(
-        t => t.eventName === 'open_meeting'
-      );
+      const transition = corpShareholdersDef.transitions.find((t) => t.eventName === 'open_meeting');
       expect(transition?.guard).toBeDefined();
     });
 
     it('should have effect on cast_vote transition', () => {
-      const transition = corpShareholdersDef.transitions.find(
-        t => t.eventName === 'cast_vote'
-      );
+      const transition = corpShareholdersDef.transitions.find((t) => t.eventName === 'cast_vote');
       expect(transition?.effect).toBeDefined();
     });
 
     it('should emit SHAREHOLDER_MEETING_SCHEDULED on schedule_annual', () => {
-      const transition = corpShareholdersDef.transitions.find(
-        t => t.eventName === 'schedule_annual'
-      );
+      const transition = corpShareholdersDef.transitions.find((t) => t.eventName === 'schedule_annual');
       expect(JSON.stringify(transition?.effect)).toContain('SHAREHOLDER_MEETING_SCHEDULED');
     });
 
     it('should emit SPECIAL_MEETING_SCHEDULED on schedule_special', () => {
-      const transition = corpShareholdersDef.transitions.find(
-        t => t.eventName === 'schedule_special'
-      );
+      const transition = corpShareholdersDef.transitions.find((t) => t.eventName === 'schedule_special');
       expect(JSON.stringify(transition?.effect)).toContain('SPECIAL_MEETING_SCHEDULED');
     });
 
     it('should emit RECORD_DATE_SET on set_record_date', () => {
-      const transition = corpShareholdersDef.transitions.find(
-        t => t.eventName === 'set_record_date'
-      );
+      const transition = corpShareholdersDef.transitions.find((t) => t.eventName === 'set_record_date');
       expect(JSON.stringify(transition?.effect)).toContain('RECORD_DATE_SET');
     });
 
     it('should emit PROXY_PERIOD_OPENED on open_proxy_period', () => {
-      const transition = corpShareholdersDef.transitions.find(
-        t => t.eventName === 'open_proxy_period'
-      );
+      const transition = corpShareholdersDef.transitions.find((t) => t.eventName === 'open_proxy_period');
       expect(JSON.stringify(transition?.effect)).toContain('PROXY_PERIOD_OPENED');
     });
 
     it('should emit SHAREHOLDER_MEETING_OPENED on open_meeting', () => {
-      const transition = corpShareholdersDef.transitions.find(
-        t => t.eventName === 'open_meeting'
-      );
+      const transition = corpShareholdersDef.transitions.find((t) => t.eventName === 'open_meeting');
       expect(JSON.stringify(transition?.effect)).toContain('SHAREHOLDER_MEETING_OPENED');
     });
 
     it('should emit MEETING_RESULTS_CERTIFIED on certify_results', () => {
-      const transition = corpShareholdersDef.transitions.find(
-        t => t.eventName === 'certify_results'
-      );
+      const transition = corpShareholdersDef.transitions.find((t) => t.eventName === 'certify_results');
       expect(JSON.stringify(transition?.effect)).toContain('MEETING_RESULTS_CERTIFIED');
     });
 
     it('should emit MEETING_ADJOURNED on adjourn_without_action', () => {
       const transition = corpShareholdersDef.transitions.find(
-        t => t.from === 'IN_SESSION' && t.eventName === 'adjourn_without_action'
+        (t) => t.from === 'IN_SESSION' && t.eventName === 'adjourn_without_action',
       );
       expect(JSON.stringify(transition?.effect)).toContain('MEETING_ADJOURNED');
     });
@@ -376,9 +363,7 @@ describe('CorpShareholders State Machine', () => {
 
   describe('Two-phase annual-meeting scheduling (#24)', () => {
     it('propose_schedule_annual binds the board resolution via _addDependency', () => {
-      const propose = corpShareholdersDef.transitions.find(
-        t => t.eventName === 'propose_schedule_annual'
-      );
+      const propose = corpShareholdersDef.transitions.find((t) => t.eventName === 'propose_schedule_annual');
       expect(propose).toBeDefined();
       const effectStr = JSON.stringify(propose?.effect);
       expect(effectStr).toContain('_addDependency');
@@ -386,9 +371,7 @@ describe('CorpShareholders State Machine', () => {
     });
 
     it('schedule_annual gates on the bound resolution reaching EXECUTED (depInState), not a dropped object-dep', () => {
-      const transition = corpShareholdersDef.transitions.find(
-        t => t.eventName === 'schedule_annual'
-      );
+      const transition = corpShareholdersDef.transitions.find((t) => t.eventName === 'schedule_annual');
       const guardStr = JSON.stringify(transition?.guard);
       // dynamic currentStateId assert on the bound resolution + the recorded proposal match
       expect(guardStr).toContain('EXECUTED');
@@ -400,7 +383,7 @@ describe('CorpShareholders State Machine', () => {
 
   describe('Authorization (identity hardening)', () => {
     const guardOf = (eventName: string) =>
-      JSON.stringify(corpShareholdersDef.transitions.find(t => t.eventName === eventName)?.guard);
+      JSON.stringify(corpShareholdersDef.transitions.find((t) => t.eventName === eventName)?.guard);
 
     it('should pin registrar as a required, immutable authority address', () => {
       expect(corpShareholdersDef.createSchema.required).toContain('registrar');
@@ -415,8 +398,9 @@ describe('CorpShareholders State Machine', () => {
     });
 
     it('should accept an address per shareholder in register_eligible_shareholders event', () => {
-      const shItems = corpShareholdersDef.eventSchemas.register_eligible_shareholders.properties
-        .shareholders.items as { properties: Record<string, { type?: string }> };
+      const shItems = corpShareholdersDef.eventSchemas.register_eligible_shareholders.properties.shareholders.items as {
+        properties: Record<string, { type?: string }>;
+      };
       expect(shItems.properties.address.type).toBe('address');
     });
 

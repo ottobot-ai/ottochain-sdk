@@ -14,19 +14,16 @@ describe('Contract Escrow State Machine', () => {
       expect(contractEscrowDef.metadata.name).toBe('ContractEscrow');
       expect(contractEscrowDef.metadata.app).toBe('contracts');
       expect(contractEscrowDef.metadata.description).toBe(
-        'Asset custody with conditional release, dispute resolution, and split payments'
+        'Asset custody with conditional release, dispute resolution, and split payments',
       );
       expect(contractEscrowDef.metadata.version).toBe('1.0.0');
     });
 
     it('should define all required states', () => {
-      const expectedStates = [
-        'CREATED', 'FUNDED', 'ACTIVE', 'RELEASING', 
-        'DISPUTED', 'RELEASED', 'REFUNDED', 'SPLIT'
-      ];
+      const expectedStates = ['CREATED', 'FUNDED', 'ACTIVE', 'RELEASING', 'DISPUTED', 'RELEASED', 'REFUNDED', 'SPLIT'];
       const actualStates = Object.keys(contractEscrowDef.states);
-      
-      expectedStates.forEach(state => {
+
+      expectedStates.forEach((state) => {
         expect(actualStates).toContain(state);
       });
     });
@@ -50,9 +47,9 @@ describe('Contract Escrow State Machine', () => {
   describe('State Transitions', () => {
     it('should allow deposit transition from CREATED to FUNDED', () => {
       const depositTransition = contractEscrowDef.transitions.find(
-        t => t.from === 'CREATED' && t.to === 'FUNDED' && t.eventName === 'deposit'
+        (t) => t.from === 'CREATED' && t.to === 'FUNDED' && t.eventName === 'deposit',
       );
-      
+
       expect(depositTransition).toBeDefined();
       expect(depositTransition!.guard).toBeDefined();
       expect(depositTransition!.effect).toBeDefined();
@@ -60,36 +57,36 @@ describe('Contract Escrow State Machine', () => {
 
     it('should allow activate transition from FUNDED to ACTIVE', () => {
       const activateTransition = contractEscrowDef.transitions.find(
-        t => t.from === 'FUNDED' && t.to === 'ACTIVE' && t.eventName === 'activate'
+        (t) => t.from === 'FUNDED' && t.to === 'ACTIVE' && t.eventName === 'activate',
       );
-      
+
       expect(activateTransition).toBeDefined();
       expect(activateTransition!.guard).toBeDefined();
     });
 
     it('should allow request_release transition from ACTIVE to RELEASING', () => {
       const requestTransition = contractEscrowDef.transitions.find(
-        t => t.from === 'ACTIVE' && t.to === 'RELEASING' && t.eventName === 'request_release'
+        (t) => t.from === 'ACTIVE' && t.to === 'RELEASING' && t.eventName === 'request_release',
       );
-      
+
       expect(requestTransition).toBeDefined();
       expect(requestTransition!.guard).toBeDefined();
     });
 
     it('should allow approve_release transition from RELEASING to RELEASED', () => {
       const approveTransition = contractEscrowDef.transitions.find(
-        t => t.from === 'RELEASING' && t.to === 'RELEASED' && t.eventName === 'approve_release'
+        (t) => t.from === 'RELEASING' && t.to === 'RELEASED' && t.eventName === 'approve_release',
       );
-      
+
       expect(approveTransition).toBeDefined();
       expect(approveTransition!.guard).toBeDefined();
     });
 
     it('should allow dispute transition from RELEASING to DISPUTED', () => {
       const disputeTransition = contractEscrowDef.transitions.find(
-        t => t.from === 'RELEASING' && t.to === 'DISPUTED' && t.eventName === 'dispute'
+        (t) => t.from === 'RELEASING' && t.to === 'DISPUTED' && t.eventName === 'dispute',
       );
-      
+
       expect(disputeTransition).toBeDefined();
       expect(disputeTransition!.guard).toBeDefined();
       // A3 fix: the dropped transition-level `spawns` is now a `_emit` dispute_opened notification
@@ -98,18 +95,18 @@ describe('Contract Escrow State Machine', () => {
 
     it('should allow ruling transition from DISPUTED to SPLIT', () => {
       const rulingTransition = contractEscrowDef.transitions.find(
-        t => t.from === 'DISPUTED' && t.to === 'SPLIT' && t.eventName === 'ruling'
+        (t) => t.from === 'DISPUTED' && t.to === 'SPLIT' && t.eventName === 'ruling',
       );
-      
+
       expect(rulingTransition).toBeDefined();
       expect(rulingTransition!.guard).toBeDefined();
     });
 
     it('should allow refund transition from ACTIVE to REFUNDED', () => {
       const refundTransition = contractEscrowDef.transitions.find(
-        t => t.from === 'ACTIVE' && t.to === 'REFUNDED' && t.eventName === 'refund'
+        (t) => t.from === 'ACTIVE' && t.to === 'REFUNDED' && t.eventName === 'refund',
       );
-      
+
       expect(refundTransition).toBeDefined();
       expect(refundTransition!.guard).toBeDefined();
     });
@@ -118,9 +115,9 @@ describe('Contract Escrow State Machine', () => {
   describe('Guard Logic Preservation', () => {
     it('should preserve deposit authorization and amount validation guards', () => {
       const depositTransition = contractEscrowDef.transitions.find(
-        t => t.from === 'CREATED' && t.to === 'FUNDED' && t.eventName === 'deposit'
+        (t) => t.from === 'CREATED' && t.to === 'FUNDED' && t.eventName === 'deposit',
       );
-      
+
       expect(depositTransition!.guard).toHaveProperty('and');
       expect(Array.isArray(depositTransition!.guard.and)).toBe(true);
       expect(depositTransition!.guard.and).toHaveLength(2);
@@ -128,26 +125,26 @@ describe('Contract Escrow State Machine', () => {
 
     it('should preserve beneficiary authorization for activate', () => {
       const activateTransition = contractEscrowDef.transitions.find(
-        t => t.from === 'FUNDED' && t.to === 'ACTIVE' && t.eventName === 'activate'
+        (t) => t.from === 'FUNDED' && t.to === 'ACTIVE' && t.eventName === 'activate',
       );
-      
+
       expect(activateTransition!.guard).toHaveProperty('or');
       expect(Array.isArray(activateTransition!.guard.or)).toBe(true);
     });
 
     it('should preserve beneficiary authorization for request_release', () => {
       const requestTransition = contractEscrowDef.transitions.find(
-        t => t.from === 'ACTIVE' && t.to === 'RELEASING' && t.eventName === 'request_release'
+        (t) => t.from === 'ACTIVE' && t.to === 'RELEASING' && t.eventName === 'request_release',
       );
-      
+
       expect(requestTransition!.guard).toEqual(signerIsParty('state.beneficiary'));
     });
 
     it('should preserve time-based approval logic for approve_release', () => {
       const approveTransition = contractEscrowDef.transitions.find(
-        t => t.from === 'RELEASING' && t.to === 'RELEASED' && t.eventName === 'approve_release'
+        (t) => t.from === 'RELEASING' && t.to === 'RELEASED' && t.eventName === 'approve_release',
       );
-      
+
       expect(approveTransition!.guard).toHaveProperty('or');
       expect(Array.isArray(approveTransition!.guard.or)).toBe(true);
       expect(approveTransition!.guard.or).toHaveLength(2);
@@ -155,9 +152,9 @@ describe('Contract Escrow State Machine', () => {
 
     it('should preserve time-constraint logic for dispute', () => {
       const disputeTransition = contractEscrowDef.transitions.find(
-        t => t.from === 'RELEASING' && t.to === 'DISPUTED' && t.eventName === 'dispute'
+        (t) => t.from === 'RELEASING' && t.to === 'DISPUTED' && t.eventName === 'dispute',
       );
-      
+
       expect(disputeTransition!.guard).toHaveProperty('and');
       expect(Array.isArray(disputeTransition!.guard.and)).toBe(true);
       expect(disputeTransition!.guard.and).toHaveLength(2);
@@ -167,9 +164,9 @@ describe('Contract Escrow State Machine', () => {
   describe('Effect Logic Preservation', () => {
     it('should preserve balance updates for deposit', () => {
       const depositTransition = contractEscrowDef.transitions.find(
-        t => t.from === 'CREATED' && t.to === 'FUNDED' && t.eventName === 'deposit'
+        (t) => t.from === 'CREATED' && t.to === 'FUNDED' && t.eventName === 'deposit',
       );
-      
+
       const mergeEffect = depositTransition!.effect.merge[1];
       expect(mergeEffect).toHaveProperty('balance');
       expect(mergeEffect.balance).toEqual({ var: 'event.amount' });
@@ -178,9 +175,9 @@ describe('Contract Escrow State Machine', () => {
 
     it('should preserve release request data for request_release', () => {
       const requestTransition = contractEscrowDef.transitions.find(
-        t => t.from === 'ACTIVE' && t.to === 'RELEASING' && t.eventName === 'request_release'
+        (t) => t.from === 'ACTIVE' && t.to === 'RELEASING' && t.eventName === 'request_release',
       );
-      
+
       const mergeEffect = requestTransition!.effect.merge[1];
       expect(mergeEffect).toHaveProperty('releaseRequest');
       expect(mergeEffect).toHaveProperty('releaseDeadline');
@@ -189,9 +186,9 @@ describe('Contract Escrow State Machine', () => {
 
     it('should preserve split data for ruling', () => {
       const rulingTransition = contractEscrowDef.transitions.find(
-        t => t.from === 'DISPUTED' && t.to === 'SPLIT' && t.eventName === 'ruling'
+        (t) => t.from === 'DISPUTED' && t.to === 'SPLIT' && t.eventName === 'ruling',
       );
-      
+
       const mergeEffect = rulingTransition!.effect.merge[1];
       expect(mergeEffect).toHaveProperty('splits');
       expect(mergeEffect).toHaveProperty('rulingId');
@@ -203,7 +200,7 @@ describe('Contract Escrow State Machine', () => {
   describe('Spawn Logic Preservation', () => {
     it('should surface the judiciary dispute case via the _emit effect directive (A3)', () => {
       const disputeTransition = contractEscrowDef.transitions.find(
-        t => t.from === 'RELEASING' && t.to === 'DISPUTED' && t.eventName === 'dispute'
+        (t) => t.from === 'RELEASING' && t.to === 'DISPUTED' && t.eventName === 'dispute',
       );
 
       // transition-level `spawns` is dropped by the chain; the case rides as a _emit to "Judiciary"
@@ -236,11 +233,16 @@ describe('Contract Escrow State Machine', () => {
 
     it('should define event schemas for all escrow events', () => {
       const expectedEvents = [
-        'deposit', 'activate', 'request_release', 'approve_release', 
-        'dispute', 'ruling', 'refund'
+        'deposit',
+        'activate',
+        'request_release',
+        'approve_release',
+        'dispute',
+        'ruling',
+        'refund',
       ];
-      
-      expectedEvents.forEach(eventName => {
+
+      expectedEvents.forEach((eventName) => {
         expect(contractEscrowDef.eventSchemas).toHaveProperty(eventName);
       });
     });
@@ -265,7 +267,7 @@ describe('Contract Escrow State Machine', () => {
 
     it('ruling: signer must be the pinned arbiter AND splits must conserve the balance', () => {
       const ruling = contractEscrowDef.transitions.find(
-        t => t.from === 'DISPUTED' && t.to === 'SPLIT' && t.eventName === 'ruling'
+        (t) => t.from === 'DISPUTED' && t.to === 'SPLIT' && t.eventName === 'ruling',
       );
       expect(ruling!.guard).toHaveProperty('and');
       // disjunct 1: the arbiter is a verified signer (no bare event.judicialRuling)
@@ -274,25 +276,19 @@ describe('Contract Escrow State Machine', () => {
       expect(ruling!.guard.and[1]).toEqual({
         '===': [
           {
-            reduce: [
-              { var: 'event.splits' },
-              { '+': [{ var: 'accumulator' }, { var: 'current.amount' }] },
-              0,
-            ],
+            reduce: [{ var: 'event.splits' }, { '+': [{ var: 'accumulator' }, { var: 'current.amount' }] }, 0],
           },
           { var: 'state.balance' },
         ],
       });
       // forgeable field removed from the guard and the event schema
       expect(JSON.stringify(ruling!.guard)).not.toContain('judicialRuling');
-      expect(contractEscrowDef.eventSchemas.ruling.properties).not.toHaveProperty(
-        'judicialRuling'
-      );
+      expect(contractEscrowDef.eventSchemas.ruling.properties).not.toHaveProperty('judicialRuling');
     });
 
     it('refund: requires true mutual consent (both parties sign) OR expiry', () => {
       const refund = contractEscrowDef.transitions.find(
-        t => t.from === 'ACTIVE' && t.to === 'REFUNDED' && t.eventName === 'refund'
+        (t) => t.from === 'ACTIVE' && t.to === 'REFUNDED' && t.eventName === 'refund',
       );
       expect(refund!.guard).toHaveProperty('or');
       expect(refund!.guard.or[0]).toEqual({

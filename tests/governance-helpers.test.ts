@@ -16,11 +16,7 @@ import {
   thresholdHasQuorum,
 } from '../src/apps/governance';
 
-import type {
-  MultisigDAO,
-  TokenDAO,
-  ThresholdDAO,
-} from '../src/generated/ottochain/apps/governance/v1/governance';
+import type { MultisigDAO, TokenDAO, ThresholdDAO } from '../src/generated/ottochain/apps/governance/v1/governance';
 
 import { DAOStatus } from '../src/generated/ottochain/apps/governance/v1/governance';
 

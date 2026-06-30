@@ -32,7 +32,7 @@ describe('MarketAuction State Machine', () => {
   });
 
   it('should guard bid against seller bidding on own auction', () => {
-    const bid = marketAuctionDef.transitions.find(t => t.eventName === 'bid');
+    const bid = marketAuctionDef.transitions.find((t) => t.eventName === 'bid');
     expect(bid).toBeDefined();
     const guardStr = JSON.stringify(bid?.guard);
     // Anti-self check binds to the VERIFIED signer set (proofs[].address), not the
@@ -45,27 +45,24 @@ describe('MarketAuction State Machine', () => {
           {
             '!': [
               {
-                in: [
-                  { var: 'state.seller' },
-                  { map: [{ var: 'proofs' }, { var: 'address' }] },
-                ],
+                in: [{ var: 'state.seller' }, { map: [{ var: 'proofs' }, { var: 'address' }] }],
               },
             ],
           },
         ]),
-      })
+      }),
     );
   });
 
   it('should require bid amount >= minBid with increment', () => {
-    const bid = marketAuctionDef.transitions.find(t => t.eventName === 'bid');
+    const bid = marketAuctionDef.transitions.find((t) => t.eventName === 'bid');
     const guard = bid?.guard as Record<string, unknown>;
     const andClauses = guard['and'] as unknown[];
     expect(andClauses.length).toBeGreaterThan(2);
   });
 
   it('should settle only when reserve price is met', () => {
-    const settle = marketAuctionDef.transitions.find(t => t.eventName === 'settle');
+    const settle = marketAuctionDef.transitions.find((t) => t.eventName === 'settle');
     expect(settle).toBeDefined();
     expect(settle?.to).toBe('SETTLED');
     const guardStr = JSON.stringify(settle?.guard);
@@ -73,7 +70,7 @@ describe('MarketAuction State Machine', () => {
   });
 
   it('should support no_sale transition when reserve not met', () => {
-    const noSale = marketAuctionDef.transitions.find(t => t.eventName === 'no_sale');
+    const noSale = marketAuctionDef.transitions.find((t) => t.eventName === 'no_sale');
     expect(noSale).toBeDefined();
     expect(noSale?.to).toBe('NO_SALE');
     const effectStr = JSON.stringify(noSale?.effect);

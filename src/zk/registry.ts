@@ -62,11 +62,7 @@ export type Comparator = '>=' | '>' | '<=' | '<' | '==' | '!=';
  * `bound` stays a JSON primitive (number/string) so the canonical bytes the prover hashes match the
  * canonical bytes the rule registers under (bigint is not JSON-serializable — pre-encode if needed).
  */
-export function boundRule(
-  varName: string,
-  op: Comparator,
-  bound: number | string,
-): Record<string, unknown> {
+export function boundRule(varName: string, op: Comparator, bound: number | string): Record<string, unknown> {
   return { [op]: [{ var: varName }, bound] };
 }
 

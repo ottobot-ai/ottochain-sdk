@@ -25,12 +25,7 @@
  * the auth-DB variant (RFC §3.1.1).
  */
 
-import {
-  defineFiberApp,
-  type FiberAppDefinition,
-  type JsonLogicRule,
-  type SchemaField,
-} from "../schema/fiber-app.js";
+import { defineFiberApp, type FiberAppDefinition, type JsonLogicRule, type SchemaField } from '../schema/fiber-app.js';
 
 export interface ShieldOptions {
   /** SP1 program vkey for the zk-jlvm-shielded circuit (0x-prefixed bytes32 hex). Pinned at creation. */
@@ -57,15 +52,15 @@ const pvField = (publicValues: JsonLogicRule, hexOffset: number): JsonLogicRule 
 
 /** Standard public state every shielded pool carries (the rest of the app state is private/off-chain). */
 export const SHIELDED_POOL_STATE: Record<string, SchemaField> = {
-  vkey: { type: "hash", immutable: true },
-  exprHash: { type: "hash", immutable: true },
-  rootWindow: { type: "integer", immutable: true },
-  currentRoot: { type: "hash", computed: true },
-  knownRoots: { type: "array", computed: true, description: "rolling window of valid anchors (hex)" },
-  nullifiers: { type: "array", computed: true, description: "spent set (hex); monotonic — see RFC §5.3" },
-  commitments: { type: "array", computed: true, description: "append-only log of output commitments (hex)" },
-  leafCount: { type: "integer", computed: true, default: 0 },
-  transitions: { type: "integer", computed: true, default: 0 },
+  vkey: { type: 'hash', immutable: true },
+  exprHash: { type: 'hash', immutable: true },
+  rootWindow: { type: 'integer', immutable: true },
+  currentRoot: { type: 'hash', computed: true },
+  knownRoots: { type: 'array', computed: true, description: 'rolling window of valid anchors (hex)' },
+  nullifiers: { type: 'array', computed: true, description: 'spent set (hex); monotonic — see RFC §5.3' },
+  commitments: { type: 'array', computed: true, description: 'append-only log of output commitments (hex)' },
+  leafCount: { type: 'integer', computed: true, default: 0 },
+  transitions: { type: 'integer', computed: true, default: 0 },
 };
 
 /**
@@ -75,7 +70,7 @@ export const SHIELDED_POOL_STATE: Record<string, SchemaField> = {
  * @param opts  the circuit vkey + the pinned `exprHash` + the anchor window.
  */
 export function shieldApp(base: FiberAppDefinition, opts: ShieldOptions): FiberAppDefinition {
-  const publicValues: JsonLogicRule = { var: "event.publicValues" };
+  const publicValues: JsonLogicRule = { var: 'event.publicValues' };
   const anchor = pvField(publicValues, 2);
   const nullifier = pvField(publicValues, 66);
   const newCommitment = pvField(publicValues, 130);
@@ -85,13 +80,13 @@ export function shieldApp(base: FiberAppDefinition, opts: ShieldOptions): FiberA
   const guard: JsonLogicRule = {
     and: [
       // 1. the proof verifies against the pool's pinned vkey over EXACTLY these public bytes
-      { groth16_verify: [{ var: "state.vkey" }, publicValues, { var: "event.proof" }] },
+      { groth16_verify: [{ var: 'state.vkey' }, publicValues, { var: 'event.proof' }] },
       // 2. it ran the app logic this pool pins (binds which effect produced the transition)
-      { "===": [exprHash, { var: "state.exprHash" }] },
+      { '===': [exprHash, { var: 'state.exprHash' }] },
       // 3. the spent note was proven under an anchor we still honor
-      { in: [anchor, { var: "state.knownRoots" }] },
+      { in: [anchor, { var: 'state.knownRoots' }] },
       // 4. inter-transfer double-spend guard: the nullifier is not already spent
-      { none: [{ var: "state.nullifiers" }, { "===": [{ var: "" }, nullifier] }] },
+      { none: [{ var: 'state.nullifiers' }, { '===': [{ var: '' }, nullifier] }] },
     ],
   };
 
@@ -100,13 +95,13 @@ export function shieldApp(base: FiberAppDefinition, opts: ShieldOptions): FiberA
   // per RFC §6.2 / §10; the chain records the commitment + nullifier here.
   const effect: JsonLogicRule = {
     merge: [
-      { var: "state" },
+      { var: 'state' },
       {
-        nullifiers: { cat: [{ var: "state.nullifiers" }, [nullifier]] },
-        commitments: { cat: [{ var: "state.commitments" }, [newCommitment]] },
-        leafCount: { "+": [{ var: "state.leafCount" }, 1] },
-        transitions: { "+": [{ var: "state.transitions" }, 1] },
-        lastTransitionAt: { var: "$ordinal" },
+        nullifiers: { cat: [{ var: 'state.nullifiers' }, [nullifier]] },
+        commitments: { cat: [{ var: 'state.commitments' }, [newCommitment]] },
+        leafCount: { '+': [{ var: 'state.leafCount' }, 1] },
+        transitions: { '+': [{ var: 'state.transitions' }, 1] },
+        lastTransitionAt: { var: '$ordinal' },
       },
     ],
   };
@@ -114,7 +109,7 @@ export function shieldApp(base: FiberAppDefinition, opts: ShieldOptions): FiberA
   return defineFiberApp({
     metadata: {
       name: `Shielded${base.metadata.name}`,
-      app: "privacy",
+      app: 'privacy',
       type: `shielded-${base.metadata.type}`,
       version: base.metadata.version,
       description:
@@ -123,11 +118,11 @@ export function shieldApp(base: FiberAppDefinition, opts: ShieldOptions): FiberA
     },
 
     createSchema: {
-      required: ["vkey", "exprHash"],
+      required: ['vkey', 'exprHash'],
       properties: {
-        vkey: { type: "hash", immutable: true, default: opts.vkey },
-        exprHash: { type: "hash", immutable: true, default: opts.exprHash },
-        rootWindow: { type: "integer", immutable: true, default: opts.rootWindow ?? 64 },
+        vkey: { type: 'hash', immutable: true, default: opts.vkey },
+        exprHash: { type: 'hash', immutable: true, default: opts.exprHash },
+        rootWindow: { type: 'integer', immutable: true, default: opts.rootWindow ?? 64 },
       },
     },
 
@@ -136,23 +131,23 @@ export function shieldApp(base: FiberAppDefinition, opts: ShieldOptions): FiberA
     eventSchemas: {
       transition: {
         description: `A private state transition of ${base.metadata.name}, attested by a zk-jlvm-shielded Groth16 proof.`,
-        required: ["proof", "publicValues"],
+        required: ['proof', 'publicValues'],
         properties: {
-          proof: { type: "string", description: "Groth16 proof bytes (0x hex)" },
-          publicValues: { type: "string", description: "abi-encoded JlvmTransitionPublicValues (4×bytes32, 0x hex)" },
+          proof: { type: 'string', description: 'Groth16 proof bytes (0x hex)' },
+          publicValues: { type: 'string', description: 'abi-encoded JlvmTransitionPublicValues (4×bytes32, 0x hex)' },
         },
       },
     },
 
     states: {
       ACTIVE: {
-        id: "ACTIVE",
+        id: 'ACTIVE',
         isFinal: false,
-        metadata: { label: "Active", description: "Pool accepts shielded transitions", category: "active" },
+        metadata: { label: 'Active', description: 'Pool accepts shielded transitions', category: 'active' },
       },
     },
-    initialState: "ACTIVE",
+    initialState: 'ACTIVE',
 
-    transitions: [{ from: "ACTIVE", to: "ACTIVE", eventName: "transition", guard, effect, dependencies: [] }],
+    transitions: [{ from: 'ACTIVE', to: 'ACTIVE', eventName: 'transition', guard, effect, dependencies: [] }],
   });
 }

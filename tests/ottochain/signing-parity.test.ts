@@ -71,9 +71,7 @@ describe('signing-canonical parity (SDK <-> chain wire StateMachineDefinition)',
       metadata: { name: 'P', app: 'p', type: 'p', version: '1.0.0' },
       states: { A: { id: 'A', isFinal: false }, B: { id: 'B', isFinal: true } },
       initialState: 'A' as const,
-      transitions: [
-        { from: 'A', to: 'B', eventName: 'go', guard: { '==': [1, 1] }, effect: { var: 'state' } },
-      ],
+      transitions: [{ from: 'A', to: 'B', eventName: 'go', guard: { '==': [1, 1] }, effect: { var: 'state' } }],
     };
 
     it('omits `policy` entirely when the definition is unconstrained (no policy field)', () => {
@@ -87,9 +85,7 @@ describe('signing-canonical parity (SDK <-> chain wire StateMachineDefinition)',
     });
 
     it('omits `policy` when a constrained() has zero effective dials (empty == Unconstrained)', () => {
-      const wire = toProtoDefinition(
-        defineFiberApp({ ...base, policy: constrained({ maxGenerations: undefined }) }),
-      );
+      const wire = toProtoDefinition(defineFiberApp({ ...base, policy: constrained({ maxGenerations: undefined }) }));
       expect(wire).not.toHaveProperty('policy');
     });
 
@@ -134,9 +130,7 @@ describe('signing-canonical parity (SDK <-> chain wire StateMachineDefinition)',
       // into the `Immutable` variant, so the SDK must sign the capital-I bare string `"Immutable"`
       // (not `{ upgradePolicy: "immutable" }`) or the create signature breaks against the chain's
       // re-encoding.
-      const wire = toProtoDefinition(
-        defineFiberApp({ ...base, policy: constrained({ upgradePolicy: 'immutable' }) }),
-      );
+      const wire = toProtoDefinition(defineFiberApp({ ...base, policy: constrained({ upgradePolicy: 'immutable' }) }));
       expect(wire.policy).toBe('Immutable');
       // immutable() and the collapsed constrained() are wire-identical.
       const wireDirect = toProtoDefinition(defineFiberApp({ ...base, policy: immutable() }));
@@ -163,9 +157,7 @@ describe('signing-canonical parity (SDK <-> chain wire StateMachineDefinition)',
       metadata: { name: 'P', app: 'p', type: 'p', version: '1.0.0' },
       states: { A: { id: 'A', isFinal: false }, B: { id: 'B', isFinal: true } },
       initialState: 'A' as const,
-      transitions: [
-        { from: 'A', to: 'B', eventName: 'go', guard: { '==': [1, 1] }, effect: { var: 'state' } },
-      ],
+      transitions: [{ from: 'A', to: 'B', eventName: 'go', guard: { '==': [1, 1] }, effect: { var: 'state' } }],
     };
     const policyOf = (dials: Parameters<typeof constrained>[0]) =>
       toProtoDefinition(defineFiberApp({ ...base, policy: constrained(dials) })).policy;
@@ -231,9 +223,9 @@ describe('signing-canonical parity (SDK <-> chain wire StateMachineDefinition)',
     });
 
     it('migrationAuthority: Signers arm = { addresses }, Role arm = { registryFiberId, roleField }', () => {
-      expect(policyOf({ migrationAuthority: { addresses: ['DAG0000000000000000000000000000000000000000'] } })).toEqual(
-        { migrationAuthority: { addresses: ['DAG0000000000000000000000000000000000000000'] } },
-      );
+      expect(policyOf({ migrationAuthority: { addresses: ['DAG0000000000000000000000000000000000000000'] } })).toEqual({
+        migrationAuthority: { addresses: ['DAG0000000000000000000000000000000000000000'] },
+      });
       expect(
         policyOf({
           migrationAuthority: { registryFiberId: '33333333-3333-3333-3333-333333333333', roleField: 'admins' },

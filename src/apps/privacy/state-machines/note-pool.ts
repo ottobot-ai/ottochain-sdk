@@ -62,9 +62,9 @@ import {
   type FiberAppDefinition,
   type JsonLogicRule,
   type SchemaField,
-} from "../../../schema/fiber-app.js";
-import { signerIsParty } from "../../../schema/guards.js";
-import { transferAsset, toWallet } from "../../../schema/effects.js";
+} from '../../../schema/fiber-app.js';
+import { signerIsParty } from '../../../schema/guards.js';
+import { transferAsset, toWallet } from '../../../schema/effects.js';
 
 // =============================================================================
 // Public-input layout the guard expects (for fixture / circuit generation)
@@ -141,7 +141,7 @@ const WORD_HEX = 64; // a 32-byte ABI word as hex chars
  * field invalidates the proof: re-prefixing the verified slice IS the public-input binding.
  */
 export const pvField = (offset: number): JsonLogicRule => ({
-  cat: ["0x", { substr: [{ var: "event.publicValues" }, offset, WORD_HEX] }],
+  cat: ['0x', { substr: [{ var: 'event.publicValues' }, offset, WORD_HEX] }],
 });
 
 /**
@@ -187,71 +187,69 @@ export interface NotePoolOptions {
 }
 
 /** The all-zero 32-byte word — the MVP `feeWord` (pins fee=0). */
-export const ZERO_WORD = "0x" + "0".repeat(64);
+export const ZERO_WORD = '0x' + '0'.repeat(64);
 
 /** Public state every shielded note-pool carries (the note value model itself is private/off-chain). */
 export const NOTE_POOL_STATE: Record<string, SchemaField> = {
   vkey: {
-    type: "hash",
+    type: 'hash',
     immutable: true,
-    description: "zk-shielded program vkey (32B, 0x)",
+    description: 'zk-shielded program vkey (32B, 0x)',
   },
   depth: {
-    type: "integer",
+    type: 'integer',
     immutable: true,
-    description: "merkle depth pinned at creation",
+    description: 'merkle depth pinned at creation',
   },
   denom: {
-    type: "integer",
+    type: 'integer',
     immutable: true,
-    description: "fixed note denomination (asset units)",
+    description: 'fixed note denomination (asset units)',
   },
   poolPolicyRef: {
-    type: "string",
+    type: 'string',
     immutable: true,
-    description: "asset policy the pool mints/burns note-records under",
+    description: 'asset policy the pool mints/burns note-records under',
   },
   feeAsset: {
-    type: "hash",
+    type: 'hash',
     immutable: true,
-    description: "0x Fr label fees are charged in (== asset-as-Fr)",
+    description: '0x Fr label fees are charged in (== asset-as-Fr)',
   },
   feeWord: {
-    type: "hash",
+    type: 'hash',
     immutable: true,
-    description: "the EXACT 0x 32-byte word `fee` must equal (MVP: zero word)",
+    description: 'the EXACT 0x 32-byte word `fee` must equal (MVP: zero word)',
   },
   relayer: {
-    type: "string",
+    type: 'string',
     immutable: true,
-    description:
-      "DAG address authorized to advance the root (MVP single trusted relayer)",
+    description: 'DAG address authorized to advance the root (MVP single trusted relayer)',
   },
-  rootWindow: { type: "integer", immutable: true, default: 64 },
-  currentRoot: { type: "hash", computed: true },
+  rootWindow: { type: 'integer', immutable: true, default: 64 },
+  currentRoot: { type: 'hash', computed: true },
   knownRoots: {
-    type: "array",
+    type: 'array',
     computed: true,
-    description: "rolling window of valid anchors (0x)",
+    description: 'rolling window of valid anchors (0x)',
   },
   nullifiers: {
-    type: "array",
+    type: 'array',
     computed: true,
-    description:
-      "spent set (0x); monotonic — O(n) `none` scan, see ceiling note",
+    description: 'spent set (0x); monotonic — O(n) `none` scan, see ceiling note',
   },
   commitments: {
-    type: "array",
+    type: 'array',
     computed: true,
-    description: "append-only output-commitment log (0x)",
+    description: 'append-only output-commitment log (0x)',
   },
   noteRecords: {
-    type: "array",
+    type: 'array',
     computed: true,
-    description: "assetId UUIDs of live note-records the pool holds",
+    description: 'assetId UUIDs of live note-records the pool holds',
   },
-  leafCount: { type: "integer", computed: true, default: 0 },
-  transfers: { type: "integer", computed: true, default: 0 },
+  leafCount: { type: 'integer', computed: true, default: 0 },
+  transfers: { type: 'integer', computed: true, default: 0 },
 };
 
 // =============================================================================
@@ -308,22 +306,18 @@ const pvWords = () => ({
 const spendBinding = (w: ReturnType<typeof pvWords>): JsonLogicRule[] => [
   // 1. the proof verifies against the pool's pinned vkey over EXACTLY these public bytes
   {
-    groth16_verify: [
-      { var: "state.vkey" },
-      { var: "event.publicValues" },
-      { var: "event.proof" },
-    ],
+    groth16_verify: [{ var: 'state.vkey' }, { var: 'event.publicValues' }, { var: 'event.proof' }],
   },
   // 2. the spend's anchor is a root we produced and still honor
-  { in: [w.anchor, { var: "state.knownRoots" }] },
+  { in: [w.anchor, { var: 'state.knownRoots' }] },
   // 3. INTER-transfer double-spend: the (0x-prefixed) nullifier is not already spent
   {
-    none: [{ var: "state.nullifiers" }, { "===": [{ var: "" }, w.nullifier] }],
+    none: [{ var: 'state.nullifiers' }, { '===': [{ var: '' }, w.nullifier] }],
   },
   // 4. no fee-asset spoofing
-  { "===": [w.feeAsset, { var: "state.feeAsset" }] },
+  { '===': [w.feeAsset, { var: 'state.feeAsset' }] },
   // 5. no value siphon via fee: the whole fee word is pinned (MVP: the zero word ⇒ fee==0)
-  { "===": [w.feeWord, { var: "state.feeWord" }] },
+  { '===': [w.feeWord, { var: 'state.feeWord' }] },
 ];
 
 /**
@@ -348,29 +342,29 @@ export function notePoolDef(opts: NotePoolOptions): FiberAppDefinition {
       // Root-advance authz: only the pinned relayer's signed `transfer` advances the tree, so a
       // non-relayer cannot flood `knownRoots` and evict honest in-flight anchors (DoS). Uses
       // `proofs[].address` (verified signers) — NOT a forgeable `event.*` field.
-      signerIsParty("state.relayer"),
+      signerIsParty('state.relayer'),
     ],
   };
 
   const transferEffect: JsonLogicRule = {
     merge: [
-      { var: "state" },
+      { var: 'state' },
       {
         // append via merge (NOT cat — cat errors on arrays on-chain)
-        nullifiers: { merge: [{ var: "state.nullifiers" }, [w.nullifier]] },
-        commitments: { merge: [{ var: "state.commitments" }, [w.newCm]] },
-        currentRoot: { var: "event.newRoot" },
+        nullifiers: { merge: [{ var: 'state.nullifiers' }, [w.nullifier]] },
+        commitments: { merge: [{ var: 'state.commitments' }, [w.newCm]] },
+        currentRoot: { var: 'event.newRoot' },
         // append newRoot, then trim to the last rootWindow anchors via negative-start slice
         knownRoots: {
           slice: [
             {
-              merge: [{ var: "state.knownRoots" }, [{ var: "event.newRoot" }]],
+              merge: [{ var: 'state.knownRoots' }, [{ var: 'event.newRoot' }]],
             },
-            { "*": [-1, { var: "state.rootWindow" }] },
+            { '*': [-1, { var: 'state.rootWindow' }] },
           ],
         },
-        leafCount: { "+": [{ var: "state.leafCount" }, 1] },
-        transfers: { "+": [{ var: "state.transfers" }, 1] },
+        leafCount: { '+': [{ var: 'state.leafCount' }, 1] },
+        transfers: { '+': [{ var: 'state.transfers' }, 1] },
       },
     ],
   };
@@ -383,20 +377,20 @@ export function notePoolDef(opts: NotePoolOptions): FiberAppDefinition {
   const noteMintedGuard: JsonLogicRule = {
     // the depositor (who signed the mint) signs this witness; the commitment + recordId are theirs.
     // No balance read (no guard can witness an escrow). The release-time custody check is the real gate.
-    and: [signerIsParty("event.depositor")],
+    and: [signerIsParty('event.depositor')],
   };
 
   const noteMintedEffect: JsonLogicRule = {
     merge: [
-      { var: "state" },
+      { var: 'state' },
       {
         commitments: {
-          merge: [{ var: "state.commitments" }, [{ var: "event.commitment" }]],
+          merge: [{ var: 'state.commitments' }, [{ var: 'event.commitment' }]],
         },
         noteRecords: {
-          merge: [{ var: "state.noteRecords" }, [{ var: "event.recordId" }]],
+          merge: [{ var: 'state.noteRecords' }, [{ var: 'event.recordId' }]],
         },
-        leafCount: { "+": [{ var: "state.leafCount" }, 1] },
+        leafCount: { '+': [{ var: 'state.leafCount' }, 1] },
       },
     ],
   };
@@ -406,28 +400,25 @@ export function notePoolDef(opts: NotePoolOptions): FiberAppDefinition {
     and: [
       ...spendBinding(w),
       // can only release a record the pool actually holds (combiner R1 holder defense re-checks too)
-      { in: [{ var: "event.recordId" }, { var: "state.noteRecords" }] },
+      { in: [{ var: 'event.recordId' }, { var: 'state.noteRecords' }] },
     ],
   };
 
   const unshieldEffect: JsonLogicRule = {
     merge: [
-      { var: "state" },
+      { var: 'state' },
       {
-        nullifiers: { merge: [{ var: "state.nullifiers" }, [w.nullifier]] },
+        nullifiers: { merge: [{ var: 'state.nullifiers' }, [w.nullifier]] },
         // remove the released record id from the live set
         noteRecords: {
-          filter: [
-            { var: "state.noteRecords" },
-            { "!==": [{ var: "" }, { var: "event.recordId" }] },
-          ],
+          filter: [{ var: 'state.noteRecords' }, { '!==': [{ var: '' }, { var: 'event.recordId' }] }],
         },
-        transfers: { "+": [{ var: "state.transfers" }, 1] },
+        transfers: { '+': [{ var: 'state.transfers' }, 1] },
         // release exactly one whole denom-valued record to a clear recipient wallet
         ...transferAsset([
           {
-            assetId: { var: "event.recordId" },
-            recipient: toWallet({ var: "event.recipient" }),
+            assetId: { var: 'event.recordId' },
+            recipient: toWallet({ var: 'event.recipient' }),
           },
         ]),
       },
@@ -436,40 +427,33 @@ export function notePoolDef(opts: NotePoolOptions): FiberAppDefinition {
 
   return defineFiberApp({
     metadata: {
-      name: "ShieldedNotePool",
-      app: "privacy",
-      type: "shielded-note-pool",
-      version: "0.1.0",
+      name: 'ShieldedNotePool',
+      app: 'privacy',
+      type: 'shielded-note-pool',
+      version: '0.1.0',
       description:
-        "UNAUDITED, TEST-ASSETS-ONLY fixed-denomination UTXO-private asset pool over the zk-shielded " +
-        "Groth16 circuit (BN254 ~100-bit). Notes live off-chain in a Poseidon-Merkle tree; spends are " +
-        "attested by a Groth16 proof. Public state = nullifier set + anchor window + commitment log. " +
-        "Single trusted relayer advances the root (MVP). Do NOT deploy with value-bearing assets.",
+        'UNAUDITED, TEST-ASSETS-ONLY fixed-denomination UTXO-private asset pool over the zk-shielded ' +
+        'Groth16 circuit (BN254 ~100-bit). Notes live off-chain in a Poseidon-Merkle tree; spends are ' +
+        'attested by a Groth16 proof. Public state = nullifier set + anchor window + commitment log. ' +
+        'Single trusted relayer advances the root (MVP). Do NOT deploy with value-bearing assets.',
     },
 
     createSchema: {
-      required: [
-        "vkey",
-        "depth",
-        "denom",
-        "poolPolicyRef",
-        "feeAsset",
-        "relayer",
-      ],
+      required: ['vkey', 'depth', 'denom', 'poolPolicyRef', 'feeAsset', 'relayer'],
       properties: {
-        vkey: { type: "hash", immutable: true, default: opts.vkey },
-        depth: { type: "integer", immutable: true, default: opts.depth },
-        denom: { type: "integer", immutable: true, default: opts.denom },
+        vkey: { type: 'hash', immutable: true, default: opts.vkey },
+        depth: { type: 'integer', immutable: true, default: opts.depth },
+        denom: { type: 'integer', immutable: true, default: opts.denom },
         poolPolicyRef: {
-          type: "string",
+          type: 'string',
           immutable: true,
           default: opts.poolPolicyRef,
         },
-        feeAsset: { type: "hash", immutable: true, default: opts.feeAsset },
-        feeWord: { type: "hash", immutable: true, default: feeWord },
-        relayer: { type: "string", immutable: true, default: opts.relayer },
+        feeAsset: { type: 'hash', immutable: true, default: opts.feeAsset },
+        feeWord: { type: 'hash', immutable: true, default: feeWord },
+        relayer: { type: 'string', immutable: true, default: opts.relayer },
         rootWindow: {
-          type: "integer",
+          type: 'integer',
           immutable: true,
           default: opts.rootWindow ?? 64,
         },
@@ -481,67 +465,60 @@ export function notePoolDef(opts: NotePoolOptions): FiberAppDefinition {
     eventSchemas: {
       transfer: {
         description:
-          "Note-to-note shielded spend (N=1/M=1), attested by a zk-shielded Groth16 proof; advances the tree.",
-        required: ["proof", "publicValues", "newRoot"],
+          'Note-to-note shielded spend (N=1/M=1), attested by a zk-shielded Groth16 proof; advances the tree.',
+        required: ['proof', 'publicValues', 'newRoot'],
         properties: {
           proof: {
-            type: "string",
-            description: "Groth16 proof bytes (0x hex)",
+            type: 'string',
+            description: 'Groth16 proof bytes (0x hex)',
           },
           publicValues: {
-            type: "string",
-            description:
-              "abi-encoded ShieldedTransferPublicValues (0x hex); see PV_LAYOUT",
+            type: 'string',
+            description: 'abi-encoded ShieldedTransferPublicValues (0x hex); see PV_LAYOUT',
           },
           newRoot: {
-            type: "hash",
-            description:
-              "wallet/relayer-computed root after appending outputCms[0]",
+            type: 'hash',
+            description: 'wallet/relayer-computed root after appending outputCms[0]',
           },
         },
       },
       noteMinted: {
-        description:
-          "Witness a deposit: record its commitment + the minted note-record's UUID.",
-        required: ["commitment", "recordId", "depositor"],
+        description: "Witness a deposit: record its commitment + the minted note-record's UUID.",
+        required: ['commitment', 'recordId', 'depositor'],
         properties: {
           commitment: {
-            type: "hash",
-            description:
-              "client-computed cm = Poseidon([denom, owner, feeAsset, rho]) (0x)",
+            type: 'hash',
+            description: 'client-computed cm = Poseidon([denom, owner, feeAsset, rho]) (0x)',
           },
           recordId: {
-            type: "uuid",
-            description:
-              "assetId of the denom-valued record minted into Fiber(poolId)",
+            type: 'uuid',
+            description: 'assetId of the denom-valued record minted into Fiber(poolId)',
           },
           depositor: {
-            type: "address",
-            description: "DAG address of the depositor who signed the mint",
+            type: 'address',
+            description: 'DAG address of the depositor who signed the mint',
           },
         },
       },
       unshield: {
-        description:
-          "Burn a note, release one whole denom-valued note-record to a clear recipient.",
-        required: ["proof", "publicValues", "recordId", "recipient"],
+        description: 'Burn a note, release one whole denom-valued note-record to a clear recipient.',
+        required: ['proof', 'publicValues', 'recordId', 'recipient'],
         properties: {
           proof: {
-            type: "string",
-            description: "Groth16 proof bytes (0x hex)",
+            type: 'string',
+            description: 'Groth16 proof bytes (0x hex)',
           },
           publicValues: {
-            type: "string",
-            description:
-              "abi-encoded ShieldedTransferPublicValues (0x hex); see PV_LAYOUT",
+            type: 'string',
+            description: 'abi-encoded ShieldedTransferPublicValues (0x hex); see PV_LAYOUT',
           },
           recordId: {
-            type: "uuid",
-            description: "note-record to release; MUST be in state.noteRecords",
+            type: 'uuid',
+            description: 'note-record to release; MUST be in state.noteRecords',
           },
           recipient: {
-            type: "address",
-            description: "clear DAG address that receives the released record",
+            type: 'address',
+            description: 'clear DAG address that receives the released record',
           },
         },
       },
@@ -549,39 +526,38 @@ export function notePoolDef(opts: NotePoolOptions): FiberAppDefinition {
 
     states: {
       ACTIVE: {
-        id: "ACTIVE",
+        id: 'ACTIVE',
         isFinal: false,
         metadata: {
-          label: "Active",
-          description:
-            "Pool accepts shielded transfers, deposits, and withdrawals",
-          category: "active",
+          label: 'Active',
+          description: 'Pool accepts shielded transfers, deposits, and withdrawals',
+          category: 'active',
         },
       },
     },
-    initialState: "ACTIVE",
+    initialState: 'ACTIVE',
 
     transitions: [
       {
-        from: "ACTIVE",
-        to: "ACTIVE",
-        eventName: "transfer",
+        from: 'ACTIVE',
+        to: 'ACTIVE',
+        eventName: 'transfer',
         guard: transferGuard,
         effect: transferEffect,
         dependencies: [],
       },
       {
-        from: "ACTIVE",
-        to: "ACTIVE",
-        eventName: "noteMinted",
+        from: 'ACTIVE',
+        to: 'ACTIVE',
+        eventName: 'noteMinted',
         guard: noteMintedGuard,
         effect: noteMintedEffect,
         dependencies: [],
       },
       {
-        from: "ACTIVE",
-        to: "ACTIVE",
-        eventName: "unshield",
+        from: 'ACTIVE',
+        to: 'ACTIVE',
+        eventName: 'unshield',
         guard: unshieldGuard,
         effect: unshieldEffect,
         dependencies: [],

@@ -1,15 +1,15 @@
-import { defineFiberApp } from "../../../schema/fiber-app.js";
+import { defineFiberApp } from '../../../schema/fiber-app.js';
 
 /**
  * Minimal contract state machine - extend for custom use cases.
  */
 export const contractUniversalDef = defineFiberApp({
   metadata: {
-    name: "ContractUniversal",
-    app: "contracts",
-    type: "universal",
-    version: "1.0.0",
-    description: "Minimal contract state machine - extend for custom use cases",
+    name: 'ContractUniversal',
+    app: 'contracts',
+    type: 'universal',
+    version: '1.0.0',
+    description: 'Minimal contract state machine - extend for custom use cases',
   },
 
   createSchema: {
@@ -18,10 +18,10 @@ export const contractUniversalDef = defineFiberApp({
 
   stateSchema: {
     properties: {
-      status: { type: "string" },
-      acceptedAt: { type: "integer", nullable: true },
-      cancelledAt: { type: "integer", nullable: true },
-      completedAt: { type: "integer", nullable: true },
+      status: { type: 'string' },
+      acceptedAt: { type: 'integer', nullable: true },
+      cancelledAt: { type: 'integer', nullable: true },
+      completedAt: { type: 'integer', nullable: true },
     },
   },
 
@@ -33,95 +33,83 @@ export const contractUniversalDef = defineFiberApp({
 
   states: {
     PROPOSED: {
-      id: "PROPOSED",
+      id: 'PROPOSED',
       isFinal: false,
       metadata: {
-        label: "Proposed",
-        description: "Contract proposed; awaiting acceptance",
-        category: "initial",
+        label: 'Proposed',
+        description: 'Contract proposed; awaiting acceptance',
+        category: 'initial',
       },
     },
     ACTIVE: {
-      id: "ACTIVE",
+      id: 'ACTIVE',
       isFinal: false,
       metadata: {
-        label: "Active",
-        description: "Contract accepted and in effect",
-        category: "active",
+        label: 'Active',
+        description: 'Contract accepted and in effect',
+        category: 'active',
       },
     },
     COMPLETED: {
-      id: "COMPLETED",
+      id: 'COMPLETED',
       isFinal: true,
       metadata: {
-        label: "Completed",
-        description: "Contract obligations fulfilled (terminal)",
-        category: "terminal",
+        label: 'Completed',
+        description: 'Contract obligations fulfilled (terminal)',
+        category: 'terminal',
       },
     },
     CANCELLED: {
-      id: "CANCELLED",
+      id: 'CANCELLED',
       isFinal: true,
       metadata: {
-        label: "Cancelled",
-        description: "Contract cancelled before completion (terminal)",
-        category: "terminal",
+        label: 'Cancelled',
+        description: 'Contract cancelled before completion (terminal)',
+        category: 'terminal',
       },
     },
   },
 
-  initialState: "PROPOSED",
+  initialState: 'PROPOSED',
 
   transitions: [
     {
-      from: "PROPOSED",
-      to: "ACTIVE",
-      eventName: "accept",
-      guard: { "==": [1, 1] },
+      from: 'PROPOSED',
+      to: 'ACTIVE',
+      eventName: 'accept',
+      guard: { '==': [1, 1] },
       effect: {
-        merge: [
-          { var: "state" },
-          { status: "ACTIVE", acceptedAt: { var: "$ordinal" } },
-        ],
+        merge: [{ var: 'state' }, { status: 'ACTIVE', acceptedAt: { var: '$ordinal' } }],
       },
       dependencies: [],
     },
     {
-      from: "PROPOSED",
-      to: "CANCELLED",
-      eventName: "cancel",
-      guard: { "==": [1, 1] },
+      from: 'PROPOSED',
+      to: 'CANCELLED',
+      eventName: 'cancel',
+      guard: { '==': [1, 1] },
       effect: {
-        merge: [
-          { var: "state" },
-          { status: "CANCELLED", cancelledAt: { var: "$ordinal" } },
-        ],
+        merge: [{ var: 'state' }, { status: 'CANCELLED', cancelledAt: { var: '$ordinal' } }],
       },
       dependencies: [],
     },
     {
-      from: "ACTIVE",
-      to: "COMPLETED",
-      eventName: "complete",
-      guard: { "==": [1, 1] },
+      from: 'ACTIVE',
+      to: 'COMPLETED',
+      eventName: 'complete',
+      guard: { '==': [1, 1] },
       effect: {
-        merge: [
-          { var: "state" },
-          { status: "COMPLETED", completedAt: { var: "$ordinal" } },
-        ],
+        merge: [{ var: 'state' }, { status: 'COMPLETED', completedAt: { var: '$ordinal' } }],
       },
       dependencies: [],
     },
     {
-      from: "ACTIVE",
-      to: "CANCELLED",
-      eventName: "cancel",
-      guard: { "==": [1, 1] },
+      from: 'ACTIVE',
+      to: 'CANCELLED',
+      eventName: 'cancel',
+      guard: { '==': [1, 1] },
       effect: {
-        merge: [
-          { var: "state" },
-          { status: "CANCELLED", cancelledAt: { var: "$ordinal" } },
-        ],
+        merge: [{ var: 'state' }, { status: 'CANCELLED', cancelledAt: { var: '$ordinal' } }],
       },
       dependencies: [],
     },

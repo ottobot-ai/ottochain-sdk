@@ -39,7 +39,10 @@ describe('templates — golden canonical round-trip (signed JCS(dropNulls) == gr
   });
 
   it('nftPolicy → byte-identical canonical to goods-policy.json', () => {
-    signsIdentically(nftPolicy({ name: 'goods.asset', version: '1.0.0', combinable: true }), golden('goods-policy.json'));
+    signsIdentically(
+      nftPolicy({ name: 'goods.asset', version: '1.0.0', combinable: true }),
+      golden('goods-policy.json'),
+    );
   });
 
   it('customPolicy → byte-identical canonical to capped-policy.json', () => {

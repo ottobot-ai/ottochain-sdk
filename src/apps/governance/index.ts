@@ -52,7 +52,7 @@ export {
   proposalStatusToJSON,
   voteChoiceFromJSON,
   voteChoiceToJSON,
-} from "../../generated/ottochain/apps/governance/v1/governance.js";
+} from '../../generated/ottochain/apps/governance/v1/governance.js';
 
 // ---------------------------------------------------------------------------
 // State Machine Definitions (generated from JSON at build time)
@@ -65,17 +65,10 @@ import {
   daoMultisigDef,
   daoTokenDef,
   daoReputationDef,
-} from "./state-machines/index.js";
-import type { FiberAppDefinition } from "../../schema/fiber-app.js";
+} from './state-machines/index.js';
+import type { FiberAppDefinition } from '../../schema/fiber-app.js';
 
-export {
-  govUniversalDef,
-  govSimpleDef,
-  daoSingleDef,
-  daoMultisigDef,
-  daoTokenDef,
-  daoReputationDef,
-};
+export { govUniversalDef, govSimpleDef, daoSingleDef, daoMultisigDef, daoTokenDef, daoReputationDef };
 
 /** All governance state machine definitions */
 export const GOVERNANCE_DEFINITIONS = {
@@ -98,14 +91,12 @@ export function getGovernanceDefinition(type: GovernanceType): FiberAppDefinitio
 }
 
 /** @deprecated Use getGovernanceDefinition('daoSingle' | 'daoMultisig' | 'daoToken' | 'daoReputation') */
-export function getDAODefinition(
-  daoType: "Single" | "Multisig" | "Threshold" | "Token",
-): FiberAppDefinition {
+export function getDAODefinition(daoType: 'Single' | 'Multisig' | 'Threshold' | 'Token'): FiberAppDefinition {
   const map: Record<string, GovernanceType> = {
-    Single: "daoSingle",
-    Multisig: "daoMultisig",
-    Threshold: "daoReputation",
-    Token: "daoToken",
+    Single: 'daoSingle',
+    Multisig: 'daoMultisig',
+    Threshold: 'daoReputation',
+    Token: 'daoToken',
   };
   return GOVERNANCE_DEFINITIONS[map[daoType]];
 }
@@ -114,11 +105,7 @@ export function getDAODefinition(
 // Helper Functions
 // ---------------------------------------------------------------------------
 
-import type {
-  MultisigDAO,
-  TokenDAO,
-  ThresholdDAO,
-} from "../../generated/ottochain/apps/governance/v1/governance.js";
+import type { MultisigDAO, TokenDAO, ThresholdDAO } from '../../generated/ottochain/apps/governance/v1/governance.js';
 
 /**
  * Check if multisig has enough signatures to execute
@@ -169,8 +156,7 @@ export function getVotingPower(state: TokenDAO, agent: string): number {
  */
 export function hasQuorum(state: TokenDAO): boolean {
   if (!state.votes) return false;
-  const totalVoted =
-    state.votes.votesFor + state.votes.votesAgainst + state.votes.votesAbstain;
+  const totalVoted = state.votes.votesFor + state.votes.votesAgainst + state.votes.votesAbstain;
   return totalVoted >= state.quorum;
 }
 
@@ -195,14 +181,14 @@ export function canPropose(state: TokenDAO, agent: string): boolean {
 export function meetsThreshold(
   state: ThresholdDAO,
   reputation: number,
-  action: "member" | "vote" | "propose",
+  action: 'member' | 'vote' | 'propose',
 ): boolean {
   switch (action) {
-    case "member":
+    case 'member':
       return reputation >= state.memberThreshold;
-    case "vote":
+    case 'vote':
       return reputation >= state.voteThreshold;
-    case "propose":
+    case 'propose':
       return reputation >= state.proposeThreshold;
   }
 }
@@ -219,7 +205,6 @@ export function isMember(state: ThresholdDAO, agent: string): boolean {
  */
 export function thresholdHasQuorum(state: ThresholdDAO): boolean {
   if (!state.votes) return false;
-  const totalVoted =
-    state.votes.votesFor.length + state.votes.votesAgainst.length;
+  const totalVoted = state.votes.votesFor.length + state.votes.votesAgainst.length;
   return totalVoted >= state.quorum;
 }

@@ -8,8 +8,8 @@
  * `exprHash == logicHash` pins exactly WHICH rule was proven. See `src/zk` and
  * `/home/euler/repos/ottochain/docs/proposals/asset-model.md` §8 (ZkVerify-gated morphisms).
  */
-import { exprHash, KECCAK_TRUE } from "../../zk/index.js";
-import type { Groth16WitnessMap, Groth16Bundle } from "../../zk/index.js";
+import { exprHash, KECCAK_TRUE } from '../../zk/index.js';
+import type { Groth16WitnessMap, Groth16Bundle } from '../../zk/index.js';
 
 /** A JSON-Logic expression. */
 export type JsonLogicRule = Record<string, unknown>;
@@ -44,19 +44,13 @@ export interface LendingRuleParams {
  */
 export function lendingRule(params: LendingRuleParams): JsonLogicRule {
   const coverage: JsonLogicRule = {
-    ">=": [
-      { "*": [{ var: "collateralValue" }, 100] },
-      params.loanAmount * params.collateralRatioPct,
-    ],
+    '>=': [{ '*': [{ var: 'collateralValue' }, 100] }, params.loanAmount * params.collateralRatioPct],
   };
   if (params.minCreditScore === undefined) {
     return coverage;
   }
   return {
-    and: [
-      coverage,
-      { ">=": [{ var: "creditScore" }, params.minCreditScore] },
-    ],
+    and: [coverage, { '>=': [{ var: 'creditScore' }, params.minCreditScore] }],
   };
 }
 
@@ -77,10 +71,7 @@ export interface PinnedLendingRule {
  * guard binds against. `vkey` is the verifying key of the SP1 zk-jlvm program that runs the
  * rule (supplied by the lender / deployment).
  */
-export function pinLendingRule(
-  params: LendingRuleParams,
-  vkey: `0x${string}`,
-): PinnedLendingRule {
+export function pinLendingRule(params: LendingRuleParams, vkey: `0x${string}`): PinnedLendingRule {
   const rule = lendingRule(params);
   return {
     rule,
@@ -118,32 +109,22 @@ export interface OriginationGuardRefs {
  * policy uses it directly as the proof-gated `mintPolicy`.
  */
 export function buildOriginationGuard(refs: OriginationGuardRefs = {}): JsonLogicRule {
-  const vkeyVar = refs.vkeyVar ?? "state.lendingRuleVKey";
-  const logicHashVar = refs.logicHashVar ?? "state.lendingRuleLogicHash";
-  const keccakTrueVar = refs.keccakTrueVar ?? "state.keccakTrue";
+  const vkeyVar = refs.vkeyVar ?? 'state.lendingRuleVKey';
+  const logicHashVar = refs.logicHashVar ?? 'state.lendingRuleLogicHash';
+  const keccakTrueVar = refs.keccakTrueVar ?? 'state.keccakTrue';
   return {
     and: [
       {
-        groth16_verify: [
-          { var: vkeyVar },
-          { var: "witness.publicValues" },
-          { var: "witness.proof" },
-        ],
+        groth16_verify: [{ var: vkeyVar }, { var: 'witness.publicValues' }, { var: 'witness.proof' }],
       },
       {
-        "===": [
-          { cat: ["0x", { substr: [{ var: "witness.publicValues" }, 2, 64] }] },
-          { var: logicHashVar },
-        ],
+        '===': [{ cat: ['0x', { substr: [{ var: 'witness.publicValues' }, 2, 64] }] }, { var: logicHashVar }],
       },
       {
-        "===": [
-          { cat: ["0x", { substr: [{ var: "witness.publicValues" }, 130, 64] }] },
-          { var: keccakTrueVar },
-        ],
+        '===': [{ cat: ['0x', { substr: [{ var: 'witness.publicValues' }, 130, 64] }] }, { var: keccakTrueVar }],
       },
       {
-        "===": [{ substr: [{ var: "witness.publicValues" }, 256, 2] }, "01"],
+        '===': [{ substr: [{ var: 'witness.publicValues' }, 256, 2] }, '01'],
       },
     ],
   };
@@ -156,7 +137,7 @@ export function buildOriginationGuard(refs: OriginationGuardRefs = {}): JsonLogi
  * under the reserved `witness` key (on the loan `originate` event payload, or on a proof-gated
  * `MintAsset`).
  */
-export function buildEligibilityWitness(bundle: Pick<Groth16Bundle, "publicValues" | "proof">): Groth16WitnessMap {
+export function buildEligibilityWitness(bundle: Pick<Groth16Bundle, 'publicValues' | 'proof'>): Groth16WitnessMap {
   return {
     publicValues: bundle.publicValues,
     proof: bundle.proof,

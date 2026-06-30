@@ -41,10 +41,10 @@ export {
   stateToJSON,
   platformFromJSON,
   platformToJSON,
-} from "../../generated/ottochain/apps/identity/v1/identity.js";
+} from '../../generated/ottochain/apps/identity/v1/identity.js';
 
 // Legacy aliases for backward compatibility
-export { State as AgentState } from "../../generated/ottochain/apps/identity/v1/identity.js";
+export { State as AgentState } from '../../generated/ottochain/apps/identity/v1/identity.js';
 // Deprecated app-prefixed aliases (renamed to Type / State); kept for compat.
 export {
   Type as IdentityType,
@@ -53,7 +53,7 @@ export {
   typeToJSON as identityTypeToJSON,
   stateFromJSON as identityStateFromJSON,
   stateToJSON as identityStateToJSON,
-} from "../../generated/ottochain/apps/identity/v1/identity.js";
+} from '../../generated/ottochain/apps/identity/v1/identity.js';
 
 export {
   AttestationType,
@@ -64,7 +64,7 @@ export {
   ReputationConfig,
   attestationTypeFromJSON,
   attestationTypeToJSON,
-} from "../../generated/ottochain/apps/identity/v1/attestation.js";
+} from '../../generated/ottochain/apps/identity/v1/attestation.js';
 
 // Re-export constants and utilities
 export {
@@ -77,8 +77,8 @@ export {
   registryReputationPath,
   canTransition,
   getReputationDelta,
-} from "./constants.js";
-export type { RegistryRole } from "./constants.js";
+} from './constants.js';
+export type { RegistryRole } from './constants.js';
 
 // ---------------------------------------------------------------------------
 // Configuration Defaults
@@ -106,15 +106,10 @@ import {
   identityAgentDef,
   identityOracleDef,
   identityRegistryDef,
-} from "./state-machines/index.js";
-import type { FiberAppDefinition } from "../../schema/fiber-app.js";
+} from './state-machines/index.js';
+import type { FiberAppDefinition } from '../../schema/fiber-app.js';
 
-export {
-  identityUniversalDef,
-  identityAgentDef,
-  identityOracleDef,
-  identityRegistryDef,
-};
+export { identityUniversalDef, identityAgentDef, identityOracleDef, identityRegistryDef };
 
 /** All identity state machine definitions */
 export const IDENTITY_DEFINITIONS = {
@@ -130,8 +125,6 @@ export type IdentityDefType = keyof typeof IDENTITY_DEFINITIONS;
  * Get an identity state machine definition by type.
  * @param type - 'universal' | 'agent' | 'oracle' | 'registry' (default: 'agent')
  */
-export function getIdentityDefinition(
-  type: IdentityDefType = "agent",
-): FiberAppDefinition {
+export function getIdentityDefinition(type: IdentityDefType = 'agent'): FiberAppDefinition {
   return IDENTITY_DEFINITIONS[type];
 }

@@ -12,15 +12,7 @@ import {
 const REPO_ROOT = resolve(__dirname, '..', '..');
 
 function loadArchive(app: string, file: string): Record<string, unknown> {
-  const path = resolve(
-    REPO_ROOT,
-    'src',
-    'apps',
-    app,
-    'state-machines',
-    'json-archive',
-    file,
-  );
+  const path = resolve(REPO_ROOT, 'src', 'apps', app, 'state-machines', 'json-archive', file);
   return JSON.parse(readFileSync(path, 'utf-8')) as Record<string, unknown>;
 }
 
@@ -169,17 +161,13 @@ describe('genesis manifest', () => {
     it('governance definition matches the checked-in json-archive (content)', () => {
       const archive = loadArchive('governance', 'governance-universal.json');
       const pkg = byName.get('std.governance.package')!;
-      expect(canonicalDef(pkg.definition as unknown as Record<string, unknown>)).toEqual(
-        canonicalDef(archive),
-      );
+      expect(canonicalDef(pkg.definition as unknown as Record<string, unknown>)).toEqual(canonicalDef(archive));
     });
 
     it('markets definition matches the checked-in json-archive (content)', () => {
       const archive = loadArchive('markets', 'market-universal.json');
       const pkg = byName.get('std.markets.package')!;
-      expect(canonicalDef(pkg.definition as unknown as Record<string, unknown>)).toEqual(
-        canonicalDef(archive),
-      );
+      expect(canonicalDef(pkg.definition as unknown as Record<string, unknown>)).toEqual(canonicalDef(archive));
     });
   });
 

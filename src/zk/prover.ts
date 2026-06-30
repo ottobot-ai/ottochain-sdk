@@ -42,8 +42,7 @@ export interface SubprocessProverOptions {
   timeoutMs?: number;
 }
 
-const reLine = (label: string): RegExp =>
-  new RegExp(`^${label}:\\s*(0x[0-9a-fA-F]+)\\s*$`, 'm');
+const reLine = (label: string): RegExp => new RegExp(`^${label}:\\s*(0x[0-9a-fA-F]+)\\s*$`, 'm');
 
 /** Parse the host's `vkey:` / `public values:` / `proof bytes:` stdout lines into a bundle. */
 export function parseGroth16Stdout(stdout: string): Groth16Bundle {

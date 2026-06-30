@@ -1,5 +1,5 @@
-import { defineFiberApp } from "../../../schema/fiber-app.js";
-import type { JsonLogicRule } from "../../../schema/fiber-app.js";
+import { defineFiberApp } from '../../../schema/fiber-app.js';
+import type { JsonLogicRule } from '../../../schema/fiber-app.js';
 
 /**
  * Rule-110 cellular automaton — an in-place, Turing-complete JLVM substrate.
@@ -37,22 +37,18 @@ import type { JsonLogicRule } from "../../../schema/fiber-app.js";
 
 // nb(off): read tape at element-relative offset, fixed-0 boundary via null-default.
 const nb = (off: unknown): JsonLogicRule => ({
-  var: [{ cat: ["state.tape.", off] }, 0],
+  var: [{ cat: ['state.tape.', off] }, 0],
 });
 
 // P = 4·left + 2·center + right  (element {var:""} is the cell index i).
 const P: JsonLogicRule = {
-  "+": [
-    { "*": [4, nb({ "-": [{ var: "" }, 1] })] },
-    { "*": [2, nb({ var: "" })] },
-    nb({ "+": [{ var: "" }, 1] }),
-  ],
+  '+': [{ '*': [4, nb({ '-': [{ var: '' }, 1] })] }, { '*': [2, nb({ var: '' })] }, nb({ '+': [{ var: '' }, 1] })],
 };
 
 // CELL: 1 iff P ∈ {1,2,3,5,6}, else 0. P is INLINED at each `==` site (B1: never
 // `let` over the map element). Built from the rule-110 truth set programmatically.
 const CELL: JsonLogicRule = {
-  if: [{ or: [1, 2, 3, 5, 6].map((k) => ({ "==": [P, k] })) }, 1, 0],
+  if: [{ or: [1, 2, 3, 5, 6].map((k) => ({ '==': [P, k] })) }, 1, 0],
 };
 
 /**
@@ -65,105 +61,102 @@ const CELL: JsonLogicRule = {
  */
 export const computeRule110Def = defineFiberApp({
   metadata: {
-    name: "ComputeRule110",
-    app: "compute",
-    type: "rule110",
-    version: "1.0.0",
+    name: 'ComputeRule110',
+    app: 'compute',
+    type: 'rule110',
+    version: '1.0.0',
     description:
-      "In-place Rule-110 cellular automaton — a Turing-complete substrate. Each " +
-      "`step` advances one generation: next[i]=R110(tape[i-1],tape[i],tape[i+1]) " +
-      "with fixed-0 boundaries, as a JLVM map over a stored index array (no " +
-      "bitwise, no spawn, no zip).",
+      'In-place Rule-110 cellular automaton — a Turing-complete substrate. Each ' +
+      '`step` advances one generation: next[i]=R110(tape[i-1],tape[i],tape[i+1]) ' +
+      'with fixed-0 boundaries, as a JLVM map over a stored index array (no ' +
+      'bitwise, no spawn, no zip).',
   },
 
   createSchema: {
     // maxGen is NOT required: absent ⇒ unbounded (the step guard uses `missing`).
-    required: ["tape", "idx"] as const,
+    required: ['tape', 'idx'] as const,
     properties: {
       tape: {
-        type: "array",
-        items: { type: "integer" },
-        description: "0/1 CA row (length N).",
+        type: 'array',
+        items: { type: 'integer' },
+        description: '0/1 CA row (length N).',
       },
       idx: {
-        type: "array",
-        items: { type: "integer" },
+        type: 'array',
+        items: { type: 'integer' },
         immutable: true,
         description:
-          "Monotone index array [0..N-1]; REQUIRED (no range/iota opcode). " +
-          "Never mutated — the effect preserves it across every generation.",
+          'Monotone index array [0..N-1]; REQUIRED (no range/iota opcode). ' +
+          'Never mutated — the effect preserves it across every generation.',
       },
       gen: {
-        type: "integer",
+        type: 'integer',
         default: 0,
-        description: "Generation counter (TM step count).",
+        description: 'Generation counter (TM step count).',
       },
       maxGen: {
-        type: "integer",
-        description: "Optional halt bound; absent ⇒ unbounded.",
+        type: 'integer',
+        description: 'Optional halt bound; absent ⇒ unbounded.',
       },
     },
   },
 
   stateSchema: {
     properties: {
-      tape: { type: "array", items: { type: "integer" }, computed: true },
-      idx: { type: "array", items: { type: "integer" }, immutable: true },
-      gen: { type: "integer", computed: true },
-      maxGen: { type: "integer" },
-      status: { type: "string", computed: true },
+      tape: { type: 'array', items: { type: 'integer' }, computed: true },
+      idx: { type: 'array', items: { type: 'integer' }, immutable: true },
+      gen: { type: 'integer', computed: true },
+      maxGen: { type: 'integer' },
+      status: { type: 'string', computed: true },
     },
   },
 
   eventSchemas: {
-    step: { description: "Advance one CA generation in place." },
-    halt: { description: "Terminate once maxGen is reached (gated by gen >= maxGen)." },
+    step: { description: 'Advance one CA generation in place.' },
+    halt: { description: 'Terminate once maxGen is reached (gated by gen >= maxGen).' },
   },
 
   states: {
     RUNNING: {
-      id: "RUNNING",
+      id: 'RUNNING',
       isFinal: false,
       metadata: {
-        label: "Running",
-        description: "CA evolving; each step = one generation.",
-        category: "active",
+        label: 'Running',
+        description: 'CA evolving; each step = one generation.',
+        category: 'active',
       },
     },
     HALTED: {
-      id: "HALTED",
+      id: 'HALTED',
       isFinal: true,
       metadata: {
-        label: "Halted",
-        description: "maxGen reached; terminal.",
-        category: "terminal",
+        label: 'Halted',
+        description: 'maxGen reached; terminal.',
+        category: 'terminal',
       },
     },
   },
 
-  initialState: "RUNNING",
+  initialState: 'RUNNING',
 
   transitions: [
     {
       // One `step` = one generation. Loops in place (the TM tape-head).
-      from: "RUNNING",
-      to: "RUNNING",
-      eventName: "step",
+      from: 'RUNNING',
+      to: 'RUNNING',
+      eventName: 'step',
       // Unbounded when maxGen is absent (`missing` → true); else gate on gen < maxGen.
       guard: {
-        or: [
-          { missing: ["state.maxGen"] },
-          { "<": [{ var: "state.gen" }, { var: "state.maxGen" }] },
-        ],
+        or: [{ missing: ['state.maxGen'] }, { '<': [{ var: 'state.gen' }, { var: 'state.maxGen' }] }],
       },
       // Effect result IS the new stateData: merge[state, overrides] preserves
       // idx/maxGen and overwrites tape/gen.
       effect: {
         merge: [
-          { var: "state" },
+          { var: 'state' },
           {
-            tape: { map: [{ var: "state.idx" }, CELL] },
-            gen: { "+": [{ var: "state.gen" }, 1] },
+            tape: { map: [{ var: 'state.idx' }, CELL] },
+            gen: { '+': [{ var: 'state.gen' }, 1] },
           },
         ],
       },
@@ -171,11 +164,11 @@ export const computeRule110Def = defineFiberApp({
     },
     {
       // halt is rejected until exhaustion: gen >= maxGen.
-      from: "RUNNING",
-      to: "HALTED",
-      eventName: "halt",
-      guard: { ">=": [{ var: "state.gen" }, { var: "state.maxGen" }] },
-      effect: { merge: [{ var: "state" }, { status: "halted" }] },
+      from: 'RUNNING',
+      to: 'HALTED',
+      eventName: 'halt',
+      guard: { '>=': [{ var: 'state.gen' }, { var: 'state.maxGen' }] },
+      effect: { merge: [{ var: 'state' }, { status: 'halted' }] },
       dependencies: [],
     },
   ],

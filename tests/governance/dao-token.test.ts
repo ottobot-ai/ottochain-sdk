@@ -14,7 +14,7 @@ describe('TokenDAO State Machine', () => {
     it('should have correct metadata', () => {
       expect(daoTokenDef.metadata.name).toBe('TokenDAO');
       expect(daoTokenDef.metadata.description).toBe(
-        'Token-weighted voting. Voting power proportional to token holdings.'
+        'Token-weighted voting. Voting power proportional to token holdings.',
       );
       expect(daoTokenDef.metadata.version).toBe('1.0.0');
       expect(daoTokenDef.metadata.category).toBe('governance/dao');
@@ -45,7 +45,7 @@ describe('TokenDAO State Machine', () => {
   describe('State Transitions', () => {
     it('should allow propose transition from ACTIVE to VOTING', () => {
       const proposeTransition = daoTokenDef.transitions.find(
-        (t) => t.from === 'ACTIVE' && t.to === 'VOTING' && t.eventName === 'propose'
+        (t) => t.from === 'ACTIVE' && t.to === 'VOTING' && t.eventName === 'propose',
       );
 
       expect(proposeTransition).toBeDefined();
@@ -55,7 +55,7 @@ describe('TokenDAO State Machine', () => {
 
     it('should allow vote transition from VOTING to VOTING', () => {
       const voteTransition = daoTokenDef.transitions.find(
-        (t) => t.from === 'VOTING' && t.to === 'VOTING' && t.eventName === 'vote'
+        (t) => t.from === 'VOTING' && t.to === 'VOTING' && t.eventName === 'vote',
       );
 
       expect(voteTransition).toBeDefined();
@@ -65,7 +65,7 @@ describe('TokenDAO State Machine', () => {
 
     it('should allow queue transition from VOTING to QUEUED', () => {
       const queueTransition = daoTokenDef.transitions.find(
-        (t) => t.from === 'VOTING' && t.to === 'QUEUED' && t.eventName === 'queue'
+        (t) => t.from === 'VOTING' && t.to === 'QUEUED' && t.eventName === 'queue',
       );
 
       expect(queueTransition).toBeDefined();
@@ -75,7 +75,7 @@ describe('TokenDAO State Machine', () => {
 
     it('should allow execute transition from QUEUED to ACTIVE', () => {
       const executeTransition = daoTokenDef.transitions.find(
-        (t) => t.from === 'QUEUED' && t.to === 'ACTIVE' && t.eventName === 'execute'
+        (t) => t.from === 'QUEUED' && t.to === 'ACTIVE' && t.eventName === 'execute',
       );
 
       expect(executeTransition).toBeDefined();
@@ -85,7 +85,7 @@ describe('TokenDAO State Machine', () => {
 
     it('should allow reject transition from VOTING to ACTIVE', () => {
       const rejectTransition = daoTokenDef.transitions.find(
-        (t) => t.from === 'VOTING' && t.to === 'ACTIVE' && t.eventName === 'reject'
+        (t) => t.from === 'VOTING' && t.to === 'ACTIVE' && t.eventName === 'reject',
       );
 
       expect(rejectTransition).toBeDefined();
@@ -94,7 +94,7 @@ describe('TokenDAO State Machine', () => {
 
     it('should allow cancel transition from QUEUED to ACTIVE', () => {
       const cancelTransition = daoTokenDef.transitions.find(
-        (t) => t.from === 'QUEUED' && t.to === 'ACTIVE' && t.eventName === 'cancel'
+        (t) => t.from === 'QUEUED' && t.to === 'ACTIVE' && t.eventName === 'cancel',
       );
 
       expect(cancelTransition).toBeDefined();
@@ -104,18 +104,14 @@ describe('TokenDAO State Machine', () => {
 
   describe('Delegation Transitions', () => {
     it('should support delegate transition', () => {
-      const transition = daoTokenDef.transitions.find(
-        (t) => t.eventName === 'delegate'
-      );
+      const transition = daoTokenDef.transitions.find((t) => t.eventName === 'delegate');
       expect(transition).toBeDefined();
       expect(transition!.from).toBe('ACTIVE');
       expect(transition!.to).toBe('ACTIVE');
     });
 
     it('should support undelegate transition', () => {
-      const transition = daoTokenDef.transitions.find(
-        (t) => t.eventName === 'undelegate'
-      );
+      const transition = daoTokenDef.transitions.find((t) => t.eventName === 'undelegate');
       expect(transition).toBeDefined();
       expect(transition!.from).toBe('ACTIVE');
       expect(transition!.to).toBe('ACTIVE');
@@ -124,9 +120,7 @@ describe('TokenDAO State Machine', () => {
 
   describe('Guard Logic', () => {
     it('should guard propose to token holders meeting threshold', () => {
-      const proposeTransition = daoTokenDef.transitions.find(
-        (t) => t.eventName === 'propose'
-      );
+      const proposeTransition = daoTokenDef.transitions.find((t) => t.eventName === 'propose');
 
       // S1/A2 coupled fix: a chain-verified signer (proofs[].address) must hold
       // >= proposalThreshold. The per-signer balance is read with the `get` opcode
@@ -142,9 +136,7 @@ describe('TokenDAO State Machine', () => {
     });
 
     it('should guard vote to token holders with balance > 0', () => {
-      const voteTransition = daoTokenDef.transitions.find(
-        (t) => t.eventName === 'vote'
-      );
+      const voteTransition = daoTokenDef.transitions.find((t) => t.eventName === 'vote');
 
       expect(voteTransition!.guard).toHaveProperty('and');
       const guardStr = JSON.stringify(voteTransition!.guard);
@@ -152,27 +144,21 @@ describe('TokenDAO State Machine', () => {
     });
 
     it('should guard vote to prevent double-voting', () => {
-      const voteTransition = daoTokenDef.transitions.find(
-        (t) => t.eventName === 'vote'
-      );
+      const voteTransition = daoTokenDef.transitions.find((t) => t.eventName === 'vote');
 
       const guardStr = JSON.stringify(voteTransition!.guard);
       expect(guardStr).toContain('voters');
     });
 
     it('should guard vote to check voting deadline', () => {
-      const voteTransition = daoTokenDef.transitions.find(
-        (t) => t.eventName === 'vote'
-      );
+      const voteTransition = daoTokenDef.transitions.find((t) => t.eventName === 'vote');
 
       const guardStr = JSON.stringify(voteTransition!.guard);
       expect(guardStr).toContain('votingEndsAt');
     });
 
     it('should guard queue to require passing vote', () => {
-      const queueTransition = daoTokenDef.transitions.find(
-        (t) => t.eventName === 'queue'
-      );
+      const queueTransition = daoTokenDef.transitions.find((t) => t.eventName === 'queue');
 
       expect(queueTransition!.guard).toHaveProperty('and');
       const guardStr = JSON.stringify(queueTransition!.guard);
@@ -181,9 +167,7 @@ describe('TokenDAO State Machine', () => {
     });
 
     it('should guard execute to check timelock', () => {
-      const executeTransition = daoTokenDef.transitions.find(
-        (t) => t.eventName === 'execute'
-      );
+      const executeTransition = daoTokenDef.transitions.find((t) => t.eventName === 'execute');
 
       expect(executeTransition!.guard).toHaveProperty('>=');
       const guardStr = JSON.stringify(executeTransition!.guard);
@@ -191,9 +175,7 @@ describe('TokenDAO State Machine', () => {
     });
 
     it('should guard delegate to a verified signer who holds tokens', () => {
-      const delegateTransition = daoTokenDef.transitions.find(
-        (t) => t.eventName === 'delegate'
-      );
+      const delegateTransition = daoTokenDef.transitions.find((t) => t.eventName === 'delegate');
 
       // Hardened (S1+A2): guard ands the actorIsSigner binding with a balance check, both keyed on
       // the same verified actor — so the delegation is written under the signer's own address.
@@ -207,9 +189,7 @@ describe('TokenDAO State Machine', () => {
 
   describe('Effect Logic', () => {
     it('should create proposal with vote tracking on propose', () => {
-      const proposeTransition = daoTokenDef.transitions.find(
-        (t) => t.eventName === 'propose'
-      );
+      const proposeTransition = daoTokenDef.transitions.find((t) => t.eventName === 'propose');
 
       const effectStr = JSON.stringify(proposeTransition!.effect);
       expect(effectStr).toContain('proposal');
@@ -218,9 +198,7 @@ describe('TokenDAO State Machine', () => {
     });
 
     it('should record weighted vote on vote', () => {
-      const voteTransition = daoTokenDef.transitions.find(
-        (t) => t.eventName === 'vote'
-      );
+      const voteTransition = daoTokenDef.transitions.find((t) => t.eventName === 'vote');
 
       const effectStr = JSON.stringify(voteTransition!.effect);
       expect(effectStr).toContain('votes');
@@ -229,9 +207,7 @@ describe('TokenDAO State Machine', () => {
     });
 
     it('should set executableAt on queue', () => {
-      const queueTransition = daoTokenDef.transitions.find(
-        (t) => t.eventName === 'queue'
-      );
+      const queueTransition = daoTokenDef.transitions.find((t) => t.eventName === 'queue');
 
       const effectStr = JSON.stringify(queueTransition!.effect);
       expect(effectStr).toContain('queuedAt');
@@ -240,9 +216,7 @@ describe('TokenDAO State Machine', () => {
     });
 
     it('should record to executedProposals on execute', () => {
-      const executeTransition = daoTokenDef.transitions.find(
-        (t) => t.eventName === 'execute'
-      );
+      const executeTransition = daoTokenDef.transitions.find((t) => t.eventName === 'execute');
 
       const effectStr = JSON.stringify(executeTransition!.effect);
       expect(effectStr).toContain('executedProposals');
@@ -250,9 +224,7 @@ describe('TokenDAO State Machine', () => {
     });
 
     it('should update delegations on delegate', () => {
-      const delegateTransition = daoTokenDef.transitions.find(
-        (t) => t.eventName === 'delegate'
-      );
+      const delegateTransition = daoTokenDef.transitions.find((t) => t.eventName === 'delegate');
 
       const effectStr = JSON.stringify(delegateTransition!.effect);
       expect(effectStr).toContain('delegations');
