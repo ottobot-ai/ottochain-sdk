@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.6.0](https://github.com/ottobot-ai/ottochain-sdk/compare/v2.5.0...v2.6.0) (2026-07-01)
+
+
+### Features
+
+* **sdk:** align client types with chain + webhook/scriptCall builders ([#241](https://github.com/ottobot-ai/ottochain-sdk/issues/241)) ([77ee757](https://github.com/ottobot-ai/ottochain-sdk/commit/77ee7577514f58a75dccab86a14fb889314dce20))
+
 ## [2.5.0](https://github.com/ottobot-ai/ottochain-sdk/compare/v2.4.0...v2.5.0) (2026-07-01)
 
 
