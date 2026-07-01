@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.5.0](https://github.com/ottobot-ai/ottochain-sdk/compare/v2.4.0...v2.5.0) (2026-07-01)
+
+
+### Features
+
+* **apps:** fiber primitives (rule-110, staked-oracle, sigma-mixer) ([#222](https://github.com/ottobot-ai/ottochain-sdk/issues/222)) ([1b8a201](https://github.com/ottobot-ai/ottochain-sdk/commit/1b8a201f8b5fb79df550da349afe0a5907b47a99))
+* **fiber-app:** transitionPolicy dial + metakit-sdk rc.7 ([#240](https://github.com/ottobot-ai/ottochain-sdk/issues/240)) ([1d3556b](https://github.com/ottobot-ai/ottochain-sdk/commit/1d3556b32a51354ba4b74c839d6d6a9970c17416))
+* **openapi:** pull the vendored contract from ottochain release artifacts ([#239](https://github.com/ottobot-ai/ottochain-sdk/issues/239)) ([2180d7e](https://github.com/ottobot-ai/ottochain-sdk/commit/2180d7e9828733267e8bae998d2ef6150faeb750))
+* **templates:** SDK fiber/asset template library (Phase A) ([#227](https://github.com/ottobot-ai/ottochain-sdk/issues/227)) ([7f592f3](https://github.com/ottobot-ai/ottochain-sdk/commit/7f592f3712320d3e2a7bf7d7a8cbd947cee7d7e2))
+
+
+### Bug Fixes
+
+* **schema:** reconcile FiberPolicy dial encodings to chain wire forms ([#226](https://github.com/ottobot-ai/ottochain-sdk/issues/226)) ([6da18bf](https://github.com/ottobot-ai/ottochain-sdk/commit/6da18bfd866554c5e19563c8baaef5fe7e5375b9))
+
 ## [2.4.0](https://github.com/ottobot-ai/ottochain-sdk/compare/v2.3.0...v2.4.0) (2026-06-19)
 
 
