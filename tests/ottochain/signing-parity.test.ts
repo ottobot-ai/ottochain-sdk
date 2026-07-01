@@ -116,6 +116,15 @@ describe('signing-canonical parity (SDK <-> chain wire StateMachineDefinition)',
       expect(Object.keys(wire.policy ?? {})).toEqual(['maxGenerations']);
     });
 
+    it('emits the transitionPolicy dial verbatim (chain #194) — must NOT be silently stripped', () => {
+      // Regression guard: transitionPolicy is a projector dial (FIBER_POLICY_DIALS). Before it was
+      // added there, a hand-set value was dropped — silently downgrading the fiber to Open
+      // (guard-only, no owner gate). It must survive projection and reach the signed wire form.
+      const wire = toProtoDefinition(defineFiberApp({ ...base, policy: constrained({ transitionPolicy: 'Owners' }) }));
+      expect(wire.policy).toEqual({ transitionPolicy: 'Owners' });
+      expect(JSON.stringify(wire)).toContain('"transitionPolicy":"Owners"');
+    });
+
     it('emits `policy` as the bare string "Immutable" for an immutable() definition', () => {
       const wire = toProtoDefinition(defineFiberApp({ ...base, policy: immutable() }));
       expect(wire.policy).toBe('Immutable');

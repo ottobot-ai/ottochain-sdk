@@ -237,6 +237,23 @@ export type UpgradePolicy =
     };
 
 /**
+ * `transitionPolicy` — WHO may drive a transition on this fiber. Chain: `TransitionPolicy`
+ * (chain PR #194), a bare tag STRING with three ranked levels:
+ *
+ *   - `"Open"` — anyone may drive a transition; the transition's `guard` is the only gate.
+ *     This is the chain DEFAULT when the dial is ABSENT, so omitting it is byte-identical
+ *     to the legacy (pre-#194) behaviour.
+ *   - `"OwnersOrParticipants"` — only the fiber's owners or its declared participants.
+ *   - `"Owners"` — only the fiber's owners.
+ *
+ * Absent ⇒ `"Open"` (chain `transitionPolicy: Option[TransitionPolicy] = None`,
+ * `dropNulls`-stripped). The chain joins this to the tighten-only upgrade lattice, so an
+ * upgrade may only RAISE the level (`Open < OwnersOrParticipants < Owners`); LOOSENING it
+ * (including dropping the dial on a fiber that had it set) is rejected as `CombineRejected`.
+ */
+export type TransitionPolicy = 'Open' | 'OwnersOrParticipants' | 'Owners';
+
+/**
  * `compatibleWith` — the inclusive-min / exclusive-max SemVer bridge window a migration
  * may target. Chain: `VersionRange` (`min: Option[SemVer]`, `max: Option[SemVer]`). Each
  * bound is a SemVer STRING (`"1.2.3"`); an absent bound is unconstrained on that side and
@@ -271,7 +288,7 @@ export interface VersionRange {
  *     at sign time). A `Constrained` with no dials set is wire-indistinguishable from
  *     `Unconstrained`, so `toProtoDefinition` collapses it back to "no policy key".
  *
- * All 14 dials are optional. Provide any subset.
+ * All 15 dials are optional. Provide any subset.
  */
 export interface FiberPolicyDials {
   /** Whether the fiber may reproduce itself (spawn instances of its own definition). Wire: boolean. */
@@ -296,6 +313,13 @@ export interface FiberPolicyDials {
   acceptedCallers?: readonly string[];
   /** SET of state ids that are sealed (no transition may fire from them). Wire: string[]. */
   sealedStates?: readonly string[];
+  /**
+   * WHO may drive a transition on this fiber — a {@link TransitionPolicy} bare tag
+   * (`"Open" | "OwnersOrParticipants" | "Owners"`). Absent ⇒ `"Open"` (guard-only, the
+   * chain default); set `"Owners"`/`"OwnersOrParticipants"` to gate transitions by identity
+   * in ADDITION to the guard. Chain: `transitionPolicy: Option[TransitionPolicy]` (chain PR #194).
+   */
+  transitionPolicy?: TransitionPolicy;
   /**
    * Recipient allowlist for `_transferAsset` — the {@link TransferPolicy} object
    * `{ allowedRecipientFibers?: uuid[], allowedRecipientWallets?: DAG-address[] }`.
@@ -353,7 +377,7 @@ export type ImmutablePolicy = typeof IMMUTABLE_POLICY;
  */
 export type FiberPolicy = FiberPolicyDials | ImmutablePolicy;
 
-/** The names of the 14 policy dials, in declaration order. Used by the projector. */
+/** The names of the 15 policy dials, in declaration order. Used by the projector. */
 const FIBER_POLICY_DIALS: readonly (keyof FiberPolicyDials)[] = [
   'selfReproducing',
   'allowedEffects',
@@ -362,6 +386,7 @@ const FIBER_POLICY_DIALS: readonly (keyof FiberPolicyDials)[] = [
   'maxSpawnFanout',
   'acceptedCallers',
   'sealedStates',
+  'transitionPolicy',
   'transferPolicy',
   'dependencyPolicy',
   'upgradePolicy',
@@ -397,7 +422,7 @@ export function immutable(): ImmutablePolicy {
 }
 
 /**
- * Build a CONSTRAINED `FiberPolicy` from any subset of the 14 dials.
+ * Build a CONSTRAINED `FiberPolicy` from any subset of the 15 dials.
  *
  * Pass only the dials you want to set. Dials left `undefined`/`null` are dropped so the
  * result is a clean, minimal object that serializes identically to the chain's
@@ -493,7 +518,7 @@ export interface FiberAppDefinition<TState extends string = string, TEvent exten
    * Constrained(<dials>)`. OMIT this field (the default) for `Unconstrained` — the projected
    * wire definition then has NO `policy` key. Set it to `immutable()` to permanently lock the
    * definition (projects to the bare string `"Immutable"`). Set it to a `constrained({...})`
-   * object to declare a subset of the 14 dials; unset dials are stripped so the wire form
+   * object to declare a subset of the 15 dials; unset dials are stripped so the wire form
    * matches the chain's `dropNulls`-stripped `Constrained` byte-for-byte (and a lone
    * `upgradePolicy: 'immutable'` collapses to `"Immutable"`).
    */
