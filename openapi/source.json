@@ -1,0 +1,8 @@
+{
+  "//": "Provenance + pin for the vendored OpenAPI contract(s). `pnpm fetch:openapi` downloads these release assets from the ottochain GitHub release into openapi/; then `pnpm gen:openapi` regenerates src/generated/openapi.ts. Set `release` to a tag (e.g. \"v0.7.17\") to pin a specific published contract, or \"latest\". Keys of `assets` are the release asset names; values are the local vendored filenames. The DL1 contract (openapi-dl1.json) is also published by ottochain and can be added here when the SDK needs DL1 types.",
+  "repo": "scasplte2/ottochain",
+  "release": "latest",
+  "assets": {
+    "openapi-ml0.json": "ottochain-openapi-ml0.json"
+  }
+}
