@@ -429,11 +429,23 @@ export interface components {
             ordinal: number;
             state: components["schemas"]["CalculatedState"];
         };
+        /** DynamicDependency */
+        DynamicDependency: {
+            /** Format: uuid */
+            fiberId: string;
+            active: boolean;
+            /** Format: int64 */
+            addedAt: number;
+        };
         /** EmittedEvent */
         EmittedEvent: {
             name: string;
             data: unknown;
             destination?: string;
+            /** Format: uuid */
+            emitterFiberId: string;
+            /** Format: int32 */
+            emissionIndex: number;
         };
         /** EventReceipt */
         EventReceipt: {
@@ -563,6 +575,7 @@ export interface components {
             childFiberIds?: string[];
             schemaBinding?: components["schemas"]["SchemaBinding"];
             authorizedSigners?: string[];
+            dynamicDependencies?: components["schemas"]["DynamicDependency"][];
         };
         /** StateProofResponse */
         StateProofResponse: {

@@ -1,9 +1,11 @@
 /**
  * Typed OttoChain HTTP API surface.
  *
- * These types are generated from the metagraph's OpenAPI contract
- * (`openapi/ottochain-openapi.json`, emitted by ottochain's tapir `ApiEndpoints`) — so the SDK and the
+ * These types are generated from the metagraph's ML0 OpenAPI contract
+ * (`openapi/ottochain-openapi-ml0.json`, emitted by ottochain's tapir `ApiEndpoints`) — so the SDK and the
  * chain share ONE source of truth for request/response shapes, instead of reverse-engineering them inline.
+ * The vendored contract is pulled from ottochain's published RELEASE artifacts (see `openapi/README.md` +
+ * `openapi/source.json`); refresh it with `pnpm fetch:openapi`.
  *
  * Regenerate after the contract changes with `pnpm gen:openapi`. The raw generated module is
  * `src/generated/openapi.ts`; this file gives consumers stable, named aliases for the precise response
