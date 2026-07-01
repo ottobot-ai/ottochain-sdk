@@ -204,6 +204,7 @@ export {
   triggers,
   spawn,
   emit,
+  scriptCall,
   toFiber,
   toWallet,
   RESERVED_EFFECT_KEYS,
