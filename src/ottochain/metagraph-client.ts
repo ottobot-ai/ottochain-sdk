@@ -24,6 +24,35 @@ import type {
 } from './types.js';
 import type { CurrencySnapshotResponse } from './snapshot.js';
 import { extractOnChainState } from './snapshot.js';
+import type {
+  VersionInfo,
+  TransitionFeeEstimate,
+  ScriptFeeEstimate,
+  SubscribeRequest,
+  SubscribeResponse,
+  SubscriberList,
+} from '../openapi.js';
+
+// Re-export the wire DTOs consumers need when calling the fee-estimate + webhook methods, so the
+// `@ottochain/sdk/ottochain` subpath surfaces them alongside the client (they mirror the chain's
+// `FeeEstimates.scala` / `webhooks/Subscriber.scala` byte-for-byte).
+export type {
+  VersionInfo,
+  TransitionFeeEstimate,
+  ScriptFeeEstimate,
+  SubscribeRequest,
+  SubscribeResponse,
+  SubscriberList,
+} from '../openapi.js';
+
+/**
+ * Structural view of the vendored `HttpClient`'s shared request helper, which `get`/`post` both delegate
+ * to but which is not on the public `.d.ts`. Used only to issue verbs the public surface omits (DELETE),
+ * so those calls inherit the same `NetworkError`/timeout handling as the typed helpers.
+ */
+interface HttpRequestCapable {
+  request<T>(method: string, path: string, body?: unknown, options?: unknown): Promise<T>;
+}
 
 /**
  * Checkpoint response from the metagraph (ordinal + calculated state).
@@ -39,23 +68,40 @@ export interface Checkpoint {
  * endpoints.
  */
 export interface StateProof {
-  /** The record (or projected field) the proof attests to. */
-  record: unknown;
+  /**
+   * The trie key the proof is keyed on — the fiber/asset id (optionally suffixed with the requested
+   * field). Chain: `StateProofResponse.key: String` (required).
+   */
+  key: string;
+  ordinal: number;
   /** The committed-state combined root (= the snapshot's `calculatedStateProof`). */
   committedRoot: string;
   /** The Merkle-Patricia trie root. */
   mptRoot: string;
-  ordinal: number;
+  /** The record (or projected field) the proof attests to. */
+  record: unknown;
   /** The Merkle-Patricia inclusion proof. */
   proof: unknown;
+  /**
+   * The `stateData` field name that was projected, present ONLY when a `?field=` was requested
+   * (chain `field: Option[String]`, `dropNullValues`-stripped otherwise).
+   */
+  field?: string;
+  /**
+   * The value of the projected `field`, present ONLY when a `?field=` was requested
+   * (chain `fieldValue: Option[Json]`, `dropNullValues`-stripped otherwise).
+   */
+  fieldValue?: unknown;
 }
 
-/** A fee/gas estimate for a transition or script invocation (shape is advisory / may evolve). */
-export interface FeeEstimate {
-  gas?: number;
-  fee?: number;
-  [key: string]: unknown;
-}
+/**
+ * A static fee/gas estimate. The wire is one of two per-endpoint shapes — {@link TransitionFeeEstimate}
+ * (state-machine transition) or {@link ScriptFeeEstimate} (script invocation) — that mirror the chain's
+ * `FeeEstimates.scala` case classes byte-for-byte. Prefer the per-endpoint types on
+ * {@link MetagraphClient.estimateTransitionFee} / {@link MetagraphClient.estimateScriptFee}; this union is
+ * a convenience for code that handles either.
+ */
+export type FeeEstimate = TransitionFeeEstimate | ScriptFeeEstimate;
 
 /**
  * Options for subscribeFiberState polling behaviour.
@@ -236,9 +282,13 @@ export class MetagraphClient {
   // Registry, audit, state-proofs, fee estimates (ML0 /data-application/v1/*)
   // -------------------------------------------------------------------------
 
-  /** Get the metagraph version string. */
-  async getVersion(): Promise<string> {
-    return this.ml0.get<string>('/data-application/v1/version');
+  /**
+   * Get the node's service identity + build metadata. The chain's `GET …/version` returns a
+   * `VersionInfo` OBJECT (`{ service, version, name, scalaVersion, sbtVersion, gitCommit, buildTime,
+   * tessellationVersion }`) — chain `ServiceMeta.scala` — NOT a bare string.
+   */
+  async getVersion(): Promise<VersionInfo> {
+    return this.ml0.get<VersionInfo>('/data-application/v1/version');
   }
 
   /** Get the full registry namespace, keyed by full registry name `labels.tld`. */
@@ -292,16 +342,63 @@ export class MetagraphClient {
     );
   }
 
-  /** Estimate the fee/gas for a transition event on a state-machine fiber. */
-  async estimateTransitionFee(fiberId: string, eventName: string): Promise<FeeEstimate> {
-    return this.ml0.get<FeeEstimate>(
+  /**
+   * Estimate the fee/gas for a transition event on a state-machine fiber. Returns a
+   * {@link TransitionFeeEstimate} (`{ fiberId, currentState, event, gasEstimate, opCount, maxDepth,
+   * candidateTransitions, note }`) — chain `FeeEstimates.scala`.
+   */
+  async estimateTransitionFee(fiberId: string, eventName: string): Promise<TransitionFeeEstimate> {
+    return this.ml0.get<TransitionFeeEstimate>(
       `/data-application/v1/state-machines/${fiberId}/estimate-fee?event=${encodeURIComponent(eventName)}`,
     );
   }
 
-  /** Estimate the fee/gas for invoking a script fiber. */
-  async estimateScriptFee(fiberId: string): Promise<FeeEstimate> {
-    return this.ml0.get<FeeEstimate>(`/data-application/v1/scripts/${fiberId}/estimate-fee`);
+  /**
+   * Estimate the fee/gas for invoking a script fiber. Returns a {@link ScriptFeeEstimate}
+   * (`{ scriptId, gasEstimate, opCount, maxDepth, note }`) — chain `FeeEstimates.scala`.
+   */
+  async estimateScriptFee(fiberId: string): Promise<ScriptFeeEstimate> {
+    return this.ml0.get<ScriptFeeEstimate>(`/data-application/v1/scripts/${fiberId}/estimate-fee`);
+  }
+
+  // -------------------------------------------------------------------------
+  // Webhook subscriptions (ML0 /data-application/v1/webhooks/*)
+  // -------------------------------------------------------------------------
+
+  /**
+   * Subscribe a callback URL to snapshot-notification webhooks.
+   *
+   * `POST …/webhooks/subscribe` with `SubscribeRequest { callbackUrl, secret? }`; the chain replies
+   * `201 Created` with `SubscribeResponse { id, callbackUrl, createdAt }`. Chain: `ML0Routes.scala`
+   * (`webhook.subscribe`) + `webhooks/Subscriber.scala`.
+   */
+  async subscribeWebhook(request: SubscribeRequest): Promise<SubscribeResponse> {
+    return this.ml0.post<SubscribeResponse>('/data-application/v1/webhooks/subscribe', request);
+  }
+
+  /**
+   * Unsubscribe a webhook by its subscriber id.
+   *
+   * `DELETE …/webhooks/subscribe/{id}` → `204 No Content` (empty body) on success, or `404` if the id is
+   * unknown. Chain: `ML0Routes.scala` (`webhook.unsubscribe`). The vendored `HttpClient` exposes only
+   * `get`/`post`, so this reuses its shared private `request` helper — same `NetworkError`/timeout
+   * handling as every other call — to issue the DELETE.
+   */
+  async unsubscribeWebhook(id: string): Promise<void> {
+    await (this.ml0 as unknown as HttpRequestCapable).request<void>(
+      'DELETE',
+      `/data-application/v1/webhooks/subscribe/${encodeURIComponent(id)}`,
+    );
+  }
+
+  /**
+   * List the current webhook subscribers (secrets are redacted server-side).
+   *
+   * `GET …/webhooks/subscribers` → `SubscriberList { subscribers: Subscriber[] }`. Chain:
+   * `ML0Routes.scala` (`webhook.list`) + `webhooks/Subscriber.scala`.
+   */
+  async listWebhookSubscribers(): Promise<SubscriberList> {
+    return this.ml0.get<SubscriberList>('/data-application/v1/webhooks/subscribers');
   }
 
   // -------------------------------------------------------------------------

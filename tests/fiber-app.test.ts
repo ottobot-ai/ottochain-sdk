@@ -3,7 +3,14 @@
  * Covers getTransitionsFrom, getEventsFrom, isFinalState, toJSON.
  */
 import { describe, expect, it } from '@jest/globals';
-import { getTransitionsFrom, getEventsFrom, isFinalState, toJSON } from '../src/schema/fiber-app.js';
+import {
+  getTransitionsFrom,
+  getEventsFrom,
+  isFinalState,
+  toJSON,
+  toProtoDefinition,
+  defineFiberApp,
+} from '../src/schema/fiber-app.js';
 import { identityAgentDef } from '../src/apps/identity/state-machines/index.js';
 
 // Use the identity-agent definition as a real fixture
@@ -65,6 +72,52 @@ describe('fiber-app schema helpers', () => {
     it('deep-equals the original definition', () => {
       const json = toJSON(def);
       expect(JSON.stringify(json)).toBe(JSON.stringify(def));
+    });
+  });
+
+  describe('toProtoDefinition — guard/effect always reach the wire', () => {
+    // The chain's `Transition` case class REQUIRES `guard` + `effect` (no Scala defaults); an omitted
+    // key decodes to a failure → HTTP 400. Authoring keeps them optional, so the projector must default.
+    const bareDef = defineFiberApp({
+      metadata: { name: 'Bare', app: 'test', type: 'bare', version: '1.0.0' },
+      states: {
+        A: { id: 'A', isFinal: false },
+        B: { id: 'B', isFinal: true },
+      },
+      initialState: 'A',
+      transitions: [{ from: 'A', to: 'B', eventName: 'go' }], // NO guard, NO effect
+    });
+
+    it('projects an omitted guard to the always-true {"==":[1,1]} and an omitted effect to {}', () => {
+      const proto = toProtoDefinition(bareDef);
+      expect(proto.transitions).toHaveLength(1);
+      const t = proto.transitions[0];
+      expect(t.guard).toEqual({ '==': [1, 1] });
+      expect(t.effect).toEqual({});
+      // guard/effect keys are PRESENT (not undefined) so they survive JSON serialization to the wire
+      expect(Object.prototype.hasOwnProperty.call(t, 'guard')).toBe(true);
+      expect(Object.prototype.hasOwnProperty.call(t, 'effect')).toBe(true);
+      expect(JSON.parse(JSON.stringify(t))).toMatchObject({ guard: { '==': [1, 1] }, effect: {} });
+    });
+
+    it('preserves an explicitly-authored guard/effect verbatim', () => {
+      const withLogic = defineFiberApp({
+        metadata: { name: 'Logic', app: 'test', type: 'logic', version: '1.0.0' },
+        states: { A: { id: 'A', isFinal: false }, B: { id: 'B', isFinal: true } },
+        initialState: 'A',
+        transitions: [
+          {
+            from: 'A',
+            to: 'B',
+            eventName: 'go',
+            guard: { '>': [{ var: 'event.amount' }, 0] },
+            effect: { total: { var: 'event.amount' } },
+          },
+        ],
+      });
+      const t = toProtoDefinition(withLogic).transitions[0];
+      expect(t.guard).toEqual({ '>': [{ var: 'event.amount' }, 0] });
+      expect(t.effect).toEqual({ total: { var: 'event.amount' } });
     });
   });
 });

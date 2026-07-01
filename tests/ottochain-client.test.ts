@@ -16,6 +16,9 @@ jest.mock('@constellation-network/metagraph-sdk/network', () => {
     HttpClient: jest.fn().mockImplementation(() => ({
       get: jest.fn(),
       post: jest.fn(),
+      // `request` is the vendored HttpClient's shared verb helper (private on the .d.ts); the client
+      // reuses it for DELETE (webhook unsubscribe), so the mock must expose it too.
+      request: jest.fn(),
     })),
     NetworkError: class NetworkError extends Error {
       statusCode?: number;
@@ -147,6 +150,119 @@ describe('MetagraphClient', () => {
       const result = await client.getScriptInvocations('s1');
       expect(result).toEqual(invocations);
       expect(mockMl0Get).toHaveBeenCalledWith('/data-application/v1/scripts/s1/invocations');
+    });
+  });
+
+  describe('getVersion', () => {
+    it('returns the VersionInfo OBJECT (not a string) from GET …/version', async () => {
+      const versionInfo = {
+        service: 'ottochain-metagraph-l0',
+        version: '2.5.0',
+        name: 'ottochain',
+        scalaVersion: '2.13.18',
+        sbtVersion: '1.10.0',
+        gitCommit: 'abc1234',
+        buildTime: '2026-07-01T00:00:00Z',
+        tessellationVersion: '4.0.0',
+      };
+      mockMl0Get.mockResolvedValue(versionInfo);
+      const result = await client.getVersion();
+      expect(result).toEqual(versionInfo);
+      // parsed object, not a bare string
+      expect(typeof result).toBe('object');
+      expect(result.version).toBe('2.5.0');
+      expect(mockMl0Get).toHaveBeenCalledWith('/data-application/v1/version');
+    });
+  });
+
+  describe('estimateTransitionFee', () => {
+    it('returns a TransitionFeeEstimate with the chain field names', async () => {
+      const estimate = {
+        fiberId: 'fiber-1',
+        currentState: 'PENDING',
+        event: 'confirm',
+        gasEstimate: 42,
+        opCount: 3,
+        maxDepth: 2,
+        candidateTransitions: 1,
+        note: 'static gas estimate',
+      };
+      mockMl0Get.mockResolvedValue(estimate);
+      const result = await client.estimateTransitionFee('fiber-1', 'confirm');
+      expect(result).toEqual(estimate);
+      expect(mockMl0Get).toHaveBeenCalledWith('/data-application/v1/state-machines/fiber-1/estimate-fee?event=confirm');
+    });
+  });
+
+  describe('estimateScriptFee', () => {
+    it('returns a ScriptFeeEstimate with the chain field names', async () => {
+      const estimate = { scriptId: 's1', gasEstimate: 10, opCount: 1, maxDepth: 1, note: 'static gas estimate' };
+      mockMl0Get.mockResolvedValue(estimate);
+      const result = await client.estimateScriptFee('s1');
+      expect(result).toEqual(estimate);
+      expect(mockMl0Get).toHaveBeenCalledWith('/data-application/v1/scripts/s1/estimate-fee');
+    });
+  });
+
+  describe('getStateMachineStateProof', () => {
+    it('returns a StateProof carrying key / field / fieldValue', async () => {
+      const proof = {
+        key: 'fiber-1.status',
+        ordinal: 100,
+        committedRoot: 'root-hash',
+        mptRoot: 'mpt-hash',
+        record: { status: 'ACTIVE' },
+        proof: { siblings: [] },
+        field: 'status',
+        fieldValue: 'ACTIVE',
+      };
+      mockMl0Get.mockResolvedValue(proof);
+      const result = await client.getStateMachineStateProof('fiber-1', 'status');
+      expect(result).toEqual(proof);
+      expect(result.key).toBe('fiber-1.status');
+      expect(result.field).toBe('status');
+      expect(result.fieldValue).toBe('ACTIVE');
+      expect(mockMl0Get).toHaveBeenCalledWith('/data-application/v1/state-machines/fiber-1/state-proof?field=status');
+    });
+  });
+
+  describe('webhooks', () => {
+    it('subscribeWebhook POSTs SubscribeRequest and returns SubscribeResponse', async () => {
+      const mockPost = (client as any).ml0.post as jest.Mock;
+      const response = { id: 'sub_abc123', callbackUrl: 'https://example.com/hook', createdAt: '2026-07-01T00:00:00Z' };
+      mockPost.mockResolvedValue(response);
+      const result = await client.subscribeWebhook({ callbackUrl: 'https://example.com/hook', secret: 's3cr3t' });
+      expect(result).toEqual(response);
+      expect(mockPost).toHaveBeenCalledWith('/data-application/v1/webhooks/subscribe', {
+        callbackUrl: 'https://example.com/hook',
+        secret: 's3cr3t',
+      });
+    });
+
+    it('unsubscribeWebhook DELETEs the subscriber by id (204, no body)', async () => {
+      const mockRequest = (client as any).ml0.request as jest.Mock;
+      mockRequest.mockResolvedValue(undefined);
+      await expect(client.unsubscribeWebhook('sub_abc123')).resolves.toBeUndefined();
+      expect(mockRequest).toHaveBeenCalledWith('DELETE', '/data-application/v1/webhooks/subscribe/sub_abc123');
+    });
+
+    it('listWebhookSubscribers GETs the SubscriberList', async () => {
+      const list = {
+        subscribers: [
+          {
+            id: 'sub_abc123',
+            callbackUrl: 'https://example.com/hook',
+            secret: '***',
+            active: true,
+            createdAt: '2026-07-01T00:00:00Z',
+            failCount: 0,
+          },
+        ],
+      };
+      mockMl0Get.mockResolvedValue(list);
+      const result = await client.listWebhookSubscribers();
+      expect(result).toEqual(list);
+      expect(mockMl0Get).toHaveBeenCalledWith('/data-application/v1/webhooks/subscribers');
     });
   });
 

@@ -664,8 +664,13 @@ export function toProtoDefinition<T extends FiberAppDefinition>(def: T): ProtoSt
       from: t.from,
       to: t.to,
       eventName: t.eventName,
-      guard: t.guard, // Required - Scala has no default
-      effect: t.effect, // Required - Scala has no default
+      // guard/effect are REQUIRED by the Scala `Transition` case class (no defaults). The authoring
+      // `Transition` types them OPTIONAL for ergonomics, so ALWAYS project a concrete value here — an
+      // omitted key would serialize to `undefined`, get dropped, and fail the chain's decode (HTTP 400).
+      // The defaults are the exact shapes the chain's `PublishVersionSigningCanonicalSuite` accepts:
+      // an always-true guard `{"==":[1,1]}` and an empty (no-op) effect `{}`.
+      guard: t.guard ?? { '==': [1, 1] },
+      effect: t.effect ?? {},
       // Chain `Transition.dependencies: Set[UUID]` is REQUIRED (no Scala default), and each
       // element must be a fiber UUID string. A `DependencySpec` object is a build-time-only
       // authoring affordance with no wire representation (concrete dependency UUIDs are per

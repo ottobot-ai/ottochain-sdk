@@ -5,6 +5,7 @@ import {
   triggers,
   spawn,
   emit,
+  scriptCall,
   toFiber,
   toWallet,
   transferAsset,
@@ -86,6 +87,29 @@ describe('schema/effects — reserved EFFECT directives match the riverdale gree
     expect(emit([{ name: 'pinged', data: 1, destination: 'fiber-1' }])).toEqual({
       _emit: [{ name: 'pinged', data: 1, destination: 'fiber-1' }],
     });
+  });
+
+  it('scriptCall() wraps a SINGLE {fiberId,method,args} object under _scriptCall (chain EffectExtractor)', () => {
+    const built = scriptCall({
+      fiberId: { var: 'state.resolverId' },
+      method: 'resolve',
+      args: { marketId: { var: 'machineId' } },
+    });
+    expect(built).toEqual({
+      _scriptCall: {
+        fiberId: { var: 'state.resolverId' },
+        method: 'resolve',
+        args: { marketId: { var: 'machineId' } },
+      },
+    });
+    // NOT an array — the chain's extractScriptCall reads a single MapValue, unlike _triggers/_spawn.
+    expect(Array.isArray((built as { _scriptCall: unknown })._scriptCall)).toBe(false);
+  });
+
+  it('scriptCall() defaults an omitted args to {} (the chain drops the call if args is absent)', () => {
+    const built = scriptCall({ fiberId: 'script-1', method: 'ping' });
+    expect(built).toEqual({ _scriptCall: { fiberId: 'script-1', method: 'ping', args: {} } });
+    expect((built as { _scriptCall: { args: unknown } })._scriptCall.args).toEqual({});
   });
 
   it('RESERVED_EFFECT_KEYS lists all 7 reserved directive keys (Proposal 01 validator input)', () => {

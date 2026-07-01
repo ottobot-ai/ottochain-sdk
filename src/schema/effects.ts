@@ -157,6 +157,38 @@ export const emit = (es: { name: string; data: JsonLogicValue; destination?: str
 });
 
 /**
+ * `_scriptCall`: invoke a SCRIPT fiber's `method` from an effect. Unlike the array-valued directives,
+ * `_scriptCall` is a SINGLE object `{ fiberId, method, args }` (chain `ReservedKeys.scala` `SCRIPT_CALL` /
+ * `EffectExtractor.extractScriptCall`). `fiberId` is the target script's UUID (a literal or an expression,
+ * e.g. `{ var: "state.resolverId" }`); `method` is the script method NAME; `args` is the argument body —
+ * a JSON-Logic value the chain EVALUATES against the transition context before dispatch.
+ *
+ * The chain's extractor requires ALL THREE fields — if `args` is absent the whole call is silently DROPPED
+ * (fail-silent, like the other extractors). So the builder ALWAYS emits `args`, defaulting an omitted one
+ * to `{}` (no-args), mirroring how {@link triggers} defaults an absent `payload`. Authoring this as a
+ * builder makes a typo'd `_scriptcall` / wrong field a TypeScript error rather than a silently-merged
+ * state field. Place the fragment INSIDE the effect's state-update map so it rides in the evaluated result.
+ *
+ * @example
+ * effect: { merge: [ { var: "state" }, {
+ *   status: "resolving",
+ *   ...scriptCall({ fiberId: { var: "state.resolverId" }, method: "resolve",
+ *     args: { marketId: { var: "machineId" } } }),
+ * } ] }
+ */
+export const scriptCall = (call: {
+  fiberId: JsonLogicValue;
+  method: string;
+  args?: JsonLogicValue;
+}): Record<string, unknown> => ({
+  _scriptCall: {
+    fiberId: call.fiberId,
+    method: call.method,
+    args: call.args ?? {},
+  },
+});
+
+/**
  * The complete set of `_`-prefixed RESERVED effect keys the chain's `EffectExtractor` consumes and
  * `StateMerger` strips from state (`ReservedKeys.scala:12-49`). Exported so a validator (Proposal 01)
  * can reject an unknown `_`-prefixed key (a typo'd directive) instead of letting it silently leak into
