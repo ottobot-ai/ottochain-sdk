@@ -131,11 +131,20 @@ export const triggers = (
  * MUST be a literal {@link ProtoStateMachineDefinition} (e.g. a nested `machine().wireDefinition()` /
  * `toProtoDefinition(child)` output) — NOT an expression the engine would evaluate at runtime.
  *
- * F8 gotcha — `owners` is load-bearing. A spawned child's transitions are gated by
- * `owners ∪ authorizedSigners` (`riverdale-economy/README.md`), so EVERY party that will later drive
- * the child (e.g. every bidder on a spawned auction) MUST be listed in `owners`, or their events are
- * rejected. `owners` may be a literal id array or an expression (e.g. `{ var: "event.auctionOwners" }`);
- * `childId` / `initialData` likewise accept literals or expressions.
+ * H1 constraint — child `owners` MUST be a SUBSET of the SPAWNING PARENT fiber's `owners`. As of the
+ * fiber-engine permissionless-hardening (chain branch `fix/fiber-engine-permissionless-hardening`, audit
+ * finding H1) the chain FAILS-CLOSED — it aborts the whole transition under EVERY `spawnOwnerPolicy` — if
+ * a `_spawn`'s resolved child `owners` are not ⊆ the parent's owners. Assigning arbitrary, unsigned owners
+ * (the old "auction owned by all its bidders" pattern, where the bidders are NOT parent owners) is no
+ * longer valid: those events are not silently rejected, the spawn itself is rejected.
+ *
+ * So DO NOT try to enroll later participants by listing them here. A spawned child's transitions are gated
+ * by `owners ∪ authorizedSigners` for the DIRECT (wallet-signed) path; admit additional drivers through
+ * the child's OWN transitions (`authorizedSigners`), or drive it via the cascade (`_triggers`) subject to
+ * its `acceptedCallers` — never by widening `owners` beyond the parent's set. `owners` may be a literal id
+ * array or an expression (e.g. `{ var: "state.owners" }` — resolve it WITHIN the parent's owners), but a
+ * value the parent does not own (e.g. `{ var: "event.auctionOwners" }` supplied by the caller) will be
+ * rejected on-chain. `childId` / `initialData` likewise accept literals or expressions.
  */
 export const spawn = (
   ds: {

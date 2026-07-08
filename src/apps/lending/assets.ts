@@ -243,6 +243,11 @@ export interface ApplyMorphismMessage {
 /**
  * Apply a typed morphism (Transfer / Burn / Compose / ...). asset-model.md §7.
  * Transfer = `{ kind: "Transfer", recipient }`; Burn (repay) = `{ kind: "Burn" }`.
+ *
+ * C2 — a `Compose`/`Pool` that folds in a counter-party the signer does NOT own is now rejected on-chain
+ * unless a live `AuthorizeCompose` nonce authorizes it: pass that nonce here (`nonce`) and build the commit
+ * half with {@link createAuthorizeComposePayload}. A same-holder compose (all parts signer-owned) needs no
+ * nonce. `otherAssets` must be duplicate-free and must not include `assetId`.
  */
 export function createApplyMorphismPayload(params: ApplyMorphismParams): ApplyMorphismMessage {
   return {
@@ -278,7 +283,12 @@ export interface AuthorizeComposeMessage {
   };
 }
 
-/** Commit half of a two-party compose. asset-model.md §7/§8. */
+/**
+ * Commit half of a two-party (cross-holder) compose. asset-model.md §7/§8. As of chain finding C2 this
+ * handshake is MANDATORY: a cross-holder `Compose`/`Pool` is rejected unless a matching, unexpired nonce
+ * from this call is live for the counter-party. The composing party then echoes `nonce` in its
+ * `ApplyMorphism`. A same-holder compose (all parts owned by the signer) does not need this.
+ */
 export function createAuthorizeComposePayload(params: AuthorizeComposeParams): AuthorizeComposeMessage {
   return {
     AuthorizeCompose: {

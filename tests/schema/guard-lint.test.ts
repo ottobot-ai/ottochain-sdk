@@ -405,6 +405,102 @@ describe('rule 5: leading-dot var paths', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Rule 6 — _spawn child owners not provably ⊆ parent (H1)
+// ---------------------------------------------------------------------------
+
+describe('rule 6: _spawn owners subset (H1)', () => {
+  it('PASS: owners derived from parent state.* are not flagged', () => {
+    const app = makeApp([
+      {
+        from: 'START',
+        to: 'DONE',
+        eventName: 'open',
+        guard: { '==': [1, 1] },
+        effect: {
+          merge: [
+            { var: 'state' },
+            {
+              _spawn: [
+                { childId: { var: 'event.childId' }, definition: {}, initialData: {}, owners: { var: 'state.owners' } },
+              ],
+            },
+          ],
+        },
+        dependencies: [],
+      },
+    ]);
+    expect(has(lintFiberApp(app), LINT_CODES.SPAWN_OWNERS)).toBe(false);
+  });
+
+  it('FAIL: a hardcoded literal owner address is flagged (warn)', () => {
+    const app = makeApp([
+      {
+        from: 'START',
+        to: 'DONE',
+        eventName: 'open',
+        guard: { '==': [1, 1] },
+        effect: {
+          _spawn: [{ childId: 'c1', definition: {}, initialData: {}, owners: ['DAG8externalNotAParentOwnerAddress'] }],
+        },
+        dependencies: [],
+      },
+    ]);
+    const vs = lintFiberApp(app);
+    const v = vs.find((x) => x.code === LINT_CODES.SPAWN_OWNERS);
+    expect(v).toBeDefined();
+    expect(v!.severity).toBe('warn');
+    expect(v!.path).toContain('_spawn[0].owners');
+    expect(v!.message).toContain('SUBSET');
+  });
+
+  it('FAIL: owners sourced from event.* (caller-supplied) is flagged', () => {
+    const app = makeApp([
+      {
+        from: 'START',
+        to: 'DONE',
+        eventName: 'open',
+        guard: { '==': [1, 1] },
+        effect: {
+          merge: [
+            { var: 'state' },
+            {
+              _spawn: [
+                {
+                  childId: { var: 'event.childId' },
+                  definition: {},
+                  initialData: {},
+                  owners: { var: 'event.auctionOwners' },
+                },
+              ],
+            },
+          ],
+        },
+        dependencies: [],
+      },
+    ]);
+    const vs = lintFiberApp(app);
+    const v = vs.find((x) => x.code === LINT_CODES.SPAWN_OWNERS);
+    expect(v).toBeDefined();
+    expect(v!.severity).toBe('warn');
+    expect(v!.message).toContain('event');
+  });
+
+  it('does NOT flag an empty owners array (trivially a subset)', () => {
+    const app = makeApp([
+      {
+        from: 'START',
+        to: 'DONE',
+        eventName: 'open',
+        guard: { '==': [1, 1] },
+        effect: { _spawn: [{ childId: 'c1', definition: {}, initialData: {}, owners: [] }] },
+        dependencies: [],
+      },
+    ]);
+    expect(has(lintFiberApp(app), LINT_CODES.SPAWN_OWNERS)).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // lintGuardExpression directly (the unit-level walker)
 // ---------------------------------------------------------------------------
 
