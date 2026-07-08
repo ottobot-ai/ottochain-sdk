@@ -165,6 +165,10 @@ export type {
   InvokeScriptMessage,
 } from './transaction.js';
 
+// Message-layer advisory lint for ApplyMorphism (Compose/Pool C2 mistakes the chain rejects).
+export { lintApplyMorphism, MORPHISM_LINT_CODES } from './morphism-lint.js';
+export type { LintViolation, LintSeverity } from './morphism-lint.js';
+
 // Data utilities
 export { dropNulls } from './drop-nulls.js';
 

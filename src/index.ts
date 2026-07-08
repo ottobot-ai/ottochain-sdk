@@ -63,6 +63,10 @@ export * from './types.js';
 export * from './ottochain/transaction.js';
 export { dropNulls } from './ottochain/drop-nulls.js';
 
+// Message-layer advisory lint for ApplyMorphism (Compose/Pool consent + inflation checks).
+export { lintApplyMorphism, MORPHISM_LINT_CODES } from './ottochain/morphism-lint.js';
+export type { LintViolation, LintSeverity } from './ottochain/morphism-lint.js';
+
 // ─── Genesis manifest exporter (std-app pre-registration content) ─────────────
 export { buildGenesisManifest, GENESIS_MANIFEST_VERSION } from './ottochain/genesis-manifest.js';
 export type {

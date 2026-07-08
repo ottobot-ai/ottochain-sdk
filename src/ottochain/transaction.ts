@@ -282,7 +282,13 @@ export function createMintAssetPayload(params: MintAsset): { MintAsset: MintAsse
   return { MintAsset: params };
 }
 
-/** Wrap an {@link ApplyMorphism} (apply a typed morphism to an asset instance). */
+/**
+ * Wrap an {@link ApplyMorphism} (apply a typed morphism to an asset instance).
+ *
+ * @see lintApplyMorphism (`./morphism-lint.ts`) — pure, non-throwing advisory that flags the
+ * Compose/Pool mistakes the chain rejects (duplicate / self-referential `otherAssetIds`; a
+ * cross-holder compose with no consent `nonce`). Run it on `params` before signing.
+ */
 export function createApplyMorphismPayload(params: ApplyMorphism): { ApplyMorphism: ApplyMorphism } {
   return { ApplyMorphism: params };
 }
