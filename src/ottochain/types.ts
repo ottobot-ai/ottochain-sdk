@@ -813,15 +813,32 @@ export interface MintAsset {
  * Optional fields carry per-kind directives (recipient for Transfer/Wrap; otherAssetIds + compositeId
  * for Compose; shardIds for Fractionalize; nonce for a commit-reveal symmetric Compose;
  * priorComponents is the Decompose reveal witness).
+ *
+ * C2 — cross-holder Compose/Pool consent is MANDATORY. As of the fiber-engine permissionless-hardening
+ * (chain branch `fix/fiber-engine-permissionless-hardening`, audit finding C2) a `Compose`/`Pool` that
+ * folds in a counter-party the signer does NOT hold is REJECTED (graceful `CombineRejected`) UNLESS a
+ * live {@link AuthorizeCompose} nonce authorizes that counter-party. A SAME-holder compose (every part in
+ * `otherAssetIds` is signer-owned) still needs no nonce. `otherAssetIds` may no longer contain duplicates
+ * or the `assetId` itself (the old self/duplicate-inflation path is rejected).
  */
 export interface ApplyMorphism {
   assetId: string;
   kind: MorphismKind;
   targetSequenceNumber: number;
   recipient?: AssetHolder;
+  /**
+   * Compose/Pool counter-party asset ids folded into the composite. Each id the signer does NOT hold is a
+   * CROSS-HOLDER part and now REQUIRES a live {@link AuthorizeCompose} nonce (see `nonce`) authorizing it
+   * — else the whole morphism is rejected (C2). Must be free of duplicates and must not include `assetId`.
+   */
   otherAssetIds?: string[];
   compositeId?: string;
   shardIds?: string[];
+  /**
+   * The cross-holder Compose consent nonce: the reveal half of the {@link AuthorizeCompose} handshake.
+   * REQUIRED whenever any `otherAssetIds` entry is not signer-owned (C2); omit it only for a same-holder
+   * compose. A nonce-less cross-holder compose is no longer accepted.
+   */
   nonce?: number;
   priorComponents?: ComponentWitness[];
   /** ZkVerify-gated morphism: optional witness a `Governed` morphism's guard reads (see {@link MorphismSpec}). */
@@ -831,6 +848,11 @@ export interface ApplyMorphism {
 /**
  * Authorize a counter-party policy to Compose with this asset (the commit half of the commit-reveal
  * symmetric-compose handshake). `nonce` and `expiresAt` are REQUIRED (no sentinel defaults).
+ *
+ * C2 — this consent is now MANDATORY, not opt-in. A `Compose`/`Pool` ({@link ApplyMorphism}) that consumes
+ * a counter-party the signer does not own is rejected unless a matching, unexpired `AuthorizeCompose` nonce
+ * is live for that counter-party (chain branch `fix/fiber-engine-permissionless-hardening`, finding C2).
+ * The composing party echoes this `nonce` in `ApplyMorphism.nonce`. A same-holder compose needs none.
  */
 export interface AuthorizeCompose {
   assetId: string;

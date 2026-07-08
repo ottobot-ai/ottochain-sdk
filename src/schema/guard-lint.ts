@@ -32,6 +32,11 @@
  *
  *   leading-dot — `{"var":".foo"}` resolves to null on chain.
  *
+ *   H1 — a `_spawn` whose child `owners` are not provably a SUBSET of the spawning
+ *        parent's owners. The chain now fails-closed (aborts the transition) under
+ *        every spawnOwnerPolicy when child owners ⊄ parent owners; this advisory
+ *        flags the strong not-subset signals (hardcoded / `event.*`-derived owners).
+ *
  * This is a STANDALONE validator. It is deliberately NOT wired into
  * `defineFiberApp` / `toProtoDefinition`: doing so would break the build until
  * every app is remediated. Run it via `scripts/lint-apps.mjs`.
@@ -74,6 +79,7 @@ export const LINT_CODES = {
   WITNESS_IN_TRANSITION: 'witness-in-transition', // rule 3
   DROPPED_DIRECTIVE: 'dropped-directive', // rule 4 (A3)
   LEADING_DOT_VAR: 'leading-dot-var', // rule 5
+  SPAWN_OWNERS: 'spawn-owners', // rule 6 (H1) — child owners not provably ⊆ parent
 } as const;
 
 // =============================================================================
@@ -371,6 +377,100 @@ function lintTransitionStructure(
 }
 
 // =============================================================================
+// _spawn owner-subset rule (rule 6 / H1)
+// =============================================================================
+
+/** Collect every string `var` reference (path or `[path, default]` head) at or below `node`. */
+function collectVarRefs(node: unknown, acc: string[]): void {
+  if (Array.isArray(node)) {
+    node.forEach((child) => collectVarRefs(child, acc));
+    return;
+  }
+  if (node === null || typeof node !== 'object') return;
+  const obj = node as Record<string, unknown>;
+  const keys = Object.keys(obj);
+  if (keys.length === 1 && keys[0] === 'var') {
+    const ref = obj.var;
+    if (typeof ref === 'string') acc.push(ref);
+    else if (Array.isArray(ref)) {
+      if (typeof ref[0] === 'string') acc.push(ref[0]);
+      if (ref.length > 1) collectVarRefs(ref[1], acc);
+    }
+    return;
+  }
+  for (const k of keys) collectVarRefs(obj[k], acc);
+}
+
+/**
+ * Classify a `_spawn` child `owners` expression for the H1 subset risk. Returns a short reason string when
+ * the owners are NOT provably ⊆ the parent's owners from the definition alone, else `undefined`.
+ *
+ * The linter cannot see the parent fiber's runtime `owners` (they are set at `create()` time, not in the
+ * definition), so it flags only the two STRONG "not-subset" signals — keeping false positives low:
+ *   - a literal array carrying ≥1 concrete address string (a hardcoded external owner list); and
+ *   - any `event.*` reference (caller-supplied — the exact H1 owner-forgery vector).
+ * Owners derived purely from the parent's own `state.*` / `machineId` / `$`-context are assumed in-set and
+ * are NOT flagged.
+ */
+function spawnOwnersRisk(owners: unknown): string | undefined {
+  if (Array.isArray(owners) && owners.some((o) => typeof o === 'string' && o.length > 0)) {
+    return 'a literal array with hardcoded owner address(es)';
+  }
+  const refs: string[] = [];
+  collectVarRefs(owners, refs);
+  if (refs.some((r) => r === 'event' || r.startsWith('event.'))) {
+    return "an 'event' reference (caller-supplied owners)";
+  }
+  return undefined;
+}
+
+/**
+ * rule 6 (H1) — scan a transition effect for `_spawn` directives whose child `owners` are not provably a
+ * SUBSET of the spawning parent's owners. The chain now fails-closed (aborts the transition) under every
+ * `spawnOwnerPolicy` when a child's resolved owners are not ⊆ the parent's. Advisory (warn): the linter
+ * cannot prove the subset statically, so it flags only the strong not-subset signals (see
+ * {@link spawnOwnersRisk}).
+ */
+function lintSpawnOwners(node: unknown, app: string | undefined, transition: string, path: string): LintViolation[] {
+  const out: LintViolation[] = [];
+  if (Array.isArray(node)) {
+    node.forEach((child, i) => out.push(...lintSpawnOwners(child, app, transition, `${path}[${i}]`)));
+    return out;
+  }
+  if (node === null || typeof node !== 'object') return out;
+  const obj = node as Record<string, unknown>;
+  for (const [k, v] of Object.entries(obj)) {
+    if (k === '_spawn' && Array.isArray(v)) {
+      v.forEach((entry, i) => {
+        if (entry && typeof entry === 'object' && !Array.isArray(entry) && 'owners' in (entry as object)) {
+          const reason = spawnOwnersRisk((entry as Record<string, unknown>).owners);
+          if (reason) {
+            out.push({
+              app,
+              transition,
+              severity: 'warn',
+              code: LINT_CODES.SPAWN_OWNERS,
+              message:
+                `_spawn child 'owners' must be a SUBSET of the spawning parent fiber's owners — the chain ` +
+                `now FAILS-CLOSED (aborts the transition) under every spawnOwnerPolicy if they are not ⊆ the ` +
+                `parent's (audit H1). This 'owners' is ${reason} and cannot be proven ⊆ the parent. Admit ` +
+                `later participants via the child's own transitions / authorizedSigners / acceptedCallers ` +
+                `instead of listing non-parent owners.`,
+              path: `${path}.${k}[${i}].owners`,
+            });
+          }
+        }
+      });
+      // Do not descend into the spawn entry (its nested child definition's owners are relative to that
+      // child, not to this parent).
+      continue;
+    }
+    out.push(...lintSpawnOwners(v, app, transition, `${path}.${k}`));
+  }
+  return out;
+}
+
+// =============================================================================
 // Top-level entry point
 // =============================================================================
 
@@ -403,6 +503,7 @@ export function lintFiberApp(def: FiberAppDefinition): LintViolation[] {
     }
     if (t.effect !== undefined) {
       out.push(...lintGuardExpression(t.effect as JsonLogicRule, ctx, `${tPath}.effect`));
+      out.push(...lintSpawnOwners(t.effect, app, transition, `${tPath}.effect`));
     }
     out.push(...lintTransitionStructure(t, app, transition, tPath));
   });
