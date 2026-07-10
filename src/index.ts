@@ -142,6 +142,11 @@ export type {
   Unsubscribe,
 } from './ottochain/metagraph-client.js';
 
+// Webhook PUSH payload types (the `snapshot.finalized` notification the chain POSTs to a callback).
+// Mirrors chain `webhooks/Subscriber.scala`; not in the OpenAPI contract (server-initiated, not served).
+export type { SnapshotNotification, NotificationStats, SnapshotRejection } from './ottochain/webhook-notifications.js';
+export { SNAPSHOT_FINALIZED_EVENT } from './ottochain/webhook-notifications.js';
+
 // Proto definition helper
 export {
   toProtoDefinition,

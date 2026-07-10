@@ -134,6 +134,11 @@ export type {
 } from './metagraph-client.js';
 export { MetagraphClient } from './metagraph-client.js';
 
+// Webhook PUSH payload types (server-initiated `snapshot.finalized` notification). Hand-authored to
+// mirror the chain's `webhooks/Subscriber.scala` — the push is not in the OpenAPI contract, see file.
+export type { SnapshotNotification, NotificationStats, SnapshotRejection } from './webhook-notifications.js';
+export { SNAPSHOT_FINALIZED_EVENT } from './webhook-notifications.js';
+
 // Transaction helpers (state machine payloads, signing)
 export {
   createTransitionPayload,
