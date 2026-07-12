@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# worksheet — scaffold a new docs/worksheets/YYYY-MM-DD-<slug>.md from TEMPLATE.md.
+#
+# Usage:
+#   bin/worksheet <slug>       create docs/worksheets/YYYY-MM-DD-<slug>.md
+#   bin/worksheet --help
+#
+# <slug> should be lowercase, hyphenated, short (e.g. "openapi-dl1-wiring"). Prints the tag
+# command for marking a milestone once you're ready (`git tag ws/<slug>`).
+set -euo pipefail
+
+cd "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" || -z "${1:-}" ]]; then
+  awk 'NR==1{next} /^#/{sub(/^# ?/,""); print; next} {exit}' "$0"
+  exit 0
+fi
+
+SLUG="$1"
+if [[ ! "$SLUG" =~ ^[a-z0-9][a-z0-9-]*$ ]]; then
+  echo "slug must be lowercase alphanumeric + hyphens (got: $SLUG)" >&2
+  exit 1
+fi
+
+DATE="$(date +%Y-%m-%d)"
+OUT="docs/worksheets/${DATE}-${SLUG}.md"
+TEMPLATE="docs/worksheets/TEMPLATE.md"
+
+if [[ ! -f "$TEMPLATE" ]]; then
+  echo "template not found: $TEMPLATE" >&2
+  exit 1
+fi
+
+if [[ -e "$OUT" ]]; then
+  echo "already exists: $OUT" >&2
+  exit 1
+fi
+
+sed "s/<slug> — YYYY-MM-DD/${SLUG} — ${DATE}/" "$TEMPLATE" > "$OUT"
+
+echo "Created $OUT"
+echo
+echo "Commit trailer for this worksheet's commits:"
+echo "  Worksheet: $OUT"
+echo
+echo "Milestone tag (when ready):"
+echo "  git tag ws/${SLUG}"

@@ -1,0 +1,130 @@
+#!/usr/bin/env bash
+# pr-watch — poll a PR's checks until they're all green, all failed/pending-forever, or a
+# timeout is hit. On failure, dumps the tail of each failing job's log so you don't have to
+# go find it in the GitHub UI.
+#
+# Usage:
+#   bin/pr-watch <pr#> [--interval SECONDS] [--timeout SECONDS]
+#   bin/pr-watch 252
+#   bin/pr-watch 252 --interval 30 --timeout 900
+#   bin/pr-watch --help
+#
+# Exit code mirrors the outcome: 0 = all checks passed, 1 = one or more checks failed,
+# 2 = timed out before checks settled, 3 = bad usage / gh error.
+#
+# "PR opened" is not "done" — this is the non-negotiable last step of the workflow in
+# AGENTS.md. Never end a session with an unmonitored PR.
+set -euo pipefail
+
+INTERVAL=60
+TIMEOUT=1800
+PR=""
+
+print_help() {
+  awk 'NR==1{next} /^#/{sub(/^# ?/,""); print; next} {exit}' "$0"
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --interval)
+      INTERVAL="$2"; shift 2 ;;
+    --timeout)
+      TIMEOUT="$2"; shift 2 ;;
+    --help|-h)
+      print_help; exit 0 ;;
+    *)
+      if [[ -z "$PR" ]]; then PR="$1"; shift; else
+        echo "unexpected argument: $1" >&2; exit 3
+      fi
+      ;;
+  esac
+done
+
+if [[ -z "$PR" ]]; then
+  echo "usage: bin/pr-watch <pr#> [--interval SECONDS] [--timeout SECONDS]" >&2
+  exit 3
+fi
+
+if ! command -v gh >/dev/null 2>&1; then
+  echo "gh CLI not found — required." >&2
+  exit 3
+fi
+
+dump_failing_logs() {
+  echo
+  echo "Failing job logs (tail):"
+  local run_ids
+  run_ids=$(gh pr checks "$PR" --json link,bucket 2>/dev/null \
+    | node -e '
+        let data = "";
+        process.stdin.on("data", d => data += d);
+        process.stdin.on("end", () => {
+          const rows = JSON.parse(data || "[]");
+          const ids = new Set();
+          for (const r of rows) {
+            if (r.bucket !== "fail") continue;
+            const m = /\/actions\/runs\/(\d+)/.exec(r.link || "");
+            if (m) ids.add(m[1]);
+          }
+          process.stdout.write([...ids].join("\n"));
+        });
+      ' 2>/dev/null || true)
+  if [[ -z "$run_ids" ]]; then
+    echo "  (could not resolve failing run IDs from 'gh pr checks' output — run"
+    echo "   'gh pr checks $PR' manually and 'gh run view <run-id> --log-failed'.)"
+    return
+  fi
+  while IFS= read -r run_id; do
+    [[ -z "$run_id" ]] && continue
+    echo
+    echo "--- run $run_id (last 60 lines of failed steps) ---"
+    gh run view "$run_id" --log-failed 2>/dev/null | tail -n 60 || \
+      echo "  (log fetch failed for run $run_id — try 'gh run view $run_id --log-failed')"
+  done <<< "$run_ids"
+}
+
+START=$(date +%s)
+echo "Watching PR #$PR (interval ${INTERVAL}s, timeout ${TIMEOUT}s)..."
+
+while true; do
+  NOW=$(date +%s)
+  ELAPSED=$((NOW - START))
+  if [[ "$ELAPSED" -ge "$TIMEOUT" ]]; then
+    echo
+    echo "TIMEOUT after ${ELAPSED}s — checks did not settle. Current state:"
+    gh pr checks "$PR" || true
+    exit 2
+  fi
+
+  # gh pr checks exits 0 if all pass, 1 if any fail/pending — but we want to distinguish
+  # "still pending" from "failed", so read the JSON ourselves.
+  ROWS_JSON=$(gh pr checks "$PR" --json name,state,bucket 2>/dev/null || echo "[]")
+  TOTAL=$(node -e "console.log(JSON.parse(process.argv[1]).length)" "$ROWS_JSON" 2>/dev/null || echo 0)
+
+  if [[ "$TOTAL" -eq 0 ]]; then
+    echo "[$(date '+%H:%M:%S')] no checks reported yet..."
+    sleep "$INTERVAL"
+    continue
+  fi
+
+  PENDING=$(node -e "console.log(JSON.parse(process.argv[1]).filter(r => r.bucket === 'pending').length)" "$ROWS_JSON" 2>/dev/null || echo 0)
+  FAILED=$(node -e "console.log(JSON.parse(process.argv[1]).filter(r => r.bucket === 'fail').length)" "$ROWS_JSON" 2>/dev/null || echo 0)
+  PASSED=$(node -e "console.log(JSON.parse(process.argv[1]).filter(r => r.bucket === 'pass').length)" "$ROWS_JSON" 2>/dev/null || echo 0)
+
+  echo "[$(date '+%H:%M:%S')] total=$TOTAL passed=$PASSED failed=$FAILED pending=$PENDING"
+
+  if [[ "$PENDING" -eq 0 ]]; then
+    if [[ "$FAILED" -gt 0 ]]; then
+      echo
+      echo "FAILED — $FAILED check(s) red:"
+      gh pr checks "$PR" || true
+      dump_failing_logs
+      exit 1
+    fi
+    echo
+    echo "All $TOTAL checks green."
+    exit 0
+  fi
+
+  sleep "$INTERVAL"
+done
