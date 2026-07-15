@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.7.1](https://github.com/ottobot-ai/ottochain-sdk/compare/v2.7.0...v2.7.1) (2026-07-15)
+
+
+### Bug Fixes
+
+* **ci:** publish job on node 24; pin npm@^11.5.1 for OIDC ([#260](https://github.com/ottobot-ai/ottochain-sdk/issues/260)) ([a53a6e0](https://github.com/ottobot-ai/ottochain-sdk/commit/a53a6e0d7f0ead3c6aaae5ecc80143eded4cc2f1))
+
 ## [2.7.0](https://github.com/ottobot-ai/ottochain-sdk/compare/v2.6.0...v2.7.0) (2026-07-15)
 
 
