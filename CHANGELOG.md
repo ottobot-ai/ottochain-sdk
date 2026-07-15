@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.7.0](https://github.com/ottobot-ai/ottochain-sdk/compare/v2.6.0...v2.7.0) (2026-07-15)
+
+
+### Features
+
+* align spawn-owner (H1) & compose-consent (C2) with chain ([#248](https://github.com/ottobot-ai/ottochain-sdk/issues/248)) ([bab9501](https://github.com/ottobot-ai/ottochain-sdk/commit/bab95012b4495bf70a78b82f4fdd43fbd436bffd))
+* **sdk:** add ApplyMorphism message-layer compose-consent linter ([#250](https://github.com/ottobot-ai/ottochain-sdk/issues/250)) ([21623a5](https://github.com/ottobot-ai/ottochain-sdk/commit/21623a5d4013942bc581c515f53f0f179ac4bf94))
+* **sdk:** export webhook notification payload types ([#251](https://github.com/ottobot-ai/ottochain-sdk/issues/251)) ([5f56bd3](https://github.com/ottobot-ai/ottochain-sdk/commit/5f56bd3d3e2aba5d3de50e3743e662753458d143))
+* **zk:** riverdale-health e2e fixture generator ([#258](https://github.com/ottobot-ai/ottochain-sdk/issues/258)) ([e12aec0](https://github.com/ottobot-ai/ottochain-sdk/commit/e12aec0f742dbb8a0498ccca34593c11a3dd0179))
+
 ## [2.6.0](https://github.com/ottobot-ai/ottochain-sdk/compare/v2.5.0...v2.6.0) (2026-07-01)
 
 
