@@ -43,7 +43,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          # 24, not 20: npm@latest is v12+, whose engines require node ^22.22 || ^24.15 || >=26 —
+          # on node 20 the npm upgrade below dies with EBADENGINE (v2.7.0 publish failure).
+          # The library itself still supports node 20 (ci.yml build-matrix covers 20/22/24);
+          # only this PUBLISH job needs a current runtime for OIDC trusted publishing.
+          node-version: '24'
           cache: 'pnpm'
           # IMPORTANT: do NOT set registry-url/scope here. Passing registry-url makes
           # actions/setup-node write a project .npmrc with `_authToken=${NODE_AUTH_TOKEN}`
@@ -63,10 +67,11 @@ jobs:
 
       - name: Upgrade npm for OIDC trusted publishing
         # The OIDC -> registry token exchange (trusted publishing) is an npm CLI feature
-        # added in 11.5.1. Node 20 ships npm 10.x, and `pnpm publish` does NOT perform the
-        # exchange at all (it only signs provenance, then errors ENEEDAUTH). So publish with
-        # a recent npm CLI below.
-        run: npm install -g npm@latest
+        # added in 11.5.1, and `pnpm publish` does NOT perform the exchange at all (it only
+        # signs provenance, then errors ENEEDAUTH). Pin the 11.x line rather than `latest`:
+        # 11.5.1+ has the exchange, and unlike npm 12 its engine range (^20.17 || >=22.9)
+        # can never EBADENGINE on a runner node we use — `latest` is what broke v2.7.0.
+        run: npm install -g 'npm@^11.5.1'
 
       - name: Publish to npmjs.com
         # OIDC trusted publishing: no NODE_AUTH_TOKEN / no .npmrc token. The job's
@@ -78,7 +83,7 @@ jobs:
       - name: Setup for GitHub Packages
         uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '24'
           registry-url: 'https://npm.pkg.github.com'
           scope: '@ottobot-ai'
 
