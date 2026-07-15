@@ -1,0 +1,150 @@
+#!/usr/bin/env bash
+# preflight — mirror ottochain-sdk's CI locally before opening/pushing a PR.
+#
+# Usage:
+#   bin/preflight            full pass: install, lint, format, typecheck, openapi drift,
+#                             app lint, build, test
+#   bin/preflight --fast     stop after the openapi-drift + app-lint checks (skips build+test)
+#   bin/preflight --help     this message
+#
+# Exit code is nonzero if any step failed. Prints a summary table at the end regardless of
+# where it stopped (a step that never ran shows as SKIP, not PASS).
+set -euo pipefail
+
+cd "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+FAST=0
+for arg in "$@"; do
+  case "$arg" in
+    --fast) FAST=1 ;;
+    --help|-h)
+      awk 'NR==1{next} /^#/{sub(/^# ?/,""); print; next} {exit}' "$0"
+      exit 0
+      ;;
+    *)
+      echo "unknown argument: $arg (see --help)" >&2
+      exit 2
+      ;;
+  esac
+done
+
+declare -a STEP_NAMES=()
+declare -a STEP_RESULTS=()
+
+record() {
+  STEP_NAMES+=("$1")
+  STEP_RESULTS+=("$2")
+}
+
+run_step() {
+  local name="$1"
+  shift
+  echo
+  echo "==> $name"
+  if "$@"; then
+    record "$name" "PASS"
+  else
+    record "$name" "FAIL"
+  fi
+}
+
+print_summary_and_exit() {
+  echo
+  echo "Summary:"
+  local failed=0
+  for i in "${!STEP_NAMES[@]}"; do
+    printf '  %-10s %s\n' "${STEP_RESULTS[$i]}" "${STEP_NAMES[$i]}"
+    [[ "${STEP_RESULTS[$i]}" == "FAIL" ]] && failed=1
+  done
+  echo
+  if [[ "$failed" -eq 1 ]]; then
+    echo "preflight FAILED — fix the steps above before opening a PR."
+    exit 1
+  fi
+  echo "preflight OK."
+  exit 0
+}
+
+# ---------------------------------------------------------------------------
+# 1. install
+# ---------------------------------------------------------------------------
+echo "==> install (pnpm install --frozen-lockfile)"
+if [[ -d node_modules ]]; then
+  echo "node_modules present — installing anyway (pnpm is fast when the store is warm)."
+fi
+if pnpm install --frozen-lockfile; then
+  record "install" "PASS"
+else
+  record "install" "FAIL"
+  echo
+  echo "install failed — cannot continue, later steps need node_modules." >&2
+  print_summary_and_exit
+fi
+
+# ---------------------------------------------------------------------------
+# 2. lint
+# ---------------------------------------------------------------------------
+run_step "lint (eslint)" pnpm run lint
+
+# ---------------------------------------------------------------------------
+# 3. format:check
+# ---------------------------------------------------------------------------
+run_step "format:check (prettier)" pnpm run format:check
+
+# ---------------------------------------------------------------------------
+# 4. typecheck
+# ---------------------------------------------------------------------------
+run_step "typecheck (tsc --noEmit)" pnpm exec tsc --noEmit
+
+# ---------------------------------------------------------------------------
+# 5. OpenAPI drift check
+# ---------------------------------------------------------------------------
+echo
+echo "==> openapi drift (pnpm run gen:openapi + git diff --exit-code)"
+if [[ ! -f openapi/ottochain-openapi-ml0.json ]]; then
+  echo "WARNING: openapi/ottochain-openapi-ml0.json is missing — skipping drift check." >&2
+  echo "         Run 'bin/sync-openapi' (needs GITHUB_TOKEN) to fetch it, then re-run preflight." >&2
+  record "openapi drift" "SKIP"
+elif pnpm run gen:openapi >/tmp/preflight-openapi-gen.log 2>&1; then
+  if git diff --exit-code -- src/generated/openapi.ts >/dev/null 2>&1; then
+    record "openapi drift" "PASS"
+  else
+    echo "src/generated/openapi.ts is stale relative to openapi/ottochain-openapi-ml0.json." >&2
+    echo "Run 'pnpm gen:openapi' and commit the result." >&2
+    record "openapi drift" "FAIL"
+  fi
+else
+  echo "WARNING: 'pnpm run gen:openapi' failed — degrading to a warning instead of a hard" >&2
+  echo "         failure. gen:openapi only reads the already-vendored openapi/ file (it" >&2
+  echo "         doesn't fetch), so a failure here usually means a local toolchain issue," >&2
+  echo "         not a GITHUB_TOKEN/auth issue — but we still don't hard-fail preflight on" >&2
+  echo "         it, since it's not this repo's CI gate (typecheck's inline check is)." >&2
+  echo "         Tail of the failure:" >&2
+  tail -n 20 /tmp/preflight-openapi-gen.log >&2 || true
+  record "openapi drift" "SKIP"
+fi
+
+# ---------------------------------------------------------------------------
+# 6. app lint (guard-lint over every std-app definition)
+# ---------------------------------------------------------------------------
+run_step "app lint (scripts/lint-apps.mjs)" node scripts/lint-apps.mjs
+
+if [[ "$FAST" -eq 1 ]]; then
+  echo
+  echo "==> --fast: skipping build + test"
+  record "build" "SKIP"
+  record "test" "SKIP"
+  print_summary_and_exit
+fi
+
+# ---------------------------------------------------------------------------
+# 7. build
+# ---------------------------------------------------------------------------
+run_step "build" pnpm run build
+
+# ---------------------------------------------------------------------------
+# 8. test
+# ---------------------------------------------------------------------------
+run_step "test" pnpm test
+
+print_summary_and_exit

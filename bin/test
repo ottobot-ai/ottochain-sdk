@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# test — thin wrapper over `pnpm test` with the golden-suite shortlist documented.
+#
+# Usage:
+#   bin/test                run the full jest suite (equivalent to `pnpm test`)
+#   bin/test <pattern>       `pnpm test -- <pattern>` (jest testPathPattern / -t style args
+#                             all pass through, e.g. `bin/test signing` or
+#                             `bin/test -- -t "dropNulls"`)
+#   bin/test signing          shortcut: runs the signing-canonical golden-suite shortlist
+#                             (see below) — the suites most likely to catch a wire-parity
+#                             regression, useful as a fast pre-commit check before a full run.
+#   bin/test --help          this message
+set -euo pipefail
+
+cd "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+GOLDEN_SUITES=(
+  "tests/ottochain/signing-parity.test.ts"
+  "tests/sig-spec-vectors.test.ts"
+  "tests/canonicalize.test.ts"
+  "tests/drop-nulls.test.ts"
+  "tests/hash.test.ts"
+  "tests/binary.test.ts"
+)
+
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  awk 'NR==1{next} /^#/{sub(/^# ?/,""); print; next} {exit}' "$0"
+  echo
+  echo "Golden suite shortlist (signing-canonical parity):"
+  printf '  %s\n' "${GOLDEN_SUITES[@]}"
+  exit 0
+fi
+
+if [[ "${1:-}" == "signing" ]]; then
+  echo "Running the signing-canonical golden-suite shortlist:"
+  printf '  %s\n' "${GOLDEN_SUITES[@]}"
+  exec pnpm test -- "${GOLDEN_SUITES[@]}"
+fi
+
+if [[ $# -eq 0 ]]; then
+  exec pnpm test
+fi
+
+exec pnpm test -- "$@"

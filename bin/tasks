@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# tasks — gh issue list wrapper with this repo's agent-facing label taxonomy.
+#
+# Usage:
+#   bin/tasks                 open issues labeled 'agent-ready' (the default label)
+#   bin/tasks <label>          open issues labeled <label>
+#   bin/tasks all              open issues, no label filter
+#   bin/tasks --help
+#
+# Label taxonomy (create these labels in the repo if they don't exist yet — this script
+# doesn't create labels, it just documents and filters by them):
+#   agent-ready       triaged, scoped, safe for an agent to pick up unattended
+#   cheap-model-ok     additionally safe for a T0-1 model per AGENTS.md's tier model
+#                       (tests/docs/bin only — no blast-radius files)
+#   needs-senior       requires a senior-model session or human judgment (T2/T3+ work)
+#   size/S | size/M | size/L   rough scope estimate
+#
+# night-shift (see .claude/skills/night-shift/SKILL.md) picks from `bin/tasks cheap-model-ok`
+# by default, unless told otherwise.
+set -euo pipefail
+
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  awk 'NR==1{next} /^#/{sub(/^# ?/,""); print; next} {exit}' "$0"
+  exit 0
+fi
+
+if ! command -v gh >/dev/null 2>&1; then
+  echo "gh CLI not found — required." >&2
+  exit 1
+fi
+
+LABEL="${1:-agent-ready}"
+
+if [[ "$LABEL" == "all" ]]; then
+  exec gh issue list --state open
+fi
+
+exec gh issue list --state open --label "$LABEL"
