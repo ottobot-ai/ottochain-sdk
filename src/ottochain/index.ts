@@ -134,6 +134,10 @@ export type {
 } from './metagraph-client.js';
 export { MetagraphClient } from './metagraph-client.js';
 
+// Light-client state-proof verification (no trust in the serving node)
+export type { MptWitnessNode, MptInclusionProof, StateProofVerification } from './state-proof.js';
+export { verifyStateProof, verifyMptInclusion, commitKeyPath } from './state-proof.js';
+
 // Webhook PUSH payload types (server-initiated `snapshot.finalized` notification). Hand-authored to
 // mirror the chain's `webhooks/Subscriber.scala` — the push is not in the OpenAPI contract, see file.
 export type { SnapshotNotification, NotificationStats, SnapshotRejection } from './webhook-notifications.js';
