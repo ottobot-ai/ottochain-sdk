@@ -59,8 +59,7 @@ export type StateProofVerification = { ok: true } | { ok: false; reason: string 
 
 const utf8 = (s: string): Uint8Array => new TextEncoder().encode(s);
 
-const toHexStr = (b: Uint8Array): string =>
-  Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
+const toHexStr = (b: Uint8Array): string => Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
 
 /** `sha256(prefixByte? ++ utf8(JCS(dropNulls(value))))` — the chain's content-digest rule. */
 function jcsSha256(value: unknown, prefix?: number): string {
@@ -88,7 +87,7 @@ export function verifyMptInclusion(
   mptRoot: string,
   key: string,
   record: unknown,
-  proof: MptInclusionProof
+  proof: MptInclusionProof,
 ): StateProofVerification {
   const fail = (reason: string): StateProofVerification => ({ ok: false, reason });
   if (!proof || typeof proof.path !== 'string' || !Array.isArray(proof.witness) || proof.witness.length === 0)
@@ -143,7 +142,6 @@ export function verifyMptInclusion(
  * the caller's (or a snapshot-following light client's) responsibility.
  */
 export function verifyStateProof(resp: StateProof, expectedKey: string): StateProofVerification {
-  if (resp.key !== expectedKey)
-    return { ok: false, reason: `response key '${resp.key}' != expected '${expectedKey}'` };
+  if (resp.key !== expectedKey) return { ok: false, reason: `response key '${resp.key}' != expected '${expectedKey}'` };
   return verifyMptInclusion(String(resp.mptRoot), expectedKey, resp.record, resp.proof as MptInclusionProof);
 }

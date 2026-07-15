@@ -20,8 +20,7 @@ const fixture = JSON.parse(
   readFileSync(join(__dirname, 'fixtures', 'state-proof-committed.json'), 'utf8'),
 ) as StateProof;
 const KEY = fixture.key; // fiber/<uuid>
-const proofOf = (r: StateProof): MptInclusionProof =>
-  JSON.parse(JSON.stringify(r.proof)) as MptInclusionProof;
+const proofOf = (r: StateProof): MptInclusionProof => JSON.parse(JSON.stringify(r.proof)) as MptInclusionProof;
 
 describe('verifyStateProof (golden, captured from a live cluster)', () => {
   it('accepts the untampered response', () => {
@@ -42,12 +41,7 @@ describe('verifyStateProof (golden, captured from a live cluster)', () => {
   });
 
   it('rejects a tampered root (first commitment binding)', () => {
-    const res = verifyMptInclusion(
-      'ff' + String(fixture.mptRoot).slice(2),
-      KEY,
-      fixture.record,
-      proofOf(fixture),
-    );
+    const res = verifyMptInclusion('ff' + String(fixture.mptRoot).slice(2), KEY, fixture.record, proofOf(fixture));
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.reason).toContain('depth 0');
   });
@@ -86,7 +80,12 @@ describe('verifyStateProof (golden, captured from a live cluster)', () => {
   it('never throws on malformed proofs', () => {
     expect(verifyMptInclusion('00', KEY, {}, {} as MptInclusionProof).ok).toBe(false);
     expect(
-      verifyMptInclusion('00', KEY, {}, { path: commitKeyPath(KEY), witness: [{ type: 'Bogus', contents: {} } as never] }).ok,
+      verifyMptInclusion(
+        '00',
+        KEY,
+        {},
+        { path: commitKeyPath(KEY), witness: [{ type: 'Bogus', contents: {} } as never] },
+      ).ok,
     ).toBe(false);
   });
 });
