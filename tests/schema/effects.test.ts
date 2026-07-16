@@ -9,6 +9,7 @@ import {
   toFiber,
   toWallet,
   transferAsset,
+  consumeNullifier,
   RESERVED_EFFECT_KEYS,
 } from '../../src/schema/effects';
 
@@ -112,8 +113,8 @@ describe('schema/effects — reserved EFFECT directives match the riverdale gree
     expect((built as { _scriptCall: { args: unknown } })._scriptCall.args).toEqual({});
   });
 
-  it('RESERVED_EFFECT_KEYS lists all 7 reserved directive keys (Proposal 01 validator input)', () => {
-    expect(RESERVED_EFFECT_KEYS).toHaveLength(7);
+  it('RESERVED_EFFECT_KEYS lists all 8 reserved directive keys (Proposal 01 validator input)', () => {
+    expect(RESERVED_EFFECT_KEYS).toHaveLength(8);
     for (const key of [
       '_triggers',
       '_spawn',
@@ -122,9 +123,19 @@ describe('schema/effects — reserved EFFECT directives match the riverdale gree
       '_scriptCall',
       '_addDependency',
       '_setDependencyActive',
+      '_consumeNullifier',
     ]) {
       expect(RESERVED_EFFECT_KEYS).toContain(key);
     }
+  });
+
+  it('consumeNullifier() wraps BARE nf values under _consumeNullifier (array form, protocol-nullifier-set.md)', () => {
+    const nf = 'ab'.repeat(32);
+    const dynamic = { var: 'event.nullifier' };
+    expect(consumeNullifier([nf, dynamic])).toEqual({ _consumeNullifier: [nf, dynamic] });
+    // Items are bare values, NOT objects — the chain's extractor evaluates each item directly.
+    const built = consumeNullifier([nf]) as { _consumeNullifier: unknown[] };
+    expect(built._consumeNullifier[0]).toBe(nf);
   });
 
   it('toFiber / toWallet build the canonical AssetHolder object form', () => {

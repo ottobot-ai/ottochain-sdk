@@ -15,6 +15,7 @@ import {
   KNOWN_BAD_OPERATORS,
   type LintViolation,
 } from '../../src/schema/guard-lint';
+import { consumeNullifier } from '../../src/schema/effects';
 import type { FiberAppDefinition } from '../../src/schema/fiber-app';
 
 // ---------------------------------------------------------------------------
@@ -497,6 +498,80 @@ describe('rule 6: _spawn owners subset (H1)', () => {
       },
     ]);
     expect(has(lintFiberApp(app), LINT_CODES.SPAWN_OWNERS)).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Rule 7 — _consumeNullifier literal shape (chain `nullifier-literal-malformed` mirror)
+// ---------------------------------------------------------------------------
+
+describe('rule 7: _consumeNullifier literal shape', () => {
+  const NF = 'ab'.repeat(32);
+  const consumeEffect = (items: unknown[]) => ({
+    merge: [{ var: 'state' }, { status: 'FILLED', _consumeNullifier: items }],
+  });
+  const appWith = (items: unknown[]) =>
+    makeApp([
+      {
+        from: 'START',
+        to: 'DONE',
+        eventName: 'fill',
+        guard: { '==': [1, 1] },
+        effect: consumeEffect(items),
+        dependencies: [],
+      },
+    ]);
+
+  it('PASS: valid literals (bare, 0x-prefixed, mixed case) and dynamic expressions', () => {
+    const vs = lintFiberApp(appWith([NF, `0x${NF}`, NF.toUpperCase(), { var: 'event.nullifier' }]));
+    expect(has(vs, LINT_CODES.NULLIFIER_LITERAL)).toBe(false);
+  });
+
+  it('FAIL: a string literal that cannot normalize warns with the chain code', () => {
+    const vs = lintFiberApp(appWith(['not-a-nullifier']));
+    const v = vs.find((x) => x.code === LINT_CODES.NULLIFIER_LITERAL);
+    expect(v).toBeDefined();
+    expect(v!.severity).toBe('warn');
+    expect(v!.message).toContain('does not normalize to 64 hex chars');
+    expect(v!.path).toContain('_consumeNullifier[0]');
+  });
+
+  it('FAIL: a non-string literal (number / boolean / null / array) can never normalize', () => {
+    const vs = lintFiberApp(appWith([42, true, null, [NF]]));
+    const hits = vs.filter((x) => x.code === LINT_CODES.NULLIFIER_LITERAL);
+    expect(hits).toHaveLength(4);
+    for (const v of hits) expect(v.message).toContain('non-string literal');
+  });
+
+  it('flags only the malformed item in a mixed array (per-item location)', () => {
+    const vs = lintFiberApp(appWith([NF, 'ab'.repeat(31), { var: 'event.nf' }]));
+    const hits = vs.filter((x) => x.code === LINT_CODES.NULLIFIER_LITERAL);
+    expect(hits).toHaveLength(1);
+    expect(hits[0].path).toContain('_consumeNullifier[1]');
+  });
+
+  it('descends if/merge nesting like the chain walker', () => {
+    const app = makeApp([
+      {
+        from: 'START',
+        to: 'DONE',
+        eventName: 'fill',
+        guard: { '==': [1, 1] },
+        effect: {
+          if: [{ var: 'event.private' }, consumeEffect(['bogus']), { merge: [{ var: 'state' }, { status: 'OPEN' }] }],
+        },
+        dependencies: [],
+      },
+    ]);
+    expect(has(lintFiberApp(app), LINT_CODES.NULLIFIER_LITERAL)).toBe(true);
+  });
+
+  it('the consumeNullifier() builder output passes the lint for valid items', () => {
+    const app = appWith([]);
+    app.transitions[0].effect = {
+      merge: [{ var: 'state' }, { status: 'FILLED', ...consumeNullifier([NF, { var: 'event.nf' }]) }],
+    };
+    expect(has(lintFiberApp(app), LINT_CODES.NULLIFIER_LITERAL)).toBe(false);
   });
 });
 

@@ -209,11 +209,13 @@ export {
 } from './schema/guards.js';
 
 // Reserved EFFECT-directive builders (dynamic dependencies, #24; whole-asset custody moves;
-// cross-fiber triggers, spawn, emit + recipient-intent helpers; the reserved-key set for validators).
+// protocol nullifier consumption; cross-fiber triggers, spawn, emit + recipient-intent helpers;
+// the reserved-key set for validators).
 export {
   addDependency,
   setDependencyActive,
   transferAsset,
+  consumeNullifier,
   triggers,
   spawn,
   emit,

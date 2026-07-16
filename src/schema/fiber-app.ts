@@ -157,10 +157,11 @@ export interface Transition<TState extends string = string, TEvent extends strin
 // type is annotated with the exact Scala source it mirrors.
 
 /**
- * `allowedEffects` element — the 5 `EffectKind` families, UPPERCASE on the wire
+ * `allowedEffects` element — the 6 `EffectKind` families, UPPERCASE on the wire
  * (`enumeratum` `Uppercase` mixin). Chain: `EffectKind` in `FiberPolicy.scala`.
+ * `NULLIFIER` gates `_consumeNullifier` (protocol-nullifier-set.md).
  */
-export type EffectKind = 'TRIGGER' | 'SPAWN' | 'EMIT' | 'TRANSFER' | 'DEPENDENCY';
+export type EffectKind = 'TRIGGER' | 'SPAWN' | 'EMIT' | 'TRANSFER' | 'DEPENDENCY' | 'NULLIFIER';
 
 /**
  * `spawnOwnerPolicy` — UPPERCASE (`enumeratum` `Uppercase`). Chain: `SpawnOwnerPolicy`
@@ -294,9 +295,9 @@ export interface FiberPolicyDials {
   /** Whether the fiber may reproduce itself (spawn instances of its own definition). Wire: boolean. */
   selfReproducing?: boolean;
   /**
-   * Allow-list of effect families this fiber's transitions may produce, as a SET of the 5
+   * Allow-list of effect families this fiber's transitions may produce, as a SET of the 6
    * UPPERCASE {@link EffectKind} tokens (`"TRIGGER" | "SPAWN" | "EMIT" | "TRANSFER" |
-   * "DEPENDENCY"`). Order is not significant; duplicates are collapsed by the chain's `Set`.
+   * "DEPENDENCY" | "NULLIFIER"`). Order is not significant; duplicates are collapsed by the chain's `Set`.
    * Chain: `allowedEffects: Option[Set[EffectKind]]`.
    */
   allowedEffects?: readonly EffectKind[];
