@@ -120,6 +120,7 @@ export {
 export type {
   Checkpoint,
   StateProof,
+  NullifierSpendProof,
   FeeEstimate,
   TransitionFeeEstimate,
   ScriptFeeEstimate,
@@ -193,6 +194,9 @@ export type { LintViolation, LintSeverity } from './morphism-lint.js';
 
 // Data utilities
 export { dropNulls } from './drop-nulls.js';
+
+// Canonical nullifier normalizer (chain `NullifierHex.scala` mirror; protocol-nullifier-set.md)
+export { normalizeNullifierHex } from '../schema/nullifier.js';
 
 // Genesis manifest exporter (std-app pre-registration content)
 export { buildGenesisManifest, GENESIS_MANIFEST_VERSION } from './genesis-manifest.js';

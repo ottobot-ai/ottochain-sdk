@@ -24,6 +24,7 @@ import type {
 } from './types.js';
 import type { CurrencySnapshotResponse } from './snapshot.js';
 import { extractOnChainState } from './snapshot.js';
+import { normalizeNullifierHex } from '../schema/nullifier.js';
 import type {
   VersionInfo,
   TransitionFeeEstimate,
@@ -92,6 +93,17 @@ export interface StateProof {
    * (chain `fieldValue: Option[Json]`, `dropNullValues`-stripped otherwise).
    */
   fieldValue?: unknown;
+}
+
+/**
+ * The `GET /v1/nullifiers/{domain}/{nf}` SPENT response (chain `StateProofHandler.nullifier`,
+ * protocol-nullifier-set.md Phase A): the standard state-proof envelope keyed on the committed
+ * `nullifier/<domain>/<nf>` key, whose proven `record` is the SPEND ORDINAL. Never carries
+ * `field`/`fieldValue` (the route takes no `?field=`).
+ */
+export interface NullifierSpendProof extends StateProof {
+  /** The snapshot ordinal at which the nullifier was consumed. */
+  record: number;
 }
 
 /**
@@ -340,6 +352,33 @@ export class MetagraphClient {
     return this.ml0.get<StateProof>(
       `/data-application/v1/assets/${assetId}/state-proof?field=${encodeURIComponent(field)}`,
     );
+  }
+
+  /**
+   * Look up a protocol nullifier (protocol-nullifier-set.md): is `nf` spent in `domain`
+   * (= the consuming fiber's UUID)?
+   *
+   * Returns the chain's spent-nullifier state proof — a {@link StateProof} keyed on
+   * `nullifier/<domain>/<nf>` whose `record` is the SPEND ORDINAL — or `null` when the
+   * nullifier is unspent/unknown (the route 404s; MPT absence proofs for unspent are the
+   * chain's Phase B — verify them with `verifyAbsenceProof` once served).
+   *
+   * `nf` is normalized exactly like the chain (`NullifierHex.scala`): one optional `0x`/`0X`
+   * prefix stripped, lowercased, then required to be EXACTLY 64 hex chars — so the queried
+   * key is byte-identical to the committed one. Throws on a value that cannot normalize
+   * (mirroring the route's BadRequest) WITHOUT hitting the network.
+   */
+  async getNullifier(domain: string, nf: string): Promise<NullifierSpendProof | null> {
+    const hex = normalizeNullifierHex(nf);
+    if (hex === null) {
+      throw new Error(`nullifier must be 64 hex chars (optionally 0x-prefixed), got '${nf}'`);
+    }
+    try {
+      return await this.ml0.get<NullifierSpendProof>(`/data-application/v1/nullifiers/${domain}/${hex}`);
+    } catch (error) {
+      if (error instanceof NetworkError && error.statusCode === 404) return null;
+      throw error;
+    }
   }
 
   /**

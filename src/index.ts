@@ -137,10 +137,14 @@ export { MetagraphClient as OttoMetagraphClient } from './ottochain/metagraph-cl
 export type {
   MetagraphClientConfig,
   Checkpoint,
+  NullifierSpendProof,
   SubscribeOptions,
   FiberStateCallback,
   Unsubscribe,
 } from './ottochain/metagraph-client.js';
+
+// Canonical nullifier normalizer (chain `NullifierHex.scala` mirror; protocol-nullifier-set.md)
+export { normalizeNullifierHex } from './schema/nullifier.js';
 
 // Webhook PUSH payload types (the `snapshot.finalized` notification the chain POSTs to a callback).
 // Mirrors chain `webhooks/Subscriber.scala`; not in the OpenAPI contract (server-initiated, not served).
