@@ -137,10 +137,14 @@ export { MetagraphClient as OttoMetagraphClient } from './ottochain/metagraph-cl
 export type {
   MetagraphClientConfig,
   Checkpoint,
+  NullifierSpendProof,
   SubscribeOptions,
   FiberStateCallback,
   Unsubscribe,
 } from './ottochain/metagraph-client.js';
+
+// Canonical nullifier normalizer (chain `NullifierHex.scala` mirror; protocol-nullifier-set.md)
+export { normalizeNullifierHex } from './schema/nullifier.js';
 
 // Webhook PUSH payload types (the `snapshot.finalized` notification the chain POSTs to a callback).
 // Mirrors chain `webhooks/Subscriber.scala`; not in the OpenAPI contract (server-initiated, not served).
@@ -205,11 +209,13 @@ export {
 } from './schema/guards.js';
 
 // Reserved EFFECT-directive builders (dynamic dependencies, #24; whole-asset custody moves;
-// cross-fiber triggers, spawn, emit + recipient-intent helpers; the reserved-key set for validators).
+// protocol nullifier consumption; cross-fiber triggers, spawn, emit + recipient-intent helpers;
+// the reserved-key set for validators).
 export {
   addDependency,
   setDependencyActive,
   transferAsset,
+  consumeNullifier,
   triggers,
   spawn,
   emit,

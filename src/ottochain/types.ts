@@ -474,6 +474,15 @@ export interface CalculatedState {
   assets: Record<string, AssetRecord>;
   /** Used commit-reveal nonces per asset UUID; bounded (pruned past expiresAt in combine). */
   usedNonces: Record<string, number[]>;
+  /**
+   * Protocol nullifier set (protocol-nullifier-set.md): domain (= the consuming fiber's UUID) ->
+   * normalized 64-hex nullifier -> spend ordinal. The set is monotonic/UNBOUNDED, so
+   * `/v1/checkpoint` EXCLUDES it BY DESIGN (the chain serves `nullifiers: {}` there — a
+   * handler-level slim of the only whole-state JSON surface). Read individual entries via
+   * `MetagraphClient.getNullifier` / the committed `nullifier/<domain>/<nf>` state-proof key.
+   * Optional: absent on pre-nullifier chains.
+   */
+  nullifiers?: Record<string, Record<string, number>>;
 }
 
 // ---------------------------------------------------------------------------

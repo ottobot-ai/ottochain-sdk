@@ -44,6 +44,7 @@
 
 import { KNOWN_OPERATORS as KNOWN_OPERATORS_TYPED } from '@constellation-network/metagraph-sdk-jlvm';
 import type { FiberAppDefinition, Transition, JsonLogicRule } from './fiber-app.js';
+import { normalizeNullifierHex } from './nullifier.js';
 
 /**
  * Canonical set of valid JLVM operator tags, imported from metakit (the same
@@ -80,6 +81,7 @@ export const LINT_CODES = {
   DROPPED_DIRECTIVE: 'dropped-directive', // rule 4 (A3)
   LEADING_DOT_VAR: 'leading-dot-var', // rule 5
   SPAWN_OWNERS: 'spawn-owners', // rule 6 (H1) — child owners not provably ⊆ parent
+  NULLIFIER_LITERAL: 'nullifier-literal-malformed', // rule 7 — _consumeNullifier literal can never normalize
 } as const;
 
 // =============================================================================
@@ -471,6 +473,78 @@ function lintSpawnOwners(node: unknown, app: string | undefined, transition: str
 }
 
 // =============================================================================
+// _consumeNullifier literal-shape rule (rule 7 — chain DefinitionLinter mirror)
+// =============================================================================
+
+/**
+ * Classify ONE authored `_consumeNullifier` item for the static shape check (the chain's
+ * `DefinitionLinter.nullifierDiagnostic` mirror). Returns the advisory message when the item
+ * is a LITERAL that can never normalize, else `undefined`:
+ *
+ *  - a string literal that fails `normalizeNullifierHex` (not 64 hex chars) — the exact
+ *    values the chain rejects at combine;
+ *  - a non-string, non-expression literal (number/boolean/null/array) — can NEVER normalize.
+ *
+ * Objects are DYNAMIC (`{"var":…}` / computed) — the resolved value is checked at combine
+ * (loud graceful reject), so they are not statically checkable here.
+ */
+function nullifierItemRisk(item: unknown): string | undefined {
+  if (typeof item === 'string') {
+    return normalizeNullifierHex(item) === null
+      ? `_consumeNullifier literal "${item}" does not normalize to 64 hex chars ` +
+          `(optionally 0x-prefixed); the chain rejects it at combine`
+      : undefined;
+  }
+  if (item !== null && typeof item === 'object' && !Array.isArray(item)) return undefined; // dynamic expression
+  return (
+    `_consumeNullifier item must be a 64-hex string (or a dynamic expression); ` +
+    `this non-string literal can never normalize and the chain rejects it at combine`
+  );
+}
+
+/**
+ * rule 7 — scan a transition effect for `_consumeNullifier` directives whose LITERAL items are
+ * malformed (chain `nullifier-literal-malformed` advisory). Shift-left for the extractor's loud
+ * `CombineRejected`: an obviously-wrong literal is flagged before the definition is signed.
+ * Advisory (warn) — the chain gate is the extractor. Descends every nesting position (the
+ * chain's walker descends if/merge nesting the same way).
+ */
+function lintConsumeNullifier(
+  node: unknown,
+  app: string | undefined,
+  transition: string,
+  path: string,
+): LintViolation[] {
+  const out: LintViolation[] = [];
+  if (Array.isArray(node)) {
+    node.forEach((child, i) => out.push(...lintConsumeNullifier(child, app, transition, `${path}[${i}]`)));
+    return out;
+  }
+  if (node === null || typeof node !== 'object') return out;
+  const obj = node as Record<string, unknown>;
+  for (const [k, v] of Object.entries(obj)) {
+    if (k === '_consumeNullifier' && Array.isArray(v)) {
+      v.forEach((item, i) => {
+        const message = nullifierItemRisk(item);
+        if (message) {
+          out.push({
+            app,
+            transition,
+            severity: 'warn',
+            code: LINT_CODES.NULLIFIER_LITERAL,
+            message,
+            path: `${path}.${k}[${i}]`,
+          });
+        }
+      });
+      continue;
+    }
+    out.push(...lintConsumeNullifier(v, app, transition, `${path}.${k}`));
+  }
+  return out;
+}
+
+// =============================================================================
 // Top-level entry point
 // =============================================================================
 
@@ -504,6 +578,7 @@ export function lintFiberApp(def: FiberAppDefinition): LintViolation[] {
     if (t.effect !== undefined) {
       out.push(...lintGuardExpression(t.effect as JsonLogicRule, ctx, `${tPath}.effect`));
       out.push(...lintSpawnOwners(t.effect, app, transition, `${tPath}.effect`));
+      out.push(...lintConsumeNullifier(t.effect, app, transition, `${tPath}.effect`));
     }
     out.push(...lintTransitionStructure(t, app, transition, tPath));
   });

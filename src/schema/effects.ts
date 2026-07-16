@@ -156,6 +156,32 @@ export const spawn = (
 ): Record<string, unknown> => ({ _spawn: ds });
 
 /**
+ * `_consumeNullifier` (protocol-nullifier-set.md): atomically check-absent-then-insert one or
+ * more PROTOCOL NULLIFIERS in the emitting fiber's own domain (`nullifier/<this fiberId>/<nf>`
+ * — the domain is ALWAYS the consuming fiber's id, so no app can insert into another app's
+ * namespace). Items are BARE nf values — each a 64-hex string literal (optionally
+ * `0x`-prefixed, any case; normalized like the chain's `NullifierHex`) or an expression that
+ * resolves to one (e.g. `{ var: "event.nullifier" }`).
+ *
+ * Enforcement is COMBINER-ONLY: all nullifiers in a transition are checked absent and
+ * inserted atomically at the current ordinal; ANY hit ⇒ graceful `CombineRejected`
+ * (`RejectionReceipt`) — protocol-enforced double-spend protection even if the definition
+ * forgets its own guard. A resolved value that cannot normalize is also a loud combine
+ * reject; the offline shape check is the `nullifier-literal-malformed` lint advisory. Hard
+ * cap 32 consumptions per transition; gate with the `allowedEffects` dial token
+ * `"NULLIFIER"`.
+ *
+ * @example
+ * effect: { merge: [ { var: "state" }, {
+ *   status: "FILLED",
+ *   ...consumeNullifier([{ var: "event.rxNullifier" }]),
+ * } ] }
+ */
+export const consumeNullifier = (nfs: JsonLogicValue[]): Record<string, unknown> => ({
+  _consumeNullifier: nfs,
+});
+
+/**
  * `_emit`: emit one or more domain events to the fiber's outbox. Each entry is
  * `{ name, data, destination? }` (`ReservedKeys.scala`, `EffectExtractor.scala`). `name` is the event
  * name, `data` the body (a literal or an expression), and `destination` an OPTIONAL routing target —
@@ -211,4 +237,5 @@ export const RESERVED_EFFECT_KEYS = [
   '_scriptCall',
   '_addDependency',
   '_setDependencyActive',
+  '_consumeNullifier',
 ] as const;

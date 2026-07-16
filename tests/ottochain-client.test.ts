@@ -226,6 +226,51 @@ describe('MetagraphClient', () => {
     });
   });
 
+  describe('getNullifier', () => {
+    const DOMAIN = '7476be9e-04e7-4b25-9b88-8e6dec0ff9bf';
+    const NF = 'cd'.repeat(32);
+
+    it('returns the spent-nullifier state proof (record = spend ordinal)', async () => {
+      const proof = {
+        key: `nullifier/${DOMAIN}/${NF}`,
+        ordinal: 339,
+        committedRoot: 'root-hash',
+        mptRoot: 'mpt-hash',
+        record: 120,
+        proof: { path: 'ab', witness: [] },
+      };
+      mockMl0Get.mockResolvedValue(proof);
+      const result = await client.getNullifier(DOMAIN, NF);
+      expect(result).toEqual(proof);
+      expect(result?.record).toBe(120);
+      expect(mockMl0Get).toHaveBeenCalledWith(`/data-application/v1/nullifiers/${DOMAIN}/${NF}`);
+    });
+
+    it('normalizes the nf like the chain (0x prefix stripped, lowercased) before querying', async () => {
+      mockMl0Get.mockResolvedValue({ record: 1 });
+      await client.getNullifier(DOMAIN, `0x${NF.toUpperCase()}`);
+      expect(mockMl0Get).toHaveBeenCalledWith(`/data-application/v1/nullifiers/${DOMAIN}/${NF}`);
+    });
+
+    it('returns null on 404 (unspent/unknown nullifier)', async () => {
+      const { NetworkError } = jest.requireMock('@constellation-network/metagraph-sdk/network');
+      mockMl0Get.mockRejectedValue(new NetworkError('not found', 404));
+      await expect(client.getNullifier(DOMAIN, NF)).resolves.toBeNull();
+    });
+
+    it('throws on a value that cannot normalize, WITHOUT hitting the network', async () => {
+      await expect(client.getNullifier(DOMAIN, 'not-a-nullifier')).rejects.toThrow(/64 hex chars/);
+      await expect(client.getNullifier(DOMAIN, 'ab'.repeat(31))).rejects.toThrow(/64 hex chars/);
+      expect(mockMl0Get).not.toHaveBeenCalled();
+    });
+
+    it('rethrows non-404 errors', async () => {
+      const { NetworkError } = jest.requireMock('@constellation-network/metagraph-sdk/network');
+      mockMl0Get.mockRejectedValue(new NetworkError('boom', 500));
+      await expect(client.getNullifier(DOMAIN, NF)).rejects.toThrow('boom');
+    });
+  });
+
   describe('webhooks', () => {
     it('subscribeWebhook POSTs SubscribeRequest and returns SubscribeResponse', async () => {
       const mockPost = (client as any).ml0.post as jest.Mock;
