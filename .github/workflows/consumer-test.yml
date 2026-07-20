@@ -31,7 +31,7 @@ jobs:
 
       - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: '20'
           cache: 'pnpm'
@@ -69,7 +69,7 @@ jobs:
       - uses: pnpm/action-setup@v6
         # Uses version from packageManager field in consumer repo's package.json
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: '20'
           cache: 'pnpm'
@@ -118,7 +118,7 @@ jobs:
         # Explorer repo now sets packageManager in package.json; action-setup reads the pnpm version there
         # (pinning version: here conflicts with packageManager and aborts setup).
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: '20'
           cache: 'pnpm'
